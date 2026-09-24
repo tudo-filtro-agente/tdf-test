@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>tdf-portal — AMBIENTE DE TESTE</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 900px; margin: 30px auto; padding: 0 20px; background: #f5f5f5; color: #222; }
+  .alerta { background: #fff3cd; border: 2px solid #ffc107; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; font-weight: 600; }
+  .alerta strong { color: #d63031; }
+  h1 { margin: 0 0 10px; }
+  .badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-right: 8px; }
+  .badge.test { background: #ffeaa7; color: #d63031; }
+  .badge.dry { background: #74b9ff; color: white; }
+  .badge.prod { background: #00b894; color: white; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 20px; }
+  .card { background: white; padding: 18px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .card h3 { margin-top: 0; }
+  a.btn { display: inline-block; background: #0984e3; color: white; padding: 8px 14px; border-radius: 4px; text-decoration: none; font-size: 14px; margin-right: 8px; margin-bottom: 8px; }
+  a.btn:hover { background: #0873c7; }
+  code { background: #f1f1f1; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+  pre { background: #2d3436; color: #dfe6e9; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="alerta">
+  ⚠️ <strong>AMBIENTE DE TESTE</strong> — este projeto aponta pra bases zeradas, com <code>DRY_RUN=true</code>. Nenhuma ação real é executada.
+</div>
+
+<h1>tdf-portal</h1>
+<p>
+  <span class="badge test">ENV: <%= env %></span>
+  <% if (dryRun) { %>
+    <span class="badge dry">DRY_RUN: ON</span>
+  <% } else { %>
+    <span class="badge prod">DRY_RUN: OFF (produção)</span>
+  <% } %>
+</p>
+
+<p><strong>Empresas OMIE configuradas:</strong> <%= empresas.join(', ') %></p>
+
+<div class="grid">
+  <div class="card">
+    <h3>🔍 Health</h3>
+    <p>Verifica se o portal tá no ar.</p>
+    <a class="btn" href="/health" target="_blank">/health</a>
+  </div>
+
+  <div class="card">
+    <h3>🔐 Env vars</h3>
+    <p>Lista quais variáveis existem (sem mostrar valores).</p>
+    <a class="btn" href="/env" target="_blank">/env</a>
+  </div>
+
+  <div class="card">
+    <h3>📡 OMIE (mock)</h3>
+    <p>Lista clientes — dados fictícios no modo DRY_RUN.</p>
+    <a class="btn" href="/api/test/omie?empresa=Mococa" target="_blank">Mococa</a>
+    <a class="btn" href="/api/test/omie?empresa=Tudo%20de%20Filtro" target="_blank">Tudo de Filtro</a>
+    <a class="btn" href="/api/test/omie?empresa=American" target="_blank">American</a>
+  </div>
+
+  <div class="card">
+    <h3>📦 Pedidos OMIE</h3>
+    <p>Lista pedidos — dados fictícios no modo DRY_RUN.</p>
+    <a class="btn" href="/api/test/omie/pedidos?empresa=Mococa" target="_blank">Testar</a>
+  </div>
+
+  <div class="card">
+    <h3>🔗 tdf-ops (comunicação)</h3>
+    <p>Testa se o tdf-portal consegue falar com tdf-ops.</p>
+    <a class="btn" href="/api/test/ops" target="_blank">/api/test/ops</a>
+  </div>
+</div>
+
+<hr style="margin: 30px 0;">
+
+<h2>📋 Próximos passos</h2>
+<ol>
+  <li>Clicar em <a href="/api/test/ops" target="_blank">/api/test/ops</a> — deve mostrar resposta do tdf-ops</li>
+  <li>Clicar em <a href="/api/test/omie?empresa=Mococa" target="_blank">OMIE Mococa</a> — vê dados mock</li>
+  <li>Trocar <code>DRY_RUN=false</code> no Railway quando quiser ir pra produção</li>
+</ol>
+
+</body>
+</html>
