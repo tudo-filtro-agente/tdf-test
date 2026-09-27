@@ -205,19 +205,19 @@ async function upsertContasPagar(empresaId, rows) {
          synced_at = NOW()`,
       [
         empresaId,
-        r.codigo_lancamento_omie,
-        r.codigo_cliente_fornecedor,
-        r.nome_cliente_fornecedor,
-        r.numero_documento,
-        r.numero_parcela,
-        r.valor_documento,
-        r.valor_pago,
-        r.data_emissao || null,
-        r.data_vencimento || null,
-        r.data_pagamento || null,
-        r.status_lancamento,
-        r.codigo_categoria,
-        r.observacao,
+        m.codigo_lancamento_omie,
+        m.codigo_cliente_fornecedor,
+        m.nome_cliente_fornecedor,
+        m.numero_documento,
+        m.numero_parcela,
+        m.valor_documento,
+        m.valor_pago,
+        m.data_emissao,
+        m.data_vencimento,
+        m.data_pagamento,
+        m.status_lancamento,
+        m.codigo_categoria,
+        m.observacao,
       ]
     );
     count++;
@@ -435,6 +435,36 @@ async function upsertFornecedores(empresaId, rows) {
   return count;
 }
 
+// syncMovimentos: precisa de nCodCC para cada conta corrente.
+// Estratégia: busca as contas correntes já sincronizadas no Postgres,
+// depois chama listarMovimentos() uma vez por conta.
+async function syncMovimentos(empresa) {
+  // Pega os omie_codigo das contas bancárias já sincronizadas
+  const r = await pool.query(
+    `SELECT omie_codigo FROM contas_bancarias WHERE empresa_id = $1 AND ativa = true ORDER BY omie_codigo`,
+    [empresa.id]
+  );
+  const contasCC = r.rows.map(x => x.omie_codigo).filter(Boolean);
+  if (!contasCC.length) {
+    console.log(`[sync] ${empresa.nome}.movimentos: nenhuma conta corrente ativa, pulando`);
+    return 0;
+  }
+  let totalCount = 0;
+  for (const nCodCC of contasCC) {
+    const data = await omie.listarMovimentos(empresa.nome, { nCodCC });
+    const fields = ['listaMovimentos', 'movimentos'];
+    let rows = [];
+    for (const f of fields) {
+      if (Array.isArray(data[f])) { rows = data[f]; break; }
+    }
+    if (!rows.length) continue;
+    const n = await upsertMovimentos(empresa.id, rows);
+    totalCount += n;
+    console.log(`[sync] ${empresa.nome}.movimentos CC=${nCodCC}: ${n} registros`);
+  }
+  return totalCount;
+}
+
 async function syncEntity(empresa, entity, forceDryRun = false) {
   let data;
   if (forceDryRun && omie.DRY_RUN === false) {
@@ -466,7 +496,7 @@ async function syncEntity(empresa, entity, forceDryRun = false) {
   switch (entity.key) {
     case 'contas_pagar':     return await upsertContasPagar(empresa.id, rows);
     case 'contas_receber':   return await upsertContasReceber(empresa.id, rows);
-    case 'movimentos':       return await upsertMovimentos(empresa.id, rows);
+    case 'movimentos':       return await syncMovimentos(empresa);
     case 'contas_bancarias': return await upsertContasBancarias(empresa.id, rows);
     case 'categorias':       return await upsertCategorias(empresa.id, rows);
     case 'nf_entrada':       return await upsertNfEntrada(empresa.id, rows);
