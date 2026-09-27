@@ -15,13 +15,13 @@ const { pool } = require('./auth');
 const omie = require('./omie');
 
 const ENTIDADES = [
-  { key: 'contas_pagar',      fn: 'listarContasPagar',      table: 'contas_pagar',      listField: 'contas_pagar' },
-  { key: 'contas_receber',    fn: 'listarContasReceber',    table: 'contas_receber',    listField: 'contas_receber' },
-  { key: 'movimentos',        fn: 'listarMovimentos',       table: 'movimentos',        listField: 'movimentos' },
-  { key: 'contas_bancarias',  fn: 'listarContasBancarias',  table: 'contas_bancarias',  listField: 'contas_bancarias' },
-  { key: 'categorias',        fn: 'listarCategorias',       table: 'categorias',        listField: 'categorias' },
-  { key: 'nf_entrada',        fn: 'listarNfEntrada',        table: 'nf_entrada',        listField: 'nf_entrada' },
-  { key: 'fornecedores',      fn: 'listarFornecedores',     table: 'fornecedores',      listField: 'fornecedores' },
+  { key: 'contas_pagar',      fn: 'listarContasPagar',      table: 'contas_pagar',      listField: ['conta_pagar_cadastro', 'contas_pagar'] },
+  { key: 'contas_receber',    fn: 'listarContasReceber',    table: 'contas_receber',    listField: ['conta_receber_cadastro', 'contas_receber'] },
+  { key: 'movimentos',        fn: 'listarMovimentos',       table: 'movimentos',        listField: ['listaMovimentos', 'movimentos'] },
+  { key: 'contas_bancarias',  fn: 'listarContasBancarias',  table: 'contas_bancarias',  listField: ['ListarContasCorrentes', 'contas_correntes', 'contas_bancarias'] },
+  { key: 'categorias',        fn: 'listarCategorias',       table: 'categorias',        listField: ['ListarCategorias', 'categoria_cadastro', 'categorias'] },
+  { key: 'nf_entrada',        fn: 'listarNfEntrada',        table: 'nf_entrada',        listField: ['movimentos', 'nf_entrada'] },
+  { key: 'fornecedores',      fn: 'listarFornecedores',     table: 'fornecedores',      listField: ['clientes_cadastro', 'fornecedores'] },
 ];
 
 async function getEmpresas() {
@@ -59,9 +59,123 @@ async function finishSyncLog(logId, status, totals, errorMsg = null) {
   );
 }
 
+// --------- MAPEADORES: OMIE real → formato do sync ---------
+// OMIE retorna campos com nomes diferentes dos nossos mocks.
+// Estes mappers traduzem dados REAIS da OMIE pra estrutura esperada.
+
+function mapContaPagarOmie(r) {
+  // OMIE real: { codigo_lancamento, codigo_cliente_fornecedor, nome_cliente_fornecedor,
+  //              numero_documento, numero_parcela, valor_documento, valor_pago,
+  //              data_emissao, data_vencimento, data_pagamento, status_lancamento,
+  //              categoria, observacao } (campos camelCase ou "tag" conforme SOAP/JSON)
+  return {
+    codigo_lancamento_omie: r.codigo_lancamento_omie || r.codigo_lancamento || r.nCodTitulo || r.nCodLancamento,
+    codigo_cliente_fornecedor: r.codigo_cliente_fornecedor || r.nCodCliente || 0,
+    nome_cliente_fornecedor: r.nome_cliente_fornecedor || r.cRazCliente || r.cDesCliente || '(sem nome)',
+    numero_documento: r.numero_documento || r.cNumero || '',
+    numero_parcela: r.numero_parcela || r.cParcela || '001/001',
+    valor_documento: Number(r.valor_documento || r.nValorDocumento || 0),
+    valor_pago: Number(r.valor_pago || r.nValorPago || 0),
+    data_emissao: r.data_emissao || r.dDtEmissao || null,
+    data_vencimento: r.data_vencimento || r.dDtVencimento || null,
+    data_pagamento: r.data_pagamento || r.dDtPagamento || null,
+    status_lancamento: r.status_lancamento || r.cStatus || r.status || 'em_aberto',
+    codigo_categoria: r.codigo_categoria || r.cCodCateg || null,
+    observacao: r.observacao || r.cObservacao || null,
+  };
+}
+
+function mapContaReceberOmie(r) {
+  return {
+    codigo_lancamento_omie: r.codigo_lancamento_omie || r.codigo_lancamento || r.nCodTitulo || r.nCodLancamento,
+    codigo_cliente: r.codigo_cliente || r.nCodCliente || 0,
+    nome_cliente: r.nome_cliente || r.cRazCliente || r.cDesCliente || '(sem nome)',
+    numero_documento: r.numero_documento || r.cNumero || '',
+    numero_parcela: r.numero_parcela || r.cParcela || '001/001',
+    valor_documento: Number(r.valor_documento || r.nValorDocumento || 0),
+    valor_recebido: Number(r.valor_recebido || r.nValorRecebido || 0),
+    data_emissao: r.data_emissao || r.dDtEmissao || null,
+    data_vencimento: r.data_vencimento || r.dDtVencimento || null,
+    data_recebimento: r.data_recebimento || r.dDtRecebimento || r.dDtPagamento || null,
+    status_lancamento: r.status_lancamento || r.cStatus || 'em_aberto',
+    codigo_categoria: r.codigo_categoria || r.cCodCateg || null,
+    observacao: r.observacao || r.cObservacao || null,
+  };
+}
+
+function mapContaBancariaOmie(r) {
+  return {
+    codigo_conta_corrente: r.codigo_conta_corrente || r.nCodCC || r.codigo || 0,
+    descricao: r.descricao || r.cDescricao || r.cBanco || '(sem descrição)',
+    banco: r.banco || r.cBanco || r.nCodBanco || '',
+    agencia: r.agencia || r.cAgencia || r.nCodAgencia || '',
+    numero_conta: r.numero_conta || r.cNumero || r.nNumConta || '',
+    tipo: r.tipo || r.cTipo || 'CC',
+    saldo_atual: Number(r.saldo_atual || r.nSaldoAtual || 0),
+    ativa: r.ativa !== false && r.bloqueado !== 'S',
+  };
+}
+
+function mapCategoriaOmie(r) {
+  return {
+    codigo_categoria: r.codigo_categoria || r.codigo || r.cCodigo || '',
+    nome: r.nome || r.cNome || r.cDescricao || '(sem nome)',
+    tipo: r.tipo || r.cTipo || 'despesa',
+  };
+}
+
+function mapMovimentoOmie(r) {
+  // financas/mf: { detalhes: { cNatureza 'R' = receita, 'P' = pagamento, dDataLancamento, cDesCliente, nValorDocumento, cNumDocFiscal, cTipo, cStatus, ... } }
+  const d = r.detalhes || r;
+  const natureza = d.cNatureza || d.natureza || 'P';
+  const tipo = (natureza === 'R' || natureza === 'C') ? 'credito' : 'debito';
+  return {
+    codigo_movimento: d.nCodLancamento || d.codigo_movimento || d.nCodMovimento || Math.floor(Math.random() * 1e9),
+    conta_bancaria: d.cDesCliente || d.conta_bancaria || '',
+    tipo,
+    data_movimento: d.dDataLancamento || d.data_movimento || d.dDtEmissao || null,
+    valor: Number(d.nValorDocumento || d.valor || 0),
+    descricao: d.cObservacao || d.descricao || d.cTipo || '',
+    categoria: d.cCodCateg || d.categoria || null,
+    conciliado: (d.dDataConciliacao || '').length > 0,
+  };
+}
+
+function mapFornecedorOmie(r) {
+  return {
+    codigo_cliente_omie: r.codigo_cliente_omie || r.codigo_cliente || r.codigo || 0,
+    razao_social: r.razao_social || r.nome_razao_social || r.nome || r.razaoSocial || '(sem nome)',
+    nome_fantasia: r.nome_fantasia || r.fantasia || r.nomeFantasia || null,
+    cnpj_cpf: r.cnpj_cpf || r.cnpjCpf || r.cnpj || '',
+    email: r.email || r.email || '',
+    telefone: r.telefone || r.telefone1 || '',
+    cidade: r.cidade || '',
+    estado: r.estado || '',
+  };
+}
+
+function mapNfEntradaOmie(r) {
+  // financas/mf.detalhes → nf entrada
+  const d = r.detalhes || r;
+  return {
+    codigo_nf: d.nCodLancamento || d.codigo_nf || 0,
+    numero_nf: d.cNumDocFiscal || d.numero_nf || '',
+    serie: d.cSerie || '',
+    data_emissao: d.dDtEmissao || d.data_emissao || null,
+    data_entrada: d.dDtPagamento || d.dDataLancamento || d.data_entrada || null,
+    valor_total: Number(d.nValorDocumento || d.valor_total || 0),
+    nome_fornecedor: d.cRazCliente || d.cDesCliente || d.nome_fornecedor || '',
+    cnpj_fornecedor: d.cCPFCNPJCliente || d.cnpj_fornecedor || '',
+    chave_nfe: d.cChaveNFe || '',
+  };
+}
+
+// ---------- UPSERTS ----------
+
 async function upsertContasPagar(empresaId, rows) {
   let count = 0;
   for (const r of rows) {
+    const m = mapContaPagarOmie(r);
     await pool.query(
       `INSERT INTO contas_pagar
        (empresa_id, omie_codigo, codigo_fornecedor, nome_fornecedor, numero_documento, parcela,
@@ -107,6 +221,7 @@ async function upsertContasPagar(empresaId, rows) {
 async function upsertContasReceber(empresaId, rows) {
   let count = 0;
   for (const r of rows) {
+    const m = mapContaReceberOmie(r);
     await pool.query(
       `INSERT INTO contas_receber
        (empresa_id, omie_codigo, codigo_cliente, nome_cliente, numero_documento, parcela,
@@ -129,19 +244,19 @@ async function upsertContasReceber(empresaId, rows) {
          synced_at = NOW()`,
       [
         empresaId,
-        r.codigo_lancamento_omie,
-        r.codigo_cliente_fornecedor,
-        r.nome_cliente_fornecedor,
-        r.numero_documento,
-        r.numero_parcela,
-        r.valor_documento,
-        r.valor_recebido,
-        r.data_emissao || null,
-        r.data_vencimento || null,
-        r.data_recebimento || null,
-        r.status_lancamento,
-        r.codigo_categoria,
-        r.observacao,
+        m.codigo_lancamento_omie,
+        m.codigo_cliente,
+        m.nome_cliente,
+        m.numero_documento,
+        m.numero_parcela,
+        m.valor_documento,
+        m.valor_recebido,
+        m.data_emissao || null,
+        m.data_vencimento || null,
+        m.data_recebimento || null,
+        m.status_lancamento,
+        m.codigo_categoria,
+        m.observacao,
       ]
     );
     count++;
@@ -152,6 +267,7 @@ async function upsertContasReceber(empresaId, rows) {
 async function upsertMovimentos(empresaId, rows) {
   let count = 0;
   for (const r of rows) {
+    const m = mapMovimentoOmie(r);
     await pool.query(
       `INSERT INTO movimentos
        (empresa_id, omie_codigo, conta_bancaria, tipo, data_movimento, valor, descricao, categoria, conciliado, synced_at)
@@ -167,14 +283,14 @@ async function upsertMovimentos(empresaId, rows) {
          synced_at = NOW()`,
       [
         empresaId,
-        r.codigo_movimento,
-        r.conta_bancaria,
-        r.tipo,
-        r.data_movimento || null,
-        r.valor,
-        r.descricao,
-        r.categoria,
-        r.conciliado,
+        m.codigo_movimento,
+        m.conta_bancaria,
+        m.tipo,
+        m.data_movimento || null,
+        m.valor,
+        m.descricao,
+        m.categoria,
+        m.conciliado,
       ]
     );
     count++;
@@ -185,6 +301,7 @@ async function upsertMovimentos(empresaId, rows) {
 async function upsertContasBancarias(empresaId, rows) {
   let count = 0;
   for (const r of rows) {
+    const m = mapContaBancariaOmie(r);
     await pool.query(
       `INSERT INTO contas_bancarias
        (empresa_id, omie_codigo, nome, banco, agencia, conta, tipo, saldo_atual, ativa, synced_at)
@@ -200,14 +317,14 @@ async function upsertContasBancarias(empresaId, rows) {
          synced_at = NOW()`,
       [
         empresaId,
-        r.codigo_conta_corrente,
-        r.nome,
-        r.banco,
-        r.agencia,
-        r.conta,
-        r.tipo,
-        r.saldo_atual,
-        r.ativa,
+        m.codigo_conta_corrente,
+        m.descricao,
+        m.banco,
+        m.agencia,
+        m.numero_conta,
+        m.tipo,
+        m.saldo_atual,
+        m.ativa,
       ]
     );
     count++;
@@ -218,6 +335,7 @@ async function upsertContasBancarias(empresaId, rows) {
 async function upsertCategorias(empresaId, rows) {
   let count = 0;
   for (const r of rows) {
+    const m = mapCategoriaOmie(r);
     await pool.query(
       `INSERT INTO categorias
        (empresa_id, omie_codigo, nome, tipo, synced_at)
@@ -226,7 +344,7 @@ async function upsertCategorias(empresaId, rows) {
          nome = EXCLUDED.nome,
          tipo = EXCLUDED.tipo,
          synced_at = NOW()`,
-      [empresaId, r.codigo_categoria, r.nome, r.tipo]
+      [empresaId, m.codigo_categoria, m.nome, m.tipo]
     );
     count++;
   }
@@ -236,6 +354,7 @@ async function upsertCategorias(empresaId, rows) {
 async function upsertNfEntrada(empresaId, rows) {
   let count = 0;
   for (const r of rows) {
+    const m = mapNfEntradaOmie(r);
     await pool.query(
       `INSERT INTO nf_entrada
        (empresa_id, omie_codigo, numero, serie, chave_acesso, codigo_fornecedor, nome_fornecedor,
@@ -256,18 +375,18 @@ async function upsertNfEntrada(empresaId, rows) {
          synced_at = NOW()`,
       [
         empresaId,
-        r.codigo_nf,
-        r.numero,
-        r.serie,
-        r.chave_acesso,
-        r.codigo_fornecedor,
-        r.nome_fornecedor,
-        r.data_emissao || null,
-        r.data_entrada || null,
-        r.valor_total,
-        r.valor_produtos,
-        r.valor_impostos,
-        r.status,
+        m.codigo_nf,
+        m.numero_nf,
+        m.serie,
+        m.chave_nfe,
+        0, // codigo_fornecedor (não temos do financas/mf)
+        m.nome_fornecedor,
+        m.data_emissao || null,
+        m.data_entrada || null,
+        m.valor_total,
+        null, // valor_produtos
+        null, // valor_impostos
+        'entrada',
       ]
     );
     count++;
@@ -278,6 +397,7 @@ async function upsertNfEntrada(empresaId, rows) {
 async function upsertFornecedores(empresaId, rows) {
   let count = 0;
   for (const r of rows) {
+    const m = mapFornecedorOmie(r);
     await pool.query(
       `INSERT INTO fornecedores
        (empresa_id, omie_codigo, razao_social, nome_fantasia, cnpj_cpf, email, telefone, cidade, estado, synced_at)
@@ -293,14 +413,14 @@ async function upsertFornecedores(empresaId, rows) {
          synced_at = NOW()`,
       [
         empresaId,
-        r.codigo_cliente_omie,
-        r.razao_social,
-        r.nome_fantasia,
-        r.cnpj_cpf,
-        r.email,
-        r.telefone,
-        r.cidade,
-        r.estado,
+        m.codigo_cliente_omie,
+        m.razao_social,
+        m.nome_fantasia,
+        m.cnpj_cpf,
+        m.email,
+        m.telefone,
+        m.cidade,
+        m.estado,
       ]
     );
     count++;
@@ -327,7 +447,13 @@ async function syncEntity(empresa, entity, forceDryRun = false) {
   } else {
     data = await omie[entity.fn](empresa.nome);
   }
-  const rows = data[entity.listField] || data[entity.key] || [];
+  // listField pode ser string ou array de nomes possíveis (mock vs OMIE real)
+  const fields = Array.isArray(entity.listField) ? entity.listField : [entity.listField];
+  let rows = [];
+  for (const f of fields) {
+    if (Array.isArray(data[f])) { rows = data[f]; break; }
+  }
+  if (!rows.length) rows = data[entity.key] || [];
   if (!rows.length) return 0;
 
   switch (entity.key) {
