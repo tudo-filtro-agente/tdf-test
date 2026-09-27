@@ -33,7 +33,7 @@ INSERT INTO users (username, email, full_name, role, password_hash, portal_team,
 VALUES
     -- Admin principal
     ('marcos',    'marcosm_oliveira@hotmail.com',  'Marcos',           'admin',     NULL, 'admin',   'Marcos',              TRUE,  FALSE, 'Admin principal — redefinir senha'),
-    ('financeiro','financeiro@tudodefiltro.com.br','Financeiro TDF',   'financeiro',NULL, 'financeiro','Financeiro TDF',     TRUE,  FALSE, 'Acesso restrito ao BI'),
+    ('financeiro','financeiro@tudodefiltro.com.br','Financeiro TDF',   'financeiro','$2a$10$qDClnl5UTqfOsN1KI5ilNeA9QsCkQJ9dq.Ja3sNcB0HA8NQP0eJ/u', 'financeiro','Financeiro TDF',     TRUE,  FALSE, 'Acesso restrito ao BI'),
     -- Equipe Filtro
     ('tiago',     NULL,                            'Tiago',            'viewer',    NULL, 'filtro',  'Tiago Souza',         TRUE,  TRUE,  'Closer'),
     ('julia',     NULL,                            'Júlia',            'viewer',    NULL, 'filtro',  'Júlia Souza',         TRUE,  TRUE,  'Closer'),
@@ -51,3 +51,7 @@ VALUES
     ('taina',     NULL,                            'Tainá',           'viewer',    NULL, 'loja',    'Tainá',               TRUE,  TRUE,  'Loja física'),
     ('gabrielly', NULL,                            'Gabrielly',        'viewer',    NULL, 'loja',    'Gabrielly',           TRUE,  TRUE,  'Loja física')
 ON CONFLICT (username) DO NOTHING;
+
+-- Atualiza senha do financeiro (que veio NULL do primeiro seed)
+UPDATE users SET password_hash = '$2a$10$qDClnl5UTqfOsN1KI5ilNeA9QsCkQJ9dq.Ja3sNcB0HA8NQP0eJ/u'
+WHERE username = 'financeiro' AND password_hash IS NULL;

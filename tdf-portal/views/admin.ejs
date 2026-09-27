@@ -107,11 +107,6 @@
   </header>
 
   <div class="container">
-    <% if (user.role !== 'admin') { %>
-      <div class="card">
-        <p style="color:var(--muted);margin:0;">Acesso restrito a administradores.</p>
-      </div>
-    <% } else { %>
 
     <div class="tabs">
       <button class="tab active" onclick="showTab('sync')">🔄 Sync</button>
@@ -242,7 +237,6 @@
       </div>
     </div>
 
-    <% } %>
   </div>
 
   <script>

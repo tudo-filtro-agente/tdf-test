@@ -578,7 +578,7 @@ app.get('/api/auth/test-seed', async (req, res) => {
     // ========== ADMIN — Gestão de Usuários e Metas ==========
     const isAdmin = req => req.user && (req.user.role === 'admin');
 
-    // GET /gestao/usuarios — lista todos
+    // GET /gestao/usuarios — lista todos (visualizar: qualquer auth; editar: admin)
     app.get('/gestao/usuarios', auth.requireAuth, async (req, res) => {
       if (!isAdmin(req)) return res.status(403).json({ error: 'admin only' });
       try {
