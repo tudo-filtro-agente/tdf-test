@@ -420,4 +420,12 @@ module.exports = {
   listarCategorias,
   listarNfEntrada,
   listarFornecedores,
+  // Mocks (usados quando sync-dry é chamado mesmo com DRY_RUN=false)
+  mockContasPagar,
+  mockContasReceber,
+  mockMovimentos,
+  mockContasBancarias,
+  mockCategorias,
+  mockNfEntrada,
+  mockFornecedores,
 };
