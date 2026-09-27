@@ -575,8 +575,149 @@ app.get('/api/auth/test-seed', async (req, res) => {
       }
     });
 
+    // ========== ADMIN — Gestão de Usuários e Metas ==========
+    const isAdmin = req => req.user && (req.user.role === 'admin');
+
+    // GET /gestao/usuarios — lista todos
+    app.get('/gestao/usuarios', auth.requireAuth, async (req, res) => {
+      if (!isAdmin(req)) return res.status(403).json({ error: 'admin only' });
+      try {
+        const { rows } = await auth.pool.query(
+          `SELECT id, username, email, full_name, role, portal_team, crm_owner,
+                  meta_vendas, meta_faturamento, is_active, created_at
+             FROM users ORDER BY username`
+        );
+        res.json({ ok: true, usuarios: rows });
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
+    });
+
+    // POST /gestao/usuarios — criar novo
+    app.post('/gestao/usuarios', auth.requireAuth, async (req, res) => {
+      if (!isAdmin(req)) return res.status(403).json({ error: 'admin only' });
+      const { username, password, name, email, role, crmOwner, team } = req.body || {};
+      if (!username || !name) return res.status(400).json({ error: 'username e nome são obrigatórios' });
+      if (!['admin','financeiro','viewer'].includes(role)) return res.status(400).json({ error: 'role inválido' });
+      try {
+        // cria com must_reset=TRUE (força troca de senha)
+        const { rows } = await auth.pool.query(
+          `INSERT INTO users (username, full_name, email, role, portal_team, crm_owner,
+                              password_hash, must_reset, is_active)
+           VALUES ($1,$2,$3,$4,$5,$6, NULL, true, true)
+           ON CONFLICT (username) DO UPDATE SET full_name=EXCLUDED.full_name,
+               email=EXCLUDED.email, role=EXCLUDED.role, portal_team=EXCLUDED.portal_team,
+               crm_owner=EXCLUDED.crm_owner RETURNING id, username`,
+          [username, name, email || '', role, team || 'filtro', crmOwner || name]
+        );
+        // emite token de 1º acesso
+        const { rows: tk } = await auth.pool.query(
+          `INSERT INTO access_tokens (user_id, token_hash, purpose, expires_at)
+           VALUES ($1, encode(sha256(random()::bytea),'hex'), 'first_access',
+                   NOW() + INTERVAL '7 days') RETURNING id`,
+          [rows[0].id]
+        );
+        res.json({ ok: true, username, needs_password: true,
+                   reset_url: `/primeiro-acesso?token=${tk[0].id}` });
+      } catch (err) {
+        if (err.code === '23505') return res.status(409).json({ error: 'username já existe' });
+        res.status(500).json({ error: err.message });
+      }
+    });
+
+    // PUT /gestao/usuarios/:username — editar
+    app.put('/gestao/usuarios/:username', auth.requireAuth, async (req, res) => {
+      if (!isAdmin(req)) return res.status(403).json({ error: 'admin only' });
+      const u = req.params.username;
+      const { name, email, role, team, crmOwner, active, metaVendas, metaFaturamento } = req.body || {};
+      try {
+        const sets = [], vals = [], idx = [];
+        let p = 1;
+        if (name !== undefined)        { sets.push(`full_name = $${p++}`); vals.push(name); }
+        if (email !== undefined)        { sets.push(`email = $${p++}`); vals.push(email); }
+        if (role && ['admin','financeiro','viewer'].includes(role)) { sets.push(`role = $${p++}`); vals.push(role); }
+        if (team !== undefined)        { sets.push(`portal_team = $${p++}`); vals.push(team); }
+        if (crmOwner !== undefined)   { sets.push(`crm_owner = $${p++}`); vals.push(crmOwner); }
+        if (active !== undefined)      { sets.push(`is_active = $${p++}`); vals.push(active); }
+        if (metaVendas !== undefined)  { sets.push(`meta_vendas = $${p++}`); vals.push(metaVendas); }
+        if (metaFaturamento !== undefined) { sets.push(`meta_faturamento = $${p++}`); vals.push(metaFaturamento); }
+        if (!sets.length) return res.status(400).json({ error: 'nenhum campo para atualizar' });
+        vals.push(u);
+        await auth.pool.query(
+          `UPDATE users SET ${sets.join(', ')} WHERE username = $${p}`, vals
+        );
+        res.json({ ok: true });
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
+    });
+
+    // DELETE /gestao/usuarios/:username
+    app.delete('/gestao/usuarios/:username', auth.requireAuth, async (req, res) => {
+      if (!isAdmin(req)) return res.status(403).json({ error: 'admin only' });
+      if (req.params.username === req.user.username) return res.status(400).json({ error: 'não deletar você mesmo' });
+      try {
+        await auth.pool.query(`DELETE FROM users WHERE username = $1`, [req.params.username]);
+        res.json({ ok: true });
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
+    });
+
+    // GET /gestao/metas
+    app.get('/gestao/metas', auth.requireAuth, async (req, res) => {
+      if (!isAdmin(req)) return res.status(403).json({ error: 'admin only' });
+      try {
+        const { rows } = await auth.pool.query(
+          `SELECT username, full_name AS name, role, portal_team, crm_owner,
+                  meta_vendas, meta_faturamento
+             FROM users
+            WHERE role IN ('viewer','admin','financeiro')
+            ORDER BY portal_team, username`
+        );
+        const lojaRow = await auth.pool.query(
+          `SELECT meta_loja FROM users WHERE username = 'marcos' LIMIT 1`
+        );
+        const refilRow = await auth.pool.query(
+          `SELECT meta_refil FROM users WHERE username = 'marcos' LIMIT 1`
+        );
+        res.json({
+          ok: true,
+          closers: rows,
+          metaLoja: { faturamento: lojaRow.rows[0]?.meta_loja || 80000 },
+          metaRefil: { faturamento: refilRow.rows[0]?.meta_refil || 15000 },
+        });
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
+    });
+
+    // POST /gestao/metas
+    app.post('/gestao/metas', auth.requireAuth, async (req, res) => {
+      if (!isAdmin(req)) return res.status(403).json({ error: 'admin only' });
+      const { crmOwner, vendas, faturamento, _loja, _refil } = req.body || {};
+      try {
+        if (_loja !== undefined) {
+          await auth.pool.query(`UPDATE users SET meta_loja = $1 WHERE username = 'marcos'`, [_loja]);
+          return res.json({ ok: true, target: 'loja' });
+        }
+        if (_refil !== undefined) {
+          await auth.pool.query(`UPDATE users SET meta_refil = $1 WHERE username = 'marcos'`, [_refil]);
+          return res.json({ ok: true, target: 'refil' });
+        }
+        if (!crmOwner) return res.status(400).json({ error: 'crmOwner obrigatório' });
+        await auth.pool.query(
+          `UPDATE users SET meta_vendas = $1, meta_faturamento = $2 WHERE crm_owner = $3`,
+          [parseInt(vendas)||0, parseFloat(faturamento)||0, crmOwner]
+        );
+        res.json({ ok: true });
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
+    });
+
     // 1º acesso / reset — valida token e cria/autoriza troca de senha
-app.post('/api/auth/redeem-token', async (req, res) => {
+    app.post('/api/auth/redeem-token', async (req, res) => {
   const { token, new_password } = req.body || {};
   if (!token || !new_password) {
     return res.status(400).json({ ok: false, erro: 'token e new_password são obrigatórios' });

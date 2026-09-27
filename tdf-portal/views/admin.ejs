@@ -6,282 +6,506 @@
   <title>Admin — TDF Portal</title>
   <style>
     * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      margin: 0;
-      background: #f5f7fa;
-      color: #1a2332;
-    }
-    header {
-      background: #0b3d91;
-      color: white;
-      padding: 1rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    header h1 { margin: 0; font-size: 1.25rem; }
-    .user {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .badge {
-      background: rgba(255,255,255,0.2);
-      padding: 0.25rem 0.6rem;
-      border-radius: 12px;
-      font-size: 0.8rem;
-    }
-    .badge.admin { background: #f59e0b; }
-    .badge.financeiro { background: #10b981; }
-    form.logout { margin: 0; }
-    form.logout button {
-      background: transparent;
-      color: white;
-      border: 1px solid rgba(255,255,255,0.3);
-      padding: 0.4rem 0.8rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-    form.logout button:hover { background: rgba(255,255,255,0.1); }
+    :root { --bg:#f5f7fa; --card:#fff; --border:#e2e8f0; --blue:#2563eb; --green:#16a34a; --red:#dc2626; --amber:#f59e0b; --muted:#64748b; --fg:#1a2332; }
+    body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; margin:0; background:var(--bg); color:var(--fg); }
+    header { background:#0b3d91; color:#fff; padding:1rem 2rem; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+    header h1 { margin:0; font-size:1.2rem; }
+    .user { display:flex; align-items:center; gap:.75rem; }
+    .badge { background:rgba(255,255,255,.2); padding:.2rem .6rem; border-radius:12px; font-size:.8rem; }
+    .badge.admin { background:var(--amber); }
+    .badge.financeiro { background:var(--green); }
+    form.logout { margin:0; }
+    form.logout button { background:transparent; color:#fff; border:1px solid rgba(255,255,255,.3); padding:.4rem .8rem; border-radius:6px; cursor:pointer; font-size:.9rem; }
+    .container { max-width:1200px; margin:1.5rem auto; padding:0 1.5rem; }
 
-    main {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 0 2rem;
-    }
-    .welcome {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      margin-bottom: 1.5rem;
-    }
-    .welcome h2 { margin: 0 0 0.5rem; color: #0b3d91; }
-    .welcome p { color: #5a6b85; margin: 0.25rem 0; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1rem;
-    }
-    .tile {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      border-left: 4px solid #0b3d91;
-    }
-    .tile.disabled { border-left-color: #94a3b8; opacity: 0.6; }
-    .tile h3 { margin: 0 0 0.5rem; font-size: 1rem; }
-    .tile p { color: #5a6b85; font-size: 0.88rem; margin: 0 0 0.75rem; }
-    .tile .stage {
-      display: inline-block;
-      background: #eef4ff;
-      color: #0b3d91;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .tile.disabled .stage { background: #f1f5f9; color: #64748b; }
+    /* tabs */
+    .tabs { display:flex; gap:4px; border-bottom:2px solid var(--border); margin-bottom:1.5rem; }
+    .tab { padding:.7rem 1.2rem; border:none; background:none; color:var(--muted); font-size:.9rem; font-weight:600; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; }
+    .tab:hover { color:var(--fg); }
+    .tab.active { color:var(--blue); border-bottom-color:var(--blue); }
+
+    .panel { display:none; }
+    .panel.active { display:block; }
+
+    /* cards */
+    .card { background:var(--card); border-radius:10px; padding:1.25rem; border:1px solid var(--border); margin-bottom:1rem; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+    .card h3 { margin:0 0 1rem; font-size:1rem; color:var(--fg); display:flex; align-items:center; gap:.4rem; }
+
+    /* form elements */
+    .form-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.75rem; margin-bottom:.75rem; }
+    .form-row label { display:block; font-size:.75rem; color:var(--muted); text-transform:uppercase; font-weight:600; letter-spacing:.4px; margin-bottom:.25rem; }
+    input, select { width:100%; padding:.5rem .75rem; border:1px solid var(--border); border-radius:6px; font-size:.88rem; background:#fff; color:var(--fg); font-family:inherit; }
+    input:focus, select:focus { outline:none; border-color:var(--blue); }
+    .btn { padding:.45rem .9rem; border-radius:6px; border:0; cursor:pointer; font-size:.82rem; font-weight:600; font-family:inherit; }
+    .btn-primary { background:var(--blue); color:#fff; }
+    .btn-primary:hover { background:#1d4ed8; }
+    .btn-success { background:var(--green); color:#fff; }
+    .btn-success:hover { background:#15803d; }
+    .btn-danger { background:var(--red); color:#fff; }
+    .btn-danger:hover { background:#b91c1c; }
+    .btn-ghost { background:transparent; color:var(--muted); border:1px solid var(--border); }
+    .btn-ghost:hover { background:var(--bg); }
+
+    /* table */
+    table { width:100%; border-collapse:collapse; font-size:.85rem; }
+    th { text-align:left; padding:.6rem .75rem; font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; font-weight:600; border-bottom:2px solid var(--border); white-space:nowrap; }
+    td { padding:.6rem .75rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+    tr:hover td { background:#f8fafc; }
+    .num { text-align:right; font-variant-numeric:tabular-nums; }
+    .badge-role { display:inline-block; padding:2px 8px; border-radius:99px; font-size:.7rem; font-weight:600; }
+    .badge-role.admin { background:#fef3c7; color:#92400e; }
+    .badge-role.viewer { background:#dbeafe; color:#1e40af; }
+    .badge-role.financeiro { background:#d1fae5; color:#065f46; }
+    .badge.active { background:#d1fae5; color:#065f46; }
+    .badge.inactive { background:#fee2e2; color:#991b1b; }
+
+    /* toast */
+    .toast { position:fixed; bottom:1.5rem; right:1.5rem; background:#1a2332; color:#fff; padding:.75rem 1.25rem; border-radius:8px; font-size:.85rem; font-weight:600; z-index:999; box-shadow:0 4px 12px rgba(0,0,0,.2); }
+    .toast.err { background:var(--red); }
+    .toast.ok { background:var(--green); }
+
+    /* sync panel */
+    .sync-actions { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-bottom:.75rem; }
+    .sync-status { font-size:.8rem; color:var(--muted); }
+    .sync-log { background:#f8fafc; border:1px solid var(--border); border-radius:6px; padding:.75rem; font-size:.8rem; max-height:250px; overflow-y:auto; }
+    .sync-log-item { padding:.3rem 0; border-bottom:1px solid var(--border); }
+    .sync-log-item:last-child { border-bottom:none; }
+    .cron-info { background:#faf5ff; border-radius:6px; padding:.75rem; font-size:.8rem; }
+
+    /* meta cards */
+    .meta-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1rem; }
+    .meta-card { background:var(--card); border-radius:10px; padding:1.25rem; border:1px solid var(--border); }
+    .meta-card h4 { margin:0 0 .75rem; font-size:.9rem; color:var(--fg); }
+    .meta-input-row { display:flex; gap:.5rem; align-items:center; margin-bottom:.5rem; }
+    .meta-input-row input { flex:1; }
+    .meta-input-row .btn { white-space:nowrap; }
+    .meta-display { font-size:2rem; font-weight:700; color:var(--blue); }
+    .meta-display-label { font-size:.75rem; color:var(--muted); }
+
+    /* summary boxes */
+    .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.75rem; margin-bottom:1rem; }
+    .summary-box { background:#f8fafc; border-radius:8px; padding:.75rem; border:1px solid var(--border); }
+    .summary-box .val { font-size:1.5rem; font-weight:700; }
+    .summary-box .lbl { font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
+
+    .empty { color:var(--muted); padding:2rem; text-align:center; font-size:.9rem; }
+    .actions { display:flex; gap:.4rem; }
+    .compact { padding:.35rem .6rem; font-size:.78rem; }
+    a { color:var(--blue); text-decoration:none; }
+    a:hover { text-decoration:underline; }
   </style>
 </head>
 <body>
   <header>
-    <h1>TDF Portal — Admin</h1>
+    <h1>⚙️ Admin — TDF Portal</h1>
     <div class="user">
       <span class="badge <%= user.role %>"><%= user.role %></span>
       <span><%= user.username %></span>
-      <form class="logout" method="POST" action="/api/auth/logout">
-        <button type="submit">Sair</button>
-      </form>
+      <a href="/bi" style="color:#fff;font-size:.85rem;">📊 BI</a>
+      <form class="logout" method="POST" action="/api/auth/logout"><button type="submit">Sair</button></form>
     </div>
   </header>
 
-  <main>
-    <div class="welcome">
-      <h2>Bem-vindo, <%= user.username %>!</h2>
-      <p>Logado como <strong><%= user.role %></strong> · <%= new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) %></p>
-      <% if (user.must_reset) { %>
-        <p style="color:#c33;">⚠️ Você precisa redefinir sua senha.</p>
-      <% } %>
+  <div class="container">
+    <% if (user.role !== 'admin') { %>
+      <div class="card">
+        <p style="color:var(--muted);margin:0;">Acesso restrito a administradores.</p>
+      </div>
+    <% } else { %>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('sync')">🔄 Sync</button>
+      <button class="tab" onclick="showTab('users')">👥 Usuários</button>
+      <button class="tab" onclick="showTab('metas')">🎯 Metas</button>
     </div>
 
-    <div class="grid">
-      <div class="tile">
-        <h3>🔐 Login & Auth</h3>
-        <p>Login, sessão, logout, reset de senha.</p>
-        <span class="stage">Etapa 1 ✅</span>
-      </div>
-
-      <div class="tile">
-        <h3>📊 BI Financeiro Multiempresa</h3>
-        <p>Dashboard + 32 abas com dados das 3 empresas (Mococa, TDF, American).</p>
-        <span class="stage">Etapa 3</span>
-        <div style="margin-top: 12px;">
-          <a href="/bi" style="display: inline-block; padding: 6px 12px; border-radius: 6px; background: #16a34a; color: white; font-weight: 500; text-decoration: none;">Abrir BI →</a>
-        </div>
-      </div>
-
-      <div class="tile" id="tile-sync">
+    <!-- ========== SYNC ========== -->
+    <div class="panel active" id="panel-sync">
+      <div class="card">
         <h3>🔄 Sincronização OMIE → Postgres</h3>
-        <p>Cron que copia dados da OMIE para o banco local a cada 30min.</p>
-        <span class="stage">Etapa 2</span>
-        <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-          <button id="btn-sync" type="button" style="padding: 6px 12px; border-radius: 6px; border: 0; background: #2563eb; color: white; cursor: pointer; font-weight: 500;">Sincronizar agora</button>
-          <button id="btn-sync-mock" type="button" style="padding: 6px 12px; border-radius: 6px; border: 0; background: #f59e0b; color: white; cursor: pointer; font-weight: 500;">Sync teste (mock)</button>
-          <button id="btn-sync-log" type="button" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer;">Ver log</button>
-          <button id="btn-cron" type="button" style="padding: 6px 12px; border-radius: 6px; border: 0; background: #7c3aed; color: white; cursor: pointer; font-weight: 500;">⏰ Cron</button>
-          <span id="sync-status" style="font-size: 12px; color: #64748b;"></span>
+        <div class="sync-actions">
+          <button class="btn btn-primary" id="btn-sync" onclick="doSync(false)">🔄 Sincronizaragora</button>
+          <button class="btn btn-ghost" id="btn-mock" onclick="doSync(true)">🧪 Sync teste (mock)</button>
+          <button class="btn btn-ghost" onclick="toggleLog()">📋 Ver log</button>
+          <button class="btn btn-ghost" onclick="toggleCron()">⏰ Cron</button>
+          <span class="sync-status" id="sync-status"></span>
         </div>
-        <div id="sync-log" style="display: none; margin-top: 12px; padding: 10px; background: #f8fafc; border-radius: 6px; font-size: 12px; max-height: 240px; overflow-y: auto;"></div>
-        <div id="cron-panel" style="display: none; margin-top: 12px; padding: 10px; background: #faf5ff; border-radius: 6px; font-size: 12px;"></div>
       </div>
 
-      <% if (user.role === 'admin') { %>
-        <div class="tile disabled">
-          <h3>⚙️ Configurações</h3>
-          <p>Empresas, OMIE, Zoho, Auvo, backups.</p>
-          <span class="stage">Etapa 4</span>
-        </div>
+      <div class="card" id="log-panel" style="display:none;">
+        <h3>📋 Últimos syncs</h3>
+        <div class="sync-log" id="sync-log">carregando...</div>
+      </div>
 
-        <div class="tile disabled">
-          <h3>👥 Usuários</h3>
-          <p>Criar/editar usuários, papéis, permissões.</p>
-          <span class="stage">Etapa 4</span>
-        </div>
-      <% } %>
-
-      <div class="tile">
-        <h3>📡 Diagnóstico</h3>
-        <p>Healthcheck, logs, status das APIs externas.</p>
-        <span class="stage">Disponível</span>
-        <p style="margin-top:0.5rem; font-size:0.8rem;">
-          <a href="/api/auth/me" target="_blank">/api/auth/me</a> ·
-          <a href="/health" target="_blank">/health</a>
-        </p>
+      <div class="card" id="cron-panel" style="display:none;">
+        <h3>⏰ Status do Cron</h3>
+        <div class="cron-info" id="cron-info">carregando...</div>
       </div>
     </div>
-  </main>
+
+    <!-- ========== USUÁRIOS ========== -->
+    <div class="panel" id="panel-users">
+      <div class="card">
+        <h3>➕ Criar novo usuário</h3>
+        <div class="form-row">
+          <div><label>Username</label><input type="text" id="nu-username" placeholder="ex: jose.silva"></div>
+          <div><label>Nome completo</label><input type="text" id="nu-name" placeholder="José Silva"></div>
+          <div><label>Email</label><input type="email" id="nu-email" placeholder="jose@tdf.com.br"></div>
+          <div><label>Role</label>
+            <select id="nu-role">
+              <option value="viewer">Viewer (padrão)</option>
+              <option value="admin">Admin</option>
+              <option value="financeiro">Financeiro</option>
+            </select>
+          </div>
+          <div><label>CRM Owner</label><input type="text" id="nu-crm" placeholder="José Silva"></div>
+          <div><label>Time</label>
+            <select id="nu-team">
+              <option value="filtro">Filtro</option>
+              <option value="poco">Poço</option>
+              <option value="bebedouro">Bebedouro</option>
+              <option value="loja">Loja</option>
+              <option value="admin">Admin</option>
+              <option value="posvenda">Pós-venda</option>
+              <option value="financeiro">Financeiro</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:flex-end;"><button class="btn btn-success" onclick="criarUsuario()">Criar Usuário</button></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📋 Usuários atuais</h3>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Time</th>
+                <th>CRM Owner</th>
+                <th>Status</th>
+                <th>Meta Vendas</th>
+                <th>Meta Faturamento</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-users"><tr><td colspan="10" class="empty">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== METAS ========== -->
+    <div class="panel" id="panel-metas">
+      <div class="meta-grid">
+        <div class="meta-card">
+          <h4>🏪 Meta Loja Física (mensal)</h4>
+          <div class="meta-display" id="disp-loja">R$ 80.000</div>
+          <div class="meta-display-label">faturamento / mês</div>
+          <div class="meta-input-row" style="margin-top:1rem;">
+            <input type="number" id="meta-loja" placeholder="80000">
+            <button class="btn btn-primary compact" onclick="salvarMetaLoja()">💾 Salvar</button>
+          </div>
+        </div>
+        <div class="meta-card">
+          <h4>🔧 Meta Refil/Elemento Filtrante (mensal)</h4>
+          <div class="meta-display" id="disp-refil">R$ 15.000</div>
+          <div class="meta-display-label">faturamento / mês</div>
+          <div class="meta-input-row" style="margin-top:1rem;">
+            <input type="number" id="meta-refil" placeholder="15000">
+            <button class="btn btn-primary compact" onclick="salvarMetaRefil()">💾 Salvar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1rem;">
+        <h3>👥 Metas por vendedor</h3>
+        <div class="summary-grid" id="resumo-team"></div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Time</th>
+                <th>CRM Owner</th>
+                <th class="num">Meta Vendas/mês</th>
+                <th class="num">Meta Faturamento/mês</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-metas"><tr><td colspan="6" class="empty">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <% } %>
+  </div>
 
   <script>
-    (function() {
-      const btnSync = document.getElementById('btn-sync');
-      const btnLog = document.getElementById('btn-sync-log');
-      const status = document.getElementById('sync-status');
-      const logDiv = document.getElementById('sync-log');
-      if (!btnSync) return;
+  // ---- tabs ----
+  function showTab(name) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', t.textContent.toLowerCase().includes(name)));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    if (name === 'users') loadUsuarios();
+    if (name === 'metas') loadMetas();
+  }
 
-      btnSync.addEventListener('click', () => doSync(false));
-      const btnMock = document.getElementById('btn-sync-mock');
-      if (btnMock) btnMock.addEventListener('click', () => doSync(true));
+  // ---- toast ----
+  let _toast;
+  function toast(msg, type='ok') {
+    if (_toast) _toast.remove();
+    _toast = document.createElement('div');
+    _toast.className = 'toast ' + type;
+    _toast.textContent = msg;
+    document.body.appendChild(_toast);
+    setTimeout(() => _toast.remove(), 3500);
+  }
 
-      async function doSync(forceDry) {
-        const btn = forceDry ? btnMock : btnSync;
-        const originalText = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = 'Sincronizando...';
-        status.textContent = forceDry ? 'buscando dados MOCK...' : 'buscando dados OMIE real...';
-        try {
-          const url = '/api/bi/admin/sync' + (forceDry ? '?dry=1' : '');
-          const r = await fetch(url, { method: 'POST', credentials: 'same-origin' });
-          const data = await r.json();
-          if (!data.ok) throw new Error(data.erro || 'erro desconhecido');
-          const total = data.results.reduce((a, b) => a + b.total, 0);
-          status.textContent = `✅ ${data.results.length} empresas, ${total} registros`;
-          loadLog();
-        } catch (e) {
-          status.textContent = '❌ ' + e.message;
-        } finally {
-          btn.disabled = false;
-          btn.textContent = originalText;
-        }
-      }
+  // ========== SYNC ==========
+  function toggleLog() {
+    const p = document.getElementById('log-panel');
+    p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    if (p.style.display === 'block') loadLog();
+  }
+  function toggleCron() {
+    const p = document.getElementById('cron-panel');
+    p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    if (p.style.display === 'block') loadCron();
+  }
 
-      async function loadLog() {
-        try {
-          const r = await fetch('/api/bi/admin/sync/log?limit=10', { credentials: 'same-origin' });
-          const data = await r.json();
-          if (!data.ok) return;
-          logDiv.innerHTML = data.syncs.map(s => {
-            const dur = s.duration_ms ? ` (${s.duration_ms}ms)` : '';
-            const err = s.error_message ? ` — ⚠ ${s.error_message.slice(0, 80)}` : '';
-            const when = s.finished_at ? new Date(s.finished_at).toLocaleString('pt-BR') : 'em andamento';
-            return `<div><b>${s.empresa}</b>: ${s.status} · ${s.registros_processados || 0} regs${dur} · <span style="color:#64748b">${when}</span>${err}</div>`;
-          }).join('') || '<div style="color:#64748b">Nenhum sync registrado ainda.</div>';
-        } catch (e) {
-          logDiv.innerHTML = 'Erro ao carregar log: ' + e.message;
-        }
-      }
-
-      btnLog.addEventListener('click', () => {
-        const vis = logDiv.style.display !== 'none';
-        logDiv.style.display = vis ? 'none' : 'block';
-        if (!vis) loadLog();
-      });
-
-      // Painel do cron
-      const btnCron = document.getElementById('btn-cron');
-      const cronPanel = document.getElementById('cron-panel');
-      if (btnCron) {
-        btnCron.addEventListener('click', () => {
-          const vis = cronPanel.style.display !== 'none';
-          cronPanel.style.display = vis ? 'none' : 'block';
-          if (!vis) loadCronPanel();
-        });
-      }
-
-      async function loadCronPanel() {
-        cronPanel.innerHTML = '<div style="color:#64748b">carregando...</div>';
-        try {
-          const r = await fetch('/api/bi/admin/cron/status', { credentials: 'same-origin' });
-          const data = await r.json();
-          if (!data.ok) throw new Error(data.erro || 'erro');
-          const c = data.cron;
-          const lastRun = c.last_run ? new Date(c.last_run).toLocaleString('pt-BR') : 'nunca';
-          const nextRun = c.next_run_estimate ? new Date(c.next_run_estimate).toLocaleString('pt-BR') : '—';
-          const lastResult = c.last_result
-            ? `<br>• <b>Último resultado:</b> ${c.last_result.status} (${c.last_result.total || 0} regs) em ${new Date(c.last_result.finished_at).toLocaleString('pt-BR')}`
-            : '';
-          const cronSyncs = data.ultimos_cron_syncs || [];
-          const cronSyncsHtml = cronSyncs.length
-            ? cronSyncs.map(s => `<div>• <b>${s.empresa}</b>: ${s.status} · ${s.total_db} regs · ${new Date(s.started_at).toLocaleString('pt-BR')}</div>`).join('')
-            : '<div style="color:#64748b">Nenhum sync automático ainda.</div>';
-          cronPanel.innerHTML = `
-            <div><b>Status:</b> ${c.enabled ? '✅ ATIVO' : '⏸ PARADO'} ${c.running ? '(sincronizando agora)' : ''}</div>
-            <div><b>Intervalo:</b> a cada ${c.interval_min} minutos (${c.cron_expression || '—'})</div>
-            <div><b>Última execução:</b> ${lastRun}${lastResult}</div>
-            <div><b>Próxima (estimada):</b> ${nextRun}</div>
-            <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
-              <button id="cron-trigger" style="padding:4px 10px; border-radius:5px; border:0; background:#7c3aed; color:white; cursor:pointer;">Disparar agora</button>
-              <button id="cron-stop" style="padding:4px 10px; border-radius:5px; border:1px solid #cbd5e1; background:white; cursor:pointer;">Parar</button>
-              <button id="cron-start" style="padding:4px 10px; border-radius:5px; border:0; background:#16a34a; color:white; cursor:pointer;">Iniciar</button>
-              <button id="cron-refresh" style="padding:4px 10px; border-radius:5px; border:1px solid #cbd5e1; background:white; cursor:pointer;">Atualizar</button>
-            </div>
-            <div style="margin-top:10px;"><b>Últimos syncs automáticos:</b>${cronSyncsHtml}</div>
-          `;
-          document.getElementById('cron-trigger').onclick = async () => {
-            await fetch('/api/bi/admin/cron/trigger', { method: 'POST', credentials: 'same-origin' });
-            setTimeout(loadCronPanel, 2000);
-          };
-          document.getElementById('cron-stop').onclick = async () => {
-            await fetch('/api/bi/admin/cron/toggle?acao=stop', { method: 'POST', credentials: 'same-origin' });
-            setTimeout(loadCronPanel, 500);
-          };
-          document.getElementById('cron-start').onclick = async () => {
-            await fetch('/api/bi/admin/cron/toggle?acao=start', { method: 'POST', credentials: 'same-origin' });
-            setTimeout(loadCronPanel, 500);
-          };
-          document.getElementById('cron-refresh').onclick = loadCronPanel;
-        } catch (e) {
-          cronPanel.innerHTML = '<div style="color:#dc2626">Erro: ' + e.message + '</div>';
-        }
-      }
-
+  async function doSync(forceDry) {
+    const btn = forceDry ? document.getElementById('btn-mock') : document.getElementById('btn-sync');
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = '⏳...';
+    document.getElementById('sync-status').textContent = 'sincronizando...';
+    try {
+      const r = await fetch('/api/bi/admin/sync' + (forceDry ? '?dry=1' : ''), {method:'POST', credentials:'same-origin'});
+      const d = await r.json();
+      if (!d.ok) throw new Error(d.erro);
+      const total = (d.results||[]).reduce((a,b) => a + (b.total||0), 0);
+      document.getElementById('sync-status').textContent = '✅ ' + (d.results||[]).length + ' empresas, ' + total + ' registros';
       loadLog();
-    })();
+    } catch(e) {
+      document.getElementById('sync-status').textContent = '❌ ' + e.message;
+    } finally {
+      btn.disabled = false; btn.textContent = orig;
+    }
+  }
+
+  async function loadLog() {
+    try {
+      const r = await fetch('/api/bi/admin/sync/log?limit=15', {credentials:'same-origin'});
+      const d = await r.json();
+      const items = (d.syncs||[]).map(s => {
+        const when = s.finished_at ? new Date(s.finished_at).toLocaleString('pt-BR') : 'em andamento';
+        const dur = s.duration_ms ? ' (' + s.duration_ms + 'ms)' : '';
+        const err = s.error_message ? ' ⚠️ ' + s.error_message.slice(0,60) : '';
+        const regs = s.registros_processados || s.total_db || 0;
+        return '<div class="sync-log-item"><b>' + (s.empresa||'?') + '</b>: ' + s.status + ' · ' + regs + ' regs' + dur + ' · ' + when + err + '</div>';
+      }).join('') || '<div class="empty">Nenhum sync registrado.</div>';
+      document.getElementById('sync-log').innerHTML = items;
+    } catch(e) { document.getElementById('sync-log').innerHTML = 'Erro: ' + e.message; }
+  }
+
+  async function loadCron() {
+    try {
+      const r = await fetch('/api/bi/admin/cron/status', {credentials:'same-origin'});
+      const d = await r.json();
+      if (!d.ok) throw new Error(d.erro);
+      const c = d.cron;
+      const last = c.last_run ? new Date(c.last_run).toLocaleString('pt-BR') : 'nunca';
+      const next = c.next_run_estimate ? new Date(c.next_run_estimate).toLocaleString('pt-BR') : '—';
+      document.getElementById('cron-info').innerHTML = `
+        <div><b>Status:</b> ${c.enabled ? '✅ ATIVO' : '⏸ PARADO'} ${c.running ? '(sincronizando agora)' : ''}</div>
+        <div><b>Intervalo:</b> a cada ${c.interval_min} min</div>
+        <div><b>Última execução:</b> ${last}</div>
+        <div><b>Próxima (estimada):</b> ${next}</div>
+        <div style="margin-top:.5rem; display:flex; gap:.5rem;">
+          <button class="btn btn-primary compact" onclick="cronAct('trigger')">Disparar agora</button>
+          <button class="btn btn-ghost compact" onclick="cronAct('start')">▶ Iniciar</button>
+          <button class="btn btn-ghost compact" onclick="cronAct('stop')">⏹ Parar</button>
+          <button class="btn btn-ghost compact" onclick="loadCron()">🔄 Atualizar</button>
+        </div>
+        <div style="margin-top:.75rem; border-top:1px solid #ddd; padding-top:.5rem;">
+          ${(d.ultimos_cron_syncs||[]).slice(0,5).map(s =>
+            '<div>• <b>' + s.empresa + '</b>: ' + s.status + ' · ' + (s.total_db||0) + ' regs · ' + new Date(s.started_at).toLocaleString('pt-BR') + '</div>'
+          ).join('') || '<div style="color:#888">Nenhum sync automático ainda.</div>'}
+        </div>
+      `;
+    } catch(e) { document.getElementById('cron-info').innerHTML = '❌ ' + e.message; }
+  }
+  async function cronAct(action) {
+    await fetch('/api/bi/admin/cron/' + action, {method:'POST', credentials:'same-origin'});
+    setTimeout(loadCron, 1500);
+  }
+
+  // ========== USUÁRIOS ==========
+  async function loadUsuarios() {
+    try {
+      const r = await fetch('/gestao/usuarios', {credentials:'same-origin'});
+      const d = await r.json();
+      if (d.error) { toast('Erro: ' + d.error, 'err'); return; }
+      document.getElementById('tbody-users').innerHTML = (d.usuarios||[]).map(u => {
+        const rName = u.full_name || u.username;
+        return '<tr>' +
+          '<td><b>' + u.username + '</b></td>' +
+          '<td><input type="text" class="compact" style="width:130px;padding:.3rem" id="u-' + u.username + '-name" value="' + esc(u.full_name||'') + '"></td>' +
+          '<td><input type="email" class="compact" style="width:180px;padding:.3rem" id="u-' + u.username + '-email" value="' + esc(u.email||'') + '"></td>' +
+          '<td><select class="compact" style="width:90px;padding:.3rem" id="u-' + u.username + '-role"><option value="viewer"' + (u.role==='viewer'?' selected':'') + '>Viewer</option><option value="admin"' + (u.role==='admin'?' selected':'') + '>Admin</option><option value="financeiro"' + (u.role==='financeiro'?' selected':'') + '>Financeiro</option></select></td>' +
+          '<td><select class="compact" style="width:100px;padding:.3rem" id="u-' + u.username + '-team"><option value="filtro"' + (u.portal_team==='filtro'?' selected':'') + '>Filtro</option><option value="poco"' + (u.portal_team==='poco'?' selected':'') + '>Poço</option><option value="bebedouro"' + (u.portal_team==='bebedouro'?' selected':'') + '>Bebedouro</option><option value="loja"' + (u.portal_team==='loja'?' selected':'') + '>Loja</option><option value="admin"' + (u.portal_team==='admin'?' selected':'') + '>Admin</option><option value="posvenda"' + (u.portal_team==='posvenda'?' selected':'') + '>Pós-venda</option></select></td>' +
+          '<td><input type="text" class="compact" style="width:140px;padding:.3rem" id="u-' + u.username + '-crm" value="' + esc(u.crm_owner||'') + '"></td>' +
+          '<td><span class="badge ' + (u.is_active ? 'active' : 'inactive') + '">' + (u.is_active ? 'Ativo' : 'Inativo') + '</span></td>' +
+          '<td><input type="number" class="compact num" style="width:80px;padding:.3rem" id="u-' + u.username + '-mv" value="' + (u.meta_vendas||0) + '"></td>' +
+          '<td><input type="number" class="compact num" style="width:110px;padding:.3rem" id="u-' + u.username + '-mf" value="' + (u.meta_faturamento||0) + '"></td>' +
+          '<td><div class="actions">' +
+            '<button class="btn btn-success compact" onclick="salvarUsuario(\'' + u.username + '\')">💾</button>' +
+            (u.username !== 'marcos' ? '<button class="btn btn-danger compact" onclick="deletarUsuario(\'' + u.username + '\')">🗑️</button>' : '') +
+          '</div></td></tr>';
+      }).join('') || '<tr><td colspan="10" class="empty">Nenhum usuário.</td></tr>';
+    } catch(e) { toast('Erro: ' + e.message, 'err'); }
+  }
+
+  async function criarUsuario() {
+    const b = {
+      username: document.getElementById('nu-username').value.trim(),
+      name: document.getElementById('nu-name').value.trim(),
+      email: document.getElementById('nu-email').value.trim(),
+      role: document.getElementById('nu-role').value,
+      crmOwner: document.getElementById('nu-crm').value.trim() || document.getElementById('nu-name').value.trim(),
+      team: document.getElementById('nu-team').value,
+    };
+    if (!b.username || !b.name) { toast('Username e nome são obrigatórios', 'err'); return; }
+    try {
+      const r = await fetch('/gestao/usuarios', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(b)});
+      const d = await r.json();
+      if (d.error) { toast('Erro: ' + d.error, 'err'); return; }
+      toast('✅ ' + b.username + ' criado! Envie o link de 1º acesso.');
+      ['username','name','email','crm'].forEach(id => document.getElementById('nu-'+id).value = '');
+      loadUsuarios();
+    } catch(e) { toast('Erro: ' + e.message, 'err'); }
+  }
+
+  async function salvarUsuario(username) {
+    const b = {
+      name: document.getElementById('u-'+username+'-name').value,
+      email: document.getElementById('u-'+username+'-email').value,
+      role: document.getElementById('u-'+username+'-role').value,
+      team: document.getElementById('u-'+username+'-team').value,
+      crmOwner: document.getElementById('u-'+username+'-crm').value,
+      metaVendas: parseInt(document.getElementById('u-'+username+'-mv').value)||0,
+      metaFaturamento: parseFloat(document.getElementById('u-'+username+'-mf').value)||0,
+    };
+    try {
+      const r = await fetch('/gestao/usuarios/'+encodeURIComponent(username), {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(b)});
+      const d = await r.json();
+      if (d.error) { toast('Erro: ' + d.error, 'err'); return; }
+      toast('✅ ' + username + ' atualizado');
+    } catch(e) { toast('Erro: ' + e.message, 'err'); }
+  }
+
+  async function deletarUsuario(username) {
+    if (!confirm('Deletar ' + username + '?')) return;
+    try {
+      const r = await fetch('/gestao/usuarios/'+encodeURIComponent(username), {method:'DELETE', credentials:'same-origin'});
+      const d = await r.json();
+      if (d.error) { toast('Erro: ' + d.error, 'err'); return; }
+      toast('🗑️ ' + username + ' deletado');
+      loadUsuarios();
+    } catch(e) { toast('Erro: ' + e.message, 'err'); }
+  }
+
+  // ========== METAS ==========
+  async function loadMetas() {
+    try {
+      const r = await fetch('/gestao/metas', {credentials:'same-origin'});
+      const d = await r.json();
+      if (d.error) { toast('Erro: ' + d.error, 'err'); return; }
+
+      const loja = d.metaLoja?.faturamento || 80000;
+      const refil = d.metaRefil?.faturamento || 15000;
+      document.getElementById('meta-loja').value = loja;
+      document.getElementById('meta-refil').value = refil;
+      document.getElementById('disp-loja').textContent = 'R$ ' + Number(loja).toLocaleString('pt-BR');
+      document.getElementById('disp-refil').textContent = 'R$ ' + Number(refil).toLocaleString('pt-BR');
+
+      const closers = d.closers || [];
+      document.getElementById('tbody-metas').innerHTML = closers.map(c =>
+        '<tr>' +
+          '<td><b>' + esc(c.name||'') + '</b></td>' +
+          '<td style="font-size:.75rem;text-transform:uppercase;color:#888">' + esc(c.portal_team||'') + '</td>' +
+          '<td style="color:#888;font-size:.8rem">' + esc(c.crm_owner||'') + '</td>' +
+          '<td><input type="number" class="compact num" style="width:80px;padding:.3rem" id="m-' + esc(c.username) + '-v" value="' + (c.meta_vendas||0) + '"></td>' +
+          '<td><input type="number" class="compact num" style="width:120px;padding:.3rem" id="m-' + esc(c.username) + '-f" value="' + (c.meta_faturamento||0) + '"></td>' +
+          '<td><button class="btn btn-success compact" onclick="salvarMeta(\'' + esc(c.username) + '\')">💾</button></td>' +
+        '</tr>'
+      ).join('') || '<tr><td colspan="6" class="empty">Nenhum registro.</td></tr>';
+
+      // resumo por time
+      const porTime = {};
+      for (const c of closers) {
+        const t = c.portal_team || 'outros';
+        if (!porTime[t]) porTime[t] = {count:0, vendas:0, faturamento:0};
+        porTime[t].count++;
+        porTime[t].vendas += c.meta_vendas || 0;
+        porTime[t].faturamento += c.meta_faturamento || 0;
+      }
+      porTime.loja = porTime.loja || {count:0, vendas:0, faturamento:0};
+      porTime.loja.faturamento += loja;
+      document.getElementById('resumo-team').innerHTML = Object.entries(porTime).map(([t,v]) =>
+        '<div class="summary-box"><div class="val">' + v.count + '</div><div class="lbl">' + t.toUpperCase() + '</div></div>'
+      ).join('');
+
+    } catch(e) { toast('Erro: ' + e.message, 'err'); }
+  }
+
+  async function salvarMetaLoja() {
+    const v = parseFloat(document.getElementById('meta-loja').value)||0;
+    try {
+      const r = await fetch('/gestao/metas', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({_loja:v})});
+      const d = await r.json();
+      if (d.error) { toast('Erro: ' + d.error, 'err'); return; }
+      document.getElementById('disp-loja').textContent = 'R$ ' + v.toLocaleString('pt-BR');
+      toast('✅ Meta loja salva: R$ ' + v.toLocaleString('pt-BR') + '/mês');
+    } catch(e) { toast('Erro: ' + e.message, 'err'); }
+  }
+
+  async function salvarMetaRefil() {
+    const v = parseFloat(document.getElementById('meta-refil').value)||0;
+    try {
+      const r = await fetch('/gestao/metas', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({_refil:v})});
+      const d = await r.json();
+      if (d.error) { toast('Erro: ' + d.error, 'err'); return; }
+      document.getElementById('disp-refil').textContent = 'R$ ' + v.toLocaleString('pt-BR');
+      toast('✅ Meta refil salva: R$ ' + v.toLocaleString('pt-BR') + '/mês');
+    } catch(e) { toast('Erro: ' + e.message, 'err'); }
+  }
+
+  async function salvarMeta(username) {
+    const vendas = parseInt(document.getElementById('m-'+username+'-v').value)||0;
+    const faturamento = parseFloat(document.getElementById('m-'+username+'-f').value)||0;
+    try {
+      // busca crm_owner pelo username
+      const r0 = await fetch('/gestao/usuarios', {credentials:'same-origin'});
+      const d0 = await r0.json();
+      const u = (d0.usuarios||[]).find(x => x.username === username);
+      if (!u) { toast('Usuário não encontrado', 'err'); return; }
+      const r = await fetch('/gestao/metas', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({crmOwner:u.crm_owner||u.full_name, vendas, faturamento})});
+      const d = await r.json();
+      if (d.error) { toast('Erro: ' + d.error, 'err'); return; }
+      toast('✅ Meta de ' + username + ' salva');
+      loadMetas();
+    } catch(e) { toast('Erro: ' + e.message, 'err'); }
+  }
+
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+  // init
+  loadLog();
   </script>
 </body>
 </html>
