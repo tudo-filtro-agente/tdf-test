@@ -342,7 +342,7 @@ async function listarMovimentos(empresa, params = {}) {
     app_secret: creds(empresa).secret,
     param: [{ pagina: 1, registros_por_pagina: 200, ...params }],
   };
-  const res = await chamarOmie(empresa, 'financas/movimentos/', payload);
+  const res = await chamarOmie(empresa, 'financas/extrato/', payload);
   return res.data;
 }
 
@@ -381,13 +381,16 @@ async function listarNfEntrada(empresa, params = {}) {
     console.log(`[DRY_RUN] listarNfEntrada(${empresa})`);
     return mockNfEntrada(empresa);
   }
+  // OMIE não tem endpoint dedicado de NF-entrada. Usamos Movimentos Financeiros
+  // (financas/mf) que retorna pagamentos/baixas/lançamentos no Conta Corrente,
+  // incluindo NF de fornecedores quando aplicável.
   const payload = {
-    call: 'ListarNFEntrada',
+    call: 'ListarMovimentos',
     app_key: creds(empresa).key,
     app_secret: creds(empresa).secret,
     param: [{ pagina: 1, registros_por_pagina: 200, ...params }],
   };
-  const res = await chamarOmie(empresa, 'produtos/notafiscalentrada/', payload);
+  const res = await chamarOmie(empresa, 'financas/mf/', payload);
   return res.data;
 }
 
