@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BI Financeiro — Listagens</title>
+  <style>
+    :root {
+      --fg: #0f172a; --muted: #64748b; --bg: #f1f5f9;
+      --card: #ffffff; --border: #e2e8f0; --blue: #2563eb;
+      --green: #16a34a; --red: #dc2626; --amber: #f59e0b; --purple: #7c3aed;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+    header {
+      background: var(--card); border-bottom: 1px solid var(--border);
+      padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    header h1 { margin: 0; font-size: 17px; }
+    .user-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--border); border-radius: 99px; font-size: 12px; }
+    header .filters { display: flex; gap: 8px; align-items: center; margin-left: auto; flex-wrap: wrap; }
+    header select, header input, header button { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: white; font-size: 13px; }
+    header button.primary { background: var(--blue); color: white; border: 0; cursor: pointer; }
+    .tabs { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; gap: 4px; overflow-x: auto; }
+    .tab { padding: 10px 16px; font-size: 13px; color: var(--muted); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; white-space: nowrap; }
+    .tab:hover { color: var(--fg); }
+    .tab.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+    .container { padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+    .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+    .toolbar input[type="text"] { flex: 1; min-width: 180px; }
+    .toolbar select { min-width: 140px; }
+    .toolbar .count { font-size: 12px; color: var(--muted); margin-left: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    thead { background: #f8fafc; }
+    th { padding: 10px 12px; text-align: left; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; white-space: nowrap; cursor: pointer; user-select: none; }
+    th:hover { background: #f1f5f9; }
+    td { padding: 9px 12px; border-top: 1px solid var(--border); vertical-align: middle; }
+    tr:hover td { background: #f8fafc; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 500; }
+    .badge.open { background: #fef3c7; color: #92400e; }
+    .badge.late { background: #fee2e2; color: #991b1b; }
+    .badge.paid { background: #d1fae5; color: #065f46; }
+    .badge.entrada { background: #dbeafe; color: #1e40af; }
+    .badge.credito { background: #d1fae5; color: #065f46; }
+    .badge.debito { background: #fed7aa; color: #9a3412; }
+    .badge.ativa { background: #d1fae5; color: #065f46; }
+    .badge.inativa { background: #fee2e2; color: #991b1b; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .empty { color: var(--muted); padding: 48px; text-align: center; font-size: 14px; }
+    .loading-row td { text-align: center; color: var(--muted); padding: 24px; }
+    .pagination { display: flex; gap: 4px; align-items: center; justify-content: center; margin-top: 16px; }
+    .pagination button { padding: 6px 12px; border: 1px solid var(--border); background: white; border-radius: 6px; font-size: 13px; cursor: pointer; }
+    .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pagination button.current { background: var(--blue); color: white; border-color: var(--blue); }
+    .pagination .info { font-size: 12px; color: var(--muted); padding: 0 8px; }
+    .export-btn { font-size: 12px; padding: 5px 12px; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .empresa-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 11px; background: #e2e8f0; color: #475569; }
+    .wrap { max-width: 200px; word-break: break-all; font-size: 12px; color: var(--muted); }
+    .th-sort::after { content: ' ↕'; font-size: 9px; opacity: 0.4; }
+    .th-sort.asc::after { content: ' ↑'; opacity: 1; }
+    .th-sort.desc::after { content: ' ↓'; opacity: 1; }
+    @media (max-width: 700px) { .hide-mobile { display: none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📊 BI Financeiro — Listagens</h1>
+    <span class="user-chip"><%= user.role %> · <%= user.username %></span>
+    <div class="filters">
+      <label style="font-size:12px;color:var(--muted);">Empresa:</label>
+      <select id="empresa-filter">
+        <option value="">Todas</option>
+        <% empresas.forEach(e => { %>
+          <option value="<%= e.id %>"><%= e.nome %></option>
+        <% }); %>
+      </select>
+      <button id="btn-sync" class="primary" title="Força sync com OMIE">🔄 Sincronizar</button>
+      <a href="/bi" style="font-size:12px;">← Dashboard</a>
+      <a href="/admin" style="font-size:12px;">Admin</a>
+      <a href="/api/auth/logout" style="font-size:12px;">Sair</a>
+    </div>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="container">
+    <div class="toolbar" id="toolbar"></div>
+    <div id="table-wrap"><table id="data-table"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  <script>
+  const TABS = [
+    { key: 'contas-pagar',    label: '📋 Contas a Pagar',    api: '/api/bi/contas-pagar',    cols: ['empresa','fornecedor','documento','valor','vencimento','status','categoria'] },
+    { key: 'contas-receber',  label: '📋 Contas a Receber',  api: '/api/bi/contas-receber',  cols: ['empresa','cliente','documento','valor','vencimento','status','categoria'] },
+    { key: 'movimentos',      label: '📋 Movimentos',          api: '/api/bi/movimentos',      cols: ['empresa','conta','data','tipo','valor','descricao','conciliado'] },
+    { key: 'contas-bancarias',label: '🏦 Contas Bancárias',   api: '/api/bi/contas-bancarias', cols: ['empresa','nome','banco','agencia','conta','tipo','saldo','ativa'] },
+    { key: 'nf-entrada',     label: '🧾 NF Entrada',          api: '/api/bi/nf-entrada',     cols: ['empresa','numero','serie','fornecedor','emissao','entrada','valor'] },
+    { key: 'fornecedores',    label: '🏢 Fornecedores',         api: '/api/bi/fornecedores',    cols: ['empresa','razao','fantasia','cnpj','email','telefone','cidade'] },
+    { key: 'categorias',      label: '🏷️ Categorias',           api: '/api/bi/categorias',      cols: ['empresa','codigo','nome','tipo'] },
+  ];
+
+  const PAGE_SIZE = 50;
+  let state = { tab: TABS[0], page: 1, search: '', status: '', sort: null, dir: 'asc', data: [], loading: false };
+
+  function empresaQs() {
+    const v = document.getElementById('empresa-filter').value;
+    return v ? '&empresa=' + v : '';
+  }
+
+  function fmtBRL(v) { return 'R$ ' + (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}); }
+  function fmtDate(v) { if(!v) return '—'; try { const d=new Date(v+'T00:00:00'); return d.toLocaleDateString('pt-BR'); } catch { return v; } }
+  function fmtInt(v) { return (Number(v)||0).toLocaleString('pt-BR'); }
+
+  // ---- Colunas ----
+  const COLS = {
+    empresa:          { label:'Empresa',      render: r => `<span class="empresa-tag">${r.empresa||'—'}</span>`, th:'th-sort', mobile:true },
+    fornecedor:       { label:'Fornecedor',    render: r => `<span class="wrap">${r.nome_fornecedor||'—'}</span>`, mobile:true },
+    cliente:         { label:'Cliente',       render: r => `<span class="wrap">${r.nome_cliente||'—'}</span>`, mobile:true },
+    documento:        { label:'Doc / Parc.',   render: r => `${r.numero_documento||'—'} ${r.parcela?'('+r.parcela+')':''}`, mobile:true },
+    valor:            { label:'Valor',         render: r => fmtBRL(r.valor_documento||r.valor_total||r.saldo_atual||0), th:'num th-sort', cls:'num', mobile:true },
+    valor_pago:       { label:'Pago',          render: r => fmtBRL(r.valor_pago||r.valor_recebido||0), th:'num th-sort', cls:'num' },
+    vencimento:       { label:'Vencimento',    render: r => fmtDate(r.data_vencimento||r.data_emissao), th:'th-sort', mobile:true },
+    data:             { label:'Data',          render: r => fmtDate(r.data_movimento||r.data_entrada), th:'th-sort', mobile:true },
+    emissao:          { label:'Emissão',       render: r => fmtDate(r.data_emissao), th:'th-sort' },
+    entrada:          { label:'Entrada',        render: r => fmtDate(r.data_entrada), th:'th-sort' },
+    status:           { label:'Status',        render: r => badge(r.status), mobile:true },
+    tipo:             { label:'Tipo',          render: r => badge(r.tipo=='credito'?'credito':r.tipo=='debito'?'debito':'entrada') },
+    categoria:        { label:'Categoria',     render: r => `<span class="wrap">${r.categoria||'—'}</span>` },
+    conciliado:       { label:'Conciliado',   render: r => r.conciliado ? '<span class="badge paid">Sim</span>' : '<span class="badge late">Não</span>' },
+    conta:            { label:'Conta',         render: r => `<span class="wrap">${r.conta_bancaria||r.nome||r.descricao||'—'}</span>`, mobile:true },
+    descricao:        { label:'Descrição',     render: r => `<span class="wrap">${r.descricao||r.observacao||'—'}</span>` },
+    nome:             { label:'Nome / Descrição', render: r => `<span class="wrap">${r.nome||r.descricao||r.razao_social||'—'}</span>`, mobile:true },
+    banco:            { label:'Banco',        render: r => r.banco||r.cBanco||'—' },
+    agencia:          { label:'Agência',      render: r => r.agencia||r.cAgencia||'—' },
+    conta_banc:       { label:'Nº Conta',     render: r => r.conta||r.numero_conta||'—' },
+    saldo:            { label:'Saldo',         render: r => fmtBRL(r.saldo_atual||0), th:'num th-sort', cls:'num' },
+    ativa:            { label:'Ativa',        render: r => r.ativa ? '<span class="badge ativa">Sim</span>' : '<span class="badge inativa">Não</span>' },
+    numero:           { label:'Número NF',    render: r => r.numero||'—', th:'th-sort' },
+    serie:            { label:'Série',        render: r => r.serie||'—' },
+    fornecedor:        { label:'Fornecedor',   render: r => `<span class="wrap">${r.nome_fornecedor||r.razao_social||'—'}</span>`, mobile:true },
+    cnpj:             { label:'CNPJ/CPF',    render: r => r.cnpj_cpf||'—' },
+    email:             { label:'Email',        render: r => `<span class="wrap">${r.email||'—'}</span>` },
+    telefone:          { label:'Telefone',    render: r => r.telefone||'—' },
+    cidade:            { label:'Cidade',      render: r => `${r.cidade||'—'}${r.estado ? ' / '+r.estado : ''}`, mobile:true },
+    fantasia:          { label:'Fantasia',    render: r => r.nome_fantasia||'—', hideMobile:true },
+    razao:             { label:'Razão Social',render: r => `<span class="wrap">${r.razao_social||'—'}</span>`, mobile:true },
+    codigo:            { label:'Código',      render: r => r.codigo_categoria||r.omie_codigo||r.codigo||'—', th:'th-sort' },
+    nome_categ:        { label:'Nome',        render: r => r.nome||'—', mobile:true },
+    tipo_categ:        { label:'Tipo',        render: r => badge(r.tipo) },
+  };
+
+  function badge(s) {
+    const map = { em_aberto:'open', aberto:'open', aberto_parcial:'open', atrasado:'late', pago:'paid', 'pago_parcial':'paid', liquidado:'paid', credito:'credito', debito:'debito', receita:'credito', despesa:'late', entrada:'entrada', saida:'debito' };
+    return `<span class="badge ${map[s]||'open'}">${s||'—'}</span>`;
+  }
+
+  // ---- Tabs ----
+  const tabsEl = document.getElementById('tabs');
+  TABS.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (t.key === state.tab.key ? ' active' : '');
+    btn.textContent = t.label;
+    btn.onclick = () => switchTab(t);
+    tabsEl.appendChild(btn);
+  });
+
+  function switchTab(tab) {
+    state.tab = tab;
+    state.page = 1;
+    state.search = '';
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    tabsEl.children[TABS.indexOf(tab)].classList.add('active');
+    buildToolbar();
+    loadData();
+  }
+
+  // ---- Toolbar ----
+  function buildToolbar() {
+    const tb = document.getElementById('toolbar');
+    const t = state.tab;
+    let html = `<input type="text" id="search-input" placeholder="Buscar…" value="${esc(state.search)}" style="max-width:280px;">`;
+    if (t.key === 'contas-pagar' || t.key === 'contas-receber') {
+      html += `<select id="status-filter"><option value="">Todos</option><option value="em_aberto" ${state.status==='em_aberto'?'selected':''}>Em aberto</option><option value="atrasado" ${state.status==='atrasado'?'selected':''}>Atrasado</option><option value="pago" ${state.status==='pago'?'selected':''}>Pago</option></select>`;
+    }
+    html += `<button class="primary" onclick="state.page=1;loadData()">🔍 Buscar</button>`;
+    html += `<span class="count" id="row-count"></span>`;
+    html += `<button class="export-btn" onclick="exportCSV()">📥 CSV</button>`;
+    tb.innerHTML = html;
+    document.getElementById('search-input').addEventListener('keydown', e => { if(e.key==='Enter') { state.page=1; loadData(); } });
+    if (document.getElementById('status-filter')) {
+      document.getElementById('status-filter').addEventListener('change', e => { state.status=e.target.value; state.page=1; loadData(); });
+    }
+  }
+
+  // ---- Load ----
+  async function loadData() {
+    const t = state.tab;
+    let url = t.api + '?limit=1000&empresa=' + (document.getElementById('empresa-filter').value || '');
+    if (state.status) url += '&status=' + state.status;
+    document.getElementById('tbody').innerHTML = '<tr class="loading-row"><td colspan="20">carregando…</td></tr>';
+    try {
+      const r = await fetch(url, { credentials: 'same-origin' });
+      const json = await r.json();
+      if (!json.ok) throw new Error(json.erro);
+      state.data = json.rows || [];
+      buildThead();
+      renderTable();
+    } catch(e) {
+      document.getElementById('tbody').innerHTML = `<tr><td colspan="20" class="empty">Erro: ${e.message}</td></tr>`;
+    }
+  }
+
+  // ---- Header ----
+  function buildThead() {
+    const t = state.tab;
+    const thead = document.getElementById('thead');
+    thead.innerHTML = '<tr>' + t.cols.map(c => {
+      const col = COLS[c] || {};
+      const cls = col.th || 'th-sort';
+      const sortCls = state.sort === c ? (state.dir === 'asc' ? ' asc' : ' desc') : '';
+      return `<th class="${cls}${sortCls}" data-col="${c}" onclick="sortBy('${c}')">${col.label || c}</th>`;
+    }).join('') + '</tr>';
+  }
+
+  function sortBy(col) {
+    if (state.sort === col) { state.dir = state.dir === 'asc' ? 'desc' : 'asc'; }
+    else { state.sort = col; state.dir = 'asc'; }
+    buildThead();
+    renderTable();
+  }
+
+  // ---- Filter + sort ----
+  function getFiltered() {
+    let d = state.data;
+    const q = state.search.toLowerCase().trim();
+    if (q) {
+      d = d.filter(r => {
+        const s = JSON.stringify(r).toLowerCase();
+        return s.includes(q);
+      });
+    }
+    if (state.sort) {
+      d = [...d].sort((a,b) => {
+        const va = a[state.sort] ?? '', vb = b[state.sort] ?? '';
+        const na = Number(va), nb = Number(vb);
+        if (!isNaN(na) && !isNaN(nb)) return state.dir === 'asc' ? na - nb : nb - na;
+        return state.dir === 'asc' ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+      });
+    }
+    return d;
+  }
+
+  // ---- Render ----
+  function renderTable() {
+    const t = state.tab;
+    const all = getFiltered();
+    const total = all.length;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if (state.page > totalPages) state.page = totalPages;
+    const start = (state.page - 1) * PAGE_SIZE;
+    const page = all.slice(start, start + PAGE_SIZE);
+
+    document.getElementById('row-count').textContent = total + ' registro' + (total !== 1 ? 's' : '');
+    const tbody = document.getElementById('tbody');
+    if (!page.length) {
+      tbody.innerHTML = '<tr><td colspan="20" class="empty">Nenhum registro encontrado</td></tr>';
+    } else {
+      tbody.innerHTML = page.map(r => {
+        const isMobile = window.innerWidth < 700;
+        const cells = t.cols.map(c => {
+          if (isMobile && COLS[c]?.hideMobile) return '';
+          const col = COLS[c] || {};
+          const val = r[c] !== undefined ? r[c] : '';
+          return `<td class="${col.cls||''}">${col.render ? col.render(r) : esc(val)}</td>`;
+        }).join('');
+        return `<tr>${cells}</tr>`;
+      }).join('');
+    }
+    renderPagination(total, totalPages);
+  }
+
+  function renderPagination(total, totalPages) {
+    const p = document.getElementById('pagination');
+    if (totalPages <= 1) { p.innerHTML = ''; return; }
+    const cur = state.page;
+    let html = `<button ${cur<=1?'disabled':''} onclick="state.page=1;renderTable()">«</button>`;
+    html += `<button ${cur<=1?'disabled':''} onclick="state.page=${cur-1};renderTable()">‹</button>`;
+    const range = [];
+    for (let i = Math.max(1, cur-2); i <= Math.min(totalPages, cur+2); i++) range.push(i);
+    if (range[0] > 1) { html += `<button onclick="state.page=1;renderTable()">1</button>`; if (range[0] > 2) html += `<span class="info">…</span>`; }
+    range.forEach(i => { html += `<button class="${i===cur?'current':''}" onclick="state.page=${i};renderTable()">${i}</button>`; });
+    if (range[range.length-1] < totalPages) { if (range[range.length-1] < totalPages-1) html += `<span class="info">…</span>`; html += `<button onclick="state.page=${totalPages};renderTable()">${totalPages}</button>`; }
+    html += `<button ${cur>=totalPages?'disabled':''} onclick="state.page=${cur+1};renderTable()">›</button>`;
+    html += `<button ${cur>=totalPages?'disabled':''} onclick="state.page=${totalPages};renderTable()">»</button>`;
+    p.innerHTML = html;
+  }
+
+  // ---- Export ----
+  function exportCSV() {
+    const all = getFiltered();
+    const t = state.tab;
+    const cols = t.cols;
+    const header = cols.map(c => (COLS[c]?.label || c)).join(';');
+    const rows = all.map(r => cols.map(c => {
+      const v = r[c] ?? '';
+      return String(v).includes(';') ? `"${v}"` : v;
+    }).join(';'));
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `${t.key}_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  }
+
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // ---- Sync ----
+  document.getElementById('btn-sync').onclick = async () => {
+    const btn = document.getElementById('btn-sync');
+    btn.disabled = true; btn.textContent = '⏳ Sincronizando…';
+    try {
+      const r = await fetch('/api/bi/admin/cron/trigger', { method:'POST', credentials:'same-origin' });
+      const json = await r.json();
+      alert(json.mensagem || json.ok ? 'Sync iniciado!' : 'Erro: ' + json.erro);
+    } catch(e) { alert('Erro: ' + e.message); }
+    btn.disabled = false; btn.textContent = '🔄 Sincronizar';
+    setTimeout(loadData, 30000);
+  };
+
+  // ---- Init ----
+  document.getElementById('empresa-filter').addEventListener('change', () => { state.page=1; loadData(); });
+  window.addEventListener('resize', () => { if (!state.loading) renderTable(); });
+  buildToolbar();
+  loadData();
+  </script>
+</body>
+</html>

@@ -132,7 +132,7 @@ async function listContasPagar(filtros = {}) {
     idx++;
   }
   const r = await pool.query(
-    `SELECT cp.*, e.nome AS empresa_nome
+    `SELECT cp.*, e.nome AS empresa
        FROM contas_pagar cp JOIN empresas e ON e.id = cp.empresa_id
       WHERE ${where.join(' AND ')}
       ORDER BY cp.data_vencimento ASC NULLS LAST, cp.id DESC
@@ -158,7 +158,7 @@ async function listContasReceber(filtros = {}) {
     idx++;
   }
   const r = await pool.query(
-    `SELECT cr.*, e.nome AS empresa_nome
+    `SELECT cr.*, e.nome AS empresa
        FROM contas_receber cr JOIN empresas e ON e.id = cr.empresa_id
       WHERE ${where.join(' AND ')}
       ORDER BY cr.data_vencimento ASC NULLS LAST, cr.id DESC
@@ -179,7 +179,7 @@ async function listMovimentos(filtros = {}) {
     idx++;
   }
   const r = await pool.query(
-    `SELECT m.*, e.nome AS empresa_nome
+    `SELECT m.*, e.nome AS empresa
        FROM movimentos m JOIN empresas e ON e.id = m.empresa_id
       WHERE ${where.join(' AND ')}
       ORDER BY m.data_movimento DESC NULLS LAST, m.id DESC
@@ -197,7 +197,7 @@ async function listContasBancarias(empresa_ids = []) {
     params.push(empresa_ids);
   }
   const r = await pool.query(
-    `SELECT cb.*, e.nome AS empresa_nome
+    `SELECT cb.*, e.nome AS empresa
        FROM contas_bancarias cb JOIN empresas e ON e.id = cb.empresa_id
       WHERE ${where}
       ORDER BY cb.saldo_atual DESC NULLS LAST`
@@ -216,7 +216,7 @@ async function listNfEntrada(filtros = {}) {
     idx++;
   }
   const r = await pool.query(
-    `SELECT nf.*, e.nome AS empresa_nome
+    `SELECT nf.*, e.nome AS empresa
        FROM nf_entrada nf JOIN empresas e ON e.id = nf.empresa_id
       WHERE ${where.join(' AND ')}
       ORDER BY nf.data_emissao DESC NULLS LAST, nf.id DESC
@@ -234,7 +234,7 @@ async function listFornecedores(empresa_ids = []) {
     params.push(empresa_ids);
   }
   const r = await pool.query(
-    `SELECT f.*, e.nome AS empresa_nome
+    `SELECT f.*, e.nome AS empresa
        FROM fornecedores f JOIN empresas e ON e.id = f.empresa_id
       WHERE ${where}
       ORDER BY f.razao_social`
@@ -250,7 +250,7 @@ async function listCategorias(empresa_ids = []) {
     params.push(empresa_ids);
   }
   const r = await pool.query(
-    `SELECT c.*, e.nome AS empresa_nome
+    `SELECT c.*, e.nome AS empresa
        FROM categorias c JOIN empresas e ON e.id = c.empresa_id
       WHERE ${where}
       ORDER BY c.tipo, c.nome`

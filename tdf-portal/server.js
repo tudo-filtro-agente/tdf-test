@@ -474,6 +474,16 @@ app.get('/api/auth/test-seed', async (req, res) => {
       }
     });
 
+    // Listagens BI — 7 abas interativas
+    app.get('/bi/lista', auth.requireAuth, async (req, res) => {
+      try {
+        const empresas = (await auth.pool.query(`SELECT id, nome FROM empresas WHERE ativo = true ORDER BY id`)).rows;
+        res.render('bi/lista', { user: req.user, empresas });
+      } catch (err) {
+        res.status(500).send('Erro ao carregar listagens: ' + err.message);
+      }
+    });
+
     // API: KPIs do dashboard (autenticado). Filtro: ?empresa=1,2,3
     app.get('/api/bi/dashboard/kpis', auth.requireAuth, async (req, res) => {
       try {
