@@ -1,0 +1,314 @@
+<% const activePage = 'admin-score-leads'; const pageTitle = 'Score de Leads — Auditoria de Atividades Zoho'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.lsaa-wrap{max-width:1600px;margin:0 auto;padding:24px;color:var(--text)}
+.lsaa-header{background:linear-gradient(135deg,#1a0e2a,var(--bg));border:2px solid #ef4444;border-radius:12px;padding:18px;margin-bottom:14px}
+.lsaa-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.lsaa-tab{background:transparent;color:#9ca3af;border:none;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;text-decoration:none}
+.lsaa-tab.active{color:#fca5a5;border-bottom-color:#ef4444}
+.lsaa-status-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.lsaa-card{background:#161725;border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.lsaa-card .n{font-size:24px;font-weight:800;color:var(--text)}
+.lsaa-card .k{font-size:10px;color:#9ca3af;text-transform:uppercase;font-weight:700;margin-top:3px}
+.lsaa-card.ok .n{color:#10b981}
+.lsaa-card.warn .n{color:#fbbf24}
+.lsaa-card.danger .n{color:#ef4444}
+.lsaa-card.info .n{color:#06b6d4}
+.lsaa-toolbar{display:flex;gap:10px;align-items:center;background:#161725;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px;flex-wrap:wrap}
+.lsaa-toolbar select, .lsaa-toolbar input{background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:6px 10px;font-size:12px}
+.lsaa-btn{background:#a371f7;color:#fff;border:none;border-radius:5px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer}
+.lsaa-btn.d{background:#ef4444}
+.lsaa-btn.g{background:#374151}
+.lsaa-btn.s{background:#10b981;color:#000}
+.lsaa-btn:disabled{opacity:.5;cursor:wait}
+.lsaa-tbl{width:100%;border-collapse:collapse;font-size:11px;background:#161725;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.lsaa-tbl th{background:#1a0e2a;color:#fca5a5;padding:8px 10px;text-align:left;text-transform:uppercase;font-size:10px}
+.lsaa-tbl td{padding:6px 10px;border-bottom:1px solid #1a1a2a;vertical-align:top}
+.lsaa-pill{display:inline-block;padding:1px 7px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase}
+.lsaa-pill.CREATED{background:rgba(16,185,129,.15);color:#10b981}
+.lsaa-pill.DRY_RUN{background:rgba(167,113,247,.18);color:#c084fc}
+.lsaa-pill.DUPLICATED{background:rgba(245,158,11,.18);color:#fbbf24}
+.lsaa-pill.OWNER_INVALIDO_PARA_PRODUTO{background:rgba(239,68,68,.18);color:#fca5a5}
+.lsaa-pill.OWNER_NOT_MAPPED{background:rgba(239,68,68,.18);color:#fca5a5}
+.lsaa-pill.OWNER_INACTIVE{background:rgba(239,68,68,.18);color:#fca5a5}
+.lsaa-pill.NO_OWNER{background:rgba(239,68,68,.18);color:#fca5a5}
+.lsaa-pill.BLOCKED{background:rgba(239,68,68,.18);color:#fca5a5}
+.lsaa-pill.ERROR{background:rgba(239,68,68,.25);color:var(--text)}
+.lsaa-pill.WAIT_SKIPPED{background:rgba(156,163,175,.18);color:#9ca3af}
+.lsaa-pill.ESCALATE_NOT_IMPLEMENTED{background:rgba(245,158,11,.18);color:#fbbf24}
+.lsaa-pill.CLEANUP_CANCELLED{background:rgba(245,158,11,.18);color:#fbbf24}
+.lsaa-pill.CLEANUP_ERROR{background:rgba(239,68,68,.18);color:#fca5a5}
+.lsaa-banner{background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:8px;padding:12px;margin-bottom:14px;color:#fca5a5}
+.lsaa-banner h3{margin:0 0 6px;color:#fca5a5}
+.lsaa-banner .actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+</style>
+
+<div class="lsaa-wrap">
+  <div class="lsaa-header">
+    <h1 style="color:#fca5a5;margin:0;font-size:20px">🛡️ Auditoria de Atividades Zoho</h1>
+    <p style="color:#9ca3af;font-size:12px;margin:8px 0 0;line-height:1.5">
+      Toda tentativa de criar Task ou Call no Zoho passa por validação (Owner correto,
+      permissão por produto, idempotência) e é registrada aqui — criadas, bloqueadas, duplicadas, dry-run e erros.
+      <strong style="color:#fca5a5">Sangramento detectado em 11/Mai/2026:</strong> cadência criava tasks pra usuários
+      diferentes do Owner do deal. V2 corrigida em modo DRY_RUN — valide antes de ativar prod.
+    </p>
+  </div>
+
+  <div class="lsaa-tabs">
+    <a class="lsaa-tab" href="/admin/score-leads">📋 Critérios</a>
+    <a class="lsaa-tab" href="/admin/score-leads/distancia">📍 Distância</a>
+    <a class="lsaa-tab" href="/admin/score-leads/cadencia">⏱️ Cadência</a>
+    <a class="lsaa-tab active" href="/admin/score-leads/auditoria-atividades">🛡️ Auditoria Atividades</a>
+    <a class="lsaa-tab" href="/admin/score-leads/teste">🧪 Testar Lead</a>
+    <a class="lsaa-tab" href="/admin/score-leads/overrides">✋ Overrides</a>
+    <a class="lsaa-tab" href="/admin/score-leads/auditoria">📜 Auditoria Geral</a>
+  </div>
+
+  <div id="lsaa-banner-area"></div>
+
+  <div class="lsaa-status-cards" id="lsaa-status-cards">
+    <div class="lsaa-card"><div class="n">…</div><div class="k">Total registros</div></div>
+  </div>
+
+  <div class="lsaa-toolbar">
+    <label style="color:#9ca3af;font-size:11px;font-weight:700">Status:</label>
+    <select id="lsaa-status" onchange="lsaaLoad()">
+      <option value="">Todos</option>
+      <option value="CREATED">✅ Criadas no Zoho</option>
+      <option value="DRY_RUN">🟣 Dry-run (não chamou Zoho)</option>
+      <option value="DUPLICATED">⏭️ Duplicada</option>
+      <option value="OWNER_INVALIDO_PARA_PRODUTO">🚫 Owner inválido pra produto</option>
+      <option value="OWNER_NOT_MAPPED">🚫 Owner não mapeado</option>
+      <option value="OWNER_INACTIVE">🚫 Owner inativo</option>
+      <option value="NO_OWNER">🚫 Sem owner</option>
+      <option value="BLOCKED">🚫 Bloqueada</option>
+      <option value="ERROR">❌ Erro</option>
+      <option value="CLEANUP_CANCELLED">🧹 Cancelada por saneamento</option>
+      <option value="CLEANUP_ERROR">🧹 Erro no saneamento</option>
+    </select>
+    <label style="color:#9ca3af;font-size:11px;font-weight:700">Deal ID:</label>
+    <input id="lsaa-deal" placeholder="ex: 689…" oninput="lsaaLoad()" style="width:160px">
+    <label style="color:#9ca3af;font-size:11px;font-weight:700">Limite:</label>
+    <select id="lsaa-limit" onchange="lsaaLoad()">
+      <option>100</option><option selected>200</option><option>500</option><option>1000</option>
+    </select>
+    <span style="flex:1"></span>
+    <button class="lsaa-btn d" onclick="lsaaCancelAll()" title="Cancela TODOS runs ativos imediatamente">🛑 Cancelar todos runs ativos</button>
+    <button class="lsaa-btn" onclick="lsaaCheckOwnerMismatch()" style="background:#06b6d4" title="Lista Task/Call onde Owner é diferente do Owner do Deal">🔍 Owner ≠ Deal</button>
+    <button class="lsaa-btn" onclick="lsaaCleanupBad(true)" style="background:#f59e0b;color:#000" title="Dry-run: conta tarefas erradas no Zoho sem cancelar">🧪 Preview limpeza Zoho</button>
+    <button class="lsaa-btn d" onclick="lsaaCleanupBad(false)" title="Cancela todas tasks/calls com prefixo [TIER] no Zoho + dispara recalc V2">🧹 Limpar + re-aplicar V2</button>
+    <button class="lsaa-btn g" onclick="lsaaLoad()">🔄 Atualizar</button>
+  </div>
+
+  <div id="lsaa-mismatch-area"></div>
+
+  <table class="lsaa-tbl">
+    <thead><tr>
+      <th style="width:120px">Quando</th>
+      <th style="width:120px">Deal</th>
+      <th style="width:80px">Tipo</th>
+      <th style="width:130px">Status</th>
+      <th style="width:140px">Owner Zoho</th>
+      <th style="width:140px">User destino</th>
+      <th style="width:130px">Tier/Produto</th>
+      <th>Motivo bloqueio / detalhes</th>
+      <th style="width:90px">Cadence run</th>
+    </tr></thead>
+    <tbody id="lsaa-body"><tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text-muted)">⏳ Carregando…</td></tr></tbody>
+  </table>
+</div>
+
+<script>
+async function lsaaLoadStatus(){
+  try {
+    const [s, wo] = await Promise.all([
+      fetch('/api/lead-score/admin/status').then(r=>r.json()),
+      fetch('/api/lead-score/activity-audit/wrong-owner?limit=500').then(r=>r.json()),
+    ]);
+    if (s.ok) {
+      const dryBadge = s.env_dry_run ? '<span style="background:rgba(167,113,247,.2);color:#c084fc;padding:2px 8px;border-radius:4px">DRY_RUN ON</span>' : '<span style="color:#10b981">live</span>';
+      const disabledBadge = s.env_disabled ? '<span style="background:rgba(239,68,68,.2);color:#fca5a5;padding:2px 8px;border-radius:4px">DISABLED</span>' : '<span style="color:#10b981">enabled</span>';
+      let bannerHtml = '';
+      if (s.env_dry_run || s.env_disabled || (wo.ok && wo.total > 0)) {
+        bannerHtml = `<div class="lsaa-banner">
+          <h3>⚠️ Atenção</h3>
+          <div>Cadência: ${disabledBadge} · Modo: ${dryBadge} · Runs ativos: <strong>${s.cadence_runs_active}</strong> · Atividades bloqueadas (qualquer momento): <strong>${wo.total||0}</strong></div>
+          <div class="actions">
+            ${s.cadence_runs_active > 0 ? '<button class="lsaa-btn d" onclick="lsaaCancelAll()">🛑 Cancelar '+s.cadence_runs_active+' runs ativos</button>' : ''}
+          </div>
+        </div>`;
+      }
+      document.getElementById('lsaa-banner-area').innerHTML = bannerHtml;
+      // status cards
+      const sc = document.getElementById('lsaa-status-cards');
+      sc.innerHTML = `
+        <div class="lsaa-card info"><div class="n">${s.cadence_runs_active}</div><div class="k">Runs ativos</div></div>
+        <div class="lsaa-card info"><div class="n">${s.history_last_hour}</div><div class="k">Recalcs (1h)</div></div>
+        <div class="lsaa-card ${s.env_dry_run?'warn':'ok'}"><div class="n">${s.env_dry_run?'ON':'OFF'}</div><div class="k">DRY_RUN</div></div>
+        <div class="lsaa-card ${s.env_disabled?'danger':'ok'}"><div class="n">${s.env_disabled?'YES':'NO'}</div><div class="k">Cadence Disabled</div></div>
+        <div class="lsaa-card ${wo.total>0?'danger':'ok'}"><div class="n">${wo.total||0}</div><div class="k">Atividades bloqueadas / erradas</div></div>
+      `;
+    }
+  } catch(_){}
+}
+
+async function lsaaLoad(){
+  await lsaaLoadStatus();
+  const status = document.getElementById('lsaa-status').value;
+  const deal_id = document.getElementById('lsaa-deal').value;
+  const limit = document.getElementById('lsaa-limit').value;
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (deal_id) params.set('deal_id', deal_id);
+  params.set('limit', limit);
+  const r = await fetch('/api/lead-score/activity-audit?' + params.toString()).then(r=>r.json());
+  if (!r.ok) { document.getElementById('lsaa-body').innerHTML = `<tr><td colspan="9" style="color:#ef4444">${r.error}</td></tr>`; return; }
+  const items = r.items || [];
+  if (!items.length) {
+    document.getElementById('lsaa-body').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#888">Nenhum registro encontrado pra esse filtro.</td></tr>';
+    return;
+  }
+  document.getElementById('lsaa-body').innerHTML = items.map(it => `
+    <tr>
+      <td style="color:#9ca3af">${new Date(it.occurred_at).toLocaleString('pt-BR')}</td>
+      <td>
+        <code style="color:#a371f7;font-size:10px;cursor:pointer;padding:3px 6px;border-radius:3px;background:rgba(167,113,247,.08);border:1px solid rgba(167,113,247,.3)"
+              onclick="copyText('${escapeHtml(it.deal_id)}', this, 'Deal ID')"
+              title="Clique pra copiar o ID da negociação">📋 ${escapeHtml(it.deal_id)}</code>
+        <a href="https://crmplus.zoho.com/tudodefiltro3711/index.do/cxapp/crm/org856385701/tab/Potentials/${escapeHtml(it.deal_id)}" target="_blank" style="margin-left:4px;color:#06b6d4;font-size:10px;text-decoration:none" title="Abrir no Zoho">↗</a>
+      </td>
+      <td><strong>${escapeHtml(it.activity_kind||'-')}</strong></td>
+      <td><span class="lsaa-pill ${escapeHtml(it.status)}">${escapeHtml(it.status)}</span></td>
+      <td>${escapeHtml(it.owner_zoho_name||'-')}<br><small style="color:#9ca3af;font-size:9px">${escapeHtml(it.owner_zoho_id||'')}</small></td>
+      <td>${escapeHtml(it.target_user||'-')}</td>
+      <td>${escapeHtml(it.cadence_tier||'-')}<br><small style="color:#9ca3af">${escapeHtml(it.product_type||it.cadence_product_type||'')}</small></td>
+      <td style="color:${it.status==='CREATED'?'#10b981':(it.status.startsWith('OWNER')||it.status==='BLOCKED'||it.status==='ERROR'?'#fca5a5':'#9ca3af')};font-size:11px">${escapeHtml(it.block_reason||'-')}</td>
+      <td><code style="font-size:9px">${escapeHtml(it.cadence_run_id||'-')}</code></td>
+    </tr>
+  `).join('');
+}
+
+async function lsaaCheckOwnerMismatch(){
+  const area = document.getElementById('lsaa-mismatch-area');
+  area.innerHTML = '<div style="background:#161725;border:1px solid #06b6d4;border-radius:8px;padding:14px;color:#06b6d4">⏳ Scaneando Zoho — pode levar até 30s…</div>';
+  try {
+    const r = await fetch('/api/lead-score/admin/owner-mismatch?limit=500').then(r=>r.json());
+    if (!r.ok) { area.innerHTML = `<div style="color:#ef4444">${r.error}</div>`; return; }
+    const m = r.mismatches || [];
+    if (!m.length) {
+      area.innerHTML = `<div style="background:#161725;border:1px solid #10b981;border-radius:8px;padding:14px;color:#10b981">✅ Nenhum mismatch encontrado. Tasks scaneadas: ${r.tasks_scanned} · Calls: ${r.calls_scanned} · Deals fetched: ${r.deals_fetched}</div>`;
+      return;
+    }
+    const byActOwner = Object.entries(r.by_activity_owner || {}).map(([k,v])=>`<span style="background:rgba(239,68,68,.15);color:#fca5a5;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;margin:2px">${escapeHtml(k)}: ${v}</span>`).join(' ');
+    const byDealOwner = Object.entries(r.by_deal_owner || {}).map(([k,v])=>`<span style="background:rgba(16,185,129,.15);color:#86efac;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;margin:2px">${escapeHtml(k)}: ${v}</span>`).join(' ');
+    area.innerHTML = `
+      <div style="background:#161725;border:2px solid #ef4444;border-radius:8px;padding:14px;margin-bottom:14px">
+        <h3 style="color:#fca5a5;margin:0 0 8px">🔍 ${r.total} Task/Call em closer diferente do Owner do Deal</h3>
+        <div style="color:#9ca3af;font-size:11px;margin-bottom:8px">Scan: ${r.tasks_scanned} tasks + ${r.calls_scanned} calls · ${r.deals_fetched} deals consultados</div>
+        <div style="margin:8px 0"><strong style="color:#fca5a5">Closer que RECEBEU errado:</strong><br>${byActOwner}</div>
+        <div style="margin:8px 0"><strong style="color:#86efac">Owner CERTO (do deal):</strong><br>${byDealOwner}</div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <button class="lsaa-btn" onclick="lsaaFixMismatch('transfer', true)" style="background:#06b6d4" title="Dry-run da transferência">🧪 Preview Transferir Owner</button>
+          <button class="lsaa-btn s" onclick="lsaaFixMismatch('transfer', false)" title="Atualiza Owner das tasks/calls pro owner do deal">✅ Transferir Owner pro CERTO</button>
+          <button class="lsaa-btn d" onclick="lsaaFixMismatch('cancel', false)" title="Cancela tasks/calls erradas em vez de transferir">🛑 Cancelar erradas</button>
+        </div>
+      </div>
+      <table class="lsaa-tbl" style="margin-bottom:14px">
+        <thead><tr>
+          <th style="width:60px">Tipo</th>
+          <th style="width:140px">Deal</th>
+          <th>Subject</th>
+          <th style="width:140px">Owner da Task (errado)</th>
+          <th style="width:140px">Owner do Deal (certo)</th>
+          <th style="width:120px">Quando</th>
+        </tr></thead>
+        <tbody>
+          ${m.slice(0, 100).map(it => `
+            <tr>
+              <td><span class="lsaa-pill ${it.kind==='call'?'CREATED':'DRY_RUN'}">${it.kind}</span></td>
+              <td>
+                <code style="color:#a371f7;font-size:10px;cursor:pointer;padding:3px 6px;border-radius:3px;background:rgba(167,113,247,.08);border:1px solid rgba(167,113,247,.3)"
+                      onclick="copyText('${escapeHtml(it.deal_id)}', this, 'Deal ID')"
+                      title="Clique pra copiar">📋 ${escapeHtml(it.deal_id)}</code><br>
+                <small style="color:#9ca3af;font-size:10px">${escapeHtml(it.deal_name||'')}</small>
+              </td>
+              <td style="font-size:11px">${escapeHtml(it.subject||'')}</td>
+              <td style="color:#fca5a5;font-weight:700">${escapeHtml(it.activity_owner||'-')}</td>
+              <td style="color:#86efac;font-weight:700">${escapeHtml(it.deal_owner||'-')}</td>
+              <td style="color:#9ca3af;font-size:10px">${it.when?new Date(it.when).toLocaleString('pt-BR'):'-'}</td>
+            </tr>
+          `).join('')}
+          ${m.length > 100 ? `<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:8px">…e mais ${m.length-100} (limit do preview)</td></tr>` : ''}
+        </tbody>
+      </table>
+    `;
+  } catch (e) {
+    area.innerHTML = `<div style="color:#ef4444;padding:14px">${e.message}</div>`;
+  }
+}
+
+async function lsaaFixMismatch(mode, dryRun){
+  if (!dryRun) {
+    const msg = mode === 'cancel'
+      ? '⚠️ Vai CANCELAR todas as Task/Call com Owner errado. Confirma?'
+      : '⚠️ Vai TRANSFERIR o Owner de cada Task/Call errada pro Owner do Deal. Confirma?';
+    if (!confirm(msg)) return;
+  }
+  const btn = event.target; btn.disabled = true; btn.textContent = '⏳…';
+  try {
+    const r = await fetch('/api/lead-score/admin/fix-owner-mismatch', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ mode, dry_run: !!dryRun })
+    }).then(r=>r.json());
+    if (!r.ok) { alert(r.error||'erro'); return; }
+    if (dryRun) {
+      alert(`🧪 PREVIEW\n\nMode: ${r.mode}\nTotal pra corrigir: ${r.total}\n\nPor closer errado:\n${Object.entries(r.by_activity_owner||{}).map(([k,v])=>`  ${k}: ${v}`).join('\n')}`);
+    } else {
+      alert(`✅ EXECUTADO\n\nMode: ${r.mode}\nCorrigido: ${r.fixed}\nErros: ${r.errors||0}\nTotal: ${r.total}`);
+      lsaaCheckOwnerMismatch();
+    }
+  } finally { btn.disabled = false; btn.textContent = mode === 'cancel' ? '🛑 Cancelar erradas' : (dryRun ? '🧪 Preview Transferir Owner' : '✅ Transferir Owner pro CERTO'); }
+}
+
+async function lsaaCleanupBad(dryRun){
+  if (!dryRun) {
+    if (!confirm('⚠️ ATENÇÃO\n\nIsso vai CANCELAR no Zoho TODAS as tasks/calls abertas com prefixo [TIER] (criadas pela cadência V1 com bug).\n\nDepois dispara recalc V2 nos deals afetados pra criar as corretas (em DRY_RUN ainda — só audita).\n\nConfirma?')) return;
+  }
+  const btn = event.target; btn.disabled = true; btn.textContent = dryRun ? '⏳ Contando...' : '⏳ Limpando...';
+  try {
+    const r = await fetch('/api/lead-score/admin/cleanup-bad-tasks', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ dry_run: !!dryRun, requeue: !dryRun })
+    }).then(r=>r.json());
+    if (!r.ok) { alert(r.error||'erro'); return; }
+    const byTier = r.by_tier ? '\n\nPor tier:\n' + Object.entries(r.by_tier).map(([t,n])=>`  ${t}: ${n}`).join('\n') : '';
+    if (dryRun) {
+      alert(`🧪 PREVIEW (nada cancelado)\n\nTasks encontradas: ${r.tasks_found}\nCalls encontradas: ${r.calls_found}\nTotal: ${r.total}${byTier}`);
+    } else {
+      alert(`🧹 LIMPEZA EXECUTADA\n\nTotal de atividades canceladas: ${r.cancelled}\nErros: ${r.errors||0}\nDeals únicos afetados: ${r.deal_ids_unique}\nRecalcs disparados (V2): ${r.deals_requeued}${byTier}\n\nVeja a auditoria pra acompanhar.`);
+      lsaaLoad();
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = dryRun ? '🧪 Preview limpeza Zoho' : '🧹 Limpar + re-aplicar V2';
+  }
+}
+
+async function lsaaCancelAll(){
+  if (!confirm('Cancelar TODOS os runs ativos? Vai parar todas as cadências em execução. Use isso pra stop the bleeding.')) return;
+  const reason = prompt('Motivo (obrigatório):', 'V1 buggy — migrando pra V2 com validação de owner');
+  if (!reason) return;
+  const r = await fetch('/api/lead-score/admin/cancel-all-runs', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ reason })
+  }).then(r=>r.json());
+  if (!r.ok) { alert(r.error||'erro'); return; }
+  alert(`✅ ${r.cancelled_count} runs ativos foram cancelados.`);
+  lsaaLoad();
+}
+
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+lsaaLoad();
+</script>

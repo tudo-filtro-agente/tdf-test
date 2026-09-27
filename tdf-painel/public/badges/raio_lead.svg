@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="rl_bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </radialGradient>
+    <linearGradient id="rl_border" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="30%" stop-color="#475569"/>
+      <stop offset="50%" stop-color="#cbd5e1"/>
+      <stop offset="70%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="rl_border2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="50%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+    <radialGradient id="rl_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.4"/>
+      <stop offset="60%" stop-color="#3b82f6" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rl_icon" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="50%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="rl_shine" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="rl_shadow">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#3b82f6" flood-opacity="0.6"/>
+    </filter>
+    <filter id="rl_inner">
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#3b82f6" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <!-- Outer glow -->
+  <circle cx="60" cy="60" r="56" fill="url(#rl_glow)"/>
+  <!-- Metallic border outer -->
+  <circle cx="60" cy="60" r="54" fill="url(#rl_border)" opacity="0.8"/>
+  <circle cx="60" cy="60" r="53" fill="url(#rl_border2)" opacity="0.3"/>
+  <!-- Dark background -->
+  <circle cx="60" cy="60" r="50" fill="url(#rl_bg)"/>
+  <!-- Inner ring -->
+  <circle cx="60" cy="60" r="46" fill="none" stroke="#334155" stroke-width="1" opacity="0.6"/>
+  <circle cx="60" cy="60" r="44" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+  <!-- Lightning bolt -->
+  <g filter="url(#rl_shadow)">
+    <path d="M 65 28 L 48 58 L 58 58 L 55 92 L 72 56 L 62 56 Z" fill="url(#rl_icon)" stroke="#93c5fd" stroke-width="0.5" stroke-opacity="0.5"/>
+  </g>
+  <!-- Small sparks -->
+  <circle cx="42" cy="45" r="1.5" fill="#93c5fd" opacity="0.7"/>
+  <circle cx="78" cy="70" r="1" fill="#60a5fa" opacity="0.5"/>
+  <circle cx="75" cy="40" r="1.2" fill="#93c5fd" opacity="0.6"/>
+  <!-- Glass shine overlay -->
+  <ellipse cx="60" cy="38" rx="30" ry="22" fill="url(#rl_shine)"/>
+</svg>

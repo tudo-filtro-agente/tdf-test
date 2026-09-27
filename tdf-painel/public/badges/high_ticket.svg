@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="ht_bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#292524"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </radialGradient>
+    <linearGradient id="ht_border" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="25%" stop-color="#92400e"/>
+      <stop offset="50%" stop-color="#fde68a"/>
+      <stop offset="75%" stop-color="#92400e"/>
+      <stop offset="100%" stop-color="#fbbf24"/>
+    </linearGradient>
+    <linearGradient id="ht_border2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b45309"/>
+      <stop offset="50%" stop-color="#fef3c7"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <radialGradient id="ht_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#eab308" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#eab308" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#eab308" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ht_trophy" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="40%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#a16207"/>
+    </linearGradient>
+    <linearGradient id="ht_shine" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.2"/>
+      <stop offset="50%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="ht_shadow">
+      <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#eab308" flood-opacity="0.7"/>
+    </filter>
+  </defs>
+  <circle cx="60" cy="60" r="56" fill="url(#ht_glow)"/>
+  <circle cx="60" cy="60" r="54" fill="url(#ht_border)" opacity="0.9"/>
+  <circle cx="60" cy="60" r="53" fill="url(#ht_border2)" opacity="0.3"/>
+  <circle cx="60" cy="60" r="50" fill="url(#ht_bg)"/>
+  <circle cx="60" cy="60" r="46" fill="none" stroke="#78350f" stroke-width="1" opacity="0.6"/>
+  <g filter="url(#ht_shadow)">
+    <!-- Trophy cup -->
+    <path d="M 46 40 L 46 58 C 46 68, 52 74, 60 74 C 68 74, 74 68, 74 58 L 74 40 Z" fill="url(#ht_trophy)" stroke="#fde68a" stroke-width="0.5" opacity="0.9"/>
+    <!-- Trophy handles -->
+    <path d="M 46 44 C 38 44, 34 50, 36 56 C 38 60, 42 62, 46 58" fill="none" stroke="url(#ht_trophy)" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M 74 44 C 82 44, 86 50, 84 56 C 82 60, 78 62, 74 58" fill="none" stroke="url(#ht_trophy)" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Trophy base -->
+    <rect x="54" y="74" width="12" height="4" rx="1" fill="url(#ht_trophy)"/>
+    <rect x="50" y="78" width="20" height="4" rx="2" fill="url(#ht_trophy)"/>
+    <!-- Dollar sign -->
+    <g fill="#292524" font-weight="bold" opacity="0.7">
+      <path d="M 58 48 L 58 46 M 62 48 L 62 46 M 55 52 C 55 49, 58 48, 60 48 C 62 48, 65 49, 65 52 C 65 54, 62 55, 60 56 C 58 57, 55 58, 55 60 C 55 63, 58 64, 60 64 C 62 64, 65 63, 65 60 M 58 64 L 58 66 M 62 64 L 62 66" stroke="#292524" stroke-width="2" stroke-linecap="round" fill="none"/>
+    </g>
+    <!-- Trophy shimmer -->
+    <path d="M 52 42 L 52 56 C 52 62, 54 66, 56 68" stroke="#fef3c7" stroke-width="1" opacity="0.4" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- Sparkles -->
+  <circle cx="38" cy="36" r="1.5" fill="#fde68a" opacity="0.7"/>
+  <circle cx="82" cy="36" r="1" fill="#fbbf24" opacity="0.6"/>
+  <circle cx="86" cy="82" r="1.2" fill="#fde68a" opacity="0.5"/>
+  <ellipse cx="60" cy="38" rx="30" ry="22" fill="url(#ht_shine)"/>
+</svg>

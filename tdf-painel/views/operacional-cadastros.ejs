@@ -1,0 +1,486 @@
+<% const activePage = 'operacional'; const pageTitle = 'Operacional · Cadastros'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+  .cad-shell { padding: 16px 20px 40px; max-width: 1400px; margin: 0 auto; }
+  .cad-h { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+  .cad-h h1 { margin: 0; font-size: 20px; color: var(--text); }
+  .cad-h .sub { color: var(--text-muted); font-size: 12px; }
+  .cad-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .cad-tab { padding: 10px 16px; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; font-size: 13px; font-weight: 600; }
+  .cad-tab.active { color: var(--text); border-bottom-color: #a371f7; }
+  .cad-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .cad-section h2 { font-size: 14px; color: var(--text); margin: 0 0 14px; text-transform: uppercase; letter-spacing: .4px; display: flex; justify-content: space-between; align-items: center; }
+  .cad-info { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5; }
+  .cad-info code { background: var(--bg); padding: 1px 6px; border-radius: 4px; color: var(--warning); font-size: 11px; }
+  table.cad-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+  table.cad-table th { text-align: left; padding: 10px 12px; background: var(--bg); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--border); }
+  table.cad-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+  table.cad-table tr:hover td { background: rgba(163, 113, 247, .05); }
+  table.cad-table input { width: 100%; padding: 6px 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; font-family: inherit; }
+  table.cad-table input:focus { outline: none; border-color: #a371f7; }
+  table.cad-table input.dirty { border-color: #fbbf24; background: rgba(234, 179, 8, .05); }
+  table.cad-table input.saved { border-color: #25D366; }
+  table.cad-table input.error { border-color: #ef4444; }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 700; }
+  .b-on  { background: rgba(34,197,94,.15); color: #4ade80; }
+  .b-off { background: rgba(148,163,184,.15); color: #94a3b8; }
+  .btn { padding: 8px 14px; border-radius: 6px; border: 1px solid; font-size: 12px; font-weight: 700; cursor: pointer; background: transparent; }
+  .btn-pri { background: #a371f7; color:#fff; border-color: #a371f7; }
+  .btn-sec { color: #93c5fd; border-color: #1f6feb; }
+  .btn-tiny { padding: 5px 10px; font-size: 11px; }
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--bg-card); border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; color: var(--text); font-size: 13px; z-index: 9999; }
+  .toast.success { border-color: #25D366; }
+  .toast.error { border-color: #ef4444; }
+  .pad { display: none; }
+  .pad.active { display: block; }
+</style>
+
+<div class="cad-shell">
+  <div class="cad-h">
+    <div>
+      <h1>⚙ Cadastros · Operacional</h1>
+      <div class="sub">Configurações que alimentam o GIR + Auditoria de Campo</div>
+    </div>
+    <a href="/operacional" class="btn btn-sec">← Voltar pro Painel</a>
+  </div>
+
+  <div class="cad-tabs" id="tabs">
+    <div class="cad-tab active" data-pad="techs">👷 Técnicos</div>
+    <div class="cad-tab" data-pad="vehicles">🚗 Veículos</div>
+    <div class="cad-tab" data-pad="services">🔧 Tipos de Serviço</div>
+    <div class="cad-tab" data-pad="fuel">⛽ Combustível</div>
+  </div>
+
+  <!-- TÉCNICOS -->
+  <div id="pad-techs" class="pad active">
+    <div class="cad-section">
+      <h2>👷 Técnicos <span style="font-size:11px;color:var(--text-muted);text-transform:none;letter-spacing:0">edite o telefone no formato WATI e clique fora</span></h2>
+      <div class="cad-info">
+        Telefone deve estar no formato WhatsApp internacional sem espaços, sinais ou parênteses — ex: <code>5512991234567</code>.
+        Se tiver máscara <code>(12) 99123-4567</code>, eu normalizo.
+        Os 6 técnicos abaixo já vieram do AUVO — só falta popular o telefone manualmente (AUVO devolveu vazio).
+      </div>
+      <table class="cad-table">
+        <thead>
+          <tr>
+            <th style="width:48px">ID</th>
+            <th style="min-width:160px">Nome</th>
+            <th style="min-width:200px">Telefone WATI</th>
+            <th>Cidade base</th>
+            <th style="width:90px">Capacidade/dia</th>
+            <th style="width:90px">Status</th>
+          </tr>
+        </thead>
+        <tbody id="techs-body"><tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- VEÍCULOS -->
+  <div id="pad-vehicles" class="pad">
+    <div class="cad-section">
+      <h2>🚗 Veículos <button class="btn btn-pri btn-tiny" onclick="newVehicle()">+ Adicionar veículo</button></h2>
+      <div class="cad-info">
+        Liga cada técnico a uma placa, modelo, tipo de combustível e consumo médio (km/L).
+        Auditoria de KM usa esses dados pra calcular custo real vs previsto.
+      </div>
+      <table class="cad-table" id="vehicles-table">
+        <thead>
+          <tr>
+            <th>Placa</th>
+            <th>Modelo</th>
+            <th>Ano</th>
+            <th>Técnico</th>
+            <th>Combustível</th>
+            <th>Consumo (km/L)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="vehicles-body"><tr><td colspan="7" style="text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TIPOS DE SERVIÇO -->
+  <div id="pad-services" class="pad">
+    <div class="cad-section">
+      <h2>🔧 Tipos de Serviço</h2>
+      <div class="cad-info">
+        Tempo padrão e tolerância de cada tipo. Auditoria de tempo compara contra esses números.
+        Edite inline · clique fora pra salvar · "+ Novo Tipo" cria do zero.
+      </div>
+      <div style="margin-bottom:8px"><button class="btn btn-pri btn-tiny" onclick="newServiceType()">+ Novo Tipo</button></div>
+      <table class="cad-table">
+        <thead>
+          <tr>
+            <th style="width:160px">Code</th>
+            <th>Nome</th>
+            <th style="width:120px">Fila</th>
+            <th style="width:110px">Padrão (min)</th>
+            <th style="width:110px">Tolerância (min)</th>
+            <th style="width:90px">KM esp.</th>
+            <th style="width:110px">Custo op.</th>
+            <th style="width:70px">Ativo</th>
+          </tr>
+        </thead>
+        <tbody id="services-body"><tr><td colspan="8" style="text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- COMBUSTÍVEL -->
+  <div id="pad-fuel" class="pad">
+    <div class="cad-section">
+      <h2>⛽ Preços de Combustível <button class="btn btn-pri btn-tiny" onclick="newFuelPrice()">+ Atualizar preço</button></h2>
+      <div class="cad-info">
+        Preço base usado na auditoria de KM (custo = (km / consumo_km_l) × preço_litro).
+        Cadastrar novo registro quando mudar; o mais recente é usado.
+      </div>
+      <table class="cad-table">
+        <thead>
+          <tr>
+            <th>Combustível</th>
+            <th>Preço/L</th>
+            <th>Região</th>
+            <th>Vigente desde</th>
+            <th>Notas</th>
+          </tr>
+        </thead>
+        <tbody id="fuel-body"><tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+function toast(msg, kind='success') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+async function api(path, opts={}) {
+  const r = await fetch(path, {
+    method: opts.method || 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`${r.status} — ${t.substring(0,200)}`);
+  }
+  return r.json();
+}
+
+// Normaliza phone para formato WATI (só dígitos, com 55 BR se vier com 10/11)
+function normalizePhone(s) {
+  const digits = (s||'').replace(/\D+/g, '');
+  if (digits.length === 10 || digits.length === 11) return '55' + digits;
+  return digits;
+}
+
+// ===== Técnicos =====
+async function loadTechs() {
+  try {
+    const techs = await api('/operacional/api/technicians?active=true');
+    const body = document.getElementById('techs-body');
+    if (!techs.length) {
+      body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666">Nenhum técnico</td></tr>';
+      return;
+    }
+    body.innerHTML = techs.map(t => `
+      <tr data-tech-id="${t.id}">
+        <td style="color:#666">${t.id}</td>
+        <td><b>${t.name}</b><div style="font-size:10px;color:#888">AUVO ${t.auvo_user_id}</div></td>
+        <td><input type="tel" class="phone" data-orig="${t.phone||''}" value="${t.phone||''}" placeholder="5512999999999"></td>
+        <td><input type="text" class="city" data-orig="${t.base_city||''}" value="${t.base_city||''}" placeholder="São José dos Campos"></td>
+        <td><input type="number" class="capacity" data-orig="${t.daily_capacity}" value="${t.daily_capacity}" min="1" max="20"></td>
+        <td><span class="badge ${t.active ? 'b-on' : 'b-off'}">${t.active ? 'ativo' : 'inativo'}</span></td>
+      </tr>
+    `).join('');
+
+    body.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        inp.classList.toggle('dirty', inp.value !== inp.dataset.orig);
+        inp.classList.remove('saved', 'error');
+      });
+      inp.addEventListener('blur', () => saveTechField(inp));
+    });
+  } catch (e) {
+    document.getElementById('techs-body').innerHTML = `<tr><td colspan="6" style="color:#f87171">${e.message}</td></tr>`;
+  }
+}
+
+async function saveTechField(input) {
+  if (input.value === input.dataset.orig) return;
+  const tr = input.closest('tr');
+  const techId = tr.dataset.techId;
+  const cls = input.classList;
+  const payload = {};
+  if (cls.contains('phone')) {
+    const norm = normalizePhone(input.value);
+    if (norm && norm.length < 12) {
+      input.classList.add('error');
+      toast('Telefone deve ter DDI+DDD+número. Ex: 5512999999999', 'error');
+      return;
+    }
+    payload.phone = norm || null;
+    input.value = norm; // mostra normalizado
+  } else if (cls.contains('city')) {
+    payload.base_city = input.value || null;
+  } else if (cls.contains('capacity')) {
+    payload.daily_capacity = parseInt(input.value, 10) || 8;
+  }
+
+  try {
+    await api(`/operacional/api/technicians/${techId}`, { method: 'PATCH', body: payload });
+    input.dataset.orig = input.value;
+    input.classList.remove('dirty', 'error');
+    input.classList.add('saved');
+    setTimeout(() => input.classList.remove('saved'), 1500);
+    toast(`Técnico ${techId} atualizado ✓`);
+  } catch (e) {
+    input.classList.add('error');
+    toast(e.message, 'error');
+  }
+}
+
+// ===== Veículos =====
+let _techsCache = null;
+async function _getTechs() {
+  if (_techsCache) return _techsCache;
+  _techsCache = await api('/operacional/api/technicians?active=true');
+  return _techsCache;
+}
+
+async function loadVehicles() {
+  try {
+    const [list, techs] = await Promise.all([
+      api('/operacional/api/vehicles'),
+      _getTechs(),
+    ]);
+    const body = document.getElementById('vehicles-body');
+    if (!list.length) {
+      body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#666">Nenhum veículo cadastrado · clique em "+ Adicionar veículo"</td></tr>';
+      return;
+    }
+    body.innerHTML = list.map(v => {
+      const opts = `<option value="">— sem técnico —</option>` + techs.map(t =>
+        `<option value="${t.id}" ${t.id === v.technician_id ? 'selected' : ''}>${t.name}</option>`
+      ).join('');
+      return `
+        <tr data-vehicle-id="${v.id}">
+          <td><b>${v.plate}</b></td>
+          <td>${v.model || '—'}</td>
+          <td>${v.year || '—'}</td>
+          <td><select class="vh-tech" data-orig="${v.technician_id || ''}">${opts}</select></td>
+          <td><select class="vh-fuel" data-orig="${v.fuel_type || ''}">
+            <option value="">—</option>
+            <option ${v.fuel_type === 'gasolina' ? 'selected' : ''}>gasolina</option>
+            <option ${v.fuel_type === 'etanol' ? 'selected' : ''}>etanol</option>
+            <option ${v.fuel_type === 'diesel' ? 'selected' : ''}>diesel</option>
+            <option ${v.fuel_type === 'flex' ? 'selected' : ''}>flex</option>
+          </select></td>
+          <td><input type="number" class="vh-cons" step="0.1" data-orig="${v.avg_consumption_km_l}" value="${v.avg_consumption_km_l}" min="3" max="50" style="width:70px"></td>
+          <td><span class="badge ${v.active ? 'b-on' : 'b-off'}">${v.active ? 'ativo' : 'inativo'}</span></td>
+        </tr>
+      `;
+    }).join('');
+
+    // Wire change events
+    body.querySelectorAll('select, input').forEach(el => {
+      el.addEventListener('change', () => saveVehicle(el));
+      el.addEventListener('blur', () => saveVehicle(el));
+    });
+  } catch (e) {
+    document.getElementById('vehicles-body').innerHTML = `<tr><td colspan="7" style="color:#f87171">${e.message}</td></tr>`;
+  }
+}
+
+async function saveVehicle(el) {
+  const tr = el.closest('tr');
+  const vehId = tr.dataset.vehicleId;
+  const tech = tr.querySelector('.vh-tech');
+  const fuel = tr.querySelector('.vh-fuel');
+  const cons = tr.querySelector('.vh-cons');
+  // Build payload (PUT replaces, so we send all fields)
+  const allVeh = await api('/operacional/api/vehicles');
+  const v = allVeh.find(x => String(x.id) === String(vehId));
+  if (!v) return;
+  const payload = {
+    plate: v.plate,
+    model: v.model,
+    year: v.year,
+    technician_id: tech.value ? parseInt(tech.value, 10) : null,
+    fuel_type: fuel.value || null,
+    avg_consumption_km_l: parseFloat(cons.value) || 10,
+    active: v.active,
+    notes: v.notes,
+  };
+  try {
+    await api(`/operacional/api/vehicles/${vehId}`, { method: 'PUT', body: payload });
+    el.style.borderColor = '#25D366';
+    setTimeout(() => { el.style.borderColor = ''; }, 1500);
+    toast('Veículo atualizado ✓');
+  } catch (e) {
+    el.style.borderColor = '#ef4444';
+    toast(e.message, 'error');
+  }
+}
+
+async function newVehicle() {
+  const plate = (prompt('Placa (ex: ABC1D23):') || '').toUpperCase().trim();
+  if (!plate) return;
+  const model = prompt('Modelo (opcional):') || null;
+  const fuel_type = prompt('Combustível (gasolina | etanol | diesel | flex):') || 'gasolina';
+  const consumo = parseFloat(prompt('Consumo médio km/L:', '10') || '10');
+  try {
+    await api('/operacional/api/vehicles', {
+      method: 'POST',
+      body: { plate, model, fuel_type, avg_consumption_km_l: consumo, active: true }
+    });
+    toast('Veículo cadastrado ✓');
+    loadVehicles();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ===== Tipos de Serviço =====
+let _stCache = [];
+
+async function loadServices() {
+  try {
+    const list = await api('/operacional/api/service-types');
+    _stCache = list;
+    const body = document.getElementById('services-body');
+    body.innerHTML = list.map(s => {
+      const queues = ['tecnica','bebedouro','manutencao','envio','retirada'];
+      const opts = queues.map(q => `<option ${s.queue===q?'selected':''}>${q}</option>`).join('');
+      return `
+        <tr data-st-id="${s.id}">
+          <td style="font-family:monospace;font-size:11px;color:#aaa">${s.code}</td>
+          <td><input class="st-name" data-orig="${s.name}" value="${s.name}" style="width:100%"></td>
+          <td><select class="st-queue" data-orig="${s.queue}">${opts}</select></td>
+          <td><input class="st-std" type="number" min="5" max="600" data-orig="${s.standard_minutes}" value="${s.standard_minutes}"></td>
+          <td><input class="st-tol" type="number" min="0" max="180" data-orig="${s.tolerance_minutes}" value="${s.tolerance_minutes}"></td>
+          <td><input class="st-km" type="number" step="0.5" data-orig="${s.expected_km || ''}" value="${s.expected_km || ''}" placeholder="—"></td>
+          <td><input class="st-cost" type="number" step="0.01" data-orig="${s.operational_cost || ''}" value="${s.operational_cost || ''}" placeholder="—"></td>
+          <td><input class="st-active" type="checkbox" ${s.active?'checked':''}></td>
+        </tr>
+      `;
+    }).join('');
+
+    body.querySelectorAll('input,select').forEach(el => {
+      el.addEventListener('change', () => saveServiceType(el));
+      if (el.tagName === 'INPUT' && el.type !== 'checkbox') {
+        el.addEventListener('blur', () => saveServiceType(el));
+      }
+    });
+  } catch (e) {
+    document.getElementById('services-body').innerHTML = `<tr><td colspan="8" style="color:#f87171">${e.message}</td></tr>`;
+  }
+}
+
+async function saveServiceType(el) {
+  const tr = el.closest('tr');
+  const stId = tr.dataset.stId;
+  const original = _stCache.find(x => String(x.id) === String(stId));
+  if (!original) return;
+  const payload = {
+    code: original.code,
+    name: tr.querySelector('.st-name').value.trim() || original.name,
+    queue: tr.querySelector('.st-queue').value,
+    standard_minutes: parseInt(tr.querySelector('.st-std').value, 10) || original.standard_minutes,
+    tolerance_minutes: parseInt(tr.querySelector('.st-tol').value, 10) || 0,
+    expected_km: parseFloat(tr.querySelector('.st-km').value) || null,
+    operational_cost: parseFloat(tr.querySelector('.st-cost').value) || null,
+    active: tr.querySelector('.st-active').checked,
+    auvo_task_type_id: original.auvo_task_type_id,
+    required_materials: original.required_materials,
+  };
+  try {
+    await api(`/operacional/api/service-types/${stId}`, { method: 'PUT', body: payload });
+    el.style.borderColor = '#25D366';
+    setTimeout(() => { el.style.borderColor = ''; }, 1500);
+    toast('Tipo de serviço salvo ✓');
+    Object.assign(original, payload);
+  } catch (e) {
+    el.style.borderColor = '#ef4444';
+    toast(e.message, 'error');
+  }
+}
+
+async function newServiceType() {
+  const name = prompt('Nome do tipo de serviço (ex: "Instalação Filtro Industrial"):');
+  if (!name || !name.trim()) return;
+  const code = prompt('Código curto (slug, ex: "inst_filtro_industrial"):',
+    name.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 60));
+  if (!code) return;
+  const queue = prompt('Fila (tecnica | bebedouro | manutencao | envio | retirada):', 'tecnica');
+  if (!queue) return;
+  const std = parseInt(prompt('Tempo padrão em minutos:', '60'), 10);
+  if (!std) return;
+  const tol = parseInt(prompt('Tolerância em minutos:', '20'), 10) || 0;
+  try {
+    await api('/operacional/api/service-types', {
+      method: 'POST',
+      body: { code: code.trim(), name: name.trim(), queue: queue.trim(),
+              standard_minutes: std, tolerance_minutes: tol, active: true }
+    });
+    toast('Tipo de serviço criado ✓');
+    loadServices();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+// ===== Combustível =====
+async function loadFuel() {
+  try {
+    const list = await api('/operacional/api/fuel-prices');
+    const body = document.getElementById('fuel-body');
+    body.innerHTML = list.map(p => `
+      <tr>
+        <td><b>${p.fuel_type}</b></td>
+        <td>R$ ${parseFloat(p.price_per_liter).toFixed(3)}</td>
+        <td>${p.region}</td>
+        <td>${p.effective_from || '—'}</td>
+        <td style="color:#888;font-size:11px">${p.notes || ''}</td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    document.getElementById('fuel-body').innerHTML = `<tr><td colspan="5" style="color:#f87171">${e.message}</td></tr>`;
+  }
+}
+
+async function newFuelPrice() {
+  const fuel = prompt('Combustível (gasolina | etanol | diesel):');
+  if (!fuel) return;
+  const price = parseFloat(prompt(`Preço atual de ${fuel} por litro:`, '6.29') || '0');
+  if (!price) return;
+  try {
+    await api('/operacional/api/fuel-prices', {
+      method: 'POST',
+      body: { fuel_type: fuel, price_per_liter: price, region: 'default' }
+    });
+    toast('Preço atualizado ✓');
+    loadFuel();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ===== Tabs =====
+document.getElementById('tabs').addEventListener('click', (e) => {
+  if (!e.target.dataset.pad) return;
+  const pad = e.target.dataset.pad;
+  document.querySelectorAll('.cad-tab').forEach(t => t.classList.toggle('active', t.dataset.pad === pad));
+  document.querySelectorAll('.pad').forEach(p => p.classList.toggle('active', p.id === `pad-${pad}`));
+});
+
+// INIT
+loadTechs();
+loadVehicles();
+loadServices();
+loadFuel();
+</script>

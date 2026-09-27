@@ -1,0 +1,1075 @@
+<% const activePage = 'admin-score-leads'; const pageTitle = 'Score de Leads — Cadência por Tier × Produto'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.lsc-wrap{max-width:1500px;margin:0 auto;padding:24px;color:var(--text)}
+.lsc-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #a371f7;border-radius:12px;padding:18px;margin-bottom:14px}
+.lsc-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.lsc-tab{background:transparent;color:#9ca3af;border:none;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;text-decoration:none}
+.lsc-tab.active{color:#c084fc;border-bottom-color:#a371f7}
+.lsc-toolbar{display:flex;gap:10px;align-items:center;background:#161725;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;flex-wrap:wrap}
+.lsc-toolbar label{color:#9ca3af;font-size:11px;font-weight:700;text-transform:uppercase}
+.lsc-toolbar select{background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:7px 12px;font-size:13px;font-weight:600}
+.lsc-toolbar .badge{display:inline-block;background:rgba(167,113,247,.15);color:#c084fc;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase}
+.lsc-toolbar .badge.live{background:rgba(16,185,129,.15);color:#10b981}
+.lsc-card{background:#161725;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px}
+.lsc-card.t-DIAMANTE{border-left:5px solid #06b6d4;background:linear-gradient(90deg,rgba(6,182,212,.05),#161725 30%)}
+.lsc-card.t-OURO{border-left:5px solid #fbbf24;background:linear-gradient(90deg,rgba(251,191,36,.05),#161725 30%)}
+.lsc-card.t-PRATA{border-left:5px solid #94a3b8;background:linear-gradient(90deg,rgba(148,163,184,.05),#161725 30%)}
+.lsc-card.t-BRONZE{border-left:5px solid #b45309;background:linear-gradient(90deg,rgba(180,83,9,.05),#161725 30%)}
+.lsc-card.t-PEDRA{border-left:5px solid #4b5563;background:linear-gradient(90deg,rgba(75,85,99,.05),#161725 30%)}
+.lsc-card.fallback{opacity:.78}
+.lsc-head{display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.lsc-head .icon{font-size:36px}
+.lsc-head .name{font-size:18px;font-weight:800;color:var(--text)}
+.lsc-head .name small{color:#9ca3af;font-size:11px;font-weight:500;display:block;margin-top:2px}
+.lsc-head .pill{display:inline-block;padding:3px 9px;border-radius:5px;font-size:10px;font-weight:700;text-transform:uppercase}
+.lsc-head .pill.fb{background:rgba(245,158,11,.15);color:#fbbf24}
+.lsc-head .pill.sp{background:rgba(167,113,247,.18);color:#c084fc}
+.lsc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+.lsc-field{background:#0a0a0f;border:1px solid var(--border);border-radius:6px;padding:8px 10px}
+.lsc-field label{display:block;color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:3px}
+.lsc-field input, .lsc-field select{width:100%;background:transparent;border:none;color:var(--text);font-size:14px;font-weight:700;outline:none}
+.lsc-steps{margin-top:6px}
+.lsc-day-header{font-size:11px;color:#c084fc;font-weight:800;margin:10px 0 4px;padding:4px 8px;background:#1a0e2a;border-radius:4px;display:inline-block}
+.lsc-step{display:grid;grid-template-columns:36px 90px 70px 110px 1fr 80px 50px 50px 36px;gap:6px;align-items:center;background:#0a0a0f;border:1px solid var(--border);border-radius:5px;padding:6px;margin-bottom:4px}
+.lsc-step .idx{color:#a371f7;font-weight:800;font-family:monospace;text-align:center}
+.lsc-step select, .lsc-step input{background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:5px 7px;font-size:11px;width:100%;box-sizing:border-box}
+.lsc-step input.day{text-align:center;color:#fbbf24;font-weight:700}
+.lsc-step input.time{text-align:center;font-family:monospace}
+.lsc-step .rem{text-align:center}
+.lsc-step .rem input[type=checkbox]{width:18px;height:18px;cursor:pointer}
+.lsc-btn{background:#a371f7;color:#fff;border:none;border-radius:5px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer}
+.lsc-btn.s{background:#10b981;color:#000}
+.lsc-btn.d{background:#ef4444}
+.lsc-btn.g{background:#374151;color:#fff}
+.lsc-btn:disabled{opacity:.5;cursor:wait}
+.lsc-notes{background:#0a0a0f;border:1px solid var(--border);border-radius:5px;padding:7px 10px;color:#c084fc;font-size:11px;font-style:italic;margin-bottom:8px}
+.lsc-pool{background:#0a0a0f;border:1px solid var(--border);border-radius:5px;padding:8px 10px;margin-bottom:8px}
+.lsc-pool .h{color:#c084fc;font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.lsc-pool .chips{display:flex;flex-wrap:wrap;gap:4px}
+.lsc-pool .chip{background:#161725;border:1px solid var(--border);border-radius:14px;padding:3px 8px 3px 9px;font-size:11px;color:#9ca3af;cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px}
+.lsc-pool .chip:hover{border-color:#a371f7}
+.lsc-pool .chip.active{background:rgba(167,113,247,.2);color:var(--text);border-color:#a371f7}
+.lsc-pool .chip.cant{opacity:.4;cursor:not-allowed}
+.lsc-pool .chip small{color:#6b7280;font-size:9px}
+.lsc-pool .chip .wbox{display:flex;align-items:center;gap:3px;background:rgba(0,0,0,.3);border-radius:10px;padding:1px 4px;margin-left:2px}
+.lsc-pool .chip .wbtn{background:transparent;border:none;color:#a371f7;font-weight:700;cursor:pointer;padding:0 2px;font-size:12px;line-height:1}
+.lsc-pool .chip .wbtn:hover{color:var(--text)}
+.lsc-pool .chip .wnum{font-family:monospace;font-weight:800;color:#fbbf24;min-width:14px;text-align:center;font-size:11px}
+.lsc-toolbar2{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap}
+.lsc-toolbar2 .runs{font-size:11px;color:#9ca3af}
+.lsc-runs-tbl{width:100%;margin-top:14px;border-collapse:collapse;font-size:11px;background:#161725;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.lsc-runs-tbl th{background:#1a0e2a;color:#c084fc;padding:7px 10px;text-align:left;text-transform:uppercase;font-size:10px}
+.lsc-runs-tbl td{padding:6px 10px;border-bottom:1px solid #1a1a2a}
+.lsc-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;margin-bottom:10px;padding:8px 10px;background:#0a0a0f;border:1px dashed var(--border);border-radius:5px}
+.lsc-summary div{font-size:11px;color:#9ca3af;text-align:center}
+.lsc-summary div strong{display:block;font-size:18px;color:var(--text);font-weight:800}
+.lsc-step-col-header{display:grid;grid-template-columns:36px 90px 70px 110px 1fr 80px 50px 50px 36px;gap:6px;font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;padding:0 6px;margin-bottom:3px}
+.lsc-step-summary{display:grid;grid-template-columns:28px 36px 90px 90px 110px 1fr 80px 40px 40px 80px;gap:6px;align-items:center;background:#0a0a0f;border:1px solid var(--border);border-radius:5px;padding:8px;margin-bottom:4px;cursor:pointer;transition:background .15s,border-color .15s}
+.lsc-step-summary:hover{background:#1a1a2a;border-color:#a371f7}
+.lsc-step-summary.dragging{opacity:.4;border-style:dashed}
+.lsc-step-summary.drag-over-top{border-top:3px solid #10b981}
+.lsc-step-summary.drag-over-bottom{border-bottom:3px solid #10b981}
+.lsc-step-summary .drag-handle{cursor:grab;color:#9ca3af;font-size:14px;text-align:center;user-select:none}
+.lsc-step-summary .drag-handle:hover{color:#a371f7}
+.lsc-step-summary .drag-handle:active{cursor:grabbing}
+.lsc-step-summary .idx{color:#a371f7;font-weight:800;text-align:center;font-family:monospace}
+.lsc-step-summary .when{color:#fbbf24;font-weight:700;font-size:11px}
+.lsc-step-summary .abs{color:#9ca3af;font-size:10px}
+.lsc-step-summary .ch{color:var(--text);font-weight:700;font-size:11px}
+.lsc-step-summary .lab{color:var(--text);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lsc-step-summary .pri{font-size:10px;text-align:center;font-weight:700}
+.lsc-step-summary .pri.High{color:#ef4444}
+.lsc-step-summary .pri.Normal{color:#fbbf24}
+.lsc-step-summary .pri.Low{color:#9ca3af}
+.lsc-step-summary .badge{font-size:10px;text-align:center}
+.lsc-step-summary .moveb{display:flex;gap:2px;justify-content:flex-end}
+.lsc-step-summary .moveb button{background:#374151;color:#fff;border:none;border-radius:3px;padding:2px 6px;cursor:pointer;font-size:10px}
+.lsc-step-summary .moveb button:hover{background:#a371f7}
+.lsc-step-summary .moveb button.d{background:#ef4444}
+.lsc-step-summary-header{display:grid;grid-template-columns:28px 36px 90px 90px 110px 1fr 80px 40px 40px 80px;gap:6px;font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;padding:0 8px;margin-bottom:4px}
+
+.lsc-modal-back{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:none;align-items:center;justify-content:center}
+.lsc-modal-back.open{display:flex}
+.lsc-modal{background:#161725;border:2px solid #a371f7;border-radius:14px;padding:22px;max-width:680px;width:92vw;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.lsc-modal h3{color:#c084fc;margin:0 0 14px;font-size:18px}
+.lsc-modal label{display:block;color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;margin:10px 0 4px}
+.lsc-modal input, .lsc-modal select, .lsc-modal textarea{width:100%;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:6px;padding:8px 10px;font-size:13px;box-sizing:border-box}
+.lsc-modal textarea{min-height:60px;resize:vertical}
+.lsc-modal-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lsc-modal-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.lsc-modal-section{background:#0a0a0f;border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:10px}
+.lsc-modal-section .h{color:#c084fc;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:6px}
+.lsc-modal-radio{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.lsc-modal-radio label{display:flex;align-items:center;gap:5px;text-transform:none;color:#fff;font-size:12px;font-weight:600;cursor:pointer;background:#161725;padding:5px 10px;border:1px solid var(--border);border-radius:5px;margin:0}
+.lsc-modal-radio label:has(input:checked){border-color:#a371f7;background:rgba(167,113,247,.15)}
+.lsc-modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+</style>
+
+<div class="lsc-wrap">
+  <div class="lsc-header">
+    <h1 style="color:#c084fc;margin:0;font-size:20px">⏱️ Cadência por Tier × Produto</h1>
+    <p style="color:#9ca3af;font-size:12px;margin:8px 0 0;line-height:1.5">
+      Cadência por <strong>Tier × Produto × Layout × Funil × Etapa</strong> com <strong>fallback em cascata</strong>.
+      Cada passo agora é <strong>offset relativo ao início</strong> (+30min, +2h, +1d). Se cair fora do horário comercial
+      (Seg-Sex 09-18 / Sáb 09-13), <strong>pula pro próximo dia útil às 09:00</strong>. Atrasos automaticamente notificam
+      closer (Z-API) + gestor (Cliq) + viram <strong>nota no CRM como evidência</strong>.
+      Passos em <strong>D+N às HH:MM</strong>, intercalando dias livremente (D+0, D+3, D+7…).
+      Roteamento por canal:
+      <strong style="color:#10b981">📞 call</strong> = Chamada agendada (<code>Calls</code>);
+      <strong style="color:#06b6d4">💬 whatsapp / email</strong> = Task (<code>Tasks</code>);
+      <strong style="color:#f59e0b">⚠️ escalate</strong> = Task pro gestor;
+      <strong style="color:#9ca3af">⏸️ wait</strong> = só espera. 🔔 = <code>Reminder ALARM=POPUP</code>
+      trava a tela do owner. Cliente respondeu WhatsApp = cadência cancela. Handoff real: SDR aciona
+      Núbia outreach, Closer faz round-robin no time do produto.
+    </p>
+  </div>
+
+  <div class="lsc-tabs">
+    <a class="lsc-tab" href="/admin/score-leads">📋 Critérios</a>
+    <a class="lsc-tab" href="/admin/score-leads/distancia">📍 Distância & Cidades</a>
+    <a class="lsc-tab active" href="/admin/score-leads/cadencia">⏱️ Cadência por Tier</a>
+    <a class="lsc-tab" href="/admin/score-leads/atrasos">🚨 Atrasos</a>
+    <a class="lsc-tab" href="/admin/score-leads/teste">🧪 Testar Lead</a>
+    <a class="lsc-tab" href="/admin/score-leads/overrides">✋ Overrides Manuais</a>
+    <a class="lsc-tab" href="/admin/score-leads/auditoria">📜 Auditoria</a>
+  </div>
+
+  <div class="lsc-toolbar">
+    <label>Produto:</label>
+    <select id="lsc-product" onchange="lscLoad()">
+      <option value="">— (sem filtro)</option>
+      <option value="FILTRO_ENTRADA_AGUA_TRATADA">Filtro Entrada — Tratada</option>
+      <option value="FILTRO_ENTRADA_POCO">Filtro Entrada — Poço</option>
+      <option value="IRON_FREE">Iron Free</option>
+      <option value="SCALE_STOP">Scale Stop</option>
+      <option value="BEBEDOURO_INDUSTRIAL">Bebedouro Industrial</option>
+      <option value="PURIFICADOR">Purificador</option>
+      <option value="REFIL_MANUTENCAO">Refil/Manutenção</option>
+      <option value="PECAS_ACESSORIOS">Peças/Acessórios</option>
+      <option value="OUTROS">Outros</option>
+    </select>
+    <label>Layout:</label>
+    <select id="lsc-layout" onchange="lscLoad()">
+      <option value="">— (sem filtro)</option>
+      <option value="Telemarketing">Telemarketing</option>
+      <option value="Inside Sales">Inside Sales</option>
+    </select>
+    <label>Funil:</label>
+    <select id="lsc-pipeline" onchange="lscLoad()">
+      <option value="">— (sem filtro)</option>
+      <option value="Geral">Geral</option>
+      <option value="Funil água não tratada">Funil água não tratada</option>
+    </select>
+    <label>Etapa:</label>
+    <select id="lsc-stage" onchange="lscLoad()">
+      <option value="">— (sem filtro)</option>
+    </select>
+    <span id="lsc-product-info" class="badge">Carregando…</span>
+    <span style="flex:1"></span>
+    <button class="lsc-btn g" onclick="lscReseed()" title="Recria os 5 fallbacks default se nunca foram editados">🔄 Reseed fallbacks</button>
+  </div>
+
+  <div id="lsc-content"><div style="color:var(--text-muted);padding:30px;text-align:center">⏳ Carregando cadências...</div></div>
+
+  <!-- MODAL: adicionar/editar passo -->
+  <div class="lsc-modal-back" id="lsc-step-modal">
+    <div class="lsc-modal">
+      <h3 id="lsc-step-modal-title">➕ Novo passo da cadência</h3>
+      <input type="hidden" id="lsc-step-tier">
+      <input type="hidden" id="lsc-step-idx">
+
+      <label>Nome da tarefa (aparece no Subject do Zoho)</label>
+      <input type="text" id="lsc-step-label" placeholder="ex: 📞 Primeira ligação imediata">
+
+      <div class="lsc-modal-grid2">
+        <div>
+          <label>Canal / tipo de atividade</label>
+          <select id="lsc-step-channel">
+            <option value="call">📞 call — Chamada Agendada no Zoho</option>
+            <option value="whatsapp">💬 whatsapp — Task no Zoho</option>
+            <option value="email">📧 email — Task no Zoho</option>
+            <option value="wait">⏸️ wait — só espera (não cria nada)</option>
+            <option value="escalate">⚠️ escalate — Task pro gestor</option>
+          </select>
+        </div>
+        <div>
+          <label>Prioridade</label>
+          <select id="lsc-step-priority">
+            <option value="High">🔴 Alta</option>
+            <option value="Normal" selected>🟡 Normal</option>
+            <option value="Low">🟢 Baixa</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="lsc-modal-section">
+        <div class="h">⏰ Quando esta tarefa deve ser criada?</div>
+        <div class="lsc-modal-radio">
+          <label><input type="radio" name="lsc-when" value="offset" checked onchange="lscWhenSwitch()"> Por prazo (offset desde o lead chegar)</label>
+          <label><input type="radio" name="lsc-when" value="fixed" onchange="lscWhenSwitch()"> Horário fixo (D+N às HH:MM)</label>
+        </div>
+        <div id="lsc-when-offset" style="margin-top:10px">
+          <div class="lsc-modal-grid2">
+            <div><label>Quantidade</label><input type="number" id="lsc-step-off-value" min="0" step="1" value="30"></div>
+            <div><label>Unidade</label>
+              <select id="lsc-step-off-unit">
+                <option value="min">minutos</option>
+                <option value="h">horas</option>
+                <option value="d">dias</option>
+              </select>
+            </div>
+          </div>
+          <p style="color:#9ca3af;font-size:10px;margin:6px 0 0">Exemplo: 30min = primeira ação 30min depois do lead entrar. 1d = no dia seguinte.</p>
+        </div>
+        <div id="lsc-when-fixed" style="display:none;margin-top:10px">
+          <div class="lsc-modal-grid2">
+            <div><label>D+ qual dia?</label><input type="number" id="lsc-step-day" min="0" value="0"></div>
+            <div><label>Horário</label><input type="text" id="lsc-step-time" placeholder="09:00" value="09:00"></div>
+          </div>
+          <p style="color:#9ca3af;font-size:10px;margin:6px 0 0">D+0 = mesmo dia. Horário em formato HH:MM (BRT).</p>
+        </div>
+      </div>
+
+      <div class="lsc-modal-grid3" id="lsc-step-extras">
+        <div>
+          <label>Duração estimada</label>
+          <input type="number" id="lsc-step-duration" min="0" value="15" title="Em minutos. Só usado pra calls."> <small style="color:#9ca3af;font-size:10px">min (só call)</small>
+        </div>
+        <div>
+          <label style="display:flex;align-items:center;gap:6px;text-transform:none;color:var(--text);font-size:12px;margin-top:18px">
+            <input type="checkbox" id="lsc-step-remind" checked> 🔔 Popup Zoho na hora
+          </label>
+        </div>
+        <div>
+          <label style="display:flex;align-items:center;gap:6px;text-transform:none;color:var(--text);font-size:12px;margin-top:18px">
+            <input type="checkbox" id="lsc-step-bh" checked> 🕐 Só horário comercial
+          </label>
+        </div>
+      </div>
+
+      <label>Descrição interna (opcional — aparece em Description da task)</label>
+      <textarea id="lsc-step-desc" placeholder="instruções pra quem vai executar… ex: 'mencionar promoção de Maio'"></textarea>
+
+      <div class="lsc-modal-foot">
+        <button class="lsc-btn g" onclick="lscCloseStepModal()">Cancelar</button>
+        <button class="lsc-btn s" onclick="lscSaveStepModal()">💾 Adicionar passo</button>
+      </div>
+    </div>
+  </div>
+
+  <h2 style="color:#c084fc;font-size:14px;margin:22px 0 8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    🏃 Cadências em execução
+    <button class="lsc-btn g" onclick="lscLoadRuns()">🔄</button>
+    <button class="lsc-btn" onclick="lscRunNow()">⚡ Forçar avanço cron agora</button>
+    <span style="flex:1"></span>
+    <span style="font-size:11px;color:#9ca3af" id="lsc-runs-count"></span>
+  </h2>
+  <div id="lsc-runs"></div>
+</div>
+
+<script>
+const TIER_ORDER = ['DIAMANTE','OURO','PRATA','BRONZE','PEDRA'];
+const TIER_ICONS = { DIAMANTE:'💎', OURO:'🥇', PRATA:'🥈', BRONZE:'🥉', PEDRA:'🪨' };
+const CHANNELS = ['call','whatsapp','email','wait','escalate'];
+
+// Mapa de etapas por funil — replica os funis do Zoho TDF.
+// Quando o usuário escolhe um funil, o select Stage repopula só com as etapas daquele funil.
+const PIPELINE_STAGES = {
+  'Geral': [
+    'Leads Novos', 'IA sem Contato', 'Etapa IA',
+    'Primeiro Contato', 'Em Qualificação', 'Qualificado',
+    'Proposta', 'Proposta Quente', 'Proposta Fria',
+    'Em Atendimento', 'Fechado – Ganhou', 'Fechado Perdido',
+  ],
+  'Funil água não tratada': [
+    'Leads Novos', 'Etapa IA',
+    'Primeiro Contato', 'Em Qualificação', 'Analise ou vazão',
+    'Qualificado', 'Proposta', 'Proposta Quente', 'Proposta Fria',
+    'Em Atendimento', 'Fechado Ganho', 'Fechado Perdido',
+  ],
+};
+// Lista completa (todos stages únicos) — usada quando nenhum funil é selecionado
+const ALL_STAGES = [...new Set(Object.values(PIPELINE_STAGES).flat())];
+
+let _LSC_DATA = [];
+let _LSC_PRODUCT = '';
+let _LSC_LAYOUT = '';
+let _LSC_PIPELINE = '';
+let _LSC_STAGE = '';
+let _LSC_CLOSERS = [];           // lista de closers ativos
+const _LSC_POOL_BUFFER = {};     // tier → array de usernames selecionados
+
+// Mapa product_type → chave de permissão (espelho do owner-validator)
+const PRODUCT_TO_PERM_UI = {
+  FILTRO_ENTRADA_AGUA_TRATADA: 'filtro_entrada',
+  FILTRO_ENTRADA_POCO: 'poco',
+  IRON_FREE: 'iron_free',
+  SCALE_STOP: 'scale_stop',
+  BEBEDOURO_INDUSTRIAL: 'bebedouro',
+  PURIFICADOR: 'purificador',
+  REFIL_MANUTENCAO: 'refil',
+};
+
+function lscFiltersActive() {
+  return !!(_LSC_PRODUCT || _LSC_LAYOUT || _LSC_PIPELINE || _LSC_STAGE);
+}
+
+function lscFilterLabel() {
+  const p = [];
+  if (_LSC_PRODUCT) p.push('prod:'+_LSC_PRODUCT);
+  if (_LSC_LAYOUT) p.push('layout:'+_LSC_LAYOUT);
+  if (_LSC_PIPELINE) p.push('funil:'+_LSC_PIPELINE);
+  if (_LSC_STAGE) p.push('etapa:'+_LSC_STAGE);
+  return p.join(' · ') || 'Fallback puro (vale pra todos)';
+}
+
+function lscRefreshStagesSelect(){
+  const sel = document.getElementById('lsc-stage');
+  const currentValue = sel.value;
+  const pipeline = document.getElementById('lsc-pipeline').value;
+  const stages = pipeline && PIPELINE_STAGES[pipeline] ? PIPELINE_STAGES[pipeline] : ALL_STAGES;
+  const opts = ['<option value="">— (sem filtro)</option>'].concat(
+    stages.map(s => `<option value="${s}" ${s===currentValue?'selected':''}>${s}</option>`)
+  );
+  sel.innerHTML = opts.join('');
+  // Se o valor anterior não existe mais no novo pipeline, limpa
+  if (currentValue && !stages.includes(currentValue)) sel.value = '';
+}
+
+async function lscLoadClosers(){
+  if (_LSC_CLOSERS.length) return;
+  try {
+    const r = await fetch('/api/lead-score/closers').then(r=>r.json());
+    if (r.ok) _LSC_CLOSERS = r.items || [];
+  } catch(_){}
+}
+
+// Pool agora é array de {username, weight}. Mantém compat com strings legadas.
+function _normPool(arr){
+  return (arr||[]).map(p => typeof p === 'string' ? {username:p, weight:1} : {username:p.username, weight:Math.max(1, Number(p.weight)||1)});
+}
+
+function lscRenderPoolForTier(tier){
+  const card = _LSC_DATA.find(c => c.tier === tier);
+  if (!card) return;
+  const el = document.getElementById(`ls-pool-chips-${tier}`);
+  if (!el) return;
+  const productKey = card.product_type ? PRODUCT_TO_PERM_UI[card.product_type] : null;
+  const pool = _normPool(_LSC_POOL_BUFFER[tier]);
+  // Salva normalizado de volta
+  _LSC_POOL_BUFFER[tier] = pool;
+
+  const sumWeights = pool.reduce((a,b)=>a+b.weight, 0);
+  const proportionLabel = pool.length > 1
+    ? ` · proporção a cada ${sumWeights} leads: ${pool.map(p=>`${p.weight} pra ${p.username}`).join(', ')}`
+    : '';
+
+  const chips = _LSC_CLOSERS.map(c => {
+    const hasPerm = !productKey || (c.permissoes && c.permissoes[productKey]);
+    const entry = pool.find(p => p.username === c.username);
+    const isActive = !!entry;
+    const cls = (hasPerm ? '' : 'cant ') + (isActive ? 'active' : '');
+    const titleAdd = hasPerm
+      ? (isActive ? 'Clique pra remover do pool' : 'Clique pra adicionar ao pool')
+      : `${c.name} não tem permissão pra ${card.product_type} (team=${c.team})`;
+    const weightBox = isActive ? `
+      <span class="wbox" onclick="event.stopPropagation()">
+        <button class="wbtn" onclick="lscPoolWeight('${tier}','${c.username}',-1)" title="diminuir peso">−</button>
+        <span class="wnum">${entry.weight}</span>
+        <button class="wbtn" onclick="lscPoolWeight('${tier}','${c.username}',1)" title="aumentar peso">+</button>
+      </span>
+    ` : '';
+    return `<div class="chip ${cls}" title="${titleAdd}" onclick="${hasPerm?`lscTogglePool('${tier}','${c.username}')`:'event.stopPropagation()'}">
+      ${escapeHtml(c.name)} <small>${c.team}${hasPerm?'':' 🚫'}</small>${weightBox}
+    </div>`;
+  }).join('');
+  // header dinâmico
+  const headerEl = document.getElementById(`ls-pool-${tier}`)?.querySelector('.h');
+  if (headerEl && pool.length > 1) {
+    const baseLabel = headerEl.dataset._base || headerEl.innerHTML;
+    if (!headerEl.dataset._base) headerEl.dataset._base = baseLabel;
+    headerEl.innerHTML = baseLabel + `<div style="margin-top:4px;color:#fbbf24;font-size:10px">⚖️ A cada ${sumWeights} leads: ${pool.map(p => `<strong>${p.weight} pra ${p.username}</strong>`).join(', ')}</div>`;
+  } else if (headerEl && headerEl.dataset._base) {
+    headerEl.innerHTML = headerEl.dataset._base;
+  }
+  el.innerHTML = chips || '<small style="color:#9ca3af">Nenhum closer ativo</small>';
+}
+
+function lscTogglePool(tier, username){
+  if (!_LSC_POOL_BUFFER[tier]) _LSC_POOL_BUFFER[tier] = [];
+  const pool = _normPool(_LSC_POOL_BUFFER[tier]);
+  const idx = pool.findIndex(p => p.username === username);
+  if (idx >= 0) pool.splice(idx, 1);
+  else pool.push({ username, weight: 1 });
+  _LSC_POOL_BUFFER[tier] = pool;
+  lscRenderPoolForTier(tier);
+}
+
+function lscPoolWeight(tier, username, delta){
+  const pool = _normPool(_LSC_POOL_BUFFER[tier]);
+  const entry = pool.find(p => p.username === username);
+  if (!entry) return;
+  entry.weight = Math.max(1, entry.weight + delta);
+  _LSC_POOL_BUFFER[tier] = pool;
+  lscRenderPoolForTier(tier);
+}
+
+async function lscLoad(){
+  await lscLoadClosers();
+  lscRefreshStagesSelect();
+  _LSC_PRODUCT = document.getElementById('lsc-product').value;
+  _LSC_LAYOUT = document.getElementById('lsc-layout').value;
+  _LSC_PIPELINE = document.getElementById('lsc-pipeline').value;
+  _LSC_STAGE = document.getElementById('lsc-stage').value;
+  try {
+    const params = new URLSearchParams();
+    params.set('product', _LSC_PRODUCT || '');
+    params.set('layout', _LSC_LAYOUT || '');
+    params.set('pipeline', _LSC_PIPELINE || '');
+    params.set('stage', _LSC_STAGE || '');
+    const r = await fetch('/api/lead-score/cadences?' + params.toString()).then(r=>r.json());
+    if (!r.ok) throw new Error(r.error);
+    _LSC_DATA = r.items || [];
+    lscRender();
+    lscLoadRuns();
+    const lbl = lscFilterLabel();
+    document.getElementById('lsc-product-info').textContent = lscFiltersActive() ? `Específica: ${lbl}` : lbl;
+    document.getElementById('lsc-product-info').className = lscFiltersActive() ? 'badge live' : 'badge';
+  } catch(e){
+    document.getElementById('lsc-content').innerHTML = `<div style="color:#ef4444;padding:20px">${e.message}</div>`;
+  }
+}
+
+function lscRender(){
+  const byTier = {};
+  for (const c of _LSC_DATA) byTier[c.tier] = c;
+
+  // Carrega buffer dos steps + pool de cada cadência
+  for (const tier of TIER_ORDER) {
+    const cad = byTier[tier];
+    if (cad) {
+      const steps = Array.isArray(cad.steps_json) ? cad.steps_json
+                  : (typeof cad.steps_json === 'string' ? JSON.parse(cad.steps_json) : []);
+      _LSC_STEPS_BUFFER[tier] = steps.slice();
+      const pool = Array.isArray(cad.assignee_pool_json) ? cad.assignee_pool_json
+                 : (typeof cad.assignee_pool_json === 'string' ? JSON.parse(cad.assignee_pool_json) : []);
+      _LSC_POOL_BUFFER[tier] = pool || [];
+    } else {
+      _LSC_STEPS_BUFFER[tier] = [];
+      _LSC_POOL_BUFFER[tier] = [];
+    }
+  }
+
+  const html = TIER_ORDER.map(tier => {
+    const cad = byTier[tier];
+    if (cad) return lscCardHtml(cad);
+    return lscPlaceholderHtml(tier);
+  }).join('');
+  document.getElementById('lsc-content').innerHTML = html;
+  // Render steps + pool de cada cadência (depois que o DOM foi inserido)
+  setTimeout(() => {
+    for (const tier of TIER_ORDER) {
+      try { lscRerenderSteps(tier); } catch(_){}
+      try { lscRenderPoolForTier(tier); } catch(_){}
+    }
+  }, 0);
+}
+
+function lscPlaceholderHtml(tier){
+  if (!lscFiltersActive()) {
+    return `<div class="lsc-card t-${tier}"><div style="color:#ef4444">Fallback de ${tier} faltando — clique "Reseed fallbacks"</div></div>`;
+  }
+  const lbl = lscFilterLabel();
+  return `
+    <div class="lsc-card t-${tier} fallback">
+      <div class="lsc-head">
+        <span class="icon">${TIER_ICONS[tier]||'•'}</span>
+        <div class="name">${tier}<small>Usando regra mais genérica · sem cadência específica pra <code>${escapeHtml(lbl)}</code></small></div>
+        <span class="pill fb">FALLBACK</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button class="lsc-btn" onclick="lscCreateSpecific('${tier}')">➕ Criar cadência específica pra ${escapeHtml(lbl)}</button>
+        <span style="font-size:11px;color:#9ca3af;align-self:center">(engine procura em cascata: a mais específica que casa)</span>
+      </div>
+    </div>
+  `;
+}
+
+function lscCardHtml(c){
+  const tier = c.tier;
+  const steps = Array.isArray(c.steps_json) ? c.steps_json
+              : (typeof c.steps_json === 'string' ? JSON.parse(c.steps_json) : []);
+  const filters = [];
+  if (c.product_type) filters.push('prod:'+c.product_type);
+  if (c.layout) filters.push('layout:'+c.layout);
+  if (c.pipeline) filters.push('funil:'+c.pipeline);
+  if (c.stage) filters.push('etapa:'+c.stage);
+  const isSpecific = filters.length > 0;
+  const filtersLabel = filters.join(' · ') || 'fallback puro';
+  const totalCalls = steps.filter(s=>s.channel==='call').length;
+  const totalWa = steps.filter(s=>s.channel==='whatsapp').length;
+  // duração total = maior offset (em horas)
+  const maxOffset = Math.max(0, ...steps.map(s => Number(s.offset_minutes != null ? s.offset_minutes : ((s.day||0)*1440 + (s.hour||9)*60 + (s.minute||0)))));
+  const durLabel = maxOffset >= 1440 ? Math.round(maxOffset/1440)+'d' : maxOffset >= 60 ? Math.round(maxOffset/60)+'h' : maxOffset+'min';
+
+  return `
+    <div class="lsc-card t-${tier}">
+      <div class="lsc-head">
+        <span class="icon">${TIER_ICONS[tier]||'•'}</span>
+        <div class="name">${tier}<small>${isSpecific?'Específica · '+escapeHtml(filtersLabel):'Fallback genérico'} · ${steps.length} passos · duração ${durLabel} · ${c.is_active?'Ativo':'Inativo'}</small></div>
+        <span class="pill ${isSpecific?'sp':'fb'}">${isSpecific?'ESPECÍFICA':'FALLBACK'}</span>
+      </div>
+
+      <div class="lsc-summary">
+        <div><strong>${c.sla_first_call_minutes}min</strong>SLA 1ª ação</div>
+        <div onclick="lscOpenFarewellModal('${tier}')" style="cursor:pointer;border:1px dashed #a371f7;border-radius:6px" title="Clique pra configurar a tarefa de DESPEDIDA (última do funil)"><strong>${c.max_attempts}</strong>Máx tentativas <small style="color:#c084fc;font-size:9px;text-transform:none">🙏 clique</small></div>
+        <div><strong>${c.assignee_role}</strong>Quem atende</div>
+        <div><strong>${totalCalls}</strong>📞 Ligações</div>
+        <div><strong>${totalWa}</strong>💬 WhatsApp</div>
+        <div><strong>${c.remind_default?'SIM':'NÃO'}</strong>Popup default</div>
+      </div>
+
+      <div class="lsc-grid">
+        <div class="lsc-field">
+          <label>SLA primeira ação (min)</label>
+          <input type="number" id="ls-c-${tier}-sla" value="${c.sla_first_call_minutes}">
+        </div>
+        <div class="lsc-field">
+          <label>Máx tentativas</label>
+          <input type="number" id="ls-c-${tier}-max" value="${c.max_attempts}">
+        </div>
+        <div class="lsc-field" title="SDR=dispara nubiaOutreach 1x quando aplica · Closer=round-robin time produto · Both=ambos">
+          <label>Quem atende ⚡<small style="color:#10b981;font-weight:500;text-transform:none">handoff ativo</small></label>
+          <select id="ls-c-${tier}-role">
+            <option value="sdr" ${c.assignee_role==='sdr'?'selected':''}>🤖 SDR (Núbia outreach)</option>
+            <option value="closer" ${c.assignee_role==='closer'?'selected':''}>👤 Closer (round-robin)</option>
+            <option value="both" ${c.assignee_role==='both'?'selected':''}>🤝 SDR + Closer</option>
+            <option value="none" ${c.assignee_role==='none'?'selected':''}>⏸️ Só task/call (sem handoff)</option>
+          </select>
+        </div>
+        <div class="lsc-field">
+          <label>Popup default</label>
+          <select id="ls-c-${tier}-remind">
+            <option value="1" ${c.remind_default!==false?'selected':''}>Sim — trava tela</option>
+            <option value="0" ${c.remind_default===false?'selected':''}>Não — só task</option>
+          </select>
+        </div>
+        <div class="lsc-field">
+          <label>Status</label>
+          <select id="ls-c-${tier}-active">
+            <option value="1" ${c.is_active?'selected':''}>Ativo</option>
+            <option value="0" ${!c.is_active?'selected':''}>Inativo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="lsc-step-summary-header">
+        <span>⋮⋮</span><span>#</span><span>QUANDO</span><span>HORA REAL</span><span>CANAL</span><span>NOME DA TAREFA</span><span>PRIO</span><span>🔔</span><span>🕐</span><span>AÇÕES</span>
+      </div>
+      <div class="lsc-steps" id="ls-c-${tier}-steps"></div>
+
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
+        <button class="lsc-btn" onclick="lscOpenStepModal('${tier}', -1)" style="background:#10b981;color:#000">➕ Adicionar tarefa…</button>
+        <span style="color:#9ca3af;font-size:11px">|</span>
+        <span style="color:#9ca3af;font-size:11px">atalhos:</span>
+        <button class="lsc-btn g" onclick="lscAddPack3Calls('${tier}')" title="3 ligações no dia">📞 ×3 (2h/2h)</button>
+        <button class="lsc-btn g" onclick="lscAddPack5Days('${tier}')" title="5 dias com call+wpp">📆 5 dias</button>
+        <button class="lsc-btn g" onclick="lscOpenFarewellModal('${tier}')" title="Configura a tarefa de despedida (última)">🙏 Despedida</button>
+      </div>
+
+      ${c.assignee_role === 'closer' || c.assignee_role === 'both' ? `
+        <div class="lsc-pool" id="ls-pool-${tier}">
+          <div class="h">
+            👥 Closers que participam dessa cadência
+            <small style="color:#9ca3af;font-weight:500;text-transform:none">Clique nos chips pra (des)selecionar · vazio = qualquer closer com permissão pro produto</small>
+          </div>
+          <div class="chips" id="ls-pool-chips-${tier}">Carregando…</div>
+        </div>
+      ` : ''}
+
+      <div class="lsc-notes">📝 ${escapeHtml(c.notes||'sem notas')}</div>
+
+      <div class="lsc-toolbar2">
+        <div class="runs">D+0 = mesmo dia · D+1 = amanhã · HH:MM hora cheia em BRT · popup ativa Remind_At no Zoho</div>
+        <div style="display:flex;gap:6px">
+          ${isSpecific ? `<button class="lsc-btn d" onclick="lscDeleteSpecific(${c.id})">🗑️ Apagar (volta ao fallback)</button>` : ''}
+          <button class="lsc-btn s" onclick="lscSave('${tier}')">💾 Salvar ${tier}${isSpecific?' × '+c.product_type:''}</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Cada step vira uma linha resumida, clicável (abre modal pra editar).
+// Buttons de mover ↑↓ e remover ficam ao lado.
+function stepRowHtml(tier, idx, s, cadenceCfg){
+  let offsetMin = s.offset_minutes;
+  if (offsetMin == null && s.day != null) {
+    offsetMin = (Number(s.day)||0) * 1440 + (Number(s.hour)||9) * 60 + (Number(s.minute)||0);
+  }
+  if (offsetMin == null) offsetMin = 0;
+  let unit = 'min', value = offsetMin;
+  if (offsetMin >= 1440 && offsetMin % 1440 === 0) { unit = 'd'; value = offsetMin/1440; }
+  else if (offsetMin >= 60 && offsetMin % 60 === 0) { unit = 'h'; value = offsetMin/60; }
+  const whenLabel = s.day != null && s.hour != null
+    ? `D+${s.day||0} ${String(s.hour).padStart(2,'0')}:${String(s.minute||0).padStart(2,'0')}`
+    : `+${value}${unit}`;
+  const withReminder = s.with_reminder != null ? s.with_reminder : (cadenceCfg.remind_default !== false);
+  const businessHoursOnly = s.business_hours_only !== false;
+  const isFarewell = s.is_farewell === true;
+  const chIcon = s.channel === 'call' ? '📞' : s.channel === 'whatsapp' ? '💬' : s.channel === 'email' ? '📧' : s.channel === 'wait' ? '⏸️' : '⚠️';
+  const labelDisplay = isFarewell ? '🙏 ' + (s.label || 'Despedida final') : (s.label || `(sem nome — ${s.channel})`);
+  // armazena step inteiro como JSON no dataset pra abrir modal de edição
+  const dataJson = encodeURIComponent(JSON.stringify(s));
+  return `
+    <div class="lsc-step-summary" data-tier="${tier}" data-idx="${idx}" data-json="${dataJson}"
+         draggable="true"
+         ondragstart="lscDragStart(event, '${tier}', ${idx})"
+         ondragover="lscDragOver(event, this)"
+         ondragleave="lscDragLeave(event, this)"
+         ondrop="lscDrop(event, '${tier}', ${idx}, this)"
+         ondragend="lscDragEnd(event, this)"
+         onclick="if (event.target.classList.contains('drag-handle')) return; lscOpenStepModal('${tier}', ${idx}, decodeURIComponent(this.dataset.json))"
+         title="Arraste pelo ⋮⋮ pra reordenar — clique no resto pra editar">
+      <div class="drag-handle" title="Arraste pra reordenar">⋮⋮</div>
+      <div class="idx">${idx+1}</div>
+      <div class="when">${whenLabel}</div>
+      <div class="abs">—</div>
+      <div class="ch">${chIcon} ${s.channel}</div>
+      <div class="lab">${escapeHtml(labelDisplay)}</div>
+      <div class="pri ${s.priority||'Normal'}">${s.priority||'Normal'}</div>
+      <div class="badge" title="${withReminder?'popup ON':'popup OFF'}">${withReminder?'🔔':'·'}</div>
+      <div class="badge" title="${businessHoursOnly?'só horário comercial':'qualquer hora'}">${businessHoursOnly?'🕐':'·'}</div>
+      <div class="moveb" onclick="event.stopPropagation()">
+        <button onclick="lscMoveStep('${tier}', ${idx}, -1)" title="mover acima">▲</button>
+        <button onclick="lscMoveStep('${tier}', ${idx}, 1)" title="mover abaixo">▼</button>
+        <button class="d" onclick="lscDeleteStep('${tier}', ${idx})" title="excluir">×</button>
+      </div>
+    </div>
+  `;
+}
+
+// _LSC_STEPS_BUFFER[tier] = array de steps em edição (estado client-side)
+const _LSC_STEPS_BUFFER = {};
+
+// ============== DRAG-AND-DROP REORDER ==============
+let _LSC_DRAG = null;   // { tier, idx }
+
+function lscDragStart(e, tier, idx) {
+  _LSC_DRAG = { tier, idx };
+  e.dataTransfer.effectAllowed = 'move';
+  // necessário pra Firefox aceitar o drag
+  try { e.dataTransfer.setData('text/plain', `${tier}:${idx}`); } catch (_) {}
+  e.currentTarget.classList.add('dragging');
+}
+
+function lscDragOver(e, el) {
+  if (!_LSC_DRAG) return;
+  const tier = el.dataset.tier;
+  if (_LSC_DRAG.tier !== tier) return; // só reordena no mesmo tier
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  // mostra indicador de top/bottom
+  const rect = el.getBoundingClientRect();
+  const mid = rect.top + rect.height / 2;
+  el.classList.remove('drag-over-top', 'drag-over-bottom');
+  if (e.clientY < mid) el.classList.add('drag-over-top');
+  else el.classList.add('drag-over-bottom');
+}
+
+function lscDragLeave(e, el) {
+  el.classList.remove('drag-over-top', 'drag-over-bottom');
+}
+
+function lscDrop(e, tier, dropIdx, el) {
+  e.preventDefault();
+  el.classList.remove('drag-over-top', 'drag-over-bottom');
+  if (!_LSC_DRAG || _LSC_DRAG.tier !== tier) { _LSC_DRAG = null; return; }
+  const fromIdx = _LSC_DRAG.idx;
+  if (fromIdx === dropIdx) { _LSC_DRAG = null; return; }
+
+  // Decide se vai acima ou abaixo do alvo
+  const rect = el.getBoundingClientRect();
+  const mid = rect.top + rect.height / 2;
+  const before = e.clientY < mid;
+
+  const arr = _LSC_STEPS_BUFFER[tier] || [];
+  const item = arr[fromIdx];
+  arr.splice(fromIdx, 1);
+  let insertAt = dropIdx;
+  // ajusta índice depois da remoção
+  if (fromIdx < dropIdx) insertAt = dropIdx - 1;
+  if (!before) insertAt += 1;
+  arr.splice(insertAt, 0, item);
+
+  // Despedida sempre forçada ao final
+  const fw = arr.filter(s => s.is_farewell);
+  const norm = arr.filter(s => !s.is_farewell);
+  _LSC_STEPS_BUFFER[tier] = norm.concat(fw);
+
+  _LSC_DRAG = null;
+  lscRerenderSteps(tier);
+}
+
+function lscDragEnd(e, el) {
+  el.classList.remove('dragging');
+  document.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(x => {
+    x.classList.remove('drag-over-top', 'drag-over-bottom');
+  });
+  _LSC_DRAG = null;
+}
+
+function lscMoveStep(tier, idx, delta){
+  const arr = _LSC_STEPS_BUFFER[tier] || [];
+  const j = idx + delta;
+  if (j < 0 || j >= arr.length) return;
+  const tmp = arr[idx]; arr[idx] = arr[j]; arr[j] = tmp;
+  lscRerenderSteps(tier);
+}
+
+function lscDeleteStep(tier, idx){
+  const arr = _LSC_STEPS_BUFFER[tier] || [];
+  arr.splice(idx, 1);
+  lscRerenderSteps(tier);
+}
+
+function lscRerenderSteps(tier){
+  const cardEl = document.getElementById(`ls-c-${tier}-steps`);
+  if (!cardEl) return;
+  const cadCfg = _LSC_DATA.find(c => c.tier === tier) || { remind_default: true };
+  const arr = _LSC_STEPS_BUFFER[tier] || [];
+  cardEl.innerHTML = arr.map((s, i) => stepRowHtml(tier, i, s, cadCfg)).join('');
+  lscRefreshAbsTimes(tier);
+}
+
+// Adiciona passo direto no buffer (usado por pacotes prontos).
+function lscAddStep(tier, value, unit, channel, labelDefault, extras){
+  if (!_LSC_STEPS_BUFFER[tier]) _LSC_STEPS_BUFFER[tier] = [];
+  const offset_minutes = unit === 'd' ? value*1440 : (unit === 'h' ? value*60 : value);
+  const label = labelDefault || `${channel === 'call' ? 'Ligação' : channel === 'whatsapp' ? 'WhatsApp' : channel} (+${value}${unit})`;
+  _LSC_STEPS_BUFFER[tier].push(Object.assign({
+    offset_minutes, channel: channel || 'whatsapp',
+    label, priority: channel === 'call' ? 'High' : 'Normal',
+    with_reminder: true, business_hours_only: true,
+  }, extras || {}));
+  lscRerenderSteps(tier);
+}
+
+function lscAddPack3Calls(tier){
+  lscAddStep(tier, 30, 'min', 'call', '📞 Ligação 1 (imediato)');
+  lscAddStep(tier, 2, 'h', 'call', '📞 Ligação 2 (2h depois)');
+  lscAddStep(tier, 4, 'h', 'call', '📞 Ligação 3 (4h depois)');
+}
+
+function lscAddPack5Days(tier){
+  for (let d = 1; d <= 5; d++) {
+    lscAddStep(tier, d*24, 'h', 'call', `📞 Ligação D+${d}`);
+    lscAddStep(tier, d*24+4, 'h', 'whatsapp', `💬 WhatsApp D+${d} (tarde)`);
+  }
+}
+
+// ============== MODAL DE PASSO ==============
+let _LSC_MODAL_CTX = null;  // { tier, idx, is_farewell }
+
+function lscOpenStepModal(tier, idx, jsonOrEmpty){
+  // idx === -1 → novo passo
+  // idx >= 0  → editar existente
+  const isNew = idx == null || idx < 0;
+  let s = {};
+  try { s = typeof jsonOrEmpty === 'string' ? JSON.parse(jsonOrEmpty) : (jsonOrEmpty || {}); } catch(_) { s = {}; }
+  _LSC_MODAL_CTX = { tier, idx: isNew ? -1 : Number(idx), is_farewell: !!s.is_farewell };
+  document.getElementById('lsc-step-modal-title').textContent = isNew
+    ? (s.is_farewell ? '🙏 Tarefa de despedida (última)' : '➕ Novo passo da cadência')
+    : (s.is_farewell ? '🙏 Editar tarefa de despedida' : '✏️ Editar passo da cadência');
+  document.getElementById('lsc-step-tier').value = tier;
+  document.getElementById('lsc-step-idx').value = isNew ? '' : idx;
+  document.getElementById('lsc-step-label').value = s.label || (s.is_farewell ? '🙏 Última tentativa — despedida' : '');
+  document.getElementById('lsc-step-channel').value = s.channel || (s.is_farewell ? 'whatsapp' : 'whatsapp');
+  document.getElementById('lsc-step-priority').value = s.priority || 'Normal';
+  document.getElementById('lsc-step-desc').value = s.description || '';
+  document.getElementById('lsc-step-duration').value = s.duration_minutes || 15;
+  document.getElementById('lsc-step-remind').checked = s.with_reminder !== false;
+  document.getElementById('lsc-step-bh').checked = s.business_hours_only !== false;
+  // when
+  let offsetMin = s.offset_minutes;
+  if (offsetMin == null && s.day != null) {
+    offsetMin = (Number(s.day)||0)*1440 + (Number(s.hour)||9)*60 + (Number(s.minute)||0);
+  }
+  if (offsetMin == null) offsetMin = 30;
+  let unit = 'min', value = offsetMin;
+  if (offsetMin >= 1440 && offsetMin % 1440 === 0) { unit = 'd'; value = offsetMin/1440; }
+  else if (offsetMin >= 60 && offsetMin % 60 === 0) { unit = 'h'; value = offsetMin/60; }
+  if (s.day != null && s.hour != null) {
+    document.querySelector('input[name="lsc-when"][value="fixed"]').checked = true;
+    document.getElementById('lsc-step-day').value = s.day;
+    document.getElementById('lsc-step-time').value = `${String(s.hour).padStart(2,'0')}:${String(s.minute||0).padStart(2,'0')}`;
+    document.getElementById('lsc-step-off-value').value = value;
+    document.getElementById('lsc-step-off-unit').value = unit;
+  } else {
+    document.querySelector('input[name="lsc-when"][value="offset"]').checked = true;
+    document.getElementById('lsc-step-off-value').value = value;
+    document.getElementById('lsc-step-off-unit').value = unit;
+    document.getElementById('lsc-step-day').value = 0;
+    document.getElementById('lsc-step-time').value = '09:00';
+  }
+  lscWhenSwitch();
+  document.getElementById('lsc-step-modal').classList.add('open');
+}
+
+function lscWhenSwitch(){
+  const mode = document.querySelector('input[name="lsc-when"]:checked').value;
+  document.getElementById('lsc-when-offset').style.display = mode === 'offset' ? '' : 'none';
+  document.getElementById('lsc-when-fixed').style.display = mode === 'fixed' ? '' : 'none';
+}
+
+function lscCloseStepModal(){
+  document.getElementById('lsc-step-modal').classList.remove('open');
+  _LSC_MODAL_CTX = null;
+}
+
+function lscSaveStepModal(){
+  if (!_LSC_MODAL_CTX) return;
+  const { tier, idx, is_farewell } = _LSC_MODAL_CTX;
+  const channel = document.getElementById('lsc-step-channel').value;
+  const label = document.getElementById('lsc-step-label').value.trim() || `(${channel} sem nome)`;
+  const priority = document.getElementById('lsc-step-priority').value;
+  const description = document.getElementById('lsc-step-desc').value.trim() || undefined;
+  const duration_minutes = Number(document.getElementById('lsc-step-duration').value) || 15;
+  const with_reminder = document.getElementById('lsc-step-remind').checked;
+  const business_hours_only = document.getElementById('lsc-step-bh').checked;
+  const whenMode = document.querySelector('input[name="lsc-when"]:checked').value;
+  const step = { channel, label, priority, description, duration_minutes, with_reminder, business_hours_only };
+  if (whenMode === 'offset') {
+    const v = Number(document.getElementById('lsc-step-off-value').value) || 0;
+    const u = document.getElementById('lsc-step-off-unit').value;
+    step.offset_minutes = u === 'd' ? v*1440 : (u === 'h' ? v*60 : v);
+  } else {
+    step.day = Number(document.getElementById('lsc-step-day').value) || 0;
+    const [hh, mm] = (document.getElementById('lsc-step-time').value || '09:00').split(':').map(n => Number(n)||0);
+    step.hour = hh; step.minute = mm;
+    step.offset_minutes = step.day*1440 + step.hour*60 + step.minute;
+  }
+  if (is_farewell) step.is_farewell = true;
+
+  if (!_LSC_STEPS_BUFFER[tier]) _LSC_STEPS_BUFFER[tier] = [];
+  if (idx === -1) {
+    if (is_farewell) {
+      // remove despedida anterior, se houver
+      _LSC_STEPS_BUFFER[tier] = _LSC_STEPS_BUFFER[tier].filter(s => !s.is_farewell);
+    }
+    _LSC_STEPS_BUFFER[tier].push(step);
+  } else {
+    _LSC_STEPS_BUFFER[tier][idx] = step;
+  }
+  // se é despedida, força ela ser sempre o último: ordena por offset_minutes e move farewell ao fim
+  if (is_farewell) {
+    const fw = _LSC_STEPS_BUFFER[tier].filter(s => s.is_farewell);
+    const norm = _LSC_STEPS_BUFFER[tier].filter(s => !s.is_farewell);
+    _LSC_STEPS_BUFFER[tier] = norm.concat(fw);
+  }
+  lscRerenderSteps(tier);
+  lscCloseStepModal();
+}
+
+function lscOpenFarewellModal(tier){
+  // Procura despedida existente
+  const arr = _LSC_STEPS_BUFFER[tier] || [];
+  const existingIdx = arr.findIndex(s => s.is_farewell);
+  if (existingIdx >= 0) {
+    lscOpenStepModal(tier, existingIdx, JSON.stringify(arr[existingIdx]));
+  } else {
+    // Default: offset = último + 1 dia
+    const maxOffset = arr.length ? Math.max(...arr.map(s => s.offset_minutes||0)) : 0;
+    lscOpenStepModal(tier, -1, JSON.stringify({
+      is_farewell: true,
+      offset_minutes: maxOffset + 1440,
+      channel: 'whatsapp',
+      label: '🙏 Última tentativa — despedida',
+      priority: 'Normal',
+      with_reminder: true,
+      business_hours_only: true,
+      description: 'Última mensagem antes de encerrar a cadência. Use tom respeitoso, deixa porta aberta.',
+    }));
+  }
+}
+
+// Recalcula horário absoluto previsto (relativo a agora) pra cada passo
+function lscRefreshAbsTimes(tier){
+  const now = new Date();
+  const arr = _LSC_STEPS_BUFFER[tier] || [];
+  document.querySelectorAll(`#ls-c-${tier}-steps .lsc-step-summary`).forEach((row, i) => {
+    const s = arr[i]; if (!s) return;
+    let minutes = s.offset_minutes;
+    if (minutes == null && s.day != null) {
+      minutes = (Number(s.day)||0)*1440 + (Number(s.hour)||9)*60 + (Number(s.minute)||0);
+    }
+    if (minutes == null) minutes = 0;
+    let when = new Date(now.getTime() + minutes*60000);
+    const bhOnly = s.business_hours_only !== false;
+    if (bhOnly) when = lscBumpBusinessHours(when);
+    const el = row.querySelector('.abs');
+    if (el) {
+      const pad = n => String(n).padStart(2, '0');
+      el.textContent = `${pad(when.getDate())}/${pad(when.getMonth()+1)} ${pad(when.getHours())}:${pad(when.getMinutes())}`;
+    }
+  });
+}
+
+function lscBumpBusinessHours(date){
+  const isIn = (d) => {
+    const dow = d.getDay();
+    if (dow === 0) return false;
+    const cur = d.getHours()*60 + d.getMinutes();
+    if (dow === 6) return cur >= 540 && cur < 780;
+    return cur >= 540 && cur < 1080;
+  };
+  if (isIn(date)) return date;
+  const d = new Date(date);
+  const dow = d.getDay();
+  if (dow >= 1 && dow <= 6) {
+    const cur = d.getHours()*60 + d.getMinutes();
+    if (cur < 540) { d.setHours(9, 0, 0, 0); return d; }
+  }
+  for (let i = 1; i <= 14; i++) {
+    const next = new Date(d);
+    next.setDate(next.getDate() + i);
+    const nd = next.getDay();
+    if (nd === 0) continue;
+    next.setHours(9, 0, 0, 0);
+    return next;
+  }
+  return date;
+}
+
+async function lscSave(tier){
+  // Buffer já mantém ordem do usuário. Salva como tá (despedida já foi forçada ao final no save do modal).
+  const steps = (_LSC_STEPS_BUFFER[tier] || []).slice();
+
+  const payload = {
+    product_type: _LSC_PRODUCT || null,
+    layout: _LSC_LAYOUT || null,
+    pipeline: _LSC_PIPELINE || null,
+    stage: _LSC_STAGE || null,
+    sla_first_call_minutes: Number(document.getElementById(`ls-c-${tier}-sla`).value),
+    max_attempts: Number(document.getElementById(`ls-c-${tier}-max`).value),
+    assignee_role: document.getElementById(`ls-c-${tier}-role`).value,
+    remind_default: document.getElementById(`ls-c-${tier}-remind`).value === '1',
+    is_active: document.getElementById(`ls-c-${tier}-active`).value === '1',
+    steps,
+    assignee_pool: _LSC_POOL_BUFFER[tier] || [],
+    reason: 'edit via UI',
+  };
+  const r = await fetch(`/api/lead-score/cadences/${tier}`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  }).then(r=>r.json());
+  if (!r.ok) { alert(r.error||'erro'); return; }
+  let msg = `✅ Cadência ${tier} salva (${steps.length} passos) · ${lscFilterLabel()}.`;
+  if (r.reapply) {
+    msg += `\n\n⚡ Handoff (assignee_role mudou): reforçado em ${r.reapply.redispatched||0} runs ativos`;
+    if (r.reapply.errors) msg += ` (${r.reapply.errors} erros)`;
+  }
+  alert(msg);
+  lscLoad();
+}
+
+async function lscCreateSpecific(tier){
+  // Copia do fallback puro como base (tier sozinho, todos NULL)
+  const fb = await fetch('/api/lead-score/cadences?product=&layout=&pipeline=&stage=').then(r=>r.json());
+  const base = (fb.items||[]).find(c => c.tier === tier && !c.product_type && !c.layout && !c.pipeline && !c.stage);
+  if (!base) { alert('fallback puro não encontrado pra '+tier); return; }
+  const payload = {
+    product_type: _LSC_PRODUCT || null,
+    layout: _LSC_LAYOUT || null,
+    pipeline: _LSC_PIPELINE || null,
+    stage: _LSC_STAGE || null,
+    sla_first_call_minutes: base.sla_first_call_minutes,
+    max_attempts: base.max_attempts,
+    assignee_role: base.assignee_role,
+    remind_default: base.remind_default,
+    is_active: true,
+    steps: base.steps_json || [],
+    reason: `clonada do fallback ${tier} pra ${lscFilterLabel()}`,
+  };
+  const r = await fetch(`/api/lead-score/cadences/${tier}`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  }).then(r=>r.json());
+  if (!r.ok) { alert(r.error||'erro'); return; }
+  lscLoad();
+}
+
+async function lscDeleteSpecific(id){
+  if (!confirm('Apagar essa cadência específica? (volta a usar o fallback do tier)')) return;
+  await fetch(`/api/lead-score/cadences/${id}?reason=manual delete via UI`, { method:'DELETE' });
+  lscLoad();
+}
+
+async function lscReseed(){
+  if (!confirm('Recriar os 5 fallbacks default? (só sobrescreve se nunca foram editados)')) return;
+  // chama /api/lead-score/reseed que também seeda critérios — vamos limitar
+  // pra cadência não tem endpoint dedicado; vou fazer chamadas individuais via PUT
+  alert('Pra forçar reseed das cadências, set LEAD_SCORE_FORCE_RESEED=1 e restart o portal.\nPor enquanto, basta cliques individuais no Salvar pra cada fallback.');
+}
+
+async function lscLoadRuns(){
+  const r = await fetch('/api/lead-score/cadence-runs?status=active&limit=100').then(r=>r.json());
+  if (!r.ok) { document.getElementById('lsc-runs').innerHTML = `<div style="color:#ef4444">${r.error}</div>`; return; }
+  const items = r.items || [];
+  document.getElementById('lsc-runs-count').textContent = `${items.length} runs ativos`;
+  if (!items.length) {
+    document.getElementById('lsc-runs').innerHTML = '<div style="color:#888;padding:14px;text-align:center;background:#161725;border:1px solid #30363D;border-radius:8px">Nenhuma cadência em execução no momento.</div>';
+    return;
+  }
+  document.getElementById('lsc-runs').innerHTML = `
+    <table class="lsc-runs-tbl">
+      <thead><tr><th>Deal</th><th>Tier</th><th>Produto</th><th>Layout</th><th>Funil</th><th>Etapa</th><th>Passo</th><th>Próxima ação</th><th>Última atividade Zoho</th><th>Iniciado</th><th></th></tr></thead>
+      <tbody>
+        ${items.map(r=>`
+          <tr>
+            <td>
+              <code style="color:#a371f7;cursor:pointer;padding:3px 6px;border-radius:3px;background:rgba(167,113,247,.08);border:1px solid rgba(167,113,247,.3)"
+                    onclick="copyText('${escapeHtml(r.deal_id)}', this, 'Deal ID')"
+                    title="Clique pra copiar">📋 ${escapeHtml(r.deal_id)}</code>
+              <a href="https://crmplus.zoho.com/tudodefiltro3711/index.do/cxapp/crm/org856385701/tab/Potentials/${escapeHtml(r.deal_id)}" target="_blank" style="margin-left:4px;color:#06b6d4;text-decoration:none" title="Abrir no Zoho">↗</a>
+            </td>
+            <td><strong>${escapeHtml(r.cadence_tier)}</strong></td>
+            <td>${escapeHtml(r.cadence_product_type||'—')}</td>
+            <td>${escapeHtml(r.cadence_layout||'—')}</td>
+            <td>${escapeHtml(r.cadence_pipeline||'—')}</td>
+            <td>${escapeHtml(r.cadence_stage||'—')}</td>
+            <td>${r.step_index_current+1}</td>
+            <td>${r.next_action_at?new Date(r.next_action_at).toLocaleString('pt-BR'):'-'}</td>
+            <td>${r.last_zoho_task_id?'<code style="font-size:10px">'+r.last_zoho_task_id+'</code>':'-'}</td>
+            <td>${new Date(r.started_at).toLocaleString('pt-BR')}</td>
+            <td><button class="lsc-btn d" onclick="lscCancelRun('${r.deal_id}')">✋ Cancelar</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function lscCancelRun(dealId){
+  const reason = prompt('Motivo do cancelamento:'); if (!reason) return;
+  await fetch(`/api/lead-score/cadence-runs/${encodeURIComponent(dealId)}?reason=${encodeURIComponent(reason)}`, { method:'DELETE' });
+  lscLoadRuns();
+}
+
+async function lscRunNow(){
+  const btn = event.target; btn.disabled = true; btn.textContent = '⏳ Processando...';
+  try {
+    const r = await fetch('/api/lead-score/cadence-progress/run-now', { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' }).then(r=>r.json());
+    if (!r.ok) { alert(r.error||'erro'); return; }
+    alert(`processed=${r.processed} · advanced=${r.advanced} · completed=${r.completed} · errors=${r.errors}`);
+    lscLoadRuns();
+  } finally { btn.disabled = false; btn.textContent = '⚡ Forçar avanço cron agora'; }
+}
+
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+lscLoad();
+</script>

@@ -1,0 +1,269 @@
+<% const activePage = 'integracoes'; const pageTitle = 'Integrações · APIs'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.it-wrap{padding:14px 22px 100px;max-width:1100px;margin:0 auto}
+.it-h{font-size:20px;color:var(--text);margin:0 0 4px;font-weight:800}
+.it-sub{color:var(--text-muted);font-size:12px;margin:0 0 18px}
+
+.it-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:18px}
+.it-tab{background:transparent;border:none;color:var(--text-muted);padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent}
+.it-tab.active{color:#7cb9f5;border-bottom-color:#1f6feb}
+
+.it-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px}
+.it-card h3{margin:0 0 4px;color:var(--text);font-size:15px;display:flex;align-items:center;gap:10px}
+.it-card .desc{color:var(--text-muted);font-size:12px;margin-bottom:14px}
+.it-status{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.it-status.ok{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.it-status.fail{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+
+.it-field{margin-bottom:14px}
+.it-field label{display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;margin-bottom:5px}
+.it-field label .help{background:rgba(31,111,235,.15);color:#7cb9f5;border:1px solid rgba(31,111,235,.4);border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;cursor:help;text-transform:none}
+.it-field input{width:100%;background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:9px 11px;font-size:12px;font-family:monospace}
+.it-field .hint{color:var(--text-muted);font-size:10px;margin-top:4px}
+
+.it-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.it-actions button{padding:9px 18px;font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;border:none}
+.it-actions .save{background:#22c55e;color:#000}
+.it-actions .test{background:#1f6feb;color:#fff}
+.it-actions .save:hover{background:#16a34a}
+.it-actions .test:hover{background:#2563eb}
+
+.it-tutorial{background:var(--bg-card);border-left:3px solid #f59e0b;padding:14px 16px;margin-bottom:14px;border-radius:0 8px 8px 0}
+.it-tutorial summary{cursor:pointer;color:#fbbf24;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.4px;padding:0;list-style:none}
+.it-tutorial summary::before{content:'▸ ';display:inline-block;transition:transform .15s}
+.it-tutorial[open] summary::before{transform:rotate(90deg)}
+.it-tutorial ol{margin:14px 0 0;padding-left:18px;color:var(--text-muted);font-size:12px;line-height:1.6}
+.it-tutorial ol li{margin-bottom:8px}
+.it-tutorial a{color:#7cb9f5;text-decoration:none}
+.it-tutorial a:hover{text-decoration:underline}
+.it-tutorial code{background:var(--bg-card);color:var(--warning);padding:1px 6px;border-radius:4px;font-size:11px;font-family:monospace}
+.it-tutorial .step-num{display:inline-flex;align-items:center;justify-content:center;background:#f59e0b;color:#000;width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:800;margin-right:6px;flex-shrink:0}
+
+.it-test-out{margin-top:10px;padding:10px;border-radius:6px;font-size:11px;font-family:monospace;display:none}
+.it-test-out.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#22c55e;display:block}
+.it-test-out.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;display:block}
+
+.it-saas-note{background:linear-gradient(135deg,#1a0f2e,#2d1525);border:1px solid #a371f7;border-radius:10px;padding:14px;margin-bottom:18px;color:#e9d5ff;font-size:12px;line-height:1.5}
+.it-saas-note strong{color:var(--text)}
+</style>
+
+<div class="it-wrap">
+  <h1 class="it-h">🔌 Integrações · APIs</h1>
+  <p class="it-sub">Configure as credenciais Google Ads, Meta Ads e outras integrações. Preparado pra multi-tenant SaaS — cada empresa terá sua config isolada.</p>
+
+  <div class="it-saas-note">
+    <strong>💡 SaaS roadmap:</strong> a UI já tá preparada pra cada empresa ter sua própria config. Quando virar SaaS de verdade, vou:
+    1) Adicionar OAuth 2.0 ("Conectar com Google" = 1 click), 2) Multi-tenant isolado por <code>tenant_id</code>,
+    3) Painel pra você, como dono, ver todas as instâncias. Hoje é single-tenant — você cadastra suas credenciais aqui.
+  </div>
+
+  <div class="it-tabs">
+    <button class="it-tab active" onclick="itAba('google')" id="it-tab-g">📊 Google Ads</button>
+    <button class="it-tab" onclick="itAba('meta')" id="it-tab-m">📘 Meta Ads</button>
+  </div>
+
+  <!-- GOOGLE ADS -->
+  <div id="it-pane-google">
+    <div class="it-card">
+      <h3>📊 Google Ads <span id="it-status-g" class="it-status fail">⏳ verificando</span></h3>
+      <div class="desc">Necessário pra puxar campanhas, keywords e métricas + executar pause/budget.</div>
+
+      <!-- OAuth 1-click (mostra só se OAuth app tá configurado) -->
+      <div id="it-oauth-g" style="display:none;background:#0d1f3a;border:1px solid #1f6feb;border-radius:8px;padding:14px;margin-bottom:14px">
+        <div style="color:#7cb9f5;font-weight:800;font-size:12px;margin-bottom:8px">🚀 CONEXÃO 1-CLICK (recomendado)</div>
+        <p style="color:var(--text-muted);font-size:11px;margin:0 0 10px">Em vez de copiar tokens manualmente, autoriza no Google e volta conectado.</p>
+        <a href="/integracoes/oauth/google/start" style="display:inline-block;background:#fff;color:#1a73e8;padding:10px 18px;border-radius:6px;font-size:13px;font-weight:800;text-decoration:none">
+          <span style="font-family:'Product Sans',sans-serif">🔵 Conectar com Google</span>
+        </a>
+      </div>
+
+      <details class="it-tutorial">
+        <summary>📖 Como pegar as credenciais (passo-a-passo)</summary>
+        <ol>
+          <li><span class="step-num">1</span><strong>Developer Token</strong>: Acesse <a href="https://ads.google.com/aw/apicenter" target="_blank">Google Ads → API Center</a>. Solicite Basic Access (rápido) ou Standard Access (até 7 dias). Copie o <code>Developer Token</code>.</li>
+          <li><span class="step-num">2</span><strong>OAuth Client</strong>: Vá em <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console → APIs & Credentials</a>. Crie projeto novo se não tiver. Clique <code>Create Credentials → OAuth client ID</code>. Tipo: <code>Desktop app</code>. Copie <code>Client ID</code> e <code>Client Secret</code>.</li>
+          <li><span class="step-num">3</span><strong>Habilitar API</strong>: Ainda no Cloud Console, vá em <a href="https://console.cloud.google.com/apis/library/googleads.googleapis.com" target="_blank">Google Ads API</a> → <code>Enable</code>.</li>
+          <li><span class="step-num">4</span><strong>Refresh Token</strong>: Acesse <a href="https://developers.google.com/oauthplayground" target="_blank">OAuth Playground</a>. Clique no ⚙️ canto sup direito → marque <code>Use your own OAuth credentials</code> → cola Client ID + Secret. Em <code>Step 1</code>, role até <strong>Google Ads API v17</strong> → <code>https://www.googleapis.com/auth/adwords</code> → Authorize APIs → faz login com a conta que tem acesso ao Google Ads. Depois <code>Exchange authorization code for tokens</code> → copia o <code>refresh_token</code> (começa com <code>1//</code>).</li>
+          <li><span class="step-num">5</span><strong>Customer ID</strong>: É o número da sua conta Google Ads (formato <code>123-456-7890</code>). Pega no canto superior direito quando abre <a href="https://ads.google.com" target="_blank">ads.google.com</a>. Cole sem hífens.</li>
+          <li><span class="step-num">6</span><strong>Login Customer ID</strong> (opcional): se você usa <strong>Manager Account (MCC)</strong> pra gerenciar várias contas, este é o ID do MCC. Se a conta não tem MCC, deixa vazio.</li>
+        </ol>
+      </details>
+
+      <div class="it-field">
+        <label>Developer Token <span class="help" title="Token único da API Google Ads. Solicitado em Google Ads → API Center.">?</span></label>
+        <input id="it-g-dev" placeholder="(deixe vazio pra manter atual)" autocomplete="off">
+      </div>
+      <div class="it-field">
+        <label>Client ID <span class="help" title="OAuth Client ID criado no Google Cloud Console.">?</span></label>
+        <input id="it-g-cid" placeholder="ex: 1007926029563-xxx.apps.googleusercontent.com" autocomplete="off">
+      </div>
+      <div class="it-field">
+        <label>Client Secret <span class="help" title="OAuth Client Secret (junto com o Client ID).">?</span></label>
+        <input id="it-g-csec" placeholder="(deixe vazio pra manter atual)" autocomplete="off">
+      </div>
+      <div class="it-field">
+        <label>Refresh Token <span class="help" title="Token gerado via OAuth Playground. Começa com 1//">?</span></label>
+        <input id="it-g-ref" placeholder="1//0...." autocomplete="off">
+      </div>
+      <div class="it-field">
+        <label>Customer ID (sem hífens) <span class="help" title="ID da conta Google Ads, ex: 7059046758">?</span></label>
+        <input id="it-g-customer" placeholder="ex: 7059046758">
+      </div>
+      <div class="it-field">
+        <label>Login Customer ID (Manager / MCC) <span class="help" title="Opcional: se gerencia via MCC, ID do manager account.">?</span></label>
+        <input id="it-g-login" placeholder="(opcional)">
+      </div>
+      <div class="it-actions">
+        <button class="save" onclick="itSalvar('google')">💾 Salvar Google Ads</button>
+        <button class="test" onclick="itTestar('google')">🔌 Testar conexão</button>
+      </div>
+      <div id="it-test-g" class="it-test-out"></div>
+    </div>
+  </div>
+
+  <!-- META ADS -->
+  <div id="it-pane-meta" style="display:none">
+    <div class="it-card">
+      <h3>📘 Meta Ads (Facebook + Instagram) <span id="it-status-m" class="it-status fail">⏳ verificando</span></h3>
+      <div class="desc">Necessário pra puxar campanhas, ad sets, criativos, leads + executar ações.</div>
+
+      <div id="it-oauth-m" style="display:none;background:#0d1f3a;border:1px solid #1f6feb;border-radius:8px;padding:14px;margin-bottom:14px">
+        <div style="color:#7cb9f5;font-weight:800;font-size:12px;margin-bottom:8px">🚀 CONEXÃO 1-CLICK (recomendado)</div>
+        <p style="color:var(--text-muted);font-size:11px;margin:0 0 10px">Autoriza no Facebook e volta conectado. Token long-lived 60d.</p>
+        <a href="/integracoes/oauth/meta/start" style="display:inline-block;background:#1877f2;color:#fff;padding:10px 18px;border-radius:6px;font-size:13px;font-weight:800;text-decoration:none">📘 Conectar com Facebook</a>
+      </div>
+
+      <details class="it-tutorial">
+        <summary>📖 Como pegar as credenciais (passo-a-passo)</summary>
+        <ol>
+          <li><span class="step-num">1</span><strong>Business Manager</strong>: Acesse <a href="https://business.facebook.com" target="_blank">business.facebook.com</a>. Confirme que sua conta de anúncios está vinculada ao Business.</li>
+          <li><span class="step-num">2</span><strong>System User</strong>: Vá em <a href="https://business.facebook.com/settings/system-users" target="_blank">Configurações → Usuários do sistema</a> → <code>Adicionar</code>. Crie um <strong>Admin System User</strong> (nome livre, ex: "TDF Portal API").</li>
+          <li><span class="step-num">3</span><strong>Atribuir Ad Account</strong>: Clique no system user → <code>Adicionar ativos</code> → <code>Contas de Anúncios</code> → seleciona sua conta → marque <code>Manage</code>.</li>
+          <li><span class="step-num">4</span><strong>Token de Acesso</strong>: No mesmo system user → <code>Generate New Token</code>. Marque os scopes: <code>ads_management</code>, <code>ads_read</code>, <code>business_management</code>, <code>read_insights</code>. <strong>Copie e guarde</strong> — é mostrado uma vez. Esse é um token de longa duração (não expira a menos que revogado).</li>
+          <li><span class="step-num">5</span><strong>Ad Account ID</strong>: Em <a href="https://business.facebook.com/adsmanager" target="_blank">Ads Manager</a>, no canto superior tem o ID da conta (formato <code>act_1234567890</code>). Cole aqui SEM o prefixo <code>act_</code>.</li>
+        </ol>
+      </details>
+
+      <div class="it-field">
+        <label>Access Token <span class="help" title="System User token de longa duração (não user token de 60 dias!).">?</span></label>
+        <input id="it-m-tok" placeholder="EAAxxxxxxxxx (longo, ~200 chars)" autocomplete="off">
+        <div class="hint">⚠️ Use System User Token (não expira). User token expira em 60 dias e quebra a integração.</div>
+      </div>
+      <div class="it-field">
+        <label>Ad Account ID <span class="help" title="Número da conta de anúncios sem o prefixo act_">?</span></label>
+        <input id="it-m-acc" placeholder="ex: 1234567890 (sem 'act_')">
+      </div>
+      <div class="it-actions">
+        <button class="save" onclick="itSalvar('meta')">💾 Salvar Meta Ads</button>
+        <button class="test" onclick="itTestar('meta')">🔌 Testar conexão</button>
+      </div>
+      <div id="it-test-m" class="it-test-out"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let _IT_DATA = null;
+
+async function itCarregarOAuthStatus(){
+  try {
+    const r = await fetch('/integracoes/oauth/status');
+    const d = await r.json();
+    if (d.google?.configured) document.getElementById('it-oauth-g').style.display = 'block';
+    if (d.meta?.configured) document.getElementById('it-oauth-m').style.display = 'block';
+  } catch(_){}
+}
+itCarregarOAuthStatus();
+
+// Mensagem de sucesso pós-OAuth callback
+(function(){
+  const params = new URLSearchParams(location.search);
+  if (params.get('oauth') && params.get('ok') === '1') {
+    setTimeout(() => alert('✅ Conectado via OAuth · ' + params.get('oauth').toUpperCase()), 200);
+    history.replaceState({}, '', '/integracoes');
+  }
+})();
+
+async function itCarregar(){
+  try {
+    const r = await fetch('/integracoes/config');
+    const d = await r.json();
+    _IT_DATA = d;
+    // Preenche placeholders com mascarado
+    if (d.google_ads.GOOGLE_ADS_DEVELOPER_TOKEN) document.getElementById('it-g-dev').placeholder = d.google_ads.GOOGLE_ADS_DEVELOPER_TOKEN;
+    if (d.google_ads.GOOGLE_ADS_CLIENT_ID) document.getElementById('it-g-cid').placeholder = d.google_ads.GOOGLE_ADS_CLIENT_ID;
+    if (d.google_ads.GOOGLE_ADS_CLIENT_SECRET) document.getElementById('it-g-csec').placeholder = d.google_ads.GOOGLE_ADS_CLIENT_SECRET;
+    if (d.google_ads.GOOGLE_ADS_REFRESH_TOKEN) document.getElementById('it-g-ref').placeholder = d.google_ads.GOOGLE_ADS_REFRESH_TOKEN;
+    document.getElementById('it-g-customer').value = d.google_ads.GOOGLE_ADS_CUSTOMER_ID || '';
+    document.getElementById('it-g-login').value = d.google_ads.GOOGLE_ADS_LOGIN_CUSTOMER_ID || '';
+    if (d.meta_ads.META_ACCESS_TOKEN) document.getElementById('it-m-tok').placeholder = d.meta_ads.META_ACCESS_TOKEN;
+    document.getElementById('it-m-acc').value = d.meta_ads.META_AD_ACCOUNT_ID || '';
+    // Status
+    const sg = document.getElementById('it-status-g');
+    const sm = document.getElementById('it-status-m');
+    sg.className = 'it-status ' + (d.status.google.hasCreds ? 'ok' : 'fail');
+    sg.textContent = d.status.google.hasCreds ? '✅ Conectado' : '⚠️ Sem credenciais';
+    sm.className = 'it-status ' + (d.status.meta.hasCreds ? 'ok' : 'fail');
+    sm.textContent = d.status.meta.hasCreds ? '✅ Conectado' : '⚠️ Sem credenciais';
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+function itAba(p){
+  document.querySelectorAll('.it-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('it-tab-' + (p === 'google' ? 'g' : 'm')).classList.add('active');
+  document.getElementById('it-pane-google').style.display = p === 'google' ? 'block' : 'none';
+  document.getElementById('it-pane-meta').style.display = p === 'meta' ? 'block' : 'none';
+}
+
+async function itSalvar(p){
+  const body = {};
+  if (p === 'google') {
+    body.google_ads = {
+      GOOGLE_ADS_DEVELOPER_TOKEN: document.getElementById('it-g-dev').value,
+      GOOGLE_ADS_CLIENT_ID: document.getElementById('it-g-cid').value,
+      GOOGLE_ADS_CLIENT_SECRET: document.getElementById('it-g-csec').value,
+      GOOGLE_ADS_REFRESH_TOKEN: document.getElementById('it-g-ref').value,
+      GOOGLE_ADS_CUSTOMER_ID: document.getElementById('it-g-customer').value,
+      GOOGLE_ADS_LOGIN_CUSTOMER_ID: document.getElementById('it-g-login').value,
+    };
+  } else {
+    body.meta_ads = {
+      META_ACCESS_TOKEN: document.getElementById('it-m-tok').value,
+      META_AD_ACCOUNT_ID: document.getElementById('it-m-acc').value,
+    };
+  }
+  try {
+    const r = await fetch('/integracoes/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const d = await r.json();
+    if (d.error) { alert('❌ '+d.error); return; }
+    alert('✅ Salvo. Status: ' + (p === 'google' ? (d.status.google.hasCreds?'Conectado':'Falhou — verifique campos') : (d.status.meta.hasCreds?'Conectado':'Falhou')));
+    itCarregar();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+async function itTestar(p){
+  const out = document.getElementById('it-test-' + (p === 'google' ? 'g' : 'm'));
+  out.className = 'it-test-out';
+  out.textContent = '⏳ Testando conexão...';
+  out.style.display = 'block';
+  out.style.color = '#888';
+  try {
+    const r = await fetch('/integracoes/test', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ plataforma: p }) });
+    const d = await r.json();
+    if (d.ok) {
+      out.className = 'it-test-out ok';
+      out.innerHTML = '✅ <strong>Conectado!</strong><br>' + (d.sample && d.sample.length ? 'Amostra de campanhas:<br>' + d.sample.map(s => '· ' + s.name).join('<br>') : '(sem campanhas no período)');
+    } else {
+      out.className = 'it-test-out err';
+      out.innerHTML = '❌ <strong>Falhou:</strong> ' + (d.error || 'erro desconhecido');
+    }
+  } catch(e) {
+    out.className = 'it-test-out err';
+    out.textContent = '❌ Erro: ' + e.message;
+  }
+}
+
+itCarregar();
+</script>

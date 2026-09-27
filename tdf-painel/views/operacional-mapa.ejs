@@ -1,0 +1,791 @@
+<% const activePage = 'operacional'; const pageTitle = 'Operacional · Mapa'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" />
+<style>
+  body { margin: 0; }
+  .mp-shell { display: grid; grid-template-columns: 280px 1fr; height: calc(100vh - 60px); overflow: hidden; }
+  @media (max-width: 900px) { .mp-shell { grid-template-columns: 1fr; height: auto; } }
+  .mp-side { background: var(--bg-card); border-right: 1px solid var(--border); padding: 14px; overflow-y: auto; }
+  .mp-side h2 { font-size: 14px; color: var(--text); margin: 0 0 6px; }
+  .mp-side .sub { font-size: 11px; color: var(--text-muted); margin-bottom: 16px; }
+  .mp-actions { display: flex; gap: 6px; margin-bottom: 12px; }
+  .btn { padding: 7px 12px; border-radius: 6px; border: 1px solid; font-size: 11px; font-weight: 700; cursor: pointer; background: transparent; }
+  .btn-sec { color: #93c5fd; border-color: #1f6feb; }
+  .btn-warn { color: #fbbf24; border-color: #eab308; }
+  .layer-row { display: flex; align-items: center; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; cursor: pointer; user-select: none; }
+  .layer-row:hover { border-color: var(--border); }
+  .layer-row.on { border-color: var(--c); }
+  .layer-row .pin { width: 14px; height: 14px; border-radius: 50%; margin-right: 10px; flex-shrink: 0; }
+  .layer-row .lbl { flex: 1; }
+  .layer-row .lbl .t { color: var(--text); font-weight: 700; font-size: 12px; }
+  .layer-row .lbl .d { color: var(--text-muted); font-size: 10px; }
+  .layer-row .ct { background: var(--border); padding: 2px 8px; border-radius: 8px; color: var(--text); font-size: 11px; font-weight: 700; }
+  .layer-row.on .ct { background: var(--c); color: #000; }
+  .meta { font-size: 11px; color: var(--text-muted); margin-top: 16px; line-height: 1.6; }
+  #map-bg { height: 100%; min-height: 600px; background: var(--bg); }
+  .pin-popup { font-size: 12px; line-height: 1.5; min-width: 200px; max-width: 280px; }
+  .pin-popup b { color: #1f2937; }
+  .pin-popup .badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #f3f4f6; color: #1f2937; margin-right: 4px; }
+  .leaflet-popup-content { margin: 10px 12px; }
+  .leaflet-popup-content-wrapper { border-radius: 8px; }
+
+  .mp-pin {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: var(--text); font-weight: 700;
+  }
+  .mp-pin.tecnicos {
+    width: 32px; height: 32px; font-size: 14px;
+    border: 3px solid #fff; box-shadow: 0 0 0 4px rgba(251,113,133,.35), 0 2px 8px rgba(0,0,0,.5);
+    animation: tec-ping 2s infinite;
+    position: relative;
+  }
+  .mp-pin.tecnicos.speed-low { border-color: #22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,.35), 0 2px 8px rgba(0,0,0,.5); }
+  .mp-pin.tecnicos.speed-med { border-color: #fbbf24; box-shadow: 0 0 0 4px rgba(251,191,36,.45), 0 2px 8px rgba(0,0,0,.5); }
+  .mp-pin.tecnicos.speed-high { border-color: #ef4444; box-shadow: 0 0 0 4px rgba(239,68,68,.55), 0 2px 8px rgba(0,0,0,.5); animation: speed-pulse 1s infinite; }
+  @keyframes tec-ping {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(251,113,133,.35), 0 2px 8px rgba(0,0,0,.5); }
+    50%      { box-shadow: 0 0 0 12px rgba(251,113,133,.15), 0 2px 8px rgba(0,0,0,.5); }
+  }
+  @keyframes speed-pulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(239,68,68,.55), 0 2px 8px rgba(0,0,0,.5); }
+    50%      { box-shadow: 0 0 0 14px rgba(239,68,68,.15), 0 2px 8px rgba(0,0,0,.5); }
+  }
+  .speed-badge { position: absolute; top: -8px; right: -8px; background: var(--bg); color: var(--text); font-size: 9px; font-weight: 800; padding: 1px 4px; border-radius: 3px; border: 1px solid var(--border); min-width: 20px; text-align: center; }
+  .speed-badge.high { background: #ef4444; border-color:#fff; }
+  .speed-badge.med { background: #fbbf24; color: #000; border-color:#fff; }
+
+  /* Filtro de veículos */
+  .vh-filter { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-top: 12px }
+  .vh-filter h4 { margin: 0 0 8px; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px }
+  .vh-row { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; cursor: pointer; font-size: 11px; color: #cbd5e1 }
+  .vh-row:hover { background: var(--bg-card) }
+  .vh-row input[type=checkbox] { cursor: pointer }
+  .vh-row .speed { margin-left: auto; font-weight: 700; font-family: monospace }
+  .vh-row .speed.low { color: #22c55e }
+  .vh-row .speed.med { color: #fbbf24 }
+  .vh-row .speed.high { color: #ef4444 }
+  .vh-row .speed.dim { color: #555 }
+  .vh-actions { display: flex; gap: 4px; margin-bottom: 6px }
+  .vh-actions button { background: transparent; border: 1px solid var(--border); color: #93c5fd; padding: 3px 7px; border-radius: 4px; cursor: pointer; font-size: 10px }
+  .vh-actions button:hover { background: #1f6feb; color:#fff; border-color: #1f6feb }
+
+  /* Drawer F-MAPA-DRAWER */
+  .dr-overlay { position: fixed; right: -560px; top: 0; bottom: 0; width: 540px; max-width: 95vw; background: var(--bg); border-left: 1px solid var(--border); z-index: 9000; transition: right .25s ease; display: flex; flex-direction: column; box-shadow: -4px 0 30px rgba(0,0,0,.6); }
+  .dr-overlay.show { right: 0; }
+  .dr-h { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .dr-h .name { font-size: 16px; font-weight: 800; color: var(--text); }
+  .dr-h .meta { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .dr-close { background: var(--border); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+  .dr-actions { display: flex; gap: 6px; padding: 10px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .dr-actions .btn { padding: 6px 10px; font-size: 11px; }
+  .dr-tier { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px; }
+  .dr-tier.Diamante { background: #67e8f9; color: #000; }
+  .dr-tier.Ouro { background: #fbbf24; color: #000; }
+  .dr-tier.Prata { background: #cbd5e1; color: #000; }
+  .dr-tier.Bronze { background: #fb923c; color: #000; }
+  .dr-tier.Pedra { background: #475569; color:#fff; }
+  .dr-body { flex: 1; overflow-y: auto; padding: 12px 18px; font-size: 12px; }
+  .dr-section { margin-bottom: 16px; }
+  .dr-section h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: #93c5fd; margin: 0 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+  .dr-row { display: grid; grid-template-columns: 130px 1fr; gap: 10px; padding: 5px 0; align-items: center; }
+  .dr-row .lbl { color: var(--text-muted); font-size: 11px; }
+  .dr-row .val { color: var(--text); font-size: 12px; word-break: break-word; }
+  .dr-row .val.empty { color: #555; font-style: italic; }
+  .dr-row input, .dr-row select, .dr-row textarea { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 5px 8px; border-radius: 4px; font-size: 12px; width: 100%; font-family: inherit; }
+  .dr-row textarea { min-height: 60px; resize: vertical; }
+  .dr-row.editable .val:hover { background: rgba(31,111,235,.08); cursor: pointer; border-radius: 4px; }
+  .dr-zapi-modal { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 9100; display: none; align-items: center; justify-content: center; }
+  .dr-zapi-modal.show { display: flex; }
+  .dr-zapi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; width: 480px; max-width: 95vw; }
+  .dr-zapi-card h3 { margin: 0 0 12px; font-size: 14px; color: var(--text); }
+  .dr-zapi-card textarea { width: 100%; min-height: 140px; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 6px; font-size: 13px; font-family: inherit; }
+  .dr-zapi-card .meta { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+  .dr-zapi-card .actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; }
+  .layer-row { cursor: pointer; }
+  .layer-row.active-filter { box-shadow: 0 0 0 2px var(--c) inset; }
+</style>
+
+<div class="mp-shell">
+  <div class="mp-side">
+    <h2>🗺 Mapa Operacional</h2>
+    <div class="sub">Tudo que está rolando no campo, em tempo real. Filtre o que quer ver.</div>
+
+    <div class="mp-actions">
+      <button class="btn btn-warn" onclick="loadMap()">🔄 Atualizar</button>
+      <a href="/operacional/mapa/tv" target="_blank" class="btn" style="color:#22c55e;border-color:#22c55e;text-decoration:none;display:inline-block">📺 Modo TV</a>
+      <a href="/operacional" class="btn btn-sec" style="text-decoration:none;display:inline-block">← Painel</a>
+    </div>
+
+    <label class="layer-row on" data-layer="agendados" style="--c:#22c55e">
+      <input type="checkbox" checked onchange="toggleLayer('agendados', this.checked)" style="display:none">
+      <span class="pin" style="background:#22c55e"></span>
+      <span class="lbl"><div class="t">📅 Agendados</div><div class="d">Visitas + paradas AUVO</div></span>
+      <span class="ct" id="ct-agendados">0</span>
+    </label>
+    <label class="layer-row on" data-layer="a_agendar" style="--c:#fbbf24">
+      <input type="checkbox" checked onchange="toggleLayer('a_agendar', this.checked)" style="display:none">
+      <span class="pin" style="background:#fbbf24"></span>
+      <span class="lbl"><div class="t">⏳ A Agendar</div><div class="d">Vendas pendentes de rota</div></span>
+      <span class="ct" id="ct-a_agendar">0</span>
+    </label>
+    <label class="layer-row on" data-layer="envios" style="--c:#a371f7">
+      <input type="checkbox" checked onchange="toggleLayer('envios', this.checked)" style="display:none">
+      <span class="pin" style="background:#a371f7"></span>
+      <span class="lbl"><div class="t">📦 Envios</div><div class="d">Transportadora ativa</div></span>
+      <span class="ct" id="ct-envios">0</span>
+    </label>
+    <label class="layer-row on" data-layer="tecnicos" style="--c:#fb7185">
+      <input type="checkbox" checked onchange="toggleLayer('tecnicos', this.checked)" style="display:none">
+      <span class="pin" style="background:#fb7185"></span>
+      <span class="lbl"><div class="t">🚗 Técnicos / Carros</div><div class="d">GPS últimas 24h</div></span>
+      <span class="ct" id="ct-tecnicos">0</span>
+    </label>
+
+    <!-- Filtro por veículo -->
+    <div class="vh-filter" id="vh-filter">
+      <h4>🚗 Veículos no mapa</h4>
+      <div class="vh-actions">
+        <button onclick="vhSelectAll(true)">Todos</button>
+        <button onclick="vhSelectAll(false)">Nenhum</button>
+        <button onclick="vhOnlySpeeding()">⚠ Só em excesso</button>
+      </div>
+      <div id="vh-list" style="max-height:200px;overflow-y:auto"></div>
+    </div>
+
+    <div class="meta">
+      <b style="color:var(--text-muted)">Atualização:</b> manual + auto a cada 60s.<br>
+      <b style="color:var(--text-muted)">Origem GPS:</b> tracker veicular BrasilSat (carros) + AUVO mobile (técnicos).<br>
+      <b style="color:var(--text-muted)">Pins agendados</b> incluem visitas criadas pelo sistema (instalações) e paradas AUVO.<br>
+      <span id="meta-generated"></span>
+    </div>
+  </div>
+
+  <div id="map-bg"></div>
+</div>
+
+<!-- Drawer F-MAPA-DRAWER -->
+<div class="dr-overlay" id="dr-overlay">
+  <div class="dr-h">
+    <div>
+      <div class="name" id="dr-name">—</div>
+      <div class="meta" id="dr-meta">—</div>
+    </div>
+    <button class="dr-close" onclick="drClose()">✕</button>
+  </div>
+  <div class="dr-actions" id="dr-actions"></div>
+  <div class="dr-body" id="dr-body"><div style="color:var(--text-muted);text-align:center;padding:30px">Carregando…</div></div>
+</div>
+
+<!-- Modal Z-API send -->
+<div class="dr-zapi-modal" id="dr-zapi-modal" onclick="if(event.target===this)drZapiClose()">
+  <div class="dr-zapi-card">
+    <h3 id="dr-zapi-title">📱 Enviar mensagem Z-API</h3>
+    <div class="meta" id="dr-zapi-meta">—</div>
+    <textarea id="dr-zapi-text" placeholder="Mensagem…"></textarea>
+    <div class="actions">
+      <button class="btn btn-sec" onclick="drZapiClose()">Cancelar</button>
+      <button class="btn btn-warn" onclick="drZapiSend()">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+
+<script>
+const COLORS = {
+  agendados: '#22c55e',
+  a_agendar: '#fbbf24',
+  envios: '#a371f7',
+  tecnicos: '#fb7185',
+};
+const ICONS = { agendados: '📅', a_agendar: '⏳', envios: '📦', tecnicos: '🚗' };
+
+const State = {
+  map: null,
+  layerGroups: {},  // layer name → L.LayerGroup
+  enabled: { agendados: true, a_agendar: true, envios: true, tecnicos: true },
+  data: null,
+};
+
+// Limites pra cores de velocidade no pin (configurável depois)
+const SPEED_LIMIT_URBAN = 60;
+const SPEED_LIMIT_HIGHWAY = 110;
+
+function speedClass(spd) {
+  if (spd == null || spd <= 5) return ''; // parado
+  if (spd >= 85) return spd > SPEED_LIMIT_HIGHWAY + 10 ? 'speed-high' : (spd > SPEED_LIMIT_HIGHWAY - 5 ? 'speed-med' : 'speed-low');
+  return spd > SPEED_LIMIT_URBAN + 10 ? 'speed-high' : (spd > SPEED_LIMIT_URBAN - 5 ? 'speed-med' : 'speed-low');
+}
+
+function makePin(layer, p) {
+  const isTec = layer === 'tecnicos';
+  const size = isTec ? 32 : 22;
+  let extraClass = '';
+  let speedBadge = '';
+  if (isTec && p && p.speed_kmh != null) {
+    extraClass = ' ' + speedClass(p.speed_kmh);
+    const cls = speedClass(p.speed_kmh).replace('speed-','');
+    speedBadge = `<span class="speed-badge ${cls}">${Math.round(p.speed_kmh)}</span>`;
+  }
+  return L.divIcon({
+    className: 'mp-pin-wrap',
+    html: `<div class="mp-pin ${layer}${extraClass}" style="background:${COLORS[layer]}">${ICONS[layer]}${speedBadge}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2],
+  });
+}
+
+function popupHTML(layer, p) {
+  const lines = [];
+  if (p.customer_name) lines.push(`<b>${p.customer_name}</b>`);
+  if (p.product) lines.push(p.product.substring(0, 60));
+  if (p.tech_name) lines.push(`👷 ${p.tech_name}`);
+  if (p.vehicle_plate) lines.push(`🚗 ${p.vehicle_plate} (${p.vehicle_model || '—'})`);
+  if (p.scheduled_for) lines.push(`📅 ${new Date(p.scheduled_for).toLocaleString('pt-BR')}`);
+  if (p.scheduled_start) lines.push(`📅 ${new Date(p.scheduled_start).toLocaleString('pt-BR')}`);
+  if (p.date) lines.push(`📅 ${p.date}`);
+  if (p.stage) lines.push(`<span class="badge">${p.stage}</span>`);
+  if (p.status) lines.push(`<span class="badge">${p.status}</span>`);
+  if (p.priority) lines.push(`<span class="badge">${p.priority}</span>`);
+  if (p.tracking_code) lines.push(`📮 <code>${p.tracking_code}</code>`);
+  if (p.amount) lines.push(`💰 R$ ${parseFloat(p.amount).toLocaleString('pt-BR',{minimumFractionDigits:2})}`);
+  if (p.speed_kmh != null) lines.push(`💨 ${p.speed_kmh} km/h`);
+  if (p.ts) lines.push(`<span style="color:#666">⏱ ${new Date(p.ts).toLocaleString('pt-BR')}</span>`);
+  if (p.address) lines.push(`<span style="color:#666;font-size:11px">📍 ${p.address}</span>`);
+  if (p.sale_id) {
+    lines.push(`<button onclick="drOpen(${p.sale_id},'${layer}')" style="margin-top:6px;background:#1f6feb;color:#fff;border:0;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700">📋 Detalhes & Z-API</button>`);
+  } else if (layer === 'tecnicos' && p.tech_id) {
+    lines.push(`<button onclick="drOpenTech(${p.tech_id})" style="margin-top:6px;background:#fb7185;color:#fff;border:0;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700">👷 Falar com técnico</button>`);
+  } else if (layer === 'tecnicos' && p.vehicle_plate) {
+    lines.push(`<button onclick='drOpenVehicle(${JSON.stringify(p).replace(/"/g,"&quot;")})' style="margin-top:6px;background:#fb7185;color:#fff;border:0;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700">🚗 Detalhes carro</button>`);
+  } else if (layer === 'agendados' && p.auvo_task_id) {
+    lines.push(`<button onclick='drOpenStop(${JSON.stringify(p).replace(/"/g,"&quot;")})' style="margin-top:6px;background:#22c55e;color:#000;border:0;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700">📋 Detalhes & Z-API</button>`);
+  }
+  return `<div class="pin-popup">${lines.join('<br>')}</div>`;
+}
+
+function initMap() {
+  if (State.map) return;
+  State.map = L.map('map-bg', { preferCanvas: true }).setView([-23.5505, -46.6333], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19,
+  }).addTo(State.map);
+
+  for (const layer of Object.keys(COLORS)) {
+    State.layerGroups[layer] = L.layerGroup().addTo(State.map);
+  }
+}
+
+async function loadMap() {
+  if (!State.map) initMap();
+  try {
+    const data = await fetch('/operacional/api/map-data?days=30').then(r => r.json());
+    State.data = data;
+    window._lastMapData = data;
+    vhRenderList(data.tecnicos || []);
+    document.getElementById('meta-generated').textContent =
+      'Última atualização: ' + new Date(data.meta?.generated_at + 'Z').toLocaleTimeString('pt-BR');
+    for (const layer of Object.keys(COLORS)) {
+      State.layerGroups[layer].clearLayers();
+      const items = data[layer] || [];
+      document.getElementById('ct-' + layer).textContent = items.length;
+      if (!State.enabled[layer]) continue;
+      for (const p of items) {
+        // Pin individual (pra carregar velocidade no badge)
+        const icon = makePin(layer, p);
+        // F-SPEED-ALERT filtro: se layer=tecnicos e veículo desselecionado, pula
+        if (layer === 'tecnicos' && VH.hidden.has(p.vehicle_plate || `t${p.tech_id}`)) continue;
+        const m = L.marker([p.lat, p.lng], { icon }).bindPopup(popupHTML(layer, p));
+        m.addTo(State.layerGroups[layer]);
+      }
+    }
+    // Auto-fit bounds (1ª carga apenas)
+    // Prioridade: técnicos > envios > agendados+a_agendar — pra não pegar outlier
+    // de outro estado e zoom-out demais escondendo os carros que estão em SJC.
+    if (!State._fitted) {
+      let bounds = (data.tecnicos || []).map(p => [p.lat, p.lng]);
+      if (bounds.length < 2) {
+        // só 1 técnico ou nenhum — junta envios pra ter contexto
+        bounds = bounds.concat((data.envios || []).map(p => [p.lat, p.lng]));
+      }
+      if (bounds.length === 0) {
+        // sem técnicos/envios — usa agendados/a_agendar
+        for (const l of ['agendados', 'a_agendar']) {
+          for (const p of (data[l] || [])) bounds.push([p.lat, p.lng]);
+        }
+      }
+      if (bounds.length) {
+        State.map.fitBounds(bounds, { padding: [60, 60], maxZoom: 12 });
+        State._fitted = true;
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function toggleLayer(name, on) {
+  State.enabled[name] = on;
+  const row = document.querySelector(`.layer-row[data-layer="${name}"]`);
+  if (row) row.classList.toggle('on', on);
+  if (on) {
+    State.layerGroups[name].addTo(State.map);
+  } else {
+    State.layerGroups[name].remove();
+  }
+}
+
+// Click no row faz toggle (checkbox) E filtra mapa pra esse layer
+document.querySelectorAll('.layer-row').forEach(row => {
+  row.addEventListener('click', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    // Shift+click ou click no checkbox = só toggle do layer
+    const cb = row.querySelector('input');
+    cb.checked = !cb.checked;
+    toggleLayer(row.dataset.layer, cb.checked);
+    // Quando habilita, foca nos pins desse layer
+    if (cb.checked) focusLayer(row.dataset.layer);
+  });
+});
+
+// F-SPEED-ALERT — Filtro de veículos
+const VH = { hidden: new Set() };
+
+function vhRenderList(tecnicos) {
+  const c = document.getElementById('vh-list');
+  if (!c) return;
+  if (!tecnicos.length) { c.innerHTML = '<div style="color:#666;font-size:11px;padding:6px">Sem GPS recente</div>'; return; }
+  // Dedup por placa
+  const byKey = {};
+  for (const p of tecnicos) {
+    const k = p.vehicle_plate || `t${p.tech_id}`;
+    if (!byKey[k] || (p.ts && p.ts > (byKey[k].ts||''))) byKey[k] = p;
+  }
+  c.innerHTML = Object.entries(byKey).map(([k, p]) => {
+    const spd = p.speed_kmh != null ? Math.round(p.speed_kmh) : null;
+    const cls = spd == null ? 'dim' : speedClass(spd).replace('speed-','') || 'dim';
+    const label = p.vehicle_plate ? `${p.vehicle_plate}${p.vehicle_model?' · '+p.vehicle_model:''}` : (p.tech_name || 'sem técnico');
+    const checked = !VH.hidden.has(k);
+    return `
+      <label class="vh-row">
+        <input type="checkbox" ${checked?'checked':''} onchange="vhToggle('${k}', this.checked)">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${label}</span>
+        <span class="speed ${cls}">${spd != null ? spd+'km/h' : '—'}</span>
+      </label>
+    `;
+  }).join('');
+}
+
+function vhToggle(key, checked) {
+  if (checked) VH.hidden.delete(key); else VH.hidden.add(key);
+  // re-render só do layer tecnicos
+  if (State.data) {
+    State.layerGroups['tecnicos'].clearLayers();
+    for (const p of (State.data.tecnicos || [])) {
+      const k = p.vehicle_plate || `t${p.tech_id}`;
+      if (VH.hidden.has(k)) continue;
+      const icon = makePin('tecnicos', p);
+      L.marker([p.lat, p.lng], { icon }).bindPopup(popupHTML('tecnicos', p)).addTo(State.layerGroups['tecnicos']);
+    }
+  }
+}
+
+function vhSelectAll(select) {
+  VH.hidden.clear();
+  if (!select && State.data) {
+    for (const p of (State.data.tecnicos || [])) {
+      VH.hidden.add(p.vehicle_plate || `t${p.tech_id}`);
+    }
+  }
+  vhRenderList(State.data?.tecnicos || []);
+  vhToggle('__refresh__', true);  // força redraw — checked não importa
+  // redraw manual
+  if (State.data) {
+    State.layerGroups['tecnicos'].clearLayers();
+    for (const p of (State.data.tecnicos || [])) {
+      const k = p.vehicle_plate || `t${p.tech_id}`;
+      if (VH.hidden.has(k)) continue;
+      const icon = makePin('tecnicos', p);
+      L.marker([p.lat, p.lng], { icon }).bindPopup(popupHTML('tecnicos', p)).addTo(State.layerGroups['tecnicos']);
+    }
+  }
+}
+
+function vhOnlySpeeding() {
+  if (!State.data) return;
+  VH.hidden.clear();
+  for (const p of (State.data.tecnicos || [])) {
+    const spd = p.speed_kmh;
+    const k = p.vehicle_plate || `t${p.tech_id}`;
+    // hide quem NÃO está em excesso
+    if (spd == null || speedClass(spd) !== 'speed-high') VH.hidden.add(k);
+  }
+  vhRenderList(State.data.tecnicos || []);
+  State.layerGroups['tecnicos'].clearLayers();
+  for (const p of (State.data.tecnicos || [])) {
+    const k = p.vehicle_plate || `t${p.tech_id}`;
+    if (VH.hidden.has(k)) continue;
+    const icon = makePin('tecnicos', p);
+    L.marker([p.lat, p.lng], { icon }).bindPopup(popupHTML('tecnicos', p)).addTo(State.layerGroups['tecnicos']);
+  }
+}
+
+function focusLayer(layer) {
+  if (!State.data) return;
+  const items = State.data[layer] || [];
+  if (!items.length) return;
+  const bounds = items.map(p => [p.lat, p.lng]);
+  State.map.fitBounds(bounds, { padding: [60, 60], maxZoom: 13 });
+}
+
+// ============ F-MAPA-DRAWER ============
+let _drCurrent = { saleId: null, layer: null, deal: null, customer_phone: null, tech_phone: null, tech_name: null };
+
+async function drOpen(saleId, layer) {
+  _drCurrent = { saleId, layer, deal: null, customer_phone: null, tech_phone: null, tech_name: null };
+  document.getElementById('dr-overlay').classList.add('show');
+  document.getElementById('dr-name').textContent = 'Carregando…';
+  document.getElementById('dr-meta').textContent = `Sale #${saleId}`;
+  document.getElementById('dr-actions').innerHTML = '';
+  document.getElementById('dr-body').innerHTML = '<div style="color:#666;text-align:center;padding:30px">Buscando dados…</div>';
+  try {
+    const [card, zoho] = await Promise.all([
+      fetch(`/operacional/api/sales/${saleId}/card`).then(r => r.json()),
+      fetch(`/operacional/api/sales/${saleId}/zoho-deal`).then(r => r.ok ? r.json() : { deal: {} }).catch(() => ({ deal: {} })),
+    ]);
+    _drCurrent.deal = zoho.deal || {};
+    _drCurrent.customer_phone = card.sale?.customer_phone || null;
+    _drCurrent.tech_name = card.visit?.technician_name || null;
+    // Resolve tech phone via /technicians (cache)
+    if (_drCurrent.tech_name) {
+      try {
+        const techs = await fetch('/operacional/api/technicians').then(r => r.json());
+        const list = Array.isArray(techs) ? techs : (techs.items || []);
+        const t = list.find(x => x.name === _drCurrent.tech_name);
+        if (t && t.phone) _drCurrent.tech_phone = t.phone;
+      } catch {}
+    }
+    drRender(card, _drCurrent.deal);
+  } catch (e) {
+    document.getElementById('dr-body').innerHTML = `<div style="color:#f87171;padding:20px">${e.message}</div>`;
+  }
+}
+
+function drClose() { document.getElementById('dr-overlay').classList.remove('show'); }
+
+// Drawer alternativo: técnico sem sale (vindo do layer "tecnicos")
+async function drOpenTech(techId) {
+  document.getElementById('dr-overlay').classList.add('show');
+  document.getElementById('dr-name').textContent = 'Carregando técnico…';
+  document.getElementById('dr-meta').textContent = `Tech #${techId}`;
+  document.getElementById('dr-actions').innerHTML = '';
+  document.getElementById('dr-body').innerHTML = '<div style="color:#666;text-align:center;padding:30px">Buscando dados…</div>';
+  try {
+    const techs = await fetch('/operacional/api/technicians').then(r => r.json());
+    const list = Array.isArray(techs) ? techs : (techs.items || []);
+    const t = list.find(x => x.id === techId);
+    if (!t) throw new Error('Técnico não encontrado');
+    _drCurrent = { saleId: null, layer: 'tecnicos', tech_phone: t.phone || null, tech_name: t.name, deal: {}, customer_phone: null };
+    // Última GPS ping
+    const pin = (window._lastMapData?.tecnicos || []).find(x => x.tech_id === techId);
+    document.getElementById('dr-name').textContent = t.name;
+    document.getElementById('dr-meta').innerHTML = `${t.role || 'Técnico'} ${t.phone ? '· ' + t.phone : ''} ${t.active ? '· <span style="color:#22c55e">ativo</span>' : ''}`;
+    const acts = [];
+    if (t.phone) {
+      const wa = `https://wa.me/${(t.phone+'').replace(/\D/g,'').replace(/^(\d{10,11})$/,'55$1')}`;
+      acts.push(`<a href="${wa}" target="_blank" class="btn" style="color:#25D366;border-color:#25D366">📱 WhatsApp web</a>`);
+      acts.push(`<button class="btn btn-warn" onclick="drZapiOpen('tech_freeform')">💬 Z-API mensagem livre</button>`);
+    }
+    document.getElementById('dr-actions').innerHTML = acts.join('');
+    const ro = (lbl, val) => `<div class="dr-row"><div class="lbl">${lbl}</div><div class="val${val?'':' empty'}">${val||'—'}</div></div>`;
+    document.getElementById('dr-body').innerHTML = `
+      <div class="dr-section">
+        <h4>👷 Técnico</h4>
+        ${ro('Nome', t.name)}
+        ${ro('Email', t.email)}
+        ${ro('Telefone', t.phone)}
+        ${ro('Função', t.role)}
+        ${ro('Cidade base', t.base_city)}
+        ${ro('Skills', (t.skills||[]).join(', '))}
+        ${ro('Ativo', t.active ? '✅ Sim' : '❌ Não')}
+      </div>
+      <div class="dr-section">
+        <h4>📍 Última posição GPS</h4>
+        ${pin ? `
+          ${ro('Veículo', `${pin.vehicle_plate || '—'} ${pin.vehicle_model || ''}`)}
+          ${ro('Velocidade', pin.speed_kmh != null ? pin.speed_kmh + ' km/h' : '—')}
+          ${ro('Última ping', pin.ts ? new Date(pin.ts).toLocaleString('pt-BR') : '—')}
+          ${ro('Origem', pin.source || '—')}
+        ` : '<div style="color:#666;padding:10px">Sem GPS recente</div>'}
+      </div>
+    `;
+  } catch (e) {
+    document.getElementById('dr-body').innerHTML = `<div style="color:#f87171;padding:20px">${e.message}</div>`;
+  }
+}
+
+// Drawer pra route_stop Auvo sem Sale Zoho linkada (parada manutenção/retorno)
+async function drOpenStop(p) {
+  document.getElementById('dr-overlay').classList.add('show');
+  document.getElementById('dr-name').textContent = `Auvo #${p.auvo_task_id}`;
+  document.getElementById('dr-meta').textContent = 'Carregando…';
+  document.getElementById('dr-actions').innerHTML = '';
+  document.getElementById('dr-body').innerHTML = '<div style="color:#666;text-align:center;padding:30px">Buscando técnico…</div>';
+  let tech = null;
+  if (p.tech_id) {
+    try {
+      const techs = await fetch('/operacional/api/technicians').then(r => r.json());
+      const list = Array.isArray(techs) ? techs : (techs.items || []);
+      tech = list.find(x => x.id === p.tech_id);
+    } catch {}
+  }
+  _drCurrent = {
+    saleId: null, layer: 'agendados',
+    tech_phone: tech?.phone || null, tech_name: tech?.name || p.tech_name || 'técnico',
+    deal: { Data_Agendada: p.scheduled_start, Endere_o: p.address }, customer_phone: null
+  };
+  document.getElementById('dr-name').textContent = p.tech_name ? `📅 ${p.tech_name}` : `Auvo #${p.auvo_task_id}`;
+  const dateFmt = p.scheduled_start ? new Date(p.scheduled_start).toLocaleString('pt-BR') : '—';
+  document.getElementById('dr-meta').innerHTML = `${dateFmt} · ${p.status || 'agendado'} · <span style="color:#888">sem venda Zoho linkada</span>`;
+  const acts = [];
+  acts.push(`<a href="https://app.auvo.com.br/tasks/${p.auvo_task_id}" target="_blank" class="btn" style="color:#fb923c;border-color:#fb923c">🟠 Abrir no Auvo</a>`);
+  if (tech?.phone) {
+    acts.push(`<button class="btn btn-warn" onclick="drZapiOpen('tech_freeform')">👷 Z-API → ${tech.name?.split(' ')[0]}</button>`);
+  }
+  document.getElementById('dr-actions').innerHTML = acts.join('');
+  const ro = (lbl, val) => `<div class="dr-row"><div class="lbl">${lbl}</div><div class="val${val?'':' empty'}">${val||'—'}</div></div>`;
+  document.getElementById('dr-body').innerHTML = `
+    <div class="dr-section">
+      <h4>📅 Visita Auvo</h4>
+      ${ro('Auvo Task', '#' + p.auvo_task_id)}
+      ${ro('Data/Hora', dateFmt)}
+      ${ro('Status', p.status)}
+      ${ro('Rota', '#' + (p.route_id || '—'))}
+      ${ro('Endereço', p.address)}
+    </div>
+    <div class="dr-section">
+      <h4>👷 Técnico</h4>
+      ${ro('Nome', tech?.name || p.tech_name)}
+      ${ro('Telefone', tech?.phone || '—')}
+      ${ro('Email', tech?.email || '—')}
+      ${ro('Skills', (tech?.skills||[]).join(', '))}
+    </div>
+    <div class="dr-section">
+      <h4 style="color:#fbbf24">⚠ Sem venda linkada</h4>
+      <div style="color:#aaa;font-size:11px;line-height:1.6;padding:6px 0">
+        Esta parada do Auvo não tem <code>auvo_task_id</code> casado em nenhuma Sale do Zoho.<br>
+        Possíveis motivos:<br>
+        • Manutenção corretiva avulsa criada direto no Auvo<br>
+        • Retorno de instalação anterior<br>
+        • Sale existe mas <code>auvo_task_id</code> não foi backfillado
+      </div>
+    </div>
+  `;
+}
+
+// Drawer alternativo: veículo sem técnico vinculado
+function drOpenVehicle(p) {
+  document.getElementById('dr-overlay').classList.add('show');
+  _drCurrent = { saleId: null, layer: 'tecnicos', tech_phone: null, tech_name: null, deal: {}, customer_phone: null };
+  document.getElementById('dr-name').textContent = `🚗 ${p.vehicle_plate}`;
+  document.getElementById('dr-meta').textContent = `${p.vehicle_model || ''} · GPS ${p.source || 'desconhecido'}`;
+  document.getElementById('dr-actions').innerHTML = `<span style="color:#888;font-size:11px;padding:4px 8px">Sem técnico vinculado a esse veículo. Cadastre em Cadastros → Veículos.</span>`;
+  const ro = (lbl, val) => `<div class="dr-row"><div class="lbl">${lbl}</div><div class="val${val?'':' empty'}">${val||'—'}</div></div>`;
+  document.getElementById('dr-body').innerHTML = `
+    <div class="dr-section">
+      <h4>🚗 Veículo</h4>
+      ${ro('Placa', p.vehicle_plate)}
+      ${ro('Modelo', p.vehicle_model)}
+      ${ro('Velocidade', p.speed_kmh != null ? p.speed_kmh + ' km/h' : '—')}
+      ${ro('Última ping', p.ts ? new Date(p.ts).toLocaleString('pt-BR') : '—')}
+      ${ro('Lat/Lng', `${p.lat?.toFixed(5)}, ${p.lng?.toFixed(5)}`)}
+      ${ro('Origem', p.source)}
+    </div>
+  `;
+}
+
+function drRender(card, deal) {
+  const sale = card.sale || {};
+  const tier = deal.Tier_Lead || '';
+  const score = deal.Score_Lead;
+  document.getElementById('dr-name').innerHTML =
+    (tier ? `<span class="dr-tier ${tier}">${tier}</span>` : '') +
+    (sale.customer_name || deal.Deal_Name || `Sale #${sale.id}`);
+  document.getElementById('dr-meta').innerHTML =
+    `${sale.product_line || ''} · ${sale.queue || ''} · ${sale.status || ''}` +
+    (score != null ? ` · Score ${score}` : '') +
+    (deal.SLA_Lead ? ` · ${deal.SLA_Lead}` : '');
+
+  // Actions
+  const acts = [];
+  if (card.links?.crm) acts.push(`<a href="${card.links.crm}" target="_blank" class="btn btn-sec">🔗 Zoho</a>`);
+  if (card.links?.whatsapp) acts.push(`<a href="${card.links.whatsapp}" target="_blank" class="btn" style="color:#25D366;border-color:#25D366">📱 WhatsApp web</a>`);
+  acts.push(`<a href="/operacional/cliente/${sale.id}" target="_blank" class="btn btn-sec">📋 Card completo</a>`);
+  if (_drCurrent.customer_phone) acts.push(`<button class="btn btn-warn" onclick="drZapiOpen('customer')">💬 Z-API → Cliente</button>`);
+  if (_drCurrent.tech_phone) acts.push(`<button class="btn btn-warn" onclick="drZapiOpen('tech')">👷 Z-API → ${_drCurrent.tech_name?.split(' ')[0] || 'Técnico'}</button>`);
+  document.getElementById('dr-actions').innerHTML = acts.join('');
+
+  // Body sections
+  const fmtDate = (s) => s ? new Date(s).toLocaleString('pt-BR') : '';
+  const fmtDay = (s) => s ? new Date(s).toLocaleDateString('pt-BR') : '';
+  const money = (v) => v != null ? `R$ ${parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2})}` : '';
+  const ed = (key, val, opts={}) => {
+    const empty = !val ? ' empty' : '';
+    return `<div class="dr-row editable" data-field="${key}">
+      <div class="lbl">${opts.label || key}</div>
+      <div class="val${empty}" onclick="drEditField('${key}', this, ${JSON.stringify(opts).replace(/"/g,'&quot;')})">${val || '—'}</div>
+    </div>`;
+  };
+  const ro = (lbl, val) => `<div class="dr-row"><div class="lbl">${lbl}</div><div class="val${val?'':' empty'}">${val||'—'}</div></div>`;
+
+  const enderecoFull = [deal.Endere_o, deal.N_mero, deal.Bairro, deal.Cidade, deal.Estado, deal.CEP].filter(Boolean).join(', ');
+
+  document.getElementById('dr-body').innerHTML = `
+    <div class="dr-section">
+      <h4>📦 Produto / Serviço</h4>
+      ${ro('Produto', deal.Produto_Vendido || sale.product_line)}
+      ${ro('Tipo Serviço', deal.Tipo_de_Servi_o || sale.service_type)}
+      ${ed('Tipo_de_Agua', deal.Tipo_de_Agua, {label:'Tipo Água'})}
+      ${ed('Skill_Necess_ria', deal.Skill_Necess_ria, {label:'Skill'})}
+      ${ed('Dura_o_Prevista', deal.Dura_o_Prevista, {label:'Duração'})}
+      ${ed('Janela_do_Cliente', deal.Janela_do_Cliente, {label:'Janela'})}
+      ${ro('Quantidade', sale.quantity || 1)}
+    </div>
+
+    <div class="dr-section">
+      <h4>💰 Pagamento</h4>
+      ${ro('Valor', money(deal.Amount || sale.amount))}
+      ${ed('Forma_de_Pagamento', deal.Forma_de_Pagamento || deal.Forma_Pagamento, {label:'Forma Pgto'})}
+      ${ed('Payment_Status', deal.Payment_Status || deal.Status_do_Pagamento, {label:'Status Pgto'})}
+      ${ed('Parcelas', deal.Parcelas, {label:'Parcelas', type:'number'})}
+      ${ed('Valor_Pago', deal.Valor_Pago, {label:'Valor Pago', type:'number'})}
+      ${ro('Closing Date', fmtDay(deal.Closing_Date || sale.sold_at))}
+    </div>
+
+    <div class="dr-section">
+      <h4>📅 Agendamento</h4>
+      ${ed('Data_Agendada', fmtDay(deal.Data_Agendada), {label:'Data Agendada', type:'date', raw: deal.Data_Agendada})}
+      ${ed('Data_da_Instala_o', fmtDay(deal.Data_da_Instala_o), {label:'Data Instalação', type:'date', raw: deal.Data_da_Instala_o})}
+      ${ed('T_cnico_Sugerido', deal.T_cnico_Sugerido, {label:'Técnico'})}
+      ${ro('Pronto p/ Agendar', deal.Pronto_para_Agendar ? '✅ Sim' : '❌ Não')}
+      ${ro('Produto Disponível', deal.Produto_Dispon_vel ? '✅ Sim' : '❌ Não')}
+      ${ro('Visita Auvo', card.visit?.auvo_task_id ? `#${card.visit.auvo_task_id}` : '')}
+    </div>
+
+    <div class="dr-section">
+      <h4>📍 Endereço</h4>
+      ${ed('Endere_o', deal.Endere_o, {label:'Logradouro'})}
+      ${ed('N_mero', deal.N_mero, {label:'Número'})}
+      ${ed('Bairro', deal.Bairro, {label:'Bairro'})}
+      ${ed('Cidade', deal.Cidade, {label:'Cidade'})}
+      ${ed('CEP', deal.CEP, {label:'CEP'})}
+      ${ed('Estado', deal.Estado, {label:'Estado'})}
+      ${ed('Nome_Condom_nio', deal.Nome_Condom_nio, {label:'Condomínio'})}
+      ${ro('Endereço completo', enderecoFull)}
+    </div>
+
+    <div class="dr-section">
+      <h4>👤 Cliente</h4>
+      ${ro('Nome', sale.customer_name)}
+      ${ro('Telefone', sale.customer_phone || '—')}
+      ${ro('Email', sale.customer_email || '—')}
+      ${ro('Vendedor', deal.Owner || sale.vendor_name)}
+    </div>
+
+    <div class="dr-section">
+      <h4>📝 Observações Zoho</h4>
+      ${ed('Description', deal.Description, {label:'Descrição', type:'textarea'})}
+      ${sale.observations ? `<div class="dr-row"><div class="lbl">Obs Sale</div><div class="val">${sale.observations}</div></div>` : ''}
+    </div>
+  `;
+}
+
+async function drEditField(key, el, opts) {
+  const current = el.classList.contains('empty') ? '' : el.textContent.trim();
+  const type = opts.type || 'text';
+  const input = type === 'textarea'
+    ? `<textarea>${current === '—' ? '' : current}</textarea>`
+    : `<input type="${type}" value="${(opts.raw || (current === '—' ? '' : current)).replace(/"/g,'&quot;')}" />`;
+  el.innerHTML = `${input}<div style="margin-top:4px;display:flex;gap:4px"><button class="btn btn-warn" style="padding:3px 8px;font-size:10px" onclick="drSaveField('${key}', this)">Salvar</button><button class="btn btn-sec" style="padding:3px 8px;font-size:10px" onclick="drOpen(${_drCurrent.saleId},'${_drCurrent.layer}')">Cancelar</button></div>`;
+  el.querySelector('input,textarea').focus();
+}
+
+async function drSaveField(key, btn) {
+  const cell = btn.closest('.val');
+  const val = cell.querySelector('input,textarea').value;
+  try {
+    btn.textContent = '...';
+    btn.disabled = true;
+    const r = await fetch(`/operacional/api/sales/${_drCurrent.saleId}/zoho-deal`, {
+      method: 'PATCH', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ fields: { [key]: val } })
+    });
+    if (!r.ok) throw new Error((await r.json()).error || `HTTP ${r.status}`);
+    alert('Campo atualizado no Zoho ✓');
+    drOpen(_drCurrent.saleId, _drCurrent.layer);
+  } catch (e) {
+    alert('Erro: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Salvar';
+  }
+}
+
+// Z-API modal
+function drZapiOpen(target) {
+  const sale_name = (_drCurrent.deal?.Deal_Name) || '';
+  const date = _drCurrent.deal?.Data_Agendada || _drCurrent.deal?.Data_da_Instala_o;
+  const dateFmt = date ? new Date(date).toLocaleDateString('pt-BR') : 'em breve';
+  const tech = _drCurrent.tech_name || 'técnico';
+  const product = _drCurrent.deal?.Produto_Vendido || '';
+  let phone = '', meta = '', msg = '';
+  if (target === 'tech_freeform') {
+    phone = _drCurrent.tech_phone;
+    meta = `Técnico ${tech} · ${phone}`;
+    msg = `Olá ${tech?.split(' ')[0] || ''}, `;
+  } else if (target === 'customer') {
+    phone = _drCurrent.customer_phone;
+    meta = `Cliente · ${phone}`;
+    msg = `Olá! Aqui é da Tudo de Filtro 💧\n\nLembrete: sua instalação ${product ? 'do(a) ' + product + ' ' : ''}está agendada para ${dateFmt}, com nosso técnico ${tech}.\n\nQualquer dúvida, é só responder por aqui.`;
+  } else {
+    phone = _drCurrent.tech_phone;
+    meta = `Técnico ${tech} · ${phone}`;
+    msg = `🔧 Serviço agendado\n\nCliente: ${_drCurrent.deal?.Account_Name || _drCurrent.deal?.Contact_Name || sale_name}\nData: ${dateFmt}\nProduto: ${product}\nEndereço: ${[_drCurrent.deal?.Endere_o, _drCurrent.deal?.N_mero, _drCurrent.deal?.Bairro, _drCurrent.deal?.Cidade].filter(Boolean).join(', ')}\nTel: ${_drCurrent.customer_phone || '—'}`;
+  }
+  if (!phone) return alert('Telefone não disponível');
+  document.getElementById('dr-zapi-title').textContent = target === 'customer' ? '💬 Mensagem ao Cliente' : '👷 Mensagem ao Técnico';
+  document.getElementById('dr-zapi-meta').textContent = meta;
+  document.getElementById('dr-zapi-text').value = msg;
+  document.getElementById('dr-zapi-modal').dataset.target = target;
+  document.getElementById('dr-zapi-modal').dataset.phone = phone;
+  document.getElementById('dr-zapi-modal').classList.add('show');
+}
+
+function drZapiClose() { document.getElementById('dr-zapi-modal').classList.remove('show'); }
+
+async function drZapiSend() {
+  const modal = document.getElementById('dr-zapi-modal');
+  const phone = modal.dataset.phone;
+  const target = modal.dataset.target;
+  const message = document.getElementById('dr-zapi-text').value.trim();
+  if (!message) return alert('Mensagem vazia');
+  try {
+    const r = await fetch('/operacional/api/zapi/send', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ phone, message, target })
+    });
+    const j = await r.json();
+    if (!r.ok || j.ok === false) throw new Error(j.error || `HTTP ${r.status}`);
+    alert('Mensagem enviada ✓');
+    drZapiClose();
+  } catch (e) {
+    alert('Erro Z-API: ' + e.message);
+  }
+}
+
+initMap();
+loadMap();
+setInterval(loadMap, 60000);
+</script>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script>try{if(localStorage.getItem('tdf-theme')==='light')document.documentElement.setAttribute('data-theme','light')}catch(_){}</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM TDF — Pipeline</title>
+<style>
+  :root{
+    --bg:#16181d; --panel:#1a1d23; --surface:#1e2228; --surface2:#22262e;
+    --line:#272b33; --line2:#2f343d;
+    --txt:#e3e6ea; --muted:#8b929e; --faint:#5d636e;
+    --accent:#3b82f6; --accent-soft:rgba(59,130,246,.13);
+    --green:#3fb950; --amber:#d29922; --red:#f0616d; --purple:#a371f7; --wpp:#25d366; --cyan:#0ea5b7;
+  }
+  html[data-theme="light"]{
+    --bg:#F2F4F8; --panel:#FFFFFF; --surface:#F6F8FA; --surface2:#EDF1F5;
+    --line:#D8DEE6; --line2:#C9D1DB;
+    --txt:#1F2328; --muted:#59636E; --faint:#77808B;
+    --accent:#2563EB; --accent-soft:rgba(37,99,235,.10);
+    --green:#1A7F37; --amber:#9A6700; --red:#CF222E; --purple:#8250DF; --cyan:#0891A5;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Inter","Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);height:100vh;display:flex;overflow:hidden;font-size:13px;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .side{width:228px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column}
+  .ws{display:flex;align-items:center;gap:9px;padding:13px 14px;border-bottom:1px solid var(--line)}
+  .ws .mark{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#3b82f6,#0ea5b7);display:grid;place-items:center;color:#fff;font-size:13px;font-weight:800}
+  .ws b{font-size:13px;font-weight:650}
+  .srch{display:flex;align-items:center;gap:8px;margin:10px 12px;padding:7px 9px;background:var(--bg);border:1px solid var(--line);border-radius:7px;color:var(--muted)}
+  .srch input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:12.5px;min-width:0}
+  .srch .k{font-size:10px;border:1px solid var(--line2);border-radius:4px;padding:0 4px;color:var(--faint)}
+  .nav{flex:1;overflow-y:auto;padding:4px 8px}
+  .sec{color:var(--faint);font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:13px 8px 5px}
+  .item{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;color:var(--muted);font-weight:500}
+  .item:hover{background:var(--surface);color:var(--txt)}
+  .item.on{background:var(--surface);color:var(--txt)}
+  .foot{border-top:1px solid var(--line);padding:9px 12px;display:flex;align-items:center;gap:9px}
+  .avatar{width:24px;height:24px;border-radius:50%;background:#3b4252;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff}
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .hdr{display:flex;align-items:center;gap:10px;padding:12px 18px 0}
+  .hdr .obj{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:680}
+  .hdr .obj .pico{color:var(--accent)}
+  .badge-real{font-size:10px;font-weight:700;color:var(--green);border:1px solid rgba(63,185,80,.3);background:rgba(63,185,80,.1);border-radius:20px;padding:2px 8px}
+  .tabs{display:flex;align-items:center;gap:2px;padding:10px 18px 0;border-bottom:1px solid var(--line)}
+  .tab{display:flex;align-items:center;gap:7px;padding:8px 11px;color:var(--muted);font-weight:550;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .tab.on{color:var(--txt);border-bottom-color:var(--accent)}
+  .toolbar{display:flex;align-items:center;gap:7px;padding:10px 18px}
+  .toolbar .right{margin-left:auto;color:var(--muted);font-size:12px}
+  .toolbar .right b{color:var(--green);font-weight:750}
+  .board{flex:1;display:flex;gap:14px;padding:4px 18px 18px;overflow-x:auto}
+  .col{width:266px;flex-shrink:0;display:flex;flex-direction:column;max-height:100%}
+  .colhd{display:flex;align-items:center;gap:8px;padding:6px 4px 10px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
+  .colhd .nm{font-size:12.5px;font-weight:650}
+  .colhd .ct{font-size:11px;color:var(--faint);font-weight:600}
+  .colhd .sum{margin-left:auto;font-size:12px;font-weight:700;color:var(--green)}
+  .cards{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:2px}
+  .cards::-webkit-scrollbar{width:6px}.cards::-webkit-scrollbar-thumb{background:var(--line2);border-radius:6px}
+  .card{display:block;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--pc,var(--line2));border-radius:9px;padding:11px 12px 10px;cursor:pointer;
+    transition:transform 180ms cubic-bezier(.23,1,.32,1),border-color 160ms ease,box-shadow 180ms ease}
+  @media (hover:hover){ .card:hover{border-color:var(--line2);box-shadow:0 5px 16px rgba(0,0,0,.3);transform:translateY(-1px)} }
+  .card:active{transform:translateY(0) scale(.992)}
+  .tier{font-size:9px;font-weight:800;letter-spacing:.3px;padding:2px 7px;border-radius:20px;white-space:nowrap;text-transform:uppercase;flex-shrink:0;align-self:flex-start}
+  .t-diamante{background:rgba(34,211,238,.16);color:#5fd9ea}
+  .t-ouro{background:rgba(251,191,36,.16);color:#fbbf24}
+  .t-prata{background:rgba(203,213,225,.14);color:#cbd5e1}
+  .t-bronze{background:rgba(217,119,6,.18);color:#e09b4a}
+  .t-default{background:var(--surface2);color:var(--muted)}
+  .card.r-yellow{background:linear-gradient(0deg,rgba(224,179,65,.08),var(--surface))}
+  .card.r-orange{background:linear-gradient(0deg,rgba(249,115,22,.12),var(--surface))}
+  .card.r-red{background:linear-gradient(0deg,rgba(240,97,109,.13),var(--surface))}
+  .card.has-msg{box-shadow:0 0 0 1px rgba(37,211,102,.32)}
+  .msgnova{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:#3ddc84;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.28);border-radius:7px;padding:4px 8px;margin-bottom:8px}
+  .msgnova .dot{width:6px;height:6px;border-radius:50%;background:#25d366;flex-shrink:0;animation:msgpulse 1.8s ease-in-out infinite}
+  @keyframes msgpulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(37,211,102,.5)}50%{opacity:.5;box-shadow:0 0 0 4px rgba(37,211,102,0)}}
+  .card.r-yellow .cage{color:#e0b341;font-weight:600}
+  .card.r-orange .cage{color:#f97316;font-weight:700}
+  .card.r-red .cage{color:#f0616d;font-weight:700}
+  .nm{overflow:hidden;text-overflow:ellipsis}
+  .card .top{display:flex;align-items:flex-start;gap:9px;margin-bottom:9px}
+  .card .logo{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--text);flex-shrink:0}
+  .card .nm{font-size:13px;font-weight:600;line-height:1.3}
+  .card .sub{font-size:11px;color:var(--muted);margin-top:1px;display:flex;align-items:center;gap:4px}
+  .card .mid{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+  .card .val{font-size:13px;font-weight:700}
+  .card .tag{font-size:10.5px;font-weight:600;color:var(--muted);border:1px solid var(--line2);border-radius:20px;padding:2px 8px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .card .btm{display:flex;align-items:center;justify-content:space-between;color:var(--faint);font-size:11px}
+  .card .av{width:19px;height:19px;border-radius:50%;display:grid;place-items:center;font-size:9.5px;font-weight:700;color:#fff;background:#3b4252}
+  .empty{flex:1;display:grid;place-items:center;color:var(--faint);font-size:13px;text-align:center;padding:40px}
+  .task-popup{position:fixed;bottom:18px;right:18px;width:300px;background:var(--surface);border:1px solid var(--line2);border-left:3px solid var(--amber);border-radius:11px;box-shadow:0 12px 40px rgba(0,0,0,.5);padding:13px 14px;z-index:9999;transform:translateY(10px);opacity:0;transition:transform 240ms cubic-bezier(.23,1,.32,1),opacity 220ms ease}
+  .task-popup.show{transform:translateY(0);opacity:1}
+  .tp-hd{font-size:12.5px;font-weight:700;margin-bottom:9px;display:flex;align-items:center;gap:7px}
+  .tp-item{display:block;font-size:12px;color:var(--txt);padding:6px 8px;border-radius:6px;margin-bottom:3px;background:var(--bg);text-decoration:none}
+  .tp-item:hover{background:var(--surface2)}
+  .tp-item.late{color:#ff8088}
+  .tp-close{margin-top:6px;background:none;border:none;color:var(--faint);font-size:11px;cursor:pointer;font-family:inherit}
+  .tp-close:hover{color:var(--txt)}
+</style>
+</head>
+<body>
+<%
+  function prodColor(p){ p=(p||'').toLowerCase();
+    if(p.includes('bebedouro'))return '#3b82f6';
+    if(p.includes('purifica'))return '#0ea5b7';
+    if(p.includes('entrada')||p.includes('filtralli'))return '#8b5cf6';
+    if(p.includes('poço')||p.includes('poco')||p.includes('iron')||p.includes('scale')||p.includes('abrand'))return '#d29922';
+    return '#5d636e'; }
+  function inits(n){ n=(n||'').replace(/[^A-Za-zÀ-ÿ ]/g,'').trim().split(/\s+/).filter(Boolean).slice(0,2).map(function(w){return w[0]||'';}).join(''); return (n||'?').toUpperCase(); }
+  function brl(v){ v=parseFloat(v)||0; return 'R$ '+v.toLocaleString('pt-BR',{maximumFractionDigits:0}); }
+  function idade(t){ if(!t)return ''; var ms=Date.now()-new Date(t).getTime(); if(isNaN(ms))return ''; var h=Math.floor(ms/3600000); if(h<1)return 'agora'; if(h<48)return h+'h'; return Math.floor(h/24)+'d'; }
+  function horas(t){ if(!t)return null; var h=Math.floor((Date.now()-new Date(t).getTime())/3600000); return isNaN(h)?null:h; }
+  function riscoClass(h){ if(h==null)return ''; if(h>=72)return 'r-red'; if(h>=48)return 'r-orange'; if(h>=24)return 'r-yellow'; return ''; }
+  function tierKey(t){ t=(t||'').toLowerCase(); if(t.indexOf('diam')>=0)return 'diamante'; if(t.indexOf('ouro')>=0||t.indexOf('gold')>=0)return 'ouro'; if(t.indexOf('prata')>=0||t.indexOf('silver')>=0)return 'prata'; if(t.indexOf('bronze')>=0)return 'bronze'; return 'default'; }
+%>
+  <aside class="side">
+    <div class="ws"><div class="mark">T</div><b>Tudo de Filtro</b></div>
+    <div class="srch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+      <input placeholder="Buscar..."><span class="k">⌘K</span></div>
+    <div class="nav">
+      <div class="sec">Vendas</div>
+      <a class="item on" href="/crm"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Negócios</a>
+      <a class="item" href="/contatos"><svg viewBox="0 0 24 24"><path d="M3 7h18M3 7l2 13h14l2-13M9 7V4h6v3"/></svg>Contatos</a>
+      <a class="item" href="/inbox"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Inbox</a>
+      <div class="sec">Operação</div>
+      <a class="item" href="/operacional"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 1 5.4-5.4l-2.6 2.6-2-2z"/></svg>Assistência Técnica</a>
+      <a class="item" href="/manutencao"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>CRM clássico</a>
+      <div class="sec">Configuração</div>
+      <a class="item" href="/crm/workflows"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1l-.4-2.6h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6a7 7 0 0 0 .1-1z"/></svg>Workflows</a>
+    </div>
+    <div class="foot"><div class="avatar"><%= inits(user.name) %></div><div><div style="font-size:12px;font-weight:600"><%= user.name %></div><div style="font-size:10px;color:var(--faint)"><%= isAdmin ? 'Admin' : 'Closer' %></div></div></div>
+  </aside>
+
+  <div class="main">
+    <div class="hdr">
+      <div class="obj"><span class="pico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Negócios</div>
+      <span class="badge-real">● dados reais do Zoho</span>
+    </div>
+    <div class="tabs">
+      <div class="tab on"><svg viewBox="0 0 24 24" style="width:15px;height:15px"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="13" rx="1"/><rect x="17" y="3" width="4" height="9" rx="1"/></svg> Kanban</div>
+      <div class="tab"><svg viewBox="0 0 24 24" style="width:15px;height:15px"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Tabela</div>
+    </div>
+    <div class="toolbar">
+      <div class="right">Pipeline aberto · <b><%= totalDeals %></b> negócios<% if (!isAdmin) { %> (sua carteira)<% } %></div>
+    </div>
+
+    <% if (totalDeals === 0) { %>
+      <div class="empty">Nenhum negócio aberto encontrado nos últimos 120 dias.<br>Se você é closer, mostra só a sua carteira.</div>
+    <% } else { %>
+    <div class="board">
+      <% stages.forEach(function(s){ var ds=byStage[s]; var sum=ds.reduce(function(a,d){return a+(parseFloat(d.Amount)||0);},0); %>
+        <div class="col">
+          <div class="colhd"><span class="dot"></span><span class="nm"><%= s %></span><span class="ct"><%= ds.length %></span><span class="sum"><%= brl(sum) %></span></div>
+          <div class="cards">
+            <% ds.forEach(function(d){ var prod=d.Produto_Vendido||''; var owner=(d.Owner&&d.Owner.name)||''; %>
+              <% var hrs=horas(d.Last_Activity_Time); var rc=riscoClass(hrs); %>
+              <a class="card <%= rc %><%= d._msgNova?' has-msg':'' %>" href="/crm/deal/<%= d.id %>" style="--pc:<%= prodColor(prod) %>">
+                <div class="top">
+                  <div class="logo" style="background:<%= prodColor(prod) %>"><%= inits(d.Deal_Name) %></div>
+                  <div style="flex:1;min-width:0">
+                    <div class="nm"><%= (d.Deal_Name||'(sem nome)') %></div>
+                    <% if (d.Cidade) { %><div class="sub"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:var(--faint)"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><%= d.Cidade %></div><% } %>
+                  </div>
+                  <% if (d.Tier_Lead) { %><span class="tier t-<%= tierKey(d.Tier_Lead) %>" title="Lead score: <%= d.Tier_Lead %>"><%= d.Tier_Lead %></span><% } %>
+                </div>
+                <% if (d._msgNova) { %><div class="msgnova"><span class="dot"></span>mensagem nova<% if(d._msgEsperaMin!=null){ %> · há <%= d._msgEsperaMin<60?(d._msgEsperaMin+'min'):(Math.round(d._msgEsperaMin/60)+'h') %><% } %></div><% } %>
+                <div class="mid">
+                  <span class="val" style="color:<%= (parseFloat(d.Amount)>0)?'var(--green)':'var(--faint)' %>"><%= (parseFloat(d.Amount)>0)?brl(d.Amount):'—' %></span>
+                  <% if (prod) { %><span class="tag" title="<%= prod %>"><%= prod %></span><% } %>
+                </div>
+                <div class="btm">
+                  <span style="display:flex;align-items:center;gap:6px;min-width:0"><% if(owner){ %><span class="av" title="<%= owner %>"><%= inits(owner) %></span><span style="color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= owner.split(' ')[0] %></span><% } %></span>
+                  <span class="cage" style="flex-shrink:0"><%= idade(d.Last_Activity_Time) %></span>
+                </div>
+              </a>
+            <% }); %>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+    <% } %>
+  </div>
+<script>
+(function(){
+  fetch('/crm/minhas-tarefas').then(function(r){ return r.json(); }).then(function(j){
+    if (!j.tasks || !j.tasks.length) return;
+    var pop = document.createElement('div'); pop.className = 'task-popup';
+    var itens = j.tasks.slice(0,5).map(function(t){ return '<a class="tp-item '+(t.vencida?'late':'')+'" href="/crm/deal/'+t.dealId+'">'+(t.vencida?'⚠ ':'🕐 ')+t.titulo+'</a>'; }).join('');
+    pop.innerHTML = '<div class="tp-hd">🔔 '+j.tasks.length+' tarefa(s) pra agora</div>'+itens+'<button class="tp-close">dispensar</button>';
+    document.body.appendChild(pop);
+    pop.querySelector('.tp-close').addEventListener('click', function(){ pop.remove(); });
+    requestAnimationFrame(function(){ pop.classList.add('show'); });
+  }).catch(function(){});
+})();
+</script>
+</body>
+</html>

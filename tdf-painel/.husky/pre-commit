@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+# Pre-commit hook: garante package-lock.json sincronizado com package.json
+# Caso package.json esteja staged sem lock, regenera + adiciona.
+
+if git diff --cached --name-only | grep -q "^package.json$"; then
+  if ! git diff --cached --name-only | grep -q "^package-lock.json$"; then
+    echo "⚠️  package.json modificado sem package-lock.json — regenerando..."
+    npm install --package-lock-only --no-audit --no-fund
+    git add package-lock.json
+    echo "✅ package-lock.json sincronizado e adicionado ao commit"
+  fi
+fi

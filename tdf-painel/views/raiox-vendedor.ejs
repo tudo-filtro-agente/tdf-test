@@ -1,0 +1,179 @@
+<% const activePage = 'gestao'; const pageTitle = 'Raio-X de Vendedor — Análise de Funil'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.rxv-container{max-width:1200px;margin:0 auto;padding:20px}
+.rxv-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #a371f7;border-radius:12px;padding:18px;margin-bottom:18px}
+.rxv-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.rxv-controls select,.rxv-controls input{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px}
+.rxv-btn{background:#a371f7;color:#fff;border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer}
+.rxv-btn:hover{background:#c084fc}
+.rxv-btn:disabled{opacity:.5;cursor:wait}
+.rxv-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px}
+.rxv-stat{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.rxv-stat .v{font-size:28px;font-weight:800;margin:6px 0}
+.rxv-stat .k{color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.rxv-section{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+.rxv-section h3{color:#c084fc;font-size:14px;margin:0 0 10px}
+.rxv-sintoma{display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:6px}
+.rxv-sintoma .ico{font-size:22px}
+.rxv-sintoma .info{flex:1}
+.rxv-sintoma .bar-wrap{height:6px;background:var(--bg-card);border-radius:3px;overflow:hidden;margin-top:4px}
+.rxv-sintoma .bar{height:100%}
+.rxv-caso{background:var(--bg-card);border:1px solid var(--border);border-left:4px solid #ef4444;border-radius:6px;padding:12px;margin-bottom:8px;cursor:pointer;transition:transform .15s}
+.rxv-caso:hover{transform:translateX(2px);border-color:#a371f7}
+.rxv-caso .head{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.rxv-caso .nome{color:var(--text);font-weight:700;font-size:13px}
+.rxv-caso .meta{color:var(--text-muted);font-size:11px;margin-left:auto}
+.rxv-caso .diag{color:var(--text-muted);font-size:12px;line-height:1.4;margin-top:4px}
+.rxv-caso .acao{color:#22c55e;font-size:11px;margin-top:4px;font-weight:600}
+.tier-Diamante{color:#06b6d4}
+.tier-Ouro{color:#fbbf24}
+.tier-Prata{color:#94a3b8}
+.tier-Bronze{color:#a16207}
+</style>
+
+<div class="rxv-container">
+  <div class="rxv-header">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:24px">🔍</span>
+      <h2 style="color:#c084fc;margin:0;font-size:18px">Raio-X de Vendedor — Análise de Funil</h2>
+    </div>
+    <div style="color:var(--text-muted);font-size:12px;margin-top:6px;line-height:1.5">
+      Roda análise IA em batch nos deals abertos parados do vendedor. Identifica:
+      <strong style="color:#fbbf24">em qual etapa do funil</strong> ele perde, os
+      <strong style="color:#ef4444">sintomas recorrentes</strong> (preço cedo, sem descoberta, sem urgência, objeção ignorada),
+      e gera <strong style="color:#22c55e">próxima ação</strong> por caso.
+    </div>
+    <div class="rxv-controls">
+      <select id="rxv-closer">
+        <option value="">— Selecione vendedor —</option>
+        <% closers.forEach(c => { %>
+          <option value="<%= c.username %>"><%= c.name %><%= c.team ? ' · '+c.team : '' %></option>
+        <% }) %>
+      </select>
+      <select id="rxv-dias">
+        <option value="3">Parados >3d</option>
+        <option value="7" selected>Parados >7d</option>
+        <option value="14">Parados >14d</option>
+        <option value="30">Parados >30d</option>
+      </select>
+      <select id="rxv-limite">
+        <option value="5">5 deals</option>
+        <option value="8" selected>8 deals</option>
+        <option value="12">12 deals</option>
+      </select>
+      <button id="rxv-btn" class="rxv-btn" onclick="rxvRodar()">▶ Rodar Análise</button>
+      <span id="rxv-status" style="color:var(--text-muted);font-size:11px"></span>
+    </div>
+  </div>
+
+  <div id="rxv-result"></div>
+</div>
+
+<script>
+const SINT_LABELS = {
+  preco_cedo_demais: { label: 'Preço cedo demais', icon: '💸', cor: '#ef4444' },
+  sem_descoberta: { label: 'Sem descoberta SPIN', icon: '🔍', cor: '#ef4444' },
+  sem_urgencia: { label: 'Sem urgência criada', icon: '⏰', cor: '#fbbf24' },
+  objecao_nao_tratada: { label: 'Objeção ignorada', icon: '🚫', cor: '#ef4444' },
+  sem_consciencia_dor: { label: 'Sem educar dor', icon: '🧠', cor: '#fbbf24' },
+  desqualificado_lead: { label: 'Lead não qualificado', icon: '❓', cor: '#fbbf24' },
+  sem_proxima_acao: { label: 'Sem próxima ação', icon: '🎯', cor: '#f97316' },
+  abandono_closer: { label: 'Closer abandonou', icon: '😴', cor: '#ef4444' },
+  abandono_cliente: { label: 'Cliente sumiu', icon: '👻', cor: '#888' },
+  script_robotico: { label: 'Script robótico', icon: '🤖', cor: '#fbbf24' },
+  gatilho_morto: { label: 'CTA morta', icon: '💀', cor: '#f97316' },
+};
+const STAGE_LABELS = {
+  consciencia: '🌱 Consciência',
+  descoberta: '🔍 Descoberta',
+  qualificacao: '✅ Qualificação',
+  proposta: '📨 Proposta',
+  fechamento: '🏆 Fechamento',
+};
+
+async function rxvRodar(){
+  const closer = document.getElementById('rxv-closer').value;
+  if (!closer) { alert('Selecione um vendedor'); return; }
+  const dias = document.getElementById('rxv-dias').value;
+  const limite = document.getElementById('rxv-limite').value;
+  const btn = document.getElementById('rxv-btn');
+  const status = document.getElementById('rxv-status');
+  const out = document.getElementById('rxv-result');
+  btn.disabled = true;
+  status.textContent = '⏳ Lendo conversas WATI + análise IA em batch... (pode levar 1-3 min)';
+  out.innerHTML = '<div style="text-align:center;color:#888;padding:40px">⏳ Processando...</div>';
+  try {
+    const r = await fetch(`/gestao/raiox-funil-vendedor?closer=${encodeURIComponent(closer)}&dias_parado=${dias}&limite=${limite}`);
+    const d = await r.json();
+    if (d.error) { out.innerHTML = `<div style="background:#3a0a0a;border:1px solid #ef4444;border-radius:8px;padding:16px;color:#fca5a5">❌ ${d.error}</div>`; return; }
+    if (d.total_analisados === 0) {
+      out.innerHTML = `<div class="rxv-section"><h3>${d.closer}</h3><div style="color:#888">${d.mensagem || 'Sem dados'}</div></div>`;
+      return;
+    }
+    let html = '';
+    // Stats
+    const score = d.score_medio;
+    const corScore = score >= 70 ? '#22c55e' : score >= 50 ? '#fbbf24' : score >= 25 ? '#f97316' : '#ef4444';
+    html += `<div class="rxv-stats">
+      <div class="rxv-stat"><div class="k">Vendedor</div><div class="v" style="color:#c084fc;font-size:18px">${d.closer}</div></div>
+      <div class="rxv-stat"><div class="k">Deals analisados</div><div class="v" style="color:#fff">${d.total_analisados}<span style="font-size:14px;color:#888">/${d.total_candidatos}</span></div></div>
+      <div class="rxv-stat"><div class="k">Score médio</div><div class="v" style="color:${corScore}">${score||'—'}<span style="font-size:14px;color:#888">/100</span></div></div>
+      <div class="rxv-stat"><div class="k">Gargalo principal</div><div class="v" style="color:#fbbf24;font-size:16px">${STAGE_LABELS[d.stage_gargalo?.stage] || '—'}</div><div style="color:#888;font-size:10px">${d.stage_gargalo?.count || 0} casos</div></div>
+    </div>`;
+    // Top sintomas
+    if (d.top_sintomas?.length) {
+      html += `<div class="rxv-section"><h3>📊 Sintomas Recorrentes (top ${d.top_sintomas.length})</h3>`;
+      const maxCount = Math.max(...d.top_sintomas.map(s => s.count), 1);
+      d.top_sintomas.forEach(s => {
+        const meta = SINT_LABELS[s.tipo] || { label: s.tipo, icon: '⚠️', cor: '#888' };
+        const pct = (s.count / d.total_analisados) * 100;
+        const barW = (s.count / maxCount) * 100;
+        html += `<div class="rxv-sintoma">
+          <span class="ico">${meta.icon}</span>
+          <div class="info">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <strong style="color:${meta.cor};font-size:13px">${meta.label}</strong>
+              <span style="color:#fff;font-weight:800;font-size:13px">${s.count}/${d.total_analisados} (${pct.toFixed(0)}%)</span>
+            </div>
+            <div class="bar-wrap"><div class="bar" style="background:${meta.cor};width:${barW}%"></div></div>
+            <div style="color:#888;font-size:10px;margin-top:3px">
+              ${s.severidades.alta||0} alta · ${s.severidades.media||0} média · ${s.severidades.baixa||0} baixa
+            </div>
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+    // Casos (ordenados pelo pior score primeiro)
+    html += `<div class="rxv-section"><h3>🚨 Casos analisados (${d.casos.length}) — ordenados pelo pior</h3>`;
+    d.casos.forEach(c => {
+      const corS = c.score >= 70 ? '#22c55e' : c.score >= 50 ? '#fbbf24' : c.score >= 25 ? '#f97316' : '#ef4444';
+      const sintomas = (c.sintomas_principais||[]).map(t => {
+        const m = SINT_LABELS[t] || { label: t, icon: '⚠️', cor: '#888' };
+        return `<span style="background:${m.cor}22;color:${m.cor};padding:1px 7px;border-radius:3px;font-size:10px;font-weight:700">${m.icon} ${m.label}</span>`;
+      }).join(' ');
+      html += `<div class="rxv-caso" style="border-left-color:${corS}" onclick="window.open('/manutencao#${c.dealId}','_blank')">
+        <div class="head">
+          <span class="nome">${c.nome}</span>
+          <span class="tier-${c.tier}" style="font-size:11px;font-weight:700">${c.tier || ''}</span>
+          <span style="background:${corS}22;color:${corS};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:800">Score ${c.score}</span>
+          <span style="background:#3a0a0a;color:#fca5a5;padding:2px 7px;border-radius:3px;font-size:10px">Travou: ${STAGE_LABELS[c.stage_travou]||c.stage_travou}</span>
+          <span class="meta">R$ ${(c.valor||0).toLocaleString('pt-BR')} · ${c.stage}</span>
+        </div>
+        <div style="margin-bottom:6px">${sintomas}</div>
+        <div class="diag">📋 ${c.diagnostico}</div>
+        <div class="acao">⚡ ${c.proxima_acao}</div>
+      </div>`;
+    });
+    html += `</div>`;
+    out.innerHTML = html;
+    status.textContent = `✓ ${d.total_analisados} deals analisados`;
+  } catch(e) {
+    out.innerHTML = `<div style="background:#3a0a0a;border:1px solid #ef4444;border-radius:8px;padding:16px;color:#fca5a5">❌ ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>

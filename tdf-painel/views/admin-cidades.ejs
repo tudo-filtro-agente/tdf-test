@@ -1,0 +1,247 @@
+<% const activePage = 'admin'; const pageTitle = 'Unificar Cidades — CRM Zoho'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.ac-wrap{max-width:1300px;margin:0 auto;padding:24px;color:var(--text)}
+.ac-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:1px solid #a371f7;border-radius:12px;padding:18px;margin-bottom:18px}
+.ac-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
+.ac-stat{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.ac-stat .v{color:var(--text);font-size:22px;font-weight:800}
+.ac-stat .k{color:#9ca3af;font-size:10px;text-transform:uppercase;font-weight:700;margin-top:3px}
+.ac-card{background:#161725;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
+.ac-card.precisa{border-left:4px solid #f59e0b}
+.ac-card.ok{border-left:4px solid #10b981;opacity:.7}
+.ac-canonical{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ac-canonical input{flex:1;background:#0a0a0f;border:1px solid #a371f7;color:#fff;border-radius:6px;padding:7px 10px;font-size:13px;font-weight:700}
+.ac-variantes{display:flex;flex-wrap:wrap;gap:5px}
+.ac-var{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:5px;padding:4px 9px;font-size:11px;color:#f59e0b;font-weight:600}
+.ac-var .count{color:#9ca3af;margin-left:5px;font-weight:400}
+.ac-var.canonical{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.4);color:#10b981}
+.ac-btn{background:#a371f7;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:800;cursor:pointer}
+.ac-btn:hover{background:#7c5cff}
+.ac-btn-danger{background:#ef4444}
+.ac-btn-success{background:#10b981;color:#000}
+.ac-btn:disabled{opacity:.5;cursor:wait}
+</style>
+
+<div class="ac-wrap">
+  <div class="ac-header">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:24px">🏙️</span>
+      <h2 style="color:#c084fc;margin:0;font-size:18px">Unificar Cidades — Zoho CRM</h2>
+    </div>
+    <p style="color:#9ca3af;font-size:12px;margin:8px 0 0;line-height:1.5">
+      Encontra todas as variantes de cidade nos deals (SJC, Sao Jose dos Campos, São José dos Campos, etc) e unifica pra forma canônica.
+      Aplica via Zoho Update API. Mantém histórico nos deals (não destrutivo).
+    </p>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">
+      <label style="color:#9ca3af;font-size:11px;font-weight:700">Fonte:</label>
+      <select id="ac-fonte" style="background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:5px 10px;font-size:12px">
+        <option value="base" selected>📋 Base completa (ERP local — todos clientes históricos)</option>
+        <option value="zoho">📂 Zoho últimos N meses</option>
+        <option value="tudo">🌐 Base + Zoho</option>
+      </select>
+      <label style="color:#9ca3af;font-size:11px;font-weight:700">Janela Zoho:</label>
+      <select id="ac-meses" style="background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:5px 10px;font-size:12px">
+        <option value="6">6 meses</option>
+        <option value="12">12 meses</option>
+        <option value="24" selected>24 meses</option>
+        <option value="60">5 anos</option>
+      </select>
+      <button class="ac-btn" onclick="acDescobrir()" id="ac-btn-desc">🔍 Descobrir Variantes</button>
+      <span id="ac-status" style="color:#9ca3af;font-size:11px"></span>
+    </div>
+  </div>
+
+  <div id="ac-stats-area"></div>
+  <div id="ac-grupos"></div>
+
+  <div id="ac-fixed-actions" style="display:none;position:sticky;bottom:14px;background:var(--bg);border:2px solid #a371f7;border-radius:10px;padding:12px;margin-top:14px;box-shadow:0 -4px 24px rgba(0,0,0,.6);z-index:50">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span id="ac-resumo-aplicar" style="flex:1;color:var(--text);font-size:12px;font-weight:600"></span>
+      <button class="ac-btn" onclick="acAplicar(true)" id="ac-btn-dry">🧪 Dry Run (preview)</button>
+      <button class="ac-btn ac-btn-success" onclick="acAplicar(false)" id="ac-btn-apply">⚡ Aplicar no Zoho</button>
+    </div>
+  </div>
+
+  <div id="ac-resultado" style="margin-top:14px"></div>
+</div>
+
+<script>
+let _AC_DATA = null;
+
+async function acDescobrir(){
+  const meses = document.getElementById('ac-meses').value;
+  const fonte = document.getElementById('ac-fonte').value;
+  const btn = document.getElementById('ac-btn-desc');
+  const status = document.getElementById('ac-status');
+  btn.disabled = true;
+  status.textContent = fonte === 'base' ? '⏳ Lendo base ERP local...' : '⏳ Buscando no Zoho... (pode levar 30-60s)';
+  document.getElementById('ac-grupos').innerHTML = '';
+  try {
+    const r = await fetch('/admin/cidades/discover?fonte='+fonte+'&meses='+meses);
+    const d = await r.json();
+    if (d.error) { status.textContent = '❌ '+d.error; return; }
+    _AC_DATA = d;
+    document.getElementById('ac-stats-area').innerHTML = `
+      <div class="ac-stats">
+        <div class="ac-stat"><div class="v">${d.total_deals}</div><div class="k">Deals analisados</div></div>
+        <div class="ac-stat"><div class="v" style="color:#fbbf24">${d.total_cidades_unicas}</div><div class="k">Cidades únicas</div></div>
+        <div class="ac-stat"><div class="v" style="color:#ef4444">${d.precisam_unificar}</div><div class="k">Grupos pra unificar</div></div>
+        <div class="ac-stat"><div class="v" style="color:#10b981">${d.grupos.length - d.precisam_unificar}</div><div class="k">Já unificados</div></div>
+      </div>
+    `;
+    acRenderGrupos();
+    status.textContent = `✅ ${d.total_cidades_unicas} cidades em ${d.grupos.length} grupos. ${d.precisam_unificar} precisam unificar.`;
+  } catch(e) { status.textContent = '❌ '+e.message; }
+  finally { btn.disabled = false; }
+}
+
+function acRenderGrupos(){
+  if (!_AC_DATA) return;
+  const cont = document.getElementById('ac-grupos');
+  // Mostra primeiro os que precisam, depois os ok
+  const precisam = _AC_DATA.grupos.filter(g => g.precisa_unificar);
+  const ok = _AC_DATA.grupos.filter(g => !g.precisa_unificar);
+  let html = '';
+  if (precisam.length) {
+    html += `<h3 style="color:#f59e0b;font-size:14px;margin:18px 0 10px">⚠️ ${precisam.length} grupos com variantes pra unificar</h3>`;
+    precisam.forEach((g, idx) => {
+      html += acRenderGrupoCard(g, idx, true);
+    });
+  }
+  if (ok.length) {
+    html += `<details style="margin-top:18px"><summary style="cursor:pointer;color:#10b981;font-size:13px;font-weight:700;padding:8px 0">✅ ${ok.length} grupos já unificados</summary>`;
+    ok.forEach((g, idx) => {
+      html += acRenderGrupoCard(g, 'ok-'+idx, false);
+    });
+    html += '</details>';
+  }
+  cont.innerHTML = html;
+  acAtualizarFixedActions();
+}
+
+function acRenderGrupoCard(g, idx, precisa){
+  const cls = precisa ? 'precisa' : 'ok';
+  return `
+    <div class="ac-card ${cls}" id="ac-grupo-${idx}">
+      <div class="ac-canonical">
+        <span style="color:#a371f7;font-size:11px;font-weight:800;text-transform:uppercase">→ Canônica:</span>
+        <input type="text" value="${(g.canonica||'').replace(/"/g,'&quot;')}" id="ac-can-${idx}" data-original="${(g.canonica||'').replace(/"/g,'&quot;')}" style="${!precisa?'opacity:.6':''}">
+        <span style="color:#9ca3af;font-size:11px">${g.total} deals</span>
+        ${precisa ? `<button onclick="acExcluirGrupo('${idx}')" style="background:transparent;color:#ef4444;border:1px solid #ef4444;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer">Pular</button>` : ''}
+      </div>
+      <div class="ac-variantes">
+        ${g.variantes.map(v => {
+          const canonical = v.nome === g.canonica;
+          return `<span class="ac-var ${canonical?'canonical':''}">${(v.nome||'(vazio)').replace(/</g,'&lt;')}<span class="count">×${v.count}</span></span>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function acExcluirGrupo(idx){
+  const card = document.getElementById('ac-grupo-'+idx);
+  if (card) { card.dataset.excluido = '1'; card.style.display = 'none'; }
+  acAtualizarFixedActions();
+}
+
+function acAtualizarFixedActions(){
+  if (!_AC_DATA) return;
+  const fa = document.getElementById('ac-fixed-actions');
+  const resumo = document.getElementById('ac-resumo-aplicar');
+  let totalDeals = 0;
+  const mapping = acColetarMapping();
+  Object.keys(mapping).forEach(v => {
+    // Soma deals dessa variante
+    for (const g of _AC_DATA.grupos) {
+      const found = g.variantes.find(x => x.nome === v);
+      if (found && mapping[v] !== v) totalDeals += found.count;
+    }
+  });
+  if (Object.keys(mapping).length === 0) {
+    fa.style.display = 'none';
+    return;
+  }
+  fa.style.display = 'block';
+  resumo.innerHTML = `<strong>${Object.keys(mapping).length}</strong> variantes mapeadas → ~<strong>${totalDeals}</strong> deals serão atualizados`;
+}
+
+function acColetarMapping(){
+  const mapping = {};
+  if (!_AC_DATA) return mapping;
+  _AC_DATA.grupos.forEach((g, idx) => {
+    if (!g.precisa_unificar) return;
+    const card = document.getElementById('ac-grupo-'+idx);
+    if (!card || card.dataset.excluido) return;
+    const inp = document.getElementById('ac-can-'+idx);
+    if (!inp) return;
+    const canonica = inp.value.trim();
+    if (!canonica) return;
+    g.variantes.forEach(v => {
+      if (v.nome !== canonica) mapping[v.nome] = canonica;
+    });
+  });
+  return mapping;
+}
+
+async function acAplicar(dryRun){
+  const mapping = acColetarMapping();
+  if (!Object.keys(mapping).length) { alert('Nenhuma variante mapeada'); return; }
+  const acao = dryRun ? '🧪 Rodar Dry Run' : '⚡ APLICAR no Zoho?';
+  if (!dryRun && !confirm(`${acao}\n\n${Object.keys(mapping).length} variantes serão substituídas.\n\nIsso atualiza o campo Cidade nos deals diretamente no Zoho. Continuar?`)) return;
+  const btn = dryRun ? document.getElementById('ac-btn-dry') : document.getElementById('ac-btn-apply');
+  btn.disabled = true;
+  const out = document.getElementById('ac-resultado');
+  out.innerHTML = '<div style="background:#0d1117;border:1px solid #30363D;border-radius:8px;padding:14px;color:#9ca3af">⏳ Processando...</div>';
+  try {
+    const r = await fetch('/admin/cidades/aplicar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mapping, dry_run: dryRun }),
+    });
+    const d = await r.json();
+    if (d.error) { out.innerHTML = `<div style="background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:8px;padding:14px;color:#fca5a5">❌ ${d.error}</div>`; return; }
+    let html = `
+      <div style="background:#0d1117;border:1px solid ${d.dry_run?'#f59e0b':'#10b981'};border-radius:10px;padding:16px">
+        <h3 style="color:${d.dry_run?'#f59e0b':'#10b981'};margin:0 0 10px">${d.dry_run?'🧪 Dry Run completo':'✅ Aplicação concluída'}</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px">
+          <div class="ac-stat"><div class="v">${d.total_encontrados}</div><div class="k">Deals encontrados</div></div>
+          <div class="ac-stat"><div class="v" style="color:#10b981">${d.atualizados}</div><div class="k">Atualizados</div></div>
+          <div class="ac-stat"><div class="v" style="color:${d.erros?'#ef4444':'#666'}">${d.erros}</div><div class="k">Erros</div></div>
+        </div>
+    `;
+    if (d.log?.length) {
+      html += `<details style="margin-top:12px"><summary style="cursor:pointer;color:#9ca3af;font-size:12px;font-weight:700">▸ Ver ${d.log.length} mudanças</summary>
+        <table style="width:100%;font-size:11px;color:#ccc;border-collapse:collapse;margin-top:10px">
+          <thead><tr style="background:#1a1a1a"><th style="padding:6px;text-align:left">Deal</th><th style="padding:6px;text-align:left">Antes</th><th style="padding:6px">→</th><th style="padding:6px;text-align:left">Depois</th><th style="padding:6px">OK</th></tr></thead>
+          <tbody>
+            ${d.log.map(l => `<tr style="border-bottom:1px solid #1a1a1a"><td style="padding:5px">${(l.deal_name||'').slice(0,40)}</td><td style="padding:5px;color:#ef4444">${l.cidade_antes||''}</td><td style="padding:5px">→</td><td style="padding:5px;color:#10b981">${l.cidade_depois||''}</td><td style="padding:5px">${l.ok===false?'❌':l.ok?'✅':'—'}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </details>`;
+    }
+    if (d.sample_erros?.length) {
+      html += `<details style="margin-top:8px"><summary style="cursor:pointer;color:#ef4444;font-size:12px;font-weight:700">▸ Ver ${d.sample_erros.length} erros</summary><pre style="background:#1a1a1a;padding:10px;border-radius:5px;overflow-x:auto;font-size:10px;color:#fca5a5">${JSON.stringify(d.sample_erros, null, 2)}</pre></details>`;
+    }
+    html += '</div>';
+    out.innerHTML = html;
+    if (!d.dry_run) {
+      setTimeout(() => acDescobrir(), 1500); // refresh
+    }
+  } catch(e) {
+    out.innerHTML = `<div style="background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:8px;padding:14px;color:#fca5a5">❌ ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// Watch inputs pra atualizar resumo
+document.addEventListener('input', e => {
+  if (e.target.id?.startsWith('ac-can-')) acAtualizarFixedActions();
+});
+
+// Auto-discover on load
+window.addEventListener('DOMContentLoaded', () => acDescobrir());
+</script>

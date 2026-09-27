@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script>try{if(localStorage.getItem('tdf-theme')==='light')document.documentElement.setAttribute('data-theme','light')}catch(_){}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal do Vendedor - Tudo de Filtro</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon-180.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0066CC">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TDF">
+<style>
+  :root {
+    --bg: #0D1117;
+    --bg-card: #161B22;
+    --border: #30363D;
+    --primary: #0066CC;
+    --primary-dark: #004C99;
+    --accent: #00AAFF;
+    --text: #E6EDF3;
+    --text-muted: #8B949E;
+    --danger: #F85149;
+  }
+  html[data-theme="light"] {
+    --bg: #F2F4F8;
+    --bg-card: #FFFFFF;
+    --border: #D0D7DE;
+    --accent: #0077CC;
+    --text: #1F2328;
+    --text-muted: #59636E;
+    --danger: #CF222E;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  @media print { body { display: none !important; } }
+
+  .login-container {
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+  }
+
+  .login-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 36px;
+    text-align: center;
+  }
+
+  .login-brand {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+  }
+
+  .login-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 36px;
+  }
+
+  .login-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 28px;
+    color: var(--text);
+  }
+
+  .form-group {
+    margin-bottom: 18px;
+    text-align: left;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-group input:focus {
+    border-color: var(--accent);
+  }
+
+  .btn-login {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .btn-login:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .error-msg {
+    background: rgba(248,81,73,0.1);
+    border: 1px solid rgba(248,81,73,0.3);
+    color: var(--danger);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 20px;
+    display: none;
+  }
+
+  .login-footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="login-container">
+  <div class="login-card">
+    <img src="/logo.png" alt="Tudo de Filtro" style="max-width:240px;width:80%;margin:0 auto 12px;display:block;filter:drop-shadow(0 4px 16px rgba(0,170,255,.2))">
+    <div class="login-subtitle">Eleve o nível da sua água</div>
+    <div class="login-title">Portal do Vendedor</div>
+
+    <div class="error-msg" id="errorMsg">Usuario ou senha incorretos.</div>
+
+    <form action="/login" method="POST">
+      <div class="form-group">
+        <label for="username">Usuario</label>
+        <input type="text" id="username" name="username" placeholder="seu.usuario" required autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="password">Senha</label>
+        <input type="password" id="password" name="password" placeholder="Sua senha" required>
+      </div>
+      <button type="submit" class="btn-login">Entrar</button>
+    </form>
+  </div>
+
+  <div class="login-footer">
+    Tudo de Filtro &mdash; Documento confidencial &mdash; Uso interno
+  </div>
+</div>
+
+<script>
+  // Show error if redirected with ?error=1
+  if (window.location.search.includes('error=1')) {
+    document.getElementById('errorMsg').style.display = 'block';
+  }
+
+  // Anti-copy
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'F12' ||
+        (e.ctrlKey && ['c','a','u','s','p'].includes(e.key.toLowerCase())) ||
+        e.key === 'PrintScreen') {
+      e.preventDefault();
+    }
+  });
+  document.addEventListener('dragstart', e => e.preventDefault());
+</script>
+</body>
+</html>

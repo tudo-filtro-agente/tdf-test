@@ -1,0 +1,1229 @@
+<% const activePage = 'gestao'; const pageTitle = 'Dashboard Tráfego — Painel Executivo'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+:root {
+  --dt-bg: #0a0a0f;
+  --dt-bg-2: #11121a;
+  --dt-card: #161725;
+  --dt-card-2: #1d1f30;
+  --dt-border: rgba(255,255,255,.06);
+  --dt-border-strong: rgba(255,255,255,.12);
+  --dt-text: #e5e7eb;
+  --dt-muted: #9ca3af;
+  --dt-faint: #6b7280;
+  --dt-accent: #a371f7;
+  --dt-green: #10b981;
+  --dt-yellow: #f59e0b;
+  --dt-red: #ef4444;
+  --dt-blue: #3b82f6;
+  --dt-meta: #1877f2;
+  --dt-google: #fbbc04;
+}
+html[data-theme="light"] {
+  --dt-bg: #F2F4F8;
+  --dt-bg-2: #FFFFFF;
+  --dt-card: #FFFFFF;
+  --dt-card-2: #F0F3F7;
+  --dt-border: rgba(0,0,0,.08);
+  --dt-border-strong: rgba(0,0,0,.16);
+  --dt-text: #1F2328;
+  --dt-muted: #59636E;
+  --dt-faint: #77808B;
+  --dt-accent: #8250DF;
+  --dt-green: #0E9F6E;
+  --dt-yellow: #B45309;
+  --dt-red: #DC2626;
+  --dt-blue: #2563EB;
+}
+
+.dt-container{padding:24px 28px;max-width:1600px;margin:0 auto;color:var(--dt-text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif}
+.dt-header{display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.dt-header h1{font-size:22px;font-weight:800;margin:0;background:linear-gradient(135deg,#fff,#a371f7);-webkit-background-clip:text;background-clip:text;color:transparent}
+.dt-period{display:flex;gap:6px;background:var(--dt-card);border:1px solid var(--dt-border);border-radius:10px;padding:4px}
+.dt-period button{background:transparent;color:var(--dt-muted);border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+.dt-period button:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.dt-period button.active{background:linear-gradient(135deg,var(--dt-accent),#7c5cff);color:#fff;box-shadow:0 4px 12px rgba(163,113,247,.3)}
+.dt-tabs{display:flex;gap:4px;margin:18px 0;border-bottom:1px solid var(--dt-border-strong);overflow-x:auto;scrollbar-width:none}
+.dt-tabs::-webkit-scrollbar{display:none}
+.dt-tab{background:transparent;color:var(--dt-muted);border:none;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s}
+.dt-tab:hover{color:var(--text)}
+.dt-tab.active{color:var(--text);border-bottom-color:var(--dt-accent)}
+
+/* Resumo do Dia (hero card) */
+.dt-hero{background:linear-gradient(135deg,#1a0e2a,var(--bg));border:1px solid rgba(163,113,247,.3);border-radius:16px;padding:20px;margin-bottom:18px;position:relative;overflow:hidden}
+.dt-hero::before{content:'';position:absolute;top:0;right:0;width:300px;height:200px;background:radial-gradient(circle,rgba(163,113,247,.15),transparent 70%);pointer-events:none}
+.dt-hero h2{font-size:14px;font-weight:800;color:var(--dt-accent);margin:0 0 4px;text-transform:uppercase;letter-spacing:.6px}
+.dt-hero-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-top:14px}
+.dt-hero-stat{background:rgba(255,255,255,.03);border:1px solid var(--dt-border);border-radius:10px;padding:12px}
+.dt-hero-stat .label{color:var(--dt-faint);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.dt-hero-stat .value{color:var(--text);font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.dt-hero-stat .delta{font-size:10px;font-weight:700;margin-top:3px}
+.dt-acao{margin-top:14px;padding:14px 16px;background:rgba(255,255,255,.04);border-left:4px solid var(--dt-accent);border-radius:8px;font-size:13px;font-weight:600;color:var(--text)}
+
+/* KPI grid */
+.dt-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px}
+.dt-kpi{background:var(--dt-card);border:1px solid var(--dt-border);border-radius:12px;padding:14px;transition:transform .2s,border-color .2s}
+.dt-kpi:hover{transform:translateY(-2px);border-color:var(--dt-border-strong)}
+.dt-kpi .top{display:flex;justify-content:space-between;align-items:start;margin-bottom:8px}
+.dt-kpi .top .ico{font-size:18px;opacity:.6}
+.dt-kpi .top .label{color:var(--dt-faint);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.dt-kpi .value{color:var(--text);font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;margin-bottom:4px}
+.dt-kpi .subv{color:var(--dt-muted);font-size:10px}
+.dt-kpi .delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:4px}
+.dt-kpi .delta.up{color:var(--dt-green);background:rgba(16,185,129,.1)}
+.dt-kpi .delta.down{color:var(--dt-red);background:rgba(239,68,68,.1)}
+.dt-kpi .delta.neutral{color:var(--dt-muted);background:rgba(255,255,255,.04)}
+
+/* Charts */
+.dt-chart-card{background:var(--dt-card);border:1px solid var(--dt-border);border-radius:14px;padding:18px;margin-bottom:18px}
+.dt-chart-card h3{margin:0 0 14px;font-size:14px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px}
+.dt-chart-toggle{display:flex;gap:4px;margin-left:auto;background:var(--dt-bg-2);border-radius:6px;padding:3px}
+.dt-chart-toggle button{background:transparent;color:var(--dt-muted);border:none;border-radius:4px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer}
+.dt-chart-toggle button.active{background:var(--dt-accent);color:var(--text)}
+
+/* Tables */
+.dt-table-card{background:var(--dt-card);border:1px solid var(--dt-border);border-radius:14px;padding:0;overflow:hidden;margin-bottom:18px}
+.dt-table-card h3{margin:0;padding:14px 18px;font-size:14px;font-weight:800;color:var(--text);border-bottom:1px solid var(--dt-border)}
+.dt-table{width:100%;border-collapse:collapse;font-size:12px}
+.dt-table th{background:var(--dt-bg-2);color:var(--dt-faint);font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:10px;padding:10px 12px;text-align:left;border-bottom:1px solid var(--dt-border)}
+.dt-table td{padding:10px 12px;border-bottom:1px solid var(--dt-border);color:var(--text);font-variant-numeric:tabular-nums}
+.dt-table tr:hover td{background:rgba(255,255,255,.02)}
+.dt-table .num{text-align:right}
+.dt-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.dt-pill.google{background:rgba(251,188,4,.15);color:var(--dt-google)}
+.dt-pill.meta{background:rgba(24,119,242,.15);color:var(--dt-meta)}
+
+/* Alertas */
+.dt-alertas{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.dt-alerta{background:var(--dt-card);border:1px solid var(--dt-border);border-left:4px solid var(--dt-muted);border-radius:10px;padding:14px;transition:transform .15s}
+.dt-alerta:hover{transform:translateX(2px)}
+.dt-alerta.alta{border-left-color:var(--dt-red);background:linear-gradient(90deg,rgba(239,68,68,.06),var(--dt-card) 30%)}
+.dt-alerta.media{border-left-color:var(--dt-yellow);background:linear-gradient(90deg,rgba(245,158,11,.05),var(--dt-card) 30%)}
+.dt-alerta.oportunidade{border-left-color:var(--dt-green);background:linear-gradient(90deg,rgba(16,185,129,.05),var(--dt-card) 30%)}
+.dt-alerta.info{border-left-color:var(--dt-blue);background:linear-gradient(90deg,rgba(59,130,246,.05),var(--dt-card) 30%)}
+.dt-alerta .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.dt-alerta .titulo{color:var(--text);font-size:13px;font-weight:800;flex:1}
+.dt-alerta .sev{font-size:9px;font-weight:800;padding:2px 7px;border-radius:4px;text-transform:uppercase}
+.dt-alerta .sev.alta{background:rgba(239,68,68,.15);color:var(--dt-red)}
+.dt-alerta .sev.media{background:rgba(245,158,11,.15);color:var(--dt-yellow)}
+.dt-alerta .sev.oportunidade{background:rgba(16,185,129,.15);color:var(--dt-green)}
+.dt-alerta .sev.info{background:rgba(59,130,246,.15);color:var(--dt-blue)}
+.dt-alerta .camp{color:var(--dt-muted);font-size:11px;margin-bottom:4px;font-weight:600}
+.dt-alerta .det{color:var(--dt-faint);font-size:11px;margin-bottom:8px;line-height:1.4}
+.dt-alerta .acao{display:flex;gap:6px;align-items:center}
+.dt-alerta .acao-text{color:var(--text);font-size:11px;font-weight:700;flex:1}
+.dt-alerta .acao-btn{background:var(--dt-accent);color:var(--text);border:none;border-radius:5px;padding:5px 10px;font-size:10px;font-weight:800;cursor:pointer}
+
+.dt-empty{text-align:center;padding:40px 20px;color:var(--dt-faint)}
+.dt-loading{text-align:center;padding:30px;color:var(--dt-muted);font-size:12px}
+.dt-skeleton{background:linear-gradient(90deg,var(--dt-card),var(--dt-card-2),var(--dt-card));background-size:200% 100%;animation:skel 1.5s infinite;border-radius:8px}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+</style>
+
+<div class="dt-container">
+  <div class="dt-header">
+    <h1>📊 Dashboard Tráfego Pago</h1>
+    <div class="dt-period">
+      <button onclick="dtSetPeriodo('hoje')" id="dtp-hoje" class="active">Hoje</button>
+      <button onclick="dtSetPeriodo('ontem')" id="dtp-ontem">Ontem</button>
+      <button onclick="dtSetPeriodo('7d')" id="dtp-7d">7d</button>
+      <button onclick="dtSetPeriodo('14d')" id="dtp-14d">14d</button>
+      <button onclick="dtSetPeriodo('30d')" id="dtp-30d">30d</button>
+      <button onclick="dtAbrirCustom()" id="dtp-custom">📅 Custom</button>
+    </div>
+    <div id="dt-custom-pop" style="display:none;position:absolute;top:60px;left:50%;transform:translateX(-50%);background:#161725;border:1px solid #a371f7;border-radius:10px;padding:14px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.5);min-width:280px">
+      <div style="font-size:11px;color:#9ca3af;margin-bottom:8px;font-weight:700">📅 PERÍODO CUSTOMIZADO</div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+        <input id="dtc-start" type="date" style="flex:1;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:6px;font-size:12px">
+        <span style="color:var(--text-muted)">→</span>
+        <input id="dtc-end" type="date" style="flex:1;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:6px;font-size:12px">
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="dtAplicarCustom()" style="flex:1;background:#a371f7;color:#fff;border:none;border-radius:5px;padding:7px;font-size:11px;font-weight:800;cursor:pointer">Aplicar</button>
+        <button onclick="dtFecharCustom()" style="background:transparent;color:#9ca3af;border:1px solid var(--border);border-radius:5px;padding:7px 12px;font-size:11px;cursor:pointer">Cancelar</button>
+      </div>
+    </div>
+    <span id="dt-status" style="color:var(--dt-faint);font-size:11px;margin-left:auto">⏳ Carregando...</span>
+    <button onclick="dtRecarregar()" style="background:var(--dt-card);color:var(--dt-muted);border:1px solid var(--dt-border);border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer" title="Atualizar tudo">🔄</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="dt-tabs">
+    <button onclick="dtAba('hoje')" id="dt-tab-hoje" class="dt-tab active">⚡ Resumo do Dia</button>
+    <button onclick="dtAba('overview')" id="dt-tab-overview" class="dt-tab">📈 Overview</button>
+    <button onclick="dtAba('alertas')" id="dt-tab-alertas" class="dt-tab">🚨 Alertas <span id="dt-alertas-badge" style="background:var(--dt-red);color:var(--text);border-radius:10px;padding:1px 6px;font-size:9px;font-weight:800;margin-left:4px;display:none"></span></button>
+    <button onclick="dtAba('comparar')" id="dt-tab-comparar" class="dt-tab">🆚 Comparar</button>
+    <button onclick="dtAba('speed')" id="dt-tab-speed" class="dt-tab">🚀 Speed to Lead</button>
+    <button onclick="dtAba('produto')" id="dt-tab-produto" class="dt-tab">💰 CAC por Produto</button>
+    <button onclick="dtAba('campanhas')" id="dt-tab-campanhas" class="dt-tab">📋 Campanhas</button>
+    <button onclick="dtAba('criativos')" id="dt-tab-criativos" class="dt-tab">🎨 Ranking Criativos</button>
+    <button onclick="dtAba('vendas')" id="dt-tab-vendas" class="dt-tab">💰 Vendas × Campanha</button>
+    <button onclick="dtAba('ia')" id="dt-tab-ia" class="dt-tab">🎯 Diretor de Tráfego (IA)</button>
+  </div>
+
+  <div id="dt-pane-hoje"></div>
+  <div id="dt-pane-overview" style="display:none"></div>
+  <div id="dt-pane-comparar" style="display:none"></div>
+  <div id="dt-pane-speed" style="display:none"></div>
+  <div id="dt-pane-produto" style="display:none"></div>
+  <div id="dt-pane-alertas" style="display:none"></div>
+  <div id="dt-pane-campanhas" style="display:none"></div>
+  <div id="dt-pane-criativos" style="display:none"></div>
+  <div id="dt-pane-vendas" style="display:none"></div>
+  <div id="dt-pane-ia" style="display:none"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let _DT_PERIODO = 'hoje'; // hoje | ontem | 7d | 14d | 30d (default 'hoje' pra aba Resumo carregar dados reais ao abrir)
+let _DT_DATA = {};
+
+function dtFmtR(v, big){
+  if (v == null) return '—';
+  v = Number(v);
+  if (big && v >= 1000000) return 'R$ '+(v/1000000).toFixed(1).replace('.',',')+'M';
+  if (big && v >= 1000) return 'R$ '+(v/1000).toFixed(1).replace('.',',')+'k';
+  return 'R$ '+Math.round(v).toLocaleString('pt-BR');
+}
+function dtFmtN(v){ if (v==null) return '—'; return Number(v).toLocaleString('pt-BR'); }
+function dtFmtPct(v, dec){ if (v==null) return '—'; return Number(v).toFixed(dec||1).replace('.',',')+'%'; }
+function dtDelta(d, inverso){
+  if (d == null) return '<span class="delta neutral">—</span>';
+  const positivo = inverso ? d < 0 : d > 0;
+  const cls = d === 0 ? 'neutral' : positivo ? 'up' : 'down';
+  const sym = d > 0 ? '↑' : d < 0 ? '↓' : '→';
+  return `<span class="delta ${cls}">${sym} ${Math.abs(d)}%</span>`;
+}
+
+let _DT_CUSTOM = null; // { start, end }
+
+function dtBuildQS(){
+  // Calcula start/end em horário Brasil (America/Sao_Paulo)
+  const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  const offsetDay = (n) => new Date(Date.now() - n * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  let start, end;
+  if (_DT_PERIODO === 'hoje') { start = hoje; end = hoje; }
+  else if (_DT_PERIODO === 'ontem') { start = offsetDay(1); end = offsetDay(1); }
+  else if (_DT_PERIODO === '7d') { start = offsetDay(6); end = hoje; }
+  else if (_DT_PERIODO === '14d') { start = offsetDay(13); end = hoje; }
+  else if (_DT_PERIODO === '30d') { start = offsetDay(29); end = hoje; }
+  else if (_DT_PERIODO === 'custom' && _DT_CUSTOM) { start = _DT_CUSTOM.start; end = _DT_CUSTOM.end; }
+  else { start = offsetDay(6); end = hoje; }
+  const dias = Math.max(1, Math.round((new Date(end+'T00:00:00').getTime() - new Date(start+'T00:00:00').getTime())/86400000) + 1);
+  return new URLSearchParams({ start, end, days: dias, dias }).toString();
+}
+
+function dtSetPeriodo(p){
+  _DT_PERIODO = p;
+  ['hoje','ontem','7d','14d','30d','custom'].forEach(x => {
+    const el = document.getElementById('dtp-'+x);
+    if (el) el.classList.toggle('active', x === p);
+  });
+  const ativa = document.querySelector('.dt-tab.active')?.id?.replace('dt-tab-','') || 'hoje';
+  dtAba(ativa);
+}
+
+function dtAbrirCustom(){
+  const pop = document.getElementById('dt-custom-pop');
+  pop.style.display = 'block';
+  if (_DT_CUSTOM) {
+    document.getElementById('dtc-start').value = _DT_CUSTOM.start;
+    document.getElementById('dtc-end').value = _DT_CUSTOM.end;
+  } else {
+    const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    const semana = new Date(Date.now() - 7*86400000).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    document.getElementById('dtc-start').value = semana;
+    document.getElementById('dtc-end').value = hoje;
+  }
+}
+function dtFecharCustom(){ document.getElementById('dt-custom-pop').style.display = 'none'; }
+function dtAplicarCustom(){
+  const s = document.getElementById('dtc-start').value;
+  const e = document.getElementById('dtc-end').value;
+  if (!s || !e) { alert('Preencha as duas datas'); return; }
+  if (s > e) { alert('Data inicial deve ser ≤ data final'); return; }
+  _DT_CUSTOM = { start: s, end: e };
+  document.getElementById('dtp-custom').textContent = '📅 ' + s.slice(8,10)+'/'+s.slice(5,7) + '–' + e.slice(8,10)+'/'+e.slice(5,7);
+  dtFecharCustom();
+  dtSetPeriodo('custom');
+}
+
+function dtAba(nome){
+  ['hoje','overview','comparar','speed','produto','alertas','campanhas','criativos','vendas','ia'].forEach(x => {
+    const tab = document.getElementById('dt-tab-'+x);
+    const pane = document.getElementById('dt-pane-'+x);
+    if (tab) tab.classList.toggle('active', x === nome);
+    if (pane) pane.style.display = x === nome ? '' : 'none';
+  });
+  if (nome === 'hoje') dtRenderHoje();
+  if (nome === 'overview') dtRenderOverview();
+  if (nome === 'comparar') dtRenderComparar();
+  if (nome === 'speed') dtRenderSpeed();
+  if (nome === 'produto') dtRenderProduto();
+  if (nome === 'alertas') dtRenderAlertas();
+  if (nome === 'campanhas') dtRenderCampanhas();
+  if (nome === 'criativos') dtRenderCriativos();
+  if (nome === 'vendas') dtRenderVendas();
+  if (nome === 'ia') dtRenderIA();
+}
+
+// ========== ABA RESUMO DO DIA (com breakdown por canal) ==========
+async function dtRenderHoje(){
+  const pane = document.getElementById('dt-pane-hoje');
+  // Pra períodos longos, sugere ir pro Overview
+  if (['7d','14d','30d','custom'].includes(_DT_PERIODO)) {
+    pane.innerHTML = `
+      <div class="dt-hero" style="text-align:center;padding:30px">
+        <h2>📅 Você selecionou ${_DT_PERIODO === 'custom' ? 'período customizado' : _DT_PERIODO}</h2>
+        <div style="color:var(--dt-muted);font-size:13px;margin:10px 0 16px">"Resumo do Dia" mostra dados de UM dia. Para ver o período completo:</div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <button onclick="dtAba('overview')" style="background:linear-gradient(135deg,#a371f7,#7c5cff);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-weight:800;cursor:pointer">→ Overview</button>
+          <button onclick="dtAba('comparar')" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-weight:800;cursor:pointer">🆚 Comparar Períodos</button>
+          <button onclick="dtSetPeriodo('hoje')" style="background:transparent;color:var(--dt-muted);border:1px solid var(--dt-border);border-radius:8px;padding:10px 16px;cursor:pointer">Voltar pra Hoje</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+  pane.innerHTML = '<div class="dt-loading">⏳ Carregando resumo...</div>';
+  // Calcula a data alvo: hoje ou ontem
+  const dataAlvo = _DT_PERIODO === 'ontem'
+    ? new Date(Date.now() - 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
+    : new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  try {
+    const r = await fetch('/trafego/resumo-dia?data=' + encodeURIComponent(dataAlvo));
+    const d = await r.json();
+    if (d.error) { pane.innerHTML = `<div class="dt-empty" style="color:var(--dt-red)">❌ ${d.error}</div>`; return; }
+    const k = d.kpis;
+    let html = `
+      <div class="dt-hero">
+        <h2>⚡ Resumo do Dia · ${new Date(d.hoje+'T12:00:00-03:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})}</h2>
+        <div style="color:var(--dt-muted);font-size:11px;margin-top:2px">Compara com ${new Date(d.ontem+'T12:00:00-03:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})}</div>
+        <div class="dt-hero-grid">
+          ${dtHeroStat('💰 Investido', dtFmtR(k.invest.hoje), k.invest.delta_pct, true)}
+          ${dtHeroStat('🎯 Leads', dtFmtN(k.leads.hoje), k.leads.delta_pct, false)}
+          ${dtHeroStat('💸 CPL', dtFmtR(k.cpl.hoje), k.cpl.delta_pct, true)}
+          ${dtHeroStat('🏆 Vendas', dtFmtN(k.vendas.hoje), k.vendas.delta_pct, false)}
+          ${dtHeroStat('💵 Receita atribuída', dtFmtR(k.receita.hoje, true), k.receita.delta_pct, false)}
+          ${dtHeroStat('🎯 CAC', dtFmtR(k.cac.hoje), null, true)}
+          ${dtHeroStat('📈 ROAS', k.roas.hoje != null ? k.roas.hoje.toFixed(2)+'x' : '—', null, false)}
+          ${dtHeroStat('👁️ CTR', dtFmtPct(k.ctr.hoje, 2), k.ctr.delta_pct, false)}
+        </div>
+        <div class="dt-acao" style="border-left-color:${d.acao_recomendada.cor}">
+          <strong style="color:${d.acao_recomendada.cor}">⚡ Ação recomendada agora:</strong> ${d.acao_recomendada.texto}
+        </div>
+      </div>
+      <!-- BREAKDOWN POR CANAL -->
+      <div class="dt-chart-card" style="margin-bottom:14px">
+        <h3>🌐 Breakdown por canal</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+          ${dtRenderCanalCard(d.canais.google)}
+          ${dtRenderCanalCard(d.canais.meta_ig)}
+          ${dtRenderCanalCard(d.canais.meta_fb)}
+          ${d.canais.audience_network ? dtRenderCanalCard(d.canais.audience_network) : ''}
+          ${d.canais.messenger ? dtRenderCanalCard(d.canais.messenger) : ''}
+          ${d.canais.meta_geral_extra ? dtRenderCanalCardExtra(d.canais.meta_geral_extra) : ''}
+          ${d.canais.sem_atribuicao ? dtRenderCanalCardExtra(d.canais.sem_atribuicao) : ''}
+        </div>
+        ${dtRecomendacaoCruzada(d.canais)}
+      </div>
+      <!-- SPEED TO LEAD CARD -->
+      <div id="dt-speed-mini" style="margin-bottom:14px"></div>
+      <script>setTimeout(() => dtCarregarSpeedMini(), 50);</script>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    `;
+    if (d.melhor_campanha) {
+      const m = d.melhor_campanha;
+      html += `
+        <div class="dt-chart-card" style="border-left:3px solid var(--dt-green)">
+          <h3>🏆 Melhor campanha hoje</h3>
+          <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">${m.name}</div>
+          <div><span class="dt-pill ${m.plat.toLowerCase()}">${m.plat}</span></div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;font-size:11px">
+            <div><span style="color:var(--dt-faint)">Invest</span><br><strong style="color:var(--text)">${dtFmtR(m.invest)}</strong></div>
+            <div><span style="color:var(--dt-faint)">Leads</span><br><strong style="color:var(--text)">${m.leads}</strong></div>
+            <div><span style="color:var(--dt-faint)">CPL</span><br><strong style="color:var(--dt-green)">${dtFmtR(m.cpl)}</strong></div>
+          </div>
+        </div>
+      `;
+    } else {
+      html += `<div class="dt-chart-card"><h3>🏆 Melhor campanha hoje</h3><div class="dt-empty">Sem dados ainda</div></div>`;
+    }
+    if (d.pior_campanha) {
+      const p = d.pior_campanha;
+      html += `
+        <div class="dt-chart-card" style="border-left:3px solid var(--dt-red)">
+          <h3>🔴 Pior campanha hoje</h3>
+          <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">${p.name}</div>
+          <div><span class="dt-pill ${p.plat.toLowerCase()}">${p.plat}</span></div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;font-size:11px">
+            <div><span style="color:var(--dt-faint)">Invest</span><br><strong style="color:var(--text)">${dtFmtR(p.invest)}</strong></div>
+            <div><span style="color:var(--dt-faint)">Leads</span><br><strong style="color:var(--text)">${p.leads}</strong></div>
+            <div><span style="color:var(--dt-faint)">CPL</span><br><strong style="color:var(--dt-red)">${p.cpl != null ? dtFmtR(p.cpl) : '∞'}</strong></div>
+          </div>
+        </div>
+      `;
+    } else {
+      html += `<div class="dt-chart-card"><h3>🔴 Pior campanha hoje</h3><div class="dt-empty">Tudo no controle ✅</div></div>`;
+    }
+    html += '</div>';
+    pane.innerHTML = html;
+    document.getElementById('dt-status').textContent = '✅ Atualizado · ' + new Date().toLocaleTimeString('pt-BR');
+  } catch(e) { pane.innerHTML = `<div class="dt-empty" style="color:var(--dt-red)">❌ ${e.message}</div>`; }
+}
+function dtHeroStat(label, valor, delta_pct, inverso){
+  return `
+    <div class="dt-hero-stat">
+      <div class="label">${label}</div>
+      <div class="value">${valor}</div>
+      ${delta_pct != null ? '<div class="delta">' + dtDelta(delta_pct, inverso) + '</div>' : ''}
+    </div>
+  `;
+}
+function dtRenderCanalCard(c){
+  const roasCor = c.roas == null ? '#666' : c.roas >= 3 ? '#10b981' : c.roas >= 1 ? '#f59e0b' : '#ef4444';
+  const cplCor = c.cpl == null ? '#666' : c.cpl < 30 ? '#10b981' : c.cpl < 80 ? '#f59e0b' : '#ef4444';
+  return `
+    <div style="background:rgba(255,255,255,.02);border:1px solid var(--dt-border);border-left:4px solid ${c.color};border-radius:8px;padding:12px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+        <div style="font-weight:800;color:${c.color};font-size:13px">${c.label}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px">
+        <div><span style="color:var(--dt-faint);font-size:9px;text-transform:uppercase">Invest</span><div style="color:var(--text);font-weight:800;font-size:14px">${dtFmtR(c.invest)}</div></div>
+        <div><span style="color:var(--dt-faint);font-size:9px;text-transform:uppercase">Leads</span><div style="color:var(--text);font-weight:800;font-size:14px">${c.leads||0}</div></div>
+        <div><span style="color:var(--dt-faint);font-size:9px;text-transform:uppercase">CPL</span><div style="color:${cplCor};font-weight:800;font-size:14px">${c.cpl != null ? dtFmtR(c.cpl) : '—'}</div></div>
+        <div><span style="color:var(--dt-faint);font-size:9px;text-transform:uppercase">Vendas</span><div style="color:#10b981;font-weight:800;font-size:14px">${c.vendas||0}</div></div>
+        <div><span style="color:var(--dt-faint);font-size:9px;text-transform:uppercase">Receita</span><div style="color:#10b981;font-weight:800;font-size:14px">${c.receita ? dtFmtR(c.receita,true) : '—'}</div></div>
+        <div><span style="color:var(--dt-faint);font-size:9px;text-transform:uppercase">ROAS</span><div style="color:${roasCor};font-weight:800;font-size:14px">${c.roas != null ? c.roas.toFixed(2)+'x' : '—'}</div></div>
+        <div><span style="color:var(--dt-faint);font-size:9px;text-transform:uppercase">CAC</span><div style="color:var(--text);font-weight:800;font-size:13px">${c.cac != null ? dtFmtR(c.cac) : '—'}</div></div>
+        ${c.ctr != null ? `<div><span style="color:var(--dt-faint);font-size:9px;text-transform:uppercase">CTR</span><div style="color:var(--text);font-weight:800;font-size:13px">${c.ctr.toFixed(2)}%</div></div>` : '<div></div>'}
+      </div>
+    </div>
+  `;
+}
+function dtRenderCanalCardExtra(c){
+  return `
+    <div style="background:rgba(255,255,255,.02);border:1px dashed var(--dt-border);border-left:3px solid ${c.color};border-radius:8px;padding:10px">
+      <div style="font-weight:700;color:${c.color};font-size:12px;margin-bottom:6px">${c.label}</div>
+      <div style="font-size:10px;color:var(--dt-muted);margin-bottom:6px">${c.nota||''}</div>
+      <div style="font-size:11px;color:var(--dt-text)">
+        <strong>${c.vendas||0} vendas</strong> · ${c.receita ? dtFmtR(c.receita,true) : '—'}
+      </div>
+    </div>
+  `;
+}
+
+// ========== ABA OVERVIEW (KPIs + gráfico de linha) ==========
+async function dtRenderOverview(){
+  const pane = document.getElementById('dt-pane-overview');
+  pane.innerHTML = '<div class="dt-loading">⏳ Carregando overview...</div>';
+  try {
+    const [snapR, serieR] = await Promise.all([
+      fetch('/trafego/snapshot?'+dtBuildQS()).then(r=>r.json()),
+      fetch('/trafego/serie-temporal?dias=14').then(r=>r.json()),
+    ]);
+    if (snapR.error) throw new Error(snapR.error);
+    const c = snapR.cards;
+    let html = `
+      <div class="dt-kpis">
+        ${dtKpi('💰','INVESTIDO',dtFmtR(c.invest_total,true),`G ${dtFmtR(c.invest_google,true)} · M ${dtFmtR(c.invest_meta,true)}`)}
+        ${dtKpi('🎯','LEADS',dtFmtN(c.leads),`G ${c.leads_google||0} · M ${c.leads_meta||0}`)}
+        ${dtKpi('💸','CPL',dtFmtR(c.cpl),'')}
+        ${dtKpi('🏆','VENDAS',dtFmtN(c.vendas),'(do CRM Zoho)')}
+        ${dtKpi('💵','RECEITA',dtFmtR(c.receita,true),`Ticket méd ${dtFmtR(c.ticket_medio)}`)}
+        ${dtKpi('📈','ROAS',c.roas != null ? c.roas.toFixed(2)+'x' : '—', c.roas != null && c.roas >= 3 ? '✅ Bom' : c.roas != null && c.roas >= 1 ? '⚠️ Limítrofe' : '❌ Negativo')}
+        ${dtKpi('🎯','CAC',dtFmtR(c.cac),'')}
+        ${dtKpi('🔄','LEAD→VENDA',dtFmtPct(c.taxa_lead_venda_pct,1),'')}
+      </div>
+      <div class="dt-chart-card">
+        <h3>📈 Série temporal — últimos 14 dias
+          <div class="dt-chart-toggle">
+            <button onclick="dtChartMetric('invest')" class="active" id="dtcm-invest">Invest</button>
+            <button onclick="dtChartMetric('leads')" id="dtcm-leads">Leads</button>
+            <button onclick="dtChartMetric('cpl')" id="dtcm-cpl">CPL</button>
+            <button onclick="dtChartMetric('cac')" id="dtcm-cac">CAC</button>
+            <button onclick="dtChartMetric('roas')" id="dtcm-roas">ROAS</button>
+          </div>
+        </h3>
+        <div style="height:300px"><canvas id="dt-chart-line"></canvas></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="dt-chart-card">
+          <h3>📊 Investimento Google × Meta</h3>
+          <div style="height:200px"><canvas id="dt-chart-canal"></canvas></div>
+        </div>
+        <div class="dt-chart-card">
+          <h3>🎯 Leads Google × Meta</h3>
+          <div style="height:200px"><canvas id="dt-chart-canal-leads"></canvas></div>
+        </div>
+      </div>
+    `;
+    pane.innerHTML = html;
+    window._DT_SERIE = serieR.series || [];
+    setTimeout(() => { dtChartMetric('invest'); dtChartCanal(); }, 100);
+  } catch(e) { pane.innerHTML = `<div class="dt-empty" style="color:var(--dt-red)">❌ ${e.message}</div>`; }
+}
+function dtKpi(ico, label, valor, sub){
+  return `
+    <div class="dt-kpi">
+      <div class="top">
+        <span class="label">${label}</span>
+        <span class="ico">${ico}</span>
+      </div>
+      <div class="value">${valor}</div>
+      <div class="subv">${sub||''}</div>
+    </div>
+  `;
+}
+let _DT_CHART = null;
+function dtChartMetric(metric){
+  ['invest','leads','cpl','cac','roas'].forEach(m => {
+    const el = document.getElementById('dtcm-'+m);
+    if (el) el.classList.toggle('active', m === metric);
+  });
+  const labels = (_DT_SERIE||[]).map(s => s.dow + ' ' + s.data.slice(8,10) + '/' + s.data.slice(5,7));
+  const cores = { invest:'#a371f7', leads:'#10b981', cpl:'#f59e0b', cac:'#ef4444', roas:'#3b82f6' };
+  const data = (_DT_SERIE||[]).map(s => s[metric]);
+  const ctx = document.getElementById('dt-chart-line');
+  if (!ctx) return;
+  if (_DT_CHART) _DT_CHART.destroy();
+  _DT_CHART = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{
+      label: metric.toUpperCase(), data,
+      borderColor: cores[metric], backgroundColor: cores[metric]+'22',
+      fill: true, tension: 0.3, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2,
+    }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display:false }, tooltip:{ backgroundColor:'#0a0a0f', borderColor:'#a371f7', borderWidth:1 } },
+      scales: {
+        x: { ticks:{ color:'#9ca3af', font:{ size:10 } }, grid:{ color:'rgba(255,255,255,.04)' } },
+        y: { ticks:{ color:'#9ca3af', font:{ size:10 }, callback: v => metric==='roas' ? v.toFixed(1)+'x' : (metric==='leads' ? v : 'R$'+Math.round(v)) }, grid:{ color:'rgba(255,255,255,.04)' }, beginAtZero: true },
+      },
+    },
+  });
+}
+let _DT_CHART_C = null, _DT_CHART_CL = null;
+function dtChartCanal(){
+  const labels = (_DT_SERIE||[]).map(s => s.data.slice(8,10) + '/' + s.data.slice(5,7));
+  const cInv = document.getElementById('dt-chart-canal');
+  const cLed = document.getElementById('dt-chart-canal-leads');
+  if (_DT_CHART_C) _DT_CHART_C.destroy();
+  if (_DT_CHART_CL) _DT_CHART_CL.destroy();
+  if (cInv) {
+    _DT_CHART_C = new Chart(cInv, {
+      type: 'bar',
+      data: { labels, datasets: [
+        { label: 'Google', data: _DT_SERIE.map(s => s.invest_google), backgroundColor: '#fbbc04' },
+        { label: 'Meta', data: _DT_SERIE.map(s => s.invest_meta), backgroundColor: '#1877f2' },
+      ] },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#9ca3af' } } }, scales:{ x:{ stacked:true, ticks:{ color:'#9ca3af' }, grid:{ display:false } }, y:{ stacked:true, ticks:{ color:'#9ca3af' }, grid:{ color:'rgba(255,255,255,.04)' } } } },
+    });
+  }
+}
+
+// ========== ABA COMPARAR PERÍODOS ==========
+function dtRenderComparar(){
+  const pane = document.getElementById('dt-pane-comparar');
+  const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  const offsetDay = (n) => new Date(Date.now() - n * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  // Defaults: período A = últimos 7d, período B = 7d anteriores
+  const aDefStart = offsetDay(6), aDefEnd = hoje;
+  const bDefStart = offsetDay(13), bDefEnd = offsetDay(7);
+  pane.innerHTML = `
+    <div class="dt-chart-card">
+      <h3>🆚 Comparar 2 períodos</h3>
+      <p style="color:var(--dt-muted);font-size:12px;margin:0 0 14px">Compare qualquer faixa de datas com outra. Mostra delta % e absoluto pra cada métrica + breakdown por canal (Google / IG / FB).</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div style="background:rgba(163,113,247,.08);border:1px solid rgba(163,113,247,.3);border-radius:8px;padding:12px">
+          <div style="color:var(--dt-accent);font-size:11px;font-weight:800;margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">📅 Período A (atual)</div>
+          <div style="display:flex;gap:6px">
+            <input id="cmp-a-start" type="date" value="${aDefStart}" style="flex:1;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:6px;font-size:12px">
+            <input id="cmp-a-end" type="date" value="${aDefEnd}" style="flex:1;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:6px;font-size:12px">
+          </div>
+        </div>
+        <div style="background:rgba(156,163,175,.08);border:1px solid rgba(156,163,175,.3);border-radius:8px;padding:12px">
+          <div style="color:var(--dt-muted);font-size:11px;font-weight:800;margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">📅 Período B (referência)</div>
+          <div style="display:flex;gap:6px">
+            <input id="cmp-b-start" type="date" value="${bDefStart}" style="flex:1;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:6px;font-size:12px">
+            <input id="cmp-b-end" type="date" value="${bDefEnd}" style="flex:1;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:6px;font-size:12px">
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+        <button onclick="dtCmpPreset('semana')" style="background:#1f1f2e;color:#9ca3af;border:1px solid var(--border);border-radius:5px;padding:6px 12px;font-size:11px;cursor:pointer">Esta sem. vs anterior</button>
+        <button onclick="dtCmpPreset('mes')" style="background:#1f1f2e;color:#9ca3af;border:1px solid var(--border);border-radius:5px;padding:6px 12px;font-size:11px;cursor:pointer">Este mês vs anterior</button>
+        <button onclick="dtCmpPreset('7d')" style="background:#1f1f2e;color:#9ca3af;border:1px solid var(--border);border-radius:5px;padding:6px 12px;font-size:11px;cursor:pointer">7d vs 7d anteriores</button>
+        <button onclick="dtCmpPreset('30d')" style="background:#1f1f2e;color:#9ca3af;border:1px solid var(--border);border-radius:5px;padding:6px 12px;font-size:11px;cursor:pointer">30d vs 30d anteriores</button>
+        <button onclick="dtCmpRodar()" style="background:linear-gradient(135deg,#a371f7,#7c5cff);color:#fff;border:none;border-radius:6px;padding:7px 18px;font-size:12px;font-weight:800;cursor:pointer;margin-left:auto">▶ Comparar</button>
+      </div>
+      <div id="cmp-result"></div>
+    </div>
+  `;
+}
+function dtCmpPreset(p){
+  const offsetDay = (n) => new Date(Date.now() - n * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  const hoje = new Date();
+  const hojeStr = hoje.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  let aS, aE, bS, bE;
+  if (p === '7d') { aS = offsetDay(6); aE = hojeStr; bS = offsetDay(13); bE = offsetDay(7); }
+  else if (p === '30d') { aS = offsetDay(29); aE = hojeStr; bS = offsetDay(59); bE = offsetDay(30); }
+  else if (p === 'semana') {
+    const dow = hoje.getDay() || 7; // domingo=0 → 7
+    aS = offsetDay(dow - 1); aE = hojeStr;
+    bS = offsetDay(dow - 1 + 7); bE = offsetDay(dow);
+  } else if (p === 'mes') {
+    const y = hoje.getFullYear(), m = hoje.getMonth();
+    aS = `${y}-${String(m+1).padStart(2,'0')}-01`;
+    aE = hojeStr;
+    const prev = new Date(y, m-1, 1);
+    bS = prev.toLocaleDateString('en-CA');
+    const prevEnd = new Date(y, m, 0);
+    bE = prevEnd.toLocaleDateString('en-CA');
+  }
+  document.getElementById('cmp-a-start').value = aS;
+  document.getElementById('cmp-a-end').value = aE;
+  document.getElementById('cmp-b-start').value = bS;
+  document.getElementById('cmp-b-end').value = bE;
+  dtCmpRodar();
+}
+async function dtCmpRodar(){
+  const a_start = document.getElementById('cmp-a-start').value;
+  const a_end = document.getElementById('cmp-a-end').value;
+  const b_start = document.getElementById('cmp-b-start').value;
+  const b_end = document.getElementById('cmp-b-end').value;
+  if (!a_start || !a_end || !b_start || !b_end) { alert('Preencha as 4 datas'); return; }
+  const out = document.getElementById('cmp-result');
+  out.innerHTML = '<div class="dt-loading">⏳ Comparando períodos... (15-30s)</div>';
+  try {
+    const qs = new URLSearchParams({ a_start, a_end, b_start, b_end }).toString();
+    const r = await fetch('/trafego/comparar-periodos?'+qs);
+    const d = await r.json();
+    if (d.error) { out.innerHTML = `<div class="dt-empty" style="color:var(--dt-red)">❌ ${d.error}</div>`; return; }
+    const A = d.a, B = d.b;
+    const fmtPeriod = (s, e) => `${s.slice(8,10)}/${s.slice(5,7)} → ${e.slice(8,10)}/${e.slice(5,7)}`;
+    function deltaCell(deltaObj, fmt, inverso){
+      if (deltaObj == null || deltaObj.pct == null) return '<span style="color:var(--text-muted)">—</span>';
+      const positivo = inverso ? deltaObj.pct < 0 : deltaObj.pct > 0;
+      const cls = deltaObj.pct === 0 ? 'neutral' : positivo ? 'up' : 'down';
+      const cor = cls === 'up' ? '#10b981' : cls === 'down' ? '#ef4444' : '#9ca3af';
+      const sym = deltaObj.pct > 0 ? '↑' : deltaObj.pct < 0 ? '↓' : '→';
+      const absStr = fmt === 'money' ? dtFmtR(Math.abs(deltaObj.abs)) : (fmt === 'pct' ? Math.abs(deltaObj.abs).toFixed(2)+'pp' : Math.abs(deltaObj.abs));
+      return `<span style="color:${cor};font-weight:800">${sym} ${Math.abs(deltaObj.pct)}%</span><span style="color:#9ca3af;font-size:10px;margin-left:4px">(${deltaObj.abs > 0 ? '+' : ''}${absStr})</span>`;
+    }
+    function row(label, valA, valB, delta, fmt, inverso){
+      return `<tr>
+        <td style="color:#9ca3af;font-weight:600">${label}</td>
+        <td class="num" style="color:var(--text);font-weight:700">${valA}</td>
+        <td class="num" style="color:#9ca3af">${valB}</td>
+        <td class="num">${deltaCell(delta, fmt, inverso)}</td>
+      </tr>`;
+    }
+    let html = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div style="background:rgba(163,113,247,.06);border:1px solid var(--dt-accent);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--dt-accent);font-weight:800;text-transform:uppercase;margin-bottom:4px">Período A</div>
+          <div style="color:var(--text);font-weight:700">${fmtPeriod(a_start, a_end)}</div>
+        </div>
+        <div style="background:rgba(156,163,175,.06);border:1px solid var(--dt-border);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--dt-muted);font-weight:800;text-transform:uppercase;margin-bottom:4px">Período B</div>
+          <div style="color:var(--text);font-weight:700">${fmtPeriod(b_start, b_end)}</div>
+        </div>
+      </div>
+      <div class="dt-table-card">
+        <h3>📊 Métricas globais</h3>
+        <div style="overflow-x:auto"><table class="dt-table">
+          <thead><tr><th>Métrica</th><th class="num">Período A</th><th class="num">Período B</th><th class="num">Variação</th></tr></thead>
+          <tbody>
+            ${row('💰 Investimento total', dtFmtR(A.invest), dtFmtR(B.invest), d.deltas.invest, 'money', true)}
+            ${row('🔍 Invest. Google', dtFmtR(A.invest_google), dtFmtR(B.invest_google), d.deltas.invest_google, 'money', true)}
+            ${row('📘 Invest. Meta total', dtFmtR(A.invest_meta), dtFmtR(B.invest_meta), d.deltas.invest_meta, 'money', true)}
+            ${row('📷 Invest. Instagram', dtFmtR(A.invest_ig), dtFmtR(B.invest_ig), d.deltas.invest_ig, 'money', true)}
+            ${row('👍 Invest. Facebook', dtFmtR(A.invest_fb), dtFmtR(B.invest_fb), d.deltas.invest_fb, 'money', true)}
+            <tr style="border-top:1px solid var(--dt-border-strong)"><td colspan="4" style="padding:6px 12px;background:#0d0d18;color:var(--dt-faint);font-size:9px;font-weight:800;text-transform:uppercase">LEADS</td></tr>
+            ${row('🎯 Leads total', dtFmtN(A.leads), dtFmtN(B.leads), d.deltas.leads, 'num', false)}
+            ${row('🔍 Leads Google', dtFmtN(A.leads_google), dtFmtN(B.leads_google), d.deltas.leads_google, 'num', false)}
+            ${row('📷 Leads Instagram', dtFmtN(A.leads_ig), dtFmtN(B.leads_ig), d.deltas.leads_ig, 'num', false)}
+            ${row('👍 Leads Facebook', dtFmtN(A.leads_fb), dtFmtN(B.leads_fb), d.deltas.leads_fb, 'num', false)}
+            <tr style="border-top:1px solid var(--dt-border-strong)"><td colspan="4" style="padding:6px 12px;background:#0d0d18;color:var(--dt-faint);font-size:9px;font-weight:800;text-transform:uppercase">EFICIÊNCIA</td></tr>
+            ${row('💸 CPL', dtFmtR(A.cpl), dtFmtR(B.cpl), d.deltas.cpl, 'money', true)}
+            ${row('💵 CPC', dtFmtR(A.cpc), dtFmtR(B.cpc), d.deltas.cpc, 'money', true)}
+            ${row('👁️ CTR', dtFmtPct(A.ctr,2), dtFmtPct(B.ctr,2), d.deltas.ctr, 'pct', false)}
+            <tr style="border-top:1px solid var(--dt-border-strong)"><td colspan="4" style="padding:6px 12px;background:#0d0d18;color:var(--dt-faint);font-size:9px;font-weight:800;text-transform:uppercase">VENDAS (CRM)</td></tr>
+            ${row('🏆 Vendas', dtFmtN(A.vendas), dtFmtN(B.vendas), d.deltas.vendas, 'num', false)}
+            ${row('💵 Receita atribuída', dtFmtR(A.receita), dtFmtR(B.receita), d.deltas.receita, 'money', false)}
+            ${row('🎯 CAC', dtFmtR(A.cac), dtFmtR(B.cac), d.deltas.cac, 'money', true)}
+            ${row('📈 ROAS', A.roas != null ? A.roas.toFixed(2)+'x' : '—', B.roas != null ? B.roas.toFixed(2)+'x' : '—', d.deltas.roas, 'num', false)}
+          </tbody>
+        </table></div>
+      </div>
+    `;
+    out.innerHTML = html;
+  } catch(e) { out.innerHTML = `<div class="dt-empty" style="color:var(--dt-red)">❌ ${e.message}</div>`; }
+}
+
+// ========== RECOMENDAÇÃO CRUZADA Google × Meta ==========
+function dtRecomendacaoCruzada(canais){
+  const g = canais.google;
+  const ig = canais.meta_ig;
+  const fb = canais.meta_fb;
+  const meta = { invest: ig.invest+fb.invest, leads: ig.leads+fb.leads, vendas: ig.vendas+fb.vendas, receita: ig.receita+fb.receita };
+  const cplG = g.invest > 0 && g.leads > 0 ? g.invest/g.leads : null;
+  const cplM = meta.invest > 0 && meta.leads > 0 ? meta.invest/meta.leads : null;
+  const cacG = g.invest > 0 && g.vendas > 0 ? g.invest/g.vendas : null;
+  const cacM = meta.invest > 0 && meta.vendas > 0 ? meta.invest/meta.vendas : null;
+  const roasG = g.invest > 0 ? g.receita/g.invest : null;
+  const roasM = meta.invest > 0 ? meta.receita/meta.invest : null;
+
+  let recomendacao = '';
+  let cor = '#a371f7';
+  if (g.invest === 0 && meta.invest === 0) {
+    return ''; // sem dados
+  }
+  if (cplG != null && cplM != null) {
+    if (cplG < cplM * 0.7 && cacG != null && cacM != null && cacG < cacM) {
+      recomendacao = `Google está com CPL ${dtFmtR(cplG)} e CAC ${dtFmtR(cacG)} — ambos melhores que Meta (${dtFmtR(cplM)} / ${dtFmtR(cacM)}). <strong>Considere migrar 20-30% do orçamento Meta pro Google.</strong>`;
+      cor = '#fbbc04';
+    } else if (cplM < cplG * 0.7 && meta.leads > g.leads * 1.5) {
+      recomendacao = `Meta gera <strong>volume</strong> (${meta.leads} leads vs ${g.leads}), Google gera <strong>conversão melhor</strong> (CAC ${cacG != null ? dtFmtR(cacG) : '—'} vs ${cacM != null ? dtFmtR(cacM) : '—'}). <strong>Mantenha o mix mas otimize qualificação dos leads Meta.</strong>`;
+      cor = '#a371f7';
+    } else if (roasG != null && roasM != null && roasG > roasM * 2) {
+      recomendacao = `Google está com ROAS ${roasG.toFixed(2)}x e Meta ${roasM.toFixed(2)}x. <strong>Reforce campanhas Google que vendem.</strong>`;
+      cor = '#fbbc04';
+    } else if (roasM != null && roasG != null && roasM > roasG * 2) {
+      recomendacao = `Meta está vendendo melhor (ROAS ${roasM.toFixed(2)}x vs ${roasG.toFixed(2)}x Google). <strong>Considere escalar Meta.</strong>`;
+      cor = '#1877f2';
+    }
+  }
+  if (!recomendacao) {
+    recomendacao = `Investimento balanceado: Google ${dtFmtR(g.invest)} (${g.leads} leads), Meta ${dtFmtR(meta.invest)} (${meta.leads} leads). Continue monitorando.`;
+    cor = '#9ca3af';
+  }
+  return `
+    <div style="margin-top:14px;padding:12px;background:rgba(255,255,255,.02);border-left:3px solid ${cor};border-radius:6px">
+      <div style="color:${cor};font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">⚔️ Google vs Meta — Recomendação</div>
+      <div style="color:var(--text);font-size:12px;line-height:1.5">${recomendacao}</div>
+    </div>
+  `;
+}
+
+// ========== SPEED TO LEAD MINI (no Resumo do Dia) ==========
+async function dtCarregarSpeedMini(){
+  const el = document.getElementById('dt-speed-mini');
+  if (!el) return;
+  el.innerHTML = '<div class="dt-loading" style="padding:12px">⏳ Calculando Speed to Lead...</div>';
+  try {
+    const r = await fetch('/trafego/speed-to-lead?horas=48&limite=40');
+    const d = await r.json();
+    if (d.error) { el.innerHTML = ''; return; }
+    if (d.total_analisados === 0) { el.innerHTML = ''; return; }
+    el.innerHTML = `
+      <div class="dt-chart-card" style="border-left:3px solid ${d.diagnostico.cor}">
+        <h3>🚀 Speed to Lead — últimas 48h
+          <span style="margin-left:auto;font-size:10px;color:var(--dt-faint);font-weight:500">${d.total_analisados} leads analisados</span>
+        </h3>
+        <div style="background:rgba(255,255,255,.02);border-left:3px solid ${d.diagnostico.cor};padding:10px 12px;border-radius:5px;margin-bottom:12px;font-size:12.5px;color:var(--text);line-height:1.4">${d.diagnostico.texto}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px">
+          ${dtSpeedKpi('⚡ Flash', '<5min', d.dist.flash, d.total_analisados, '#10b981')}
+          ${dtSpeedKpi('🟢 Rápido', '5-30min', d.dist.rapido, d.total_analisados, '#22c55e')}
+          ${dtSpeedKpi('🟡 Lento', '30min-2h', d.dist.lento, d.total_analisados, '#f59e0b')}
+          ${dtSpeedKpi('🟠 Muito lento', '2h-24h', d.dist.muito_lento, d.total_analisados, '#f97316')}
+          ${dtSpeedKpi('🔴 Crítico', '>24h', d.dist.critico, d.total_analisados, '#ef4444')}
+          ${dtSpeedKpi('👻 Sem contato', 'Nada', d.dist.sem_contato, d.total_analisados, '#666')}
+        </div>
+        ${d.speed_medio_min != null ? `<div style="margin-top:10px;font-size:11px;color:var(--dt-muted)">Speed médio: <strong style="color:var(--text)">${Math.round(d.speed_medio_min)}min</strong> · Mediana: <strong style="color:var(--text)">${Math.round(d.speed_mediano_min||0)}min</strong></div>` : ''}
+        ${d.criticos.length > 0 ? `<div style="margin-top:10px;text-align:right"><button onclick="dtAba('speed')" style="background:transparent;color:var(--dt-accent);border:1px solid var(--dt-accent);border-radius:5px;padding:6px 12px;font-size:11px;cursor:pointer;font-weight:700">Ver ${d.criticos.length} leads críticos →</button></div>` : ''}
+      </div>
+    `;
+  } catch(e) { el.innerHTML = ''; }
+}
+function dtSpeedKpi(label, sub, count, total, cor){
+  const pct = total > 0 ? Math.round(count/total*100) : 0;
+  return `
+    <div style="background:rgba(255,255,255,.02);border:1px solid var(--dt-border);border-radius:6px;padding:8px;text-align:center">
+      <div style="color:${cor};font-size:18px;font-weight:800">${count}</div>
+      <div style="color:var(--dt-muted);font-size:9px;font-weight:700">${label}</div>
+      <div style="color:var(--dt-faint);font-size:9px">${sub} (${pct}%)</div>
+    </div>
+  `;
+}
+
+// ========== ABA SPEED TO LEAD COMPLETA ==========
+async function dtRenderSpeed(){
+  const pane = document.getElementById('dt-pane-speed');
+  pane.innerHTML = '<div class="dt-loading">⏳ Carregando análise de Speed to Lead...</div>';
+  try {
+    const r = await fetch('/trafego/speed-to-lead?horas=48&limite=80');
+    const d = await r.json();
+    if (d.error) { pane.innerHTML = `<div class="dt-empty" style="color:var(--dt-red)">❌ ${d.error}</div>`; return; }
+    let html = `
+      <div class="dt-chart-card" style="border-left:4px solid ${d.diagnostico.cor};margin-bottom:14px">
+        <h3>🚀 Speed to Lead — análise completa</h3>
+        <div style="font-size:13px;color:var(--text);line-height:1.4;margin-bottom:14px">${d.diagnostico.texto}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px">
+          ${dtSpeedKpi('⚡ Flash', '<5min', d.dist.flash, d.total_analisados, '#10b981')}
+          ${dtSpeedKpi('🟢 Rápido', '5-30min', d.dist.rapido, d.total_analisados, '#22c55e')}
+          ${dtSpeedKpi('🟡 Lento', '30min-2h', d.dist.lento, d.total_analisados, '#f59e0b')}
+          ${dtSpeedKpi('🟠 Muito lento', '2h-24h', d.dist.muito_lento, d.total_analisados, '#f97316')}
+          ${dtSpeedKpi('🔴 Crítico', '>24h', d.dist.critico, d.total_analisados, '#ef4444')}
+          ${dtSpeedKpi('👻 Sem contato', 'Sem msg', d.dist.sem_contato, d.total_analisados, '#666')}
+        </div>
+        <div style="font-size:11px;color:var(--dt-muted)">Speed médio: <strong style="color:var(--text)">${d.speed_medio_min != null ? Math.round(d.speed_medio_min)+'min' : '—'}</strong> · Mediana: <strong style="color:var(--text)">${d.speed_mediano_min != null ? Math.round(d.speed_mediano_min)+'min' : '—'}</strong> · Janela: ${d.janela_horas}h</div>
+      </div>
+    `;
+    if (d.criticos.length) {
+      html += `
+        <div class="dt-table-card">
+          <h3>🚨 Leads críticos sem contato adequado (${d.criticos.length}) — priorizados por Tier × Valor</h3>
+          <div style="overflow-x:auto"><table class="dt-table">
+            <thead><tr>
+              <th>Status</th><th>Cliente</th><th>Tier</th><th>Owner</th>
+              <th>Origem</th><th class="num">Valor</th><th class="num">Idade</th><th class="num">Speed</th><th>Ação</th>
+            </tr></thead>
+            <tbody>
+      `;
+      d.criticos.forEach(c => {
+        const corStat = c.status === 'sem_contato' ? '#666' : c.status === 'critico' ? '#ef4444' : '#f97316';
+        const labelStat = c.status === 'sem_contato' ? '👻 Sem contato' : c.status === 'critico' ? '🔴 >24h' : '🟠 2-24h';
+        html += `<tr>
+          <td><span style="background:${corStat}22;color:${corStat};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:800">${labelStat}</span></td>
+          <td style="color:var(--text);font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nome}</td>
+          <td><span class="tier-${c.tier}" style="font-weight:700">${c.tier||'—'}</span></td>
+          <td style="color:var(--dt-muted)">${c.owner}</td>
+          <td style="color:var(--dt-muted);font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.lead_source||'—'}</td>
+          <td class="num">${dtFmtR(c.valor)}</td>
+          <td class="num">${c.idade_horas}h</td>
+          <td class="num" style="color:${corStat};font-weight:800">${c.speed_min != null ? Math.round(c.speed_min)+'min' : 'never'}</td>
+          <td><a href="/manutencao#${c.dealId}" target="_blank" style="background:var(--dt-accent);color:var(--text);text-decoration:none;border-radius:5px;padding:4px 10px;font-size:10px;font-weight:800">Abrir</a></td>
+        </tr>`;
+      });
+      html += '</tbody></table></div></div>';
+    }
+    pane.innerHTML = html;
+  } catch(e) { pane.innerHTML = `<div class="dt-empty" style="color:var(--dt-red)">❌ ${e.message}</div>`; }
+}
+
+// ========== ABA CAC POR PRODUTO ==========
+async function dtRenderProduto(){
+  const pane = document.getElementById('dt-pane-produto');
+  pane.innerHTML = '<div class="dt-loading">⏳ Calculando CAC por produto...</div>';
+  try {
+    const r = await fetch('/trafego/cac-por-produto?'+dtBuildQS());
+    const d = await r.json();
+    if (d.error) { pane.innerHTML = `<div class="dt-empty" style="color:var(--dt-red)">❌ ${d.error}</div>`; return; }
+    if (!d.produtos.length) { pane.innerHTML = '<div class="dt-empty">Sem dados no período.</div>'; return; }
+    const ROASmedio = d.total_invest > 0 ? d.total_receita / d.total_invest : null;
+    let html = `
+      <div class="dt-kpis">
+        ${dtKpi('💰','INVESTIDO',dtFmtR(d.total_invest, true),'')}
+        ${dtKpi('🏆','VENDAS',dtFmtN(d.total_vendas),'do CRM')}
+        ${dtKpi('💵','RECEITA',dtFmtR(d.total_receita, true),'')}
+        ${dtKpi('📈','ROAS GERAL',ROASmedio != null ? ROASmedio.toFixed(2)+'x' : '—','')}
+      </div>
+      <div class="dt-table-card">
+        <h3>💰 CAC e ROAS por Produto — ordenado por receita</h3>
+        <div style="overflow-x:auto"><table class="dt-table">
+          <thead><tr>
+            <th>Produto</th>
+            <th class="num">Invest.</th>
+            <th class="num">Leads</th>
+            <th class="num">CPL</th>
+            <th class="num">Vendas</th>
+            <th class="num">Receita</th>
+            <th class="num">CAC</th>
+            <th class="num">ROAS</th>
+            <th class="num">Ticket</th>
+            <th>Status</th>
+          </tr></thead>
+          <tbody>
+    `;
+    d.produtos.forEach(p => {
+      const corROAS = p.roas == null ? '#666' : p.roas >= 3 ? '#10b981' : p.roas >= 1 ? '#f59e0b' : '#ef4444';
+      const corCAC = p.cac == null ? '#666' : p.cac < 200 ? '#10b981' : p.cac < 500 ? '#f59e0b' : '#ef4444';
+      let status, statusCor;
+      if (p.invest === 0 && p.vendas > 0) { status = '🌱 Orgânico'; statusCor = '#22c55e'; }
+      else if (p.roas != null && p.roas >= 3) { status = '🚀 Escalar'; statusCor = '#10b981'; }
+      else if (p.roas != null && p.roas >= 1.5) { status = '✅ Manter'; statusCor = '#22c55e'; }
+      else if (p.roas != null && p.roas >= 1) { status = '🟡 Otimizar'; statusCor = '#f59e0b'; }
+      else if (p.invest > 0 && p.vendas === 0) { status = '🔴 Sem retorno'; statusCor = '#ef4444'; }
+      else { status = '⚪ Monitorar'; statusCor = '#9ca3af'; }
+      html += `<tr>
+        <td style="color:var(--text);font-weight:700">${p.produto}</td>
+        <td class="num">${dtFmtR(p.invest)}</td>
+        <td class="num">${dtFmtN(p.leads)}</td>
+        <td class="num">${p.cpl != null ? dtFmtR(p.cpl) : '—'}</td>
+        <td class="num"><strong style="color:#10b981">${p.vendas||0}</strong></td>
+        <td class="num" style="color:#10b981;font-weight:700">${dtFmtR(p.receita)}</td>
+        <td class="num" style="color:${corCAC};font-weight:800">${p.cac != null ? dtFmtR(p.cac) : '—'}</td>
+        <td class="num" style="color:${corROAS};font-weight:800">${p.roas != null ? p.roas.toFixed(2)+'x' : '—'}</td>
+        <td class="num">${p.ticket_medio != null ? dtFmtR(p.ticket_medio) : '—'}</td>
+        <td><span style="background:${statusCor}22;color:${statusCor};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:800">${status}</span></td>
+      </tr>`;
+    });
+    html += `</tbody></table></div></div>
+      <div style="margin-top:12px;font-size:11px;color:var(--dt-faint);line-height:1.5">
+        💡 Categorização automática via regex em nome da campanha + Lead_Source + Produto_Vendido + Pipeline. Produtos detectados: Filtro de Entrada · Bebedouro · Iron Free · Scale Stop · Purificador · Refil · Condomínio · Outros.
+      </div>
+    `;
+    pane.innerHTML = html;
+  } catch(e) { pane.innerHTML = `<div class="dt-empty" style="color:var(--dt-red)">❌ ${e.message}</div>`; }
+}
+
+// ========== ABA ALERTAS ==========
+async function dtRenderAlertas(){
+  const pane = document.getElementById('dt-pane-alertas');
+  pane.innerHTML = '<div class="dt-loading">⏳ Analisando campanhas...</div>';
+  try {
+    const r = await fetch('/trafego/alertas-auto?'+dtBuildQS());
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    const badge = document.getElementById('dt-alertas-badge');
+    if (d.total > 0) { badge.style.display='inline-block'; badge.textContent = d.total; }
+    if (!d.alertas?.length) {
+      pane.innerHTML = '<div class="dt-empty">✅ Nenhum alerta. Tudo no controle.</div>';
+      return;
+    }
+    let html = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
+        <div class="dt-kpi"><div class="top"><span class="label">🔴 Alta severidade</span></div><div class="value" style="color:var(--dt-red)">${d.por_severidade.alta||0}</div></div>
+        <div class="dt-kpi"><div class="top"><span class="label">🟡 Média</span></div><div class="value" style="color:var(--dt-yellow)">${d.por_severidade.media||0}</div></div>
+        <div class="dt-kpi"><div class="top"><span class="label">🟢 Oportunidade</span></div><div class="value" style="color:var(--dt-green)">${d.por_severidade.oportunidade||0}</div></div>
+        <div class="dt-kpi"><div class="top"><span class="label">🆕 Em aprendizado</span></div><div class="value" style="color:var(--dt-blue)">${d.por_severidade.info||0}</div></div>
+      </div>
+      <div class="dt-alertas">
+    `;
+    d.alertas.forEach(a => {
+      html += `
+        <div class="dt-alerta ${a.severidade}">
+          <div class="head">
+            <div class="titulo">${a.titulo}</div>
+            <span class="sev ${a.severidade}">${a.severidade}</span>
+          </div>
+          ${a.campanha ? '<div class="camp"><span class="dt-pill '+(a.plataforma||'').toLowerCase()+'">'+(a.plataforma||'')+'</span> '+a.campanha+'</div>' : ''}
+          <div class="det">${a.detalhe}</div>
+          <div class="acao">
+            <span class="acao-text">→ ${a.acao_sugerida}</span>
+            ${a.acao_endpoint ? '<button class="acao-btn" onclick="dtExecAcao(\''+a.acao_endpoint+'\',\''+(a.titulo||'').replace(/'/g,"\\'")+'\')">Executar</button>' : ''}
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    pane.innerHTML = html;
+  } catch(e) { pane.innerHTML = `<div class="dt-empty" style="color:var(--dt-red)">❌ ${e.message}</div>`; }
+}
+async function dtExecAcao(endpoint, titulo){
+  if (!confirm('Executar ação: '+titulo+'?')) return;
+  try {
+    const r = await fetch(endpoint, { method: 'POST' });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    alert('✅ Executado');
+    dtRenderAlertas();
+  } catch(e) { alert(e.message); }
+}
+
+// ========== ABA CAMPANHAS ==========
+async function dtRenderCampanhas(){
+  const pane = document.getElementById('dt-pane-campanhas');
+  pane.innerHTML = '<div class="dt-loading">⏳ Carregando campanhas...</div>';
+  try {
+    const r = await fetch('/trafego/snapshot?'+dtBuildQS());
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    const todas = [
+      ...(d.campanhas_google||[]).map(c => ({ plat:'Google', ...c, invest:c.cost_brl||0, leads:c.conversions||0 })),
+      ...(d.campanhas_meta||[]).map(c => ({ plat:'Meta', ...c, invest:c.spend_brl||0, leads:c.leads||0 })),
+    ];
+    todas.forEach(c => { c.cpl = c.leads > 0 ? c.invest / c.leads : null; });
+    todas.sort((a,b) => b.invest - a.invest);
+    // Calcula CPL médio (excluindo aprendizado) pra usar como baseline
+    const maduras = todas.filter(c => !c.em_aprendizado && c.invest >= 10 && c.cpl != null);
+    const cplMedio = maduras.length ? maduras.reduce((s,c) => s+c.cpl, 0) / maduras.length : null;
+    let html = `
+      <div class="dt-table-card">
+        <h3>📋 Campanhas — ordenadas por investimento ${cplMedio ? '(CPL médio do período: <strong style="color:var(--text)">'+dtFmtR(cplMedio)+'</strong>)' : ''}</h3>
+        <div style="overflow-x:auto"><table class="dt-table">
+          <thead><tr>
+            <th>Plat</th><th>Campanha</th>
+            <th class="num">Idade</th>
+            <th class="num">Invest</th><th class="num">Impr.</th><th class="num">Cliques</th><th class="num">CTR</th>
+            <th class="num">Leads</th><th class="num">CPL</th><th class="num">CPM</th>
+            <th>Status auto</th>
+          </tr></thead>
+          <tbody>
+    `;
+    todas.forEach(c => {
+      const ctr = c.ctr ? c.ctr.toFixed(2)+'%' : '—';
+      const cpm = c.impressions > 0 ? (c.invest/c.impressions*1000) : null;
+      const corCpl = c.cpl == null ? '#666' : c.cpl < 30 ? '#10b981' : c.cpl < 80 ? '#f59e0b' : '#ef4444';
+      const ativo = c.status === 'ENABLED' || c.status === 'ACTIVE';
+      // Status automático
+      let auto, autoCor;
+      if (c.em_aprendizado) { auto = '🆕 Aprendizado'; autoCor = '#3b82f6'; }
+      else if (!ativo) { auto = '⏸ Pausada'; autoCor = '#666'; }
+      else if (c.invest >= 50 && c.leads === 0) { auto = '🔴 Pausar'; autoCor = '#ef4444'; }
+      else if (cplMedio && c.cpl != null && c.cpl < cplMedio * 0.7 && c.leads >= 3) { auto = '🚀 Escalar'; autoCor = '#10b981'; }
+      else if (cplMedio && c.cpl != null && c.cpl > cplMedio * 1.5) { auto = '🟡 Otimizar'; autoCor = '#f59e0b'; }
+      else if (c.cpl != null && c.leads >= 1) { auto = '✅ Manter'; autoCor = '#22c55e'; }
+      else { auto = '⚪ Monitorar'; autoCor = '#9ca3af'; }
+      const idadeStr = c.idade_dias != null ? c.idade_dias+'d' : '—';
+      html += `<tr>
+        <td><span class="dt-pill ${c.plat.toLowerCase()}">${c.plat}</span></td>
+        <td style="color:var(--text);font-weight:600;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(c.name||'').replace(/"/g,'&quot;')}">${c.name||'(sem nome)'}</td>
+        <td class="num" style="color:${c.idade_dias != null && c.idade_dias < 7 ? '#3b82f6' : 'var(--dt-muted)'}">${idadeStr}</td>
+        <td class="num">${dtFmtR(c.invest)}</td>
+        <td class="num">${dtFmtN(c.impressions)}</td>
+        <td class="num">${dtFmtN(c.clicks)}</td>
+        <td class="num">${ctr}</td>
+        <td class="num"><strong>${c.leads||0}</strong></td>
+        <td class="num" style="color:${corCpl};font-weight:700">${c.cpl != null ? dtFmtR(c.cpl) : '—'}</td>
+        <td class="num">${cpm != null ? dtFmtR(cpm) : '—'}</td>
+        <td><span style="background:${autoCor}22;color:${autoCor};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:800">${auto}</span></td>
+      </tr>`;
+    });
+    html += '</tbody></table></div></div>';
+    pane.innerHTML = html;
+  } catch(e) { pane.innerHTML = `<div class="dt-empty" style="color:var(--dt-red)">❌ ${e.message}</div>`; }
+}
+
+// ========== ABA CRIATIVOS (Meta) ou KEYWORDS (Google) ==========
+let _DT_CRIA_PLAT = localStorage.getItem('dt_cria_plat') || 'meta';
+function dtCriaSetPlat(p){ _DT_CRIA_PLAT = p; localStorage.setItem('dt_cria_plat', p); dtRenderCriativos(); }
+async function dtRenderCriativos(){
+  const pane = document.getElementById('dt-pane-criativos');
+  pane.innerHTML = '<div class="dt-loading">⏳ Carregando ranking...</div>';
+  // Toggle plataforma
+  const toggle = `
+    <div style="display:flex;gap:6px;margin-bottom:14px;background:var(--dt-card);border:1px solid var(--dt-border);border-radius:10px;padding:4px;width:fit-content">
+      <button onclick="dtCriaSetPlat('meta')" style="background:${_DT_CRIA_PLAT==='meta'?'var(--dt-meta)':'transparent'};color:${_DT_CRIA_PLAT==='meta'?'#fff':'var(--dt-muted)'};border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer">📘 Meta (criativos)</button>
+      <button onclick="dtCriaSetPlat('google')" style="background:${_DT_CRIA_PLAT==='google'?'var(--dt-google)':'transparent'};color:${_DT_CRIA_PLAT==='google'?'#000':'var(--dt-muted)'};border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer">🔍 Google (keywords)</button>
+    </div>
+  `;
+  try {
+    if (_DT_CRIA_PLAT === 'meta') {
+      const r = await fetch('/trafego/meta/creatives?'+dtBuildQS());
+      const d = await r.json();
+      if (d.error) throw new Error(d.error);
+      const ads = (d.ads || d.list || d || []).filter(a => (a.spend_brl||0) > 5);
+      ads.forEach(a => { a.cpl = a.leads > 0 ? a.spend_brl / a.leads : null; });
+      ads.sort((a,b) => (a.cpl||1e9) - (b.cpl||1e9));
+      let html = toggle + `
+        <div class="dt-table-card">
+          <h3>🎨 Top 30 criativos Meta — ordenados pelo melhor CPL</h3>
+          <div style="overflow-x:auto"><table class="dt-table">
+            <thead><tr>
+              <th>#</th><th>Criativo</th><th>Campanha</th>
+              <th class="num">Spend</th><th class="num">CTR</th><th class="num">Freq</th>
+              <th class="num">Leads</th><th class="num">CPL</th><th>Recomendação</th>
+            </tr></thead>
+            <tbody>
+      `;
+      if (!ads.length) {
+        html += `<tr><td colspan="9" class="dt-empty">Sem criativos com spend &gt;R$5 no período</td></tr>`;
+      }
+      ads.slice(0, 30).forEach((a, i) => {
+        const rec = a.cpl == null ? '⏸ Pausar (0 leads)' : a.cpl < 25 ? '🚀 Escalar verba' : a.cpl < 60 ? '✅ Manter' : '⚠️ Trocar criativo';
+        const corRec = a.cpl == null ? '#ef4444' : a.cpl < 25 ? '#10b981' : a.cpl < 60 ? '#9ca3af' : '#f59e0b';
+        html += `<tr>
+          <td><strong style="color:${i<3?'#f59e0b':'#666'}">#${i+1}</strong></td>
+          <td style="color:var(--text);font-weight:600;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(a.name||'').replace(/"/g,'&quot;')}">${a.name||'(sem nome)'}</td>
+          <td style="color:var(--dt-muted);font-size:11px">${a.campaign_name||'—'}</td>
+          <td class="num">${dtFmtR(a.spend_brl||0)}</td>
+          <td class="num">${a.ctr ? a.ctr.toFixed(2)+'%' : '—'}</td>
+          <td class="num">${a.frequency ? a.frequency.toFixed(1) : '—'}</td>
+          <td class="num"><strong>${a.leads||0}</strong></td>
+          <td class="num" style="color:${a.cpl==null?'#ef4444':a.cpl<30?'#10b981':a.cpl<60?'#f59e0b':'#ef4444'};font-weight:700">${a.cpl != null ? dtFmtR(a.cpl) : '—'}</td>
+          <td style="color:${corRec};font-weight:700;font-size:11px">${rec}</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div></div>';
+      pane.innerHTML = html;
+    } else {
+      // GOOGLE: keywords ranking
+      const r = await fetch('/trafego/google/keywords?'+dtBuildQS());
+      const d = await r.json();
+      if (d.error) throw new Error(d.error);
+      const kws = (d.keywords || d.list || d || []).filter(k => (k.cost_brl||0) > 5);
+      kws.forEach(k => { k.cpl = k.conversions > 0 ? k.cost_brl / k.conversions : null; });
+      kws.sort((a,b) => (a.cpl||1e9) - (b.cpl||1e9));
+      let html = toggle + `
+        <div class="dt-table-card">
+          <h3>🔍 Top 30 keywords Google — ordenadas pelo melhor CPL</h3>
+          <div style="overflow-x:auto"><table class="dt-table">
+            <thead><tr>
+              <th>#</th><th>Keyword</th><th>Match Type</th><th>Campanha</th>
+              <th class="num">Spend</th><th class="num">Cliques</th><th class="num">CTR</th>
+              <th class="num">Conv</th><th class="num">CPL</th><th>Ação</th>
+            </tr></thead>
+            <tbody>
+      `;
+      if (!kws.length) {
+        html += `<tr><td colspan="10" class="dt-empty">Sem keywords com spend &gt;R$5 no período</td></tr>`;
+      }
+      kws.slice(0, 30).forEach((k, i) => {
+        const rec = k.cpl == null ? '⏸ Pausar (0 conv)' : k.cpl < 30 ? '🚀 Aumentar lance' : k.cpl < 80 ? '✅ Manter' : '⚠️ Reduzir/pausar';
+        const corRec = k.cpl == null ? '#ef4444' : k.cpl < 30 ? '#10b981' : k.cpl < 80 ? '#9ca3af' : '#f59e0b';
+        const corCpl = k.cpl == null ? '#ef4444' : k.cpl < 30 ? '#10b981' : k.cpl < 80 ? '#f59e0b' : '#ef4444';
+        html += `<tr>
+          <td><strong style="color:${i<3?'#f59e0b':'#666'}">#${i+1}</strong></td>
+          <td style="color:var(--text);font-weight:600;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(k.text||k.keyword||'').replace(/"/g,'&quot;')}">${k.text||k.keyword||'(?)'}</td>
+          <td style="color:var(--dt-muted);font-size:10px">${k.match_type||'—'}</td>
+          <td style="color:var(--dt-muted);font-size:11px">${k.campaign_name||'—'}</td>
+          <td class="num">${dtFmtR(k.cost_brl||0)}</td>
+          <td class="num">${dtFmtN(k.clicks||0)}</td>
+          <td class="num">${k.ctr ? (k.ctr*100).toFixed(2)+'%' : '—'}</td>
+          <td class="num"><strong>${k.conversions||0}</strong></td>
+          <td class="num" style="color:${corCpl};font-weight:700">${k.cpl != null ? dtFmtR(k.cpl) : '—'}</td>
+          <td style="color:${corRec};font-weight:700;font-size:11px">${rec}</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div></div>';
+      pane.innerHTML = html;
+    }
+  } catch(e) { pane.innerHTML = `<div class="dt-empty" style="color:var(--dt-red)">❌ ${e.message}</div>`; }
+}
+
+// ========== ABA VENDAS x CAMPANHA (já existe endpoint) ==========
+async function dtRenderVendas(){
+  const pane = document.getElementById('dt-pane-vendas');
+  pane.innerHTML = '<div class="dt-loading">⏳ Cruzando spend × Fechado Ganho...</div>';
+  try {
+    const r = await fetch('/trafego/vendas-por-campanha?'+dtBuildQS());
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    const T = d.total;
+    const atribPct = (T.revenue_atribuido_pct * 100).toFixed(0);
+    let html = `
+      <div class="dt-kpis">
+        ${dtKpi('💰','SPEND TOTAL',dtFmtR(T.spend,true),'')}
+        ${dtKpi('💵','RECEITA ATRIB.',dtFmtR(T.revenue,true),T.deals_won+' deals')}
+        ${dtKpi('📈','ROAS REAL',T.roas != null ? T.roas.toFixed(2)+'x' : '—','vs declarado pelas plataformas')}
+        ${dtKpi('🎯','COBERTURA',atribPct+'%',dtFmtR(T.revenue_total_zoho,true)+' total Zoho')}
+      </div>
+    `;
+    const comReceita = d.campanhas.filter(c => c.revenue > 0);
+    if (comReceita.length) {
+      html += `
+        <div class="dt-table-card">
+          <h3>🏆 Campanhas que VENDERAM (${comReceita.length})</h3>
+          <div style="overflow-x:auto"><table class="dt-table">
+            <thead><tr><th>Plat</th><th>Campanha</th><th class="num">Spend</th><th class="num">Vendas</th><th class="num">Receita</th><th class="num">ROAS Real</th><th class="num">CPA</th></tr></thead>
+            <tbody>
+      `;
+      comReceita.forEach(c => {
+        const rCor = c.roas_real >= 3 ? '#10b981' : c.roas_real >= 1 ? '#f59e0b' : '#ef4444';
+        html += `<tr>
+          <td><span class="dt-pill ${c.platform.toLowerCase()}">${c.platform}</span></td>
+          <td style="color:var(--text);font-weight:600">${c.name}</td>
+          <td class="num">${dtFmtR(c.spend)}</td>
+          <td class="num"><strong style="color:#10b981">${c.deals_won}</strong></td>
+          <td class="num" style="color:#10b981;font-weight:700">${dtFmtR(c.revenue)}</td>
+          <td class="num" style="color:${rCor};font-weight:800">${c.roas_real != null ? c.roas_real.toFixed(2)+'x' : '—'}</td>
+          <td class="num">${c.cpa_real != null ? dtFmtR(c.cpa_real) : '—'}</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div></div>';
+    }
+    if (d.sem_match.count > 0) {
+      html += `<div class="dt-table-card" style="border-left:3px solid var(--dt-yellow)">
+        <h3>🌫️ Vendas SEM atribuição (${d.sem_match.count} deals · ${dtFmtR(d.sem_match.revenue, true)})</h3>
+        <div style="padding:12px;color:var(--dt-faint);font-size:11px">Lead_Source não match com nenhuma campanha. Pode ser orgânico, indicação ou base antiga. Use /trafego/reconciliar pra melhorar.</div>
+      </div>`;
+    }
+    pane.innerHTML = html;
+  } catch(e) { pane.innerHTML = `<div class="dt-empty" style="color:var(--dt-red)">❌ ${e.message}</div>`; }
+}
+
+// ========== ABA DIRETOR DE TRÁFEGO (IA) ==========
+let _DT_IA_PLAT = localStorage.getItem('dt_ia_plat') || 'ambos'; // google | meta | ambos
+function dtIaSetPlat(p){ _DT_IA_PLAT = p; localStorage.setItem('dt_ia_plat', p); dtRenderIA(); }
+
+function dtRenderIA(){
+  const pane = document.getElementById('dt-pane-ia');
+  const btnPlat = (k, label, cor) => `<button onclick="dtIaSetPlat('${k}')" style="background:${_DT_IA_PLAT===k?cor:'transparent'};color:${_DT_IA_PLAT===k?'#fff':'var(--dt-muted)'};border:1px solid ${_DT_IA_PLAT===k?cor:'var(--dt-border)'};border-radius:6px;padding:6px 14px;font-size:11px;font-weight:800;cursor:pointer">${label}</button>`;
+  pane.innerHTML = `
+    <div class="dt-chart-card" style="background:linear-gradient(135deg,rgba(163,113,247,.08),rgba(13,17,23,.5));border:1px solid var(--dt-accent)">
+      <h3 style="justify-content:flex-start;gap:10px">
+        <span style="font-size:24px">🎯</span>
+        <span>Diretor de Tráfego (IA)</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--dt-faint);font-weight:500">Combina Google + Meta + Zoho</span>
+      </h3>
+      <p style="color:var(--dt-muted);font-size:12px;margin:0 0 14px">
+        Cada perfil abaixo é uma forma diferente do <strong style="color:var(--dt-accent)">Diretor</strong> analisar:
+        <strong style="color:#3b82f6">Estrategista</strong> dá plano 7-14d ·
+        <strong style="color:#f59e0b">Auditor</strong> caça desperdício ·
+        <strong style="color:#ec4899">Crítico</strong> avalia criativos ·
+        <strong style="color:#a371f7">Agente Autônomo</strong> investiga sozinho com tools
+      </p>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:14px;padding:10px;background:rgba(0,0,0,.2);border-radius:8px;flex-wrap:wrap">
+        <span style="color:var(--dt-faint);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px">Foco da análise:</span>
+        ${btnPlat('ambos','🌐 Google + Meta','#a371f7')}
+        ${btnPlat('google','🔍 Só Google','#fbbc04')}
+        ${btnPlat('meta','📘 Só Meta','#1877f2')}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:16px">
+        <button onclick="dtChamarIA('estrategista')" style="background:linear-gradient(135deg,#1f6feb,#0d3a8c);color:#fff;border:none;border-radius:10px;padding:14px;font-size:13px;font-weight:800;cursor:pointer;text-align:left">🧠 Estrategista<br><span style="font-size:10px;opacity:.8;font-weight:500">Plano de ação 7-14d</span></button>
+        <button onclick="dtChamarIA('auditor')" style="background:linear-gradient(135deg,#f59e0b,#a16207);color:#fff;border:none;border-radius:10px;padding:14px;font-size:13px;font-weight:800;cursor:pointer;text-align:left">🔍 Auditor<br><span style="font-size:10px;opacity:.8;font-weight:500">Identifica desperdício</span></button>
+        <button onclick="dtChamarIA('critico_criativos')" style="background:linear-gradient(135deg,#ec4899,#831843);color:#fff;border:none;border-radius:10px;padding:14px;font-size:13px;font-weight:800;cursor:pointer;text-align:left">🎨 Crítico de Criativos<br><span style="font-size:10px;opacity:.8;font-weight:500">CTR + freq + recomendações</span></button>
+        <button onclick="dtChamarAgente()" style="background:linear-gradient(135deg,#a371f7,#6d28d9);color:#fff;border:none;border-radius:10px;padding:14px;font-size:13px;font-weight:800;cursor:pointer;text-align:left">🤖 Agente Autônomo<br><span style="font-size:10px;opacity:.8;font-weight:500">Tool Use — investiga sozinho</span></button>
+      </div>
+      <div id="dt-ia-out" style="text-align:left"></div>
+    </div>
+  `;
+}
+async function dtChamarIA(persona){
+  const out = document.getElementById('dt-ia-out');
+  const platLabel = _DT_IA_PLAT === 'ambos' ? 'Google+Meta' : _DT_IA_PLAT === 'google' ? 'Google' : 'Meta';
+  out.innerHTML = `<div class="dt-loading">⏳ ${persona} analisando ${platLabel}... (15-30s)</div>`;
+  try {
+    const qs = dtBuildQS() + '&plataforma=' + _DT_IA_PLAT;
+    const r = await fetch('/trafego/gestor-ia?persona='+persona+'&'+qs, { method: 'POST' });
+    const d = await r.json();
+    if (d.error) { out.innerHTML = '<div class="dt-empty" style="color:var(--dt-red)">❌ '+d.error+'</div>'; return; }
+    out.innerHTML = `
+      <div class="dt-chart-card" style="background:rgba(163,113,247,.04);border:1px solid var(--dt-accent)">
+        <h3>🎯 ${persona.toUpperCase()} · ${platLabel} <span style="margin-left:auto;font-size:10px;color:var(--dt-faint);font-weight:500">${d.modelo||''}</span></h3>
+        <div style="white-space:pre-wrap;color:var(--text);font-size:12.5px;line-height:1.6">${(d.output||d.resposta||'').replace(/</g,'&lt;')}</div>
+      </div>
+    `;
+  } catch(e) { out.innerHTML = '<div class="dt-empty" style="color:var(--dt-red)">❌ '+e.message+'</div>'; }
+}
+async function dtChamarAgente(){
+  const out = document.getElementById('dt-ia-out');
+  const platLabel = _DT_IA_PLAT === 'ambos' ? 'Google+Meta' : _DT_IA_PLAT === 'google' ? 'Google' : 'Meta';
+  out.innerHTML = `<div class="dt-loading">⏳ Agente investigando ${platLabel} com tools... 30-90s</div>`;
+  try {
+    const foco = _DT_IA_PLAT === 'ambos' ? '' : ` Foque APENAS em ${platLabel}.`;
+    const r = await fetch('/trafego/agente-ia', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ mensagem: `Faça diagnóstico completo dos últimos 7 dias e me dê 5 ações priorizadas por impacto financeiro.${foco}` }),
+    });
+    const d = await r.json();
+    if (d.error) { out.innerHTML = '<div class="dt-empty" style="color:var(--dt-red)">❌ '+d.error+'</div>'; return; }
+    out.innerHTML = `
+      <div class="dt-chart-card" style="background:rgba(163,113,247,.04);border:1px solid var(--dt-accent)">
+        <h3>🤖 AGENTE AUTÔNOMO · ${platLabel} · ${d.iterations} iterações <span style="margin-left:auto;font-size:10px;color:var(--dt-faint);font-weight:500">tool use</span></h3>
+        <details style="margin-bottom:12px;background:rgba(0,0,0,.3);border-radius:6px;padding:10px"><summary style="cursor:pointer;color:var(--dt-accent);font-size:11px;font-weight:700">▸ ${d.trace?.length||0} passos do agente</summary>
+        <div style="margin-top:8px;font-family:monospace;font-size:11px">${(d.trace||[]).map(t => `<div style="color:#9ca3af;padding:3px 0">${t.tipo === 'tool_call' ? '🔧 '+t.tool : t.tipo === 'tool_result' ? '✅ '+(t.resultado||'') : t.tipo === 'tool_error' ? '❌' : '💭'} ${(t.conteudo||'').slice(0,180)}</div>`).join('')}</div>
+        </details>
+        <div style="white-space:pre-wrap;color:var(--text);font-size:12.5px;line-height:1.6">${(d.resposta_final||'').replace(/</g,'&lt;')}</div>
+      </div>
+    `;
+  } catch(e) { out.innerHTML = '<div class="dt-empty" style="color:var(--dt-red)">❌ '+e.message+'</div>'; }
+}
+
+function dtRecarregar(){
+  const ativa = document.querySelector('.dt-tab.active')?.id?.replace('dt-tab-','') || 'hoje';
+  dtAba(ativa);
+}
+
+// Init
+dtAba('hoje');
+// Auto-refresh resumo do dia a cada 5min
+setInterval(() => {
+  if (document.getElementById('dt-pane-hoje').style.display !== 'none') dtRenderHoje();
+}, 5 * 60 * 1000);
+</script>

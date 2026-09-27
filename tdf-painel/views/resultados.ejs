@@ -1,0 +1,46 @@
+<% var pageTitle = 'Central de Resultados'; var activePage = 'resultados'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<div class="page-header">
+  <h1>📊 Central de Resultados</h1>
+  <p class="subtitle">O record diário da operação: raio-x do dia anterior, acumulado do mês contra as metas, planos de ação e vídeos. Postado todo dia — sem desculpa pra não saber o placar.</p>
+</div>
+
+<div class="container" style="max-width:980px;">
+  <% if (!posts.length) { %>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;color:var(--text-muted);margin-top:24px;">
+      Ainda não há posts. O primeiro raio-x aparece aqui amanhã às 07h.
+    </div>
+  <% } %>
+
+  <% posts.forEach(function(p){ %>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-top:22px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:3px 10px;border-radius:10px;background:rgba(0,170,255,.14);color:#00AAFF;"><%= p.tag %></span>
+        <span style="color:var(--text-muted);font-size:.85rem;font-weight:700;"><%= p.data.split('-').reverse().join('/') %></span>
+      </div>
+      <h2 style="margin:10px 0 6px;font-size:1.2rem;color:var(--text);"><%= p.titulo %></h2>
+      <% if (p.resumo) { %>
+        <div style="color:var(--text-muted);font-size:.92rem;line-height:1.55;white-space:pre-line;"><%= p.resumo %></div>
+      <% } %>
+      <% (p.arquivos||[]).forEach(function(a){ if (!a.existe) return; %>
+        <% if (a.tipo === 'video') { %>
+          <video controls preload="metadata" style="width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;margin-top:14px;display:block;">
+            <source src="/resultados-files/<%= a.arq %>" type="video/mp4">
+          </video>
+          <div style="margin-top:6px;"><a href="/resultados-files/<%= a.arq %>" target="_blank" style="color:#00AAFF;text-decoration:none;font-size:.85rem;font-weight:700;">🎬 <%= a.titulo %> — tela cheia →</a></div>
+        <% } else { %>
+          <div style="margin-top:12px;">
+            <a href="/resultados-files/<%= a.arq %>" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 16px;color:var(--text);text-decoration:none;font-weight:700;font-size:.9rem;">📄 <%= a.titulo %> <span style="color:#00AAFF;">→</span></a>
+          </div>
+        <% } %>
+      <% }); %>
+    </div>
+  <% }); %>
+
+  <div style="margin:34px 0;text-align:center;">
+    <a href="/home" style="color:#00AAFF;text-decoration:none;">← Voltar pra Home</a>
+  </div>
+</div>
+</body>
+</html>

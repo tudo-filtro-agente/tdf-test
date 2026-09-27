@@ -1,0 +1,6 @@
+{
+  "limitePadrao": 5000,
+  "expiracaoSolicitacaoHoras": 72,
+  "notificarFinanceiro": true,
+  "pagamentoDiretoAdminExigeJustificativa": true
+}

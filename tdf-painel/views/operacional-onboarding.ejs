@@ -1,0 +1,307 @@
+<% const activePage = 'operacional'; const pageTitle = 'Operacional · Bem-vinda, Morgana!'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+  .ob-shell { max-width: 980px; margin: 0 auto; padding: 0 14px; }
+  .ob-hero {
+    background: linear-gradient(135deg, #1f6feb 0%, #25D366 100%);
+    border-radius: 16px; padding: 30px 36px; color:#fff;
+    margin-bottom: 22px; box-shadow: 0 8px 30px rgba(31,111,235,.25);
+  }
+  .ob-hero h1 { margin: 0 0 6px; font-size: 28px; font-weight: 900; }
+  .ob-hero .sub { font-size: 14px; opacity: .92; line-height: 1.6; max-width: 720px; }
+  .ob-hero .who { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; opacity: .8; margin-bottom: 8px; font-weight: 700; }
+
+  .ob-progress { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 22px; }
+  .ob-progress-bar { background: var(--bg); border-radius: 10px; height: 14px; overflow: hidden; margin-top: 10px; position: relative; }
+  .ob-progress-fill { background: linear-gradient(90deg, #1f6feb, #25D366); height: 100%; transition: width .4s; }
+  .ob-progress .top { display: flex; justify-content: space-between; align-items: center; }
+  .ob-progress h3 { margin: 0; font-size: 13px; color: var(--text); }
+  .ob-progress .pct { color: #25D366; font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; }
+
+  .ob-steps { display: flex; flex-direction: column; gap: 12px; }
+  .ob-step {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 22px; display: grid; grid-template-columns: 44px 1fr auto; gap: 16px;
+    align-items: flex-start; transition: all .15s;
+    border-left: 4px solid var(--c, var(--border));
+  }
+  .ob-step:hover { transform: translateY(-1px); }
+  .ob-step.done { opacity: .65; border-left-color: #22c55e; }
+  .ob-step.partial { border-left-color: #fbbf24; }
+  .ob-step.pending { border-left-color: #ef4444; }
+  .ob-step .icon {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; background: var(--c, var(--border));
+  }
+  .ob-step.done .icon { background: #22c55e; }
+  .ob-step.partial .icon { background: #fbbf24; }
+  .ob-step.pending .icon { background: var(--border); color: var(--text-muted); }
+  .ob-step .info h3 { margin: 0 0 4px; font-size: 15px; color: var(--text); font-weight: 800; }
+  .ob-step .info h3 .step-num { color: var(--text-muted); font-size: 11px; font-weight: 400; margin-right: 6px; }
+  .ob-step .info .why { color: #93c5fd; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+  .ob-step .info .desc { color: #cbd5e1; font-size: 13px; line-height: 1.55; }
+  .ob-step .info .status-line { color: var(--text-muted); font-size: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .ob-step .info .status-line.partial { color: #fbbf24; }
+  .ob-step .info .status-line.done { color: #22c55e; }
+  .ob-step .info .status-line.pending { color: #f87171; }
+  .ob-step .actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+  .ob-step .btn-go {
+    background: #1f6feb; color:#fff; border: 0; padding: 8px 14px;
+    border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
+    text-decoration: none; display: inline-block; white-space: nowrap;
+  }
+  .ob-step .btn-go:hover { background: #388bfd; }
+  .ob-step.done .btn-go { background: #22c55e; color: #000; }
+  .ob-step.done .btn-go:hover { background: #4ade80; }
+  .ob-step .checkmark { font-size: 22px; color: #22c55e; }
+
+  .ob-footer {
+    margin-top: 22px; padding: 18px; background: var(--bg); border: 1px dashed var(--border);
+    border-radius: 10px; text-align: center; color: var(--text-muted); font-size: 13px; line-height: 1.7;
+  }
+  .ob-footer b { color: var(--text); }
+</style>
+
+<div class="ob-shell">
+  <div class="ob-hero">
+    <div class="who">👋 Bem-vinda</div>
+    <h1>Olá, Morgana!</h1>
+    <div class="sub">
+      Aqui é o painel <b>Operacional do Portal TDF</b>. Pra ele rodar no automático
+      precisamos configurar 8 coisas. Cada passo abaixo tem ✅ se já tá pronto ou ⏳ se falta.
+      Pode fazer na ordem, ou pular pra qualquer um. Levam ~20-30 minutos no total.
+    </div>
+  </div>
+
+  <div class="ob-progress">
+    <div class="top">
+      <h3>Progresso da configuração</h3>
+      <span class="pct" id="ob-pct">—</span>
+    </div>
+    <div class="ob-progress-bar"><div class="ob-progress-fill" id="ob-fill" style="width:0%"></div></div>
+    <div style="margin-top:6px;font-size:11px;color:var(--text-muted)"><span id="ob-summary">Carregando status…</span></div>
+  </div>
+
+  <div class="ob-steps" id="ob-steps"><div style="color:var(--text-muted);padding:30px;text-align:center">Carregando…</div></div>
+
+  <div class="ob-footer">
+    Qualquer dúvida, é só falar com o <b>Paulo</b> (ou comigo). Vamos juntos! 🚀<br>
+    <span style="font-size:11px">Esse onboarding pode ser revisitado a qualquer momento via header → <b>👋 Onboarding</b></span>
+  </div>
+</div>
+
+<script>
+async function _api(path) {
+  const r = await fetch(path, { credentials: 'same-origin' });
+  if (!r.ok) throw new Error(`${r.status}`);
+  return r.json();
+}
+
+const STEPS = [
+  {
+    id: 'skills',
+    num: 1,
+    icon: '🛠',
+    title: 'Catálogo de Skills',
+    why: 'Por quê',
+    desc: 'As skills definem o que cada técnico sabe fazer. Sem isso, a IA não consegue distribuir rota automaticamente — ela precisa saber quem instala filtro de entrada, quem mexe em elétrica especializada, quem é certificado em NR-10. <b>Já temos 14 skills pré-cadastradas</b>, mas você pode ajustar/criar.',
+    link: '/operacional/config#skills',
+    check: async () => {
+      try {
+        const s = await _api('/operacional/api/skills');
+        return { done: s.length >= 5, count: s.length, msg: `${s.length} skills cadastradas (8+ recomendado)` };
+      } catch { return { done: false, count: 0, msg: 'erro ao carregar' }; }
+    }
+  },
+  {
+    id: 'tech_skills',
+    num: 2,
+    icon: '👷',
+    title: 'Atribuir skills aos técnicos',
+    why: 'Por quê',
+    desc: 'Cada técnico tem habilidades diferentes. Marque o que cada um sabe (separado por vírgula) — ex: <code>filtro_entrada, bebedouro_basico, eletrica_leve</code>. Use as chaves do catálogo de skills. Sem isso a auto-distribuição joga tudo no primeiro técnico disponível.',
+    link: '/operacional/config#tecnicos',
+    check: async () => {
+      try {
+        const techs = await _api('/operacional/api/technicians');
+        const list = Array.isArray(techs) ? techs : (techs.items || []);
+        const ok = list.filter(t => t.active && (t.skills||[]).length > 0).length;
+        const total = list.filter(t => t.active).length;
+        return {
+          done: total > 0 && ok === total,
+          partial: ok > 0 && ok < total,
+          count: ok, total, msg: `${ok} de ${total} técnicos ativos têm skills`
+        };
+      } catch { return { done: false, msg: 'erro ao carregar' }; }
+    }
+  },
+  {
+    id: 'tech_phone',
+    num: 3,
+    icon: '📱',
+    title: 'Telefones dos técnicos',
+    why: 'Por quê',
+    desc: 'Sem o phone cadastrado, o botão <b>"Z-API ao técnico"</b> não funciona — IA não consegue mandar o briefing diário com paradas, dicas e horários. Preencha o WhatsApp de cada um (formato 12996240914, sem +55).',
+    link: '/operacional/config#tecnicos',
+    check: async () => {
+      try {
+        const techs = await _api('/operacional/api/technicians');
+        const list = Array.isArray(techs) ? techs : (techs.items || []);
+        const ok = list.filter(t => t.active && t.phone && t.phone.replace(/\D/g,'').length >= 10).length;
+        const total = list.filter(t => t.active).length;
+        return {
+          done: total > 0 && ok === total,
+          partial: ok > 0 && ok < total,
+          count: ok, total, msg: `${ok} de ${total} técnicos têm phone válido`
+        };
+      } catch { return { done: false, msg: 'erro' }; }
+    }
+  },
+  {
+    id: 'tech_schedule',
+    num: 4,
+    icon: '🕐',
+    title: 'Horários (jornada + almoço)',
+    why: 'Por quê',
+    desc: 'Cada técnico tem entrada, saída e horário de almoço. O cronograma automático respeita isso — não agenda parada durante o almoço, alerta se rota passar do fim da jornada. Sem isso o sistema vai assumir 8h-18h + almoço 12h-13h pra todo mundo.',
+    link: '/operacional/config#tecnicos',
+    check: async () => {
+      try {
+        const techs = await _api('/operacional/api/technicians');
+        const list = Array.isArray(techs) ? techs : (techs.items || []);
+        const ok = list.filter(t => t.active && t.work_start_time && t.work_end_time).length;
+        const total = list.filter(t => t.active).length;
+        return {
+          done: total > 0 && ok === total,
+          partial: ok > 0 && ok < total,
+          count: ok, total, msg: `${ok} de ${total} técnicos têm horário configurado`
+        };
+      } catch { return { done: false, msg: 'erro' }; }
+    }
+  },
+  {
+    id: 'service_types',
+    num: 5,
+    icon: '⏱',
+    title: 'Tipos de Serviço (duração)',
+    why: 'Por quê',
+    desc: 'Cada tipo de serviço (instalação filtro, troca refil, manutenção, etc) tem uma duração padrão em minutos. Isso vira o tempo que o cronograma reserva pra cada parada. Confira se os valores fazem sentido pra realidade da TDF.',
+    link: '/operacional/cadastros',
+    check: async () => {
+      try {
+        const types = await _api('/operacional/api/service-types');
+        const list = Array.isArray(types) ? types : (types.items || []);
+        return {
+          done: list.length >= 3,
+          partial: list.length > 0 && list.length < 3,
+          count: list.length, msg: `${list.length} tipos cadastrados (3+ recomendado)`
+        };
+      } catch { return { done: false, msg: 'erro' }; }
+    }
+  },
+  {
+    id: 'stage_msgs',
+    num: 6,
+    icon: '💬',
+    title: 'Mensagens WATI por etapa',
+    why: 'Por quê',
+    desc: 'Quando uma entrega muda de etapa (ex: "saiu para entrega", "entregue"), o sistema pode disparar mensagem automática pro cliente via WATI. Configure pelo menos as 5 etapas-chave: separado, saiu_para_entrega, entregue, problema_entrega.',
+    link: '/operacional/config/stage-messages',
+    check: async () => {
+      try {
+        const msgs = await _api('/operacional/api/stage-messages');
+        const enabled = msgs.filter(m => m.enabled).length;
+        return {
+          done: enabled >= 5,
+          partial: enabled > 0 && enabled < 5,
+          count: enabled, msg: `${enabled} mensagens ativas (5+ recomendado)`
+        };
+      } catch { return { done: false, msg: 'erro' }; }
+    }
+  },
+  {
+    id: 'prompts',
+    num: 7,
+    icon: '🤖',
+    title: 'Prompts da Núbia (agendamento)',
+    why: 'Por quê',
+    desc: 'A Núbia é a IA que conversa com cliente após a venda pra coletar info de agendamento (endereço, melhor dia, voltagem se for bebedouro, etc). Os prompts dela já estão criados — só revise o tom de voz e ajuste se necessário.',
+    link: '/operacional/config/prompts',
+    check: async () => {
+      try {
+        const ps = await _api('/operacional/api/agent-prompts?agent=nubia');
+        return {
+          done: ps.length >= 4,
+          partial: ps.length > 0 && ps.length < 4,
+          count: ps.length, msg: `${ps.length} prompts da Núbia (4 esperados: filtro, bebedouro_inst, bebedouro_ent, extractor)`
+        };
+      } catch { return { done: false, msg: 'erro' }; }
+    }
+  },
+  {
+    id: 'speed_alerts',
+    num: 8,
+    icon: '🚨',
+    title: 'Alertas de velocidade',
+    why: 'Por quê',
+    desc: 'Quando um técnico passa de 110 km/h em rodovia ou 60 km/h em cidade (defaults), o sistema dispara Z-API pra você na hora. Confira se o phone de notificação tá correto e ajuste os limites se quiser.',
+    link: '/operacional/config#ia',
+    check: async () => {
+      try {
+        const s = await _api('/operacional/api/settings?prefix=speed_alert');
+        const phone = s['speed_alert.notify_phone'];
+        return {
+          done: !!(phone && phone.value),
+          msg: phone?.value ? `Notificando ${phone.value}` : 'phone não configurado'
+        };
+      } catch { return { done: false, msg: 'erro' }; }
+    }
+  },
+];
+
+async function loadOnboarding() {
+  const results = await Promise.all(STEPS.map(s => s.check().then(r => ({ ...s, status: r }))));
+  let doneCount = 0;
+  let partial = 0;
+  const html = results.map(s => {
+    const status = s.status;
+    let cls = 'pending';
+    let checkmark = '';
+    let statusCls = 'pending';
+    if (status.done) {
+      cls = 'done'; doneCount++; checkmark = '<div class="checkmark">✅</div>'; statusCls = 'done';
+    } else if (status.partial) {
+      cls = 'partial'; partial++; statusCls = 'partial';
+    }
+    return `
+      <div class="ob-step ${cls}">
+        <div class="icon">${s.icon}</div>
+        <div class="info">
+          <h3><span class="step-num">Passo ${s.num}</span>${s.title}</h3>
+          <div class="desc">${s.desc}</div>
+          <div class="status-line ${statusCls}">${status.done ? '✓' : (status.partial ? '◐' : '○')} ${status.msg}</div>
+        </div>
+        <div class="actions">
+          ${checkmark}
+          <a href="${s.link}" class="btn-go" target="_blank">${status.done ? '✓ Revisar' : 'Configurar →'}</a>
+        </div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('ob-steps').innerHTML = html;
+  const pct = Math.round((doneCount * 100) / STEPS.length);
+  document.getElementById('ob-pct').textContent = `${pct}%`;
+  document.getElementById('ob-fill').style.width = `${pct}%`;
+  let summary = `<b style="color:#22c55e">${doneCount} ✓</b>`;
+  if (partial) summary += ` · <b style="color:#fbbf24">${partial} ◐ em progresso</b>`;
+  const pending = STEPS.length - doneCount - partial;
+  if (pending) summary += ` · <b style="color:#f87171">${pending} ○ pendente${pending>1?'s':''}</b>`;
+  document.getElementById('ob-summary').innerHTML = summary;
+}
+
+loadOnboarding();
+// Refresh ao voltar pra aba (caso ela tenha configurado em outra)
+window.addEventListener('focus', loadOnboarding);
+</script>

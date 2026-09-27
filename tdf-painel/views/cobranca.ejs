@@ -1,0 +1,168 @@
+<% const activePage = 'cockpit'; const pageTitle = 'Cobrança — Leads pra Atender'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.co-wrap{max-width:1200px;margin:0 auto;padding:24px;color:var(--text)}
+.co-task-card{background:linear-gradient(135deg,#1f0d2a,var(--bg));border:2px solid var(--c, #fbbf24);border-radius:12px;padding:18px;margin-bottom:18px}
+.co-task-card h1{margin:0 0 6px;font-size:18px}
+.co-task-card .body{color:var(--text);font-size:13px;line-height:1.6;white-space:pre-wrap}
+.co-progress{height:10px;background:var(--bg-card);border-radius:5px;overflow:hidden;margin-top:10px}
+.co-progress .fill{height:100%;background:#22c55e;transition:width .4s}
+.co-deal{background:#161725;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
+.co-deal.tratado{opacity:.55;border-left:4px solid #22c55e}
+.co-deal.critico{border-left:4px solid #ef4444}
+.co-deal-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.co-deal-head .nm{font-weight:800;font-size:14px;color:var(--text);flex:1}
+.co-tier{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:800}
+.tier-Diamante{background:rgba(6,182,212,.15);color:#06b6d4}
+.tier-Ouro{background:rgba(251,191,36,.15);color:#fbbf24}
+.tier-Prata{background:rgba(148,163,184,.15);color:#94a3b8}
+.tier-Bronze{background:rgba(161,98,7,.15);color:#a16207}
+.co-deal-meta{font-size:11px;color:#9ca3af;display:flex;gap:14px;flex-wrap:wrap}
+.co-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.co-acts button, .co-acts a{background:#1f1f2e;color:#fff;border:1px solid var(--border);border-radius:6px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.co-acts button:hover, .co-acts a:hover{border-color:#a371f7;color:var(--text)}
+.co-acts .chat{background:linear-gradient(135deg,#0f3a1a,#22c55e22);color:#22c55e;border-color:#22c55e}
+.co-acts .nubia{background:rgba(167,113,247,.1);color:#c084fc;border-color:#a371f7}
+.co-acts .ligar{background:rgba(31,111,235,.1);color:#5ba3f5;border-color:#1f6feb}
+.co-acts .tratar{background:linear-gradient(135deg,#22c55e,#16a34a);color:#000;border:none;font-weight:800;margin-left:auto}
+.co-acts .tratar.feito{background:#22c55e22;color:#22c55e;border:1px solid #22c55e}
+</style>
+
+<div class="co-wrap">
+  <div id="co-content"><div style="text-align:center;padding:40px;color:var(--text-muted)">⏳ Carregando cobrança...</div></div>
+</div>
+
+<script>
+const _CO_TASK_ID = '<%= taskId %>';
+let _CO_DATA = null;
+
+async function coCarregar(){
+  try {
+    const r = await fetch('/cobranca/'+encodeURIComponent(_CO_TASK_ID)+'/data');
+    const d = await r.json();
+    if (d.error) {
+      document.getElementById('co-content').innerHTML = `<div style="background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:10px;padding:20px;color:#fca5a5;text-align:center">❌ ${d.error}</div>`;
+      return;
+    }
+    _CO_DATA = d;
+    coRender();
+  } catch(e) {
+    document.getElementById('co-content').innerHTML = `<div style="color:#ef4444;padding:20px">❌ ${e.message}</div>`;
+  }
+}
+
+function coRender(){
+  const t = _CO_DATA.task;
+  const deals = _CO_DATA.deals || [];
+  const tratadosCount = deals.filter(d => d.tratado).length;
+  const pct = deals.length > 0 ? Math.round((tratadosCount/deals.length)*100) : 0;
+  const cor = t.priority === 'critica' ? '#ef4444' : t.priority === 'alta' ? '#f59e0b' : '#fbbf24';
+  let html = `
+    <div class="co-task-card" style="--c:${cor}">
+      <h1 style="color:${cor}">📋 ${coEsc(t.title)}</h1>
+      <div style="color:#9ca3af;font-size:11px;margin-bottom:10px">Cobrança pra ${coEsc(t.closerName)} · ${new Date(t.createdAt).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})}</div>
+      <div class="body">${coEsc(t.body||'')}</div>
+      ${deals.length > 0 ? `
+        <div style="margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <strong style="color:#22c55e">${tratadosCount}/${deals.length} tratados (${pct}%)</strong>
+          ${pct === 100 ? '<span style="color:#22c55e;font-weight:800">✅ COBRANÇA CONCLUÍDA</span>' : ''}
+        </div>
+        <div class="co-progress"><div class="fill" style="width:${pct}%"></div></div>
+      ` : ''}
+    </div>
+  `;
+
+  if (!deals.length) {
+    html += '<div style="text-align:center;color:#9ca3af;padding:30px">Nenhum lead específico vinculado a essa cobrança. Veja a mensagem acima.</div>';
+  } else {
+    html += '<h3 style="color:#9ca3af;font-size:13px;text-transform:uppercase;font-weight:800;letter-spacing:.4px;margin:0 0 12px">🎯 Leads desta cobrança (' + deals.length + ')</h3>';
+    deals.forEach(d => {
+      if (d.error) {
+        html += `<div class="co-deal" style="border-color:#ef4444"><div class="co-deal-head"><span style="color:#fca5a5">⚠️ Deal ${d.id}: ${d.error}</span></div></div>`;
+        return;
+      }
+      const cls = d.tratado ? 'tratado' : (d.tier === 'Diamante' || d.tier === 'Ouro' ? 'critico' : '');
+      const phoneClean = (d.telefone||'').replace(/\D/g,'');
+      const watiUrl = phoneClean ? `https://live-2708.wati.io/2708/teamInbox/${phoneClean}` : '#';
+      html += `
+        <div class="co-deal ${cls}">
+          <div class="co-deal-head">
+            ${d.iaAtendendo ? '<span style="background:rgba(167,113,247,.15);color:#c084fc;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:800">🤖 Núbia ATIVA</span>' : ''}
+            ${d.tier ? '<span class="co-tier tier-'+d.tier+'">'+d.tier+'</span>' : ''}
+            <span class="nm">${coEsc(d.nome)}</span>
+            <span style="color:#22c55e;font-weight:800">${d.amount > 0 ? 'R$ '+Math.round(d.amount).toLocaleString('pt-BR') : ''}</span>
+          </div>
+          <div class="co-deal-meta">
+            ${d.telefone ? `<span>📞 <span onclick="window.copyTel&&copyTel('${d.telefone.replace(/'/g,"\\'")}',this)" title="Click pra copiar" style="cursor:pointer;user-select:all;padding:1px 6px;border-radius:4px;background:rgba(34,197,94,.08);border:1px solid #22c55e44;color:#86efac;font-family:monospace">${coEsc(d.telefone)}</span> <button onclick="window.copyTel&&copyTel('${d.telefone.replace(/'/g,"\\'")}',this)" style="background:transparent;border:1px solid #30363D;color:#9ca3af;border-radius:4px;padding:1px 5px;font-size:9px;cursor:pointer" title="Copiar">📋</button></span>` : '<span>📞 —</span>'}
+            <span>📍 ${coEsc(d.cidade||'—')}</span>
+            <span>📋 ${coEsc(d.stage||'—')}</span>
+            <span>📦 ${coEsc(d.produto||'—').slice(0,40)}</span>
+            <span>📅 ${d.lastActivity ? 'última: '+coFmtData(d.lastActivity) : 'sem atividade'}</span>
+          </div>
+          <div class="co-acts">
+            ${phoneClean ? `<button class="chat" onclick="window.abrirChat&&abrirChat('${d.id}','${phoneClean}','${coEsc(d.nome).replace(/'/g,"\\'")}')">💬 Chat</button>` : ''}
+            ${phoneClean ? `<a class="ligar" href="tel:+${phoneClean}">📞 Ligar</a>` : ''}
+            ${phoneClean ? `<a class="ligar" href="${watiUrl}" target="_blank">🌐 WATI</a>` : ''}
+            ${phoneClean ? `<button class="nubia" onclick="coAtivarNubia('${d.id}')">${d.iaAtendendo?'🤖 Desativar Núbia':'🤖 Ativar Núbia'}</button>` : ''}
+            ${phoneClean ? `<button class="nubia" onclick="coDispararNubia('${d.id}','${coEsc(d.nome).replace(/'/g,"\\'")}')">🤖 Núbia chama agora</button>` : ''}
+            <a href="/manutencao#${d.id}" target="_blank" style="background:#1a0e2a;color:#c084fc;border-color:#a371f7">📂 Drawer completo</a>
+            <a href="${d.crmLink}" target="_blank">🌐 Zoho</a>
+            <button class="tratar ${d.tratado?'feito':''}" onclick="coTratar('${d.id}', this)">${d.tratado?'✅ Tratado':'✓ Marcar tratado'}</button>
+          </div>
+        </div>
+      `;
+    });
+  }
+  document.getElementById('co-content').innerHTML = html;
+}
+
+function coEsc(s){ return String(s||'').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c])); }
+function coFmtData(s){
+  if (!s) return '—';
+  try { return new Date(s).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+  catch(_){ return s; }
+}
+
+async function coTratar(dealId, btn){
+  const nota = prompt('Marca este lead como tratado?\n\nNota opcional (o que fez):', '');
+  if (nota === null) return;
+  btn.disabled = true; btn.textContent = '⏳';
+  try {
+    const r = await fetch('/cobranca/'+encodeURIComponent(_CO_TASK_ID)+'/tratar/'+encodeURIComponent(dealId), {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ nota }),
+    });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); btn.disabled = false; btn.textContent = '✓ Marcar tratado'; return; }
+    coCarregar(); // refresh
+  } catch(e) { alert(e.message); btn.disabled = false; btn.textContent = '✓ Marcar tratado'; }
+}
+
+async function coAtivarNubia(dealId){
+  try {
+    const cliente = (_CO_DATA?.deals||[]).find(d => d.id === dealId);
+    const novo = !(cliente?.iaAtendendo);
+    if (novo && !confirm('🤖 Ativar Núbia pra atender este lead automaticamente?')) return;
+    await fetch('/manutencao/cliente/'+encodeURIComponent(dealId)+'/iaAtende', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ ativo: novo }),
+    });
+    coCarregar();
+  } catch(e) { alert(e.message); }
+}
+async function coDispararNubia(dealId, nome){
+  if (!confirm(`🤖 Pedir Núbia pra entrar em contato AGORA com "${nome}"?`)) return;
+  try {
+    const r = await fetch('/cockpit/nubia-meu-lead', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ dealId }),
+    });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    alert('✅ Núbia disparada!');
+  } catch(e) { alert(e.message); }
+}
+
+coCarregar();
+</script>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script>try{if(localStorage.getItem('tdf-theme')==='light')document.documentElement.setAttribute('data-theme','light')}catch(_){}</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM TDF — Workflows & Automação</title>
+<style>
+  :root{--bg:#16181d;--panel:#1a1d23;--surface:#1e2228;--surface2:#22262e;--line:#272b33;--line2:#2f343d;--txt:#e3e6ea;--muted:#8b929e;--faint:#5d636e;--accent:#3b82f6;--green:#3fb950;--amber:#d29922;--red:#f0616d;--purple:#a371f7;--wpp:#25d366;--cyan:#0ea5b7}
+  html[data-theme="light"]{
+    --bg:#F2F4F8; --panel:#FFFFFF; --surface:#F6F8FA; --surface2:#EDF1F5;
+    --line:#D8DEE6; --line2:#C9D1DB;
+    --txt:#1F2328; --muted:#59636E; --faint:#77808B;
+    --accent:#2563EB; --accent-soft:rgba(37,99,235,.10);
+    --green:#1A7F37; --amber:#9A6700; --red:#CF222E; --purple:#8250DF; --cyan:#0891A5;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Inter","Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);height:100vh;display:flex;overflow:hidden;font-size:13px;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .side{width:228px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column}
+  .ws{display:flex;align-items:center;gap:9px;padding:13px 14px;border-bottom:1px solid var(--line)}
+  .ws .mark{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#3b82f6,#0ea5b7);display:grid;place-items:center;color:#fff;font-size:13px;font-weight:800}
+  .ws b{font-size:13px;font-weight:650}
+  .nav{flex:1;overflow-y:auto;padding:8px}
+  .sec{color:var(--faint);font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:13px 8px 5px}
+  .item{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;color:var(--muted);font-weight:500}
+  .item:hover{background:var(--surface);color:var(--txt)}.item.on{background:var(--surface);color:var(--txt)}
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .hdr{display:flex;align-items:center;gap:9px;padding:13px 18px;border-bottom:1px solid var(--line);font-size:15px;font-weight:680}
+  .hdr .pico{color:var(--purple)}
+  .tabs{display:flex;gap:2px;padding:10px 18px 0;border-bottom:1px solid var(--line)}
+  .tab{display:flex;align-items:center;gap:7px;padding:9px 12px;color:var(--muted);font-weight:550;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer}
+  .tab.on{color:var(--txt);border-bottom-color:var(--accent)}
+  .pane{flex:1;overflow-y:auto;padding:18px;display:none}
+  .pane.on{display:block}
+  .pane{max-width:860px}
+  h2{font-size:14px;font-weight:680;margin-bottom:4px}
+  .hint{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5}
+  .cad{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:14px;margin-bottom:12px}
+  .cad-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .cad-nm{font-size:13.5px;font-weight:650}
+  .cad-del{background:none;border:none;color:var(--faint);cursor:pointer;font-size:12px}
+  .cad-del:hover{color:var(--red)}
+  .step{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:5px 0;border-top:1px solid var(--line);color:var(--muted)}
+  .step .dia{background:var(--surface2);border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;color:var(--txt);flex-shrink:0}
+  .step .ic{font-size:13px}
+  .editor{background:var(--surface);border:1px dashed var(--line2);border-radius:11px;padding:14px}
+  .editor input,.editor select{background:var(--bg);border:1px solid var(--line2);border-radius:6px;color:var(--txt);font-size:12.5px;padding:7px 9px;outline:none;font-family:inherit}
+  .editor input:focus,.editor select:focus{border-color:var(--accent)}
+  .ed-nome{width:100%;margin-bottom:10px}
+  .ed-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+  .ed-row .ed-dia{width:70px}.ed-row .ed-tipo{width:130px}.ed-row .ed-tit{flex:1}
+  .ed-del{background:none;border:none;color:var(--faint);cursor:pointer;font-size:13px}
+  .ed-add{background:none;border:1px dashed var(--line2);color:var(--muted);border-radius:7px;padding:6px 11px;cursor:pointer;font-size:12px;font-family:inherit;margin:4px 0 12px}
+  .btn{background:var(--accent);border:none;border-radius:8px;color:var(--text);font-weight:650;font-size:12.5px;padding:9px 16px;cursor:pointer;font-family:inherit;transition:transform 140ms cubic-bezier(.23,1,.32,1)}
+  .btn:active{transform:scale(.97)}
+  .auto{display:flex;align-items:flex-start;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 14px;margin-bottom:10px}
+  .auto .ai{width:30px;height:30px;border-radius:8px;background:var(--surface2);display:grid;place-items:center;flex-shrink:0}
+  .auto .at{font-size:13px;font-weight:600}
+  .auto .ad{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+  .badge-on{margin-left:auto;font-size:10px;font-weight:700;color:var(--green);background:rgba(63,185,80,.13);border:1px solid rgba(63,185,80,.3);border-radius:20px;padding:2px 9px;flex-shrink:0;height:fit-content}
+  .badge-soon{margin-left:auto;font-size:10px;font-weight:700;color:var(--amber);background:rgba(210,153,34,.13);border-radius:20px;padding:2px 9px;flex-shrink:0;height:fit-content}
+  .soon-box{border:1px dashed var(--line2);border-radius:11px;padding:22px;text-align:center;color:var(--faint);line-height:1.6}
+  .au-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:6px}
+  .au-grid label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted)}
+  .au-grid input,.au-grid select{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:6px;color:var(--txt);font-size:12.5px;padding:7px 9px;outline:none;font-family:inherit}
+  .au-grid input:focus,.au-grid select:focus{border-color:var(--accent)}
+  .sw{width:38px;height:21px;border-radius:20px;background:var(--line2);border:none;cursor:pointer;position:relative;padding:0;flex-shrink:0}
+  .sw span{position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:#fff;transition:transform 160ms cubic-bezier(.23,1,.32,1)}
+  .sw.on{background:var(--green)} .sw.on span{transform:translateX(17px)}
+</style>
+</head>
+<body>
+<%
+  function gatilhoLabel(g){ return {lead_novo:'caiu um lead novo',mudou_estagio:'mudou de estágio',lead_parado:'lead ficou parado',tarefa_vencida:'tarefa venceu'}[g]||g; }
+  function acaoLabel(a){ return {criar_tarefa_ligacao:'criar tarefa de ligação',disparar_ligacao:'disparar ligação (GoTo)',enviar_whatsapp:'enviar WhatsApp',criar_tarefa:'criar tarefa',alertar:'alertar'}[a]||a; }
+  function alvoLabel(t){ return {dono:'o dono',rr_sdr:'round-robin SDRs',todos:'todos os usuários'}[t]||t; }
+  function acaoIcon(a){ return {criar_tarefa_ligacao:'📞',disparar_ligacao:'📞',enviar_whatsapp:'💬',criar_tarefa:'✅',alertar:'🔔'}[a]||'⚙'; }
+%>
+  <aside class="side">
+    <div class="ws"><div class="mark">T</div><b>Tudo de Filtro</b></div>
+    <div class="nav">
+      <div class="sec">Vendas</div>
+      <a class="item" href="/crm"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Negócios</a>
+      <div class="sec">Configuração</div>
+      <a class="item on" href="/crm/workflows"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1l-.4-2.6h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6a7 7 0 0 0 .1-1z"/></svg>Workflows</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="hdr"><span class="pico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1l-.4-2.6h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6a7 7 0 0 0 .1-1z"/></svg></span> Workflows &amp; Automação</div>
+    <div class="tabs">
+      <div class="tab on" data-pane="cad">Cadências</div>
+      <div class="tab" data-pane="auto">Automações</div>
+      <div class="tab" data-pane="bp">Blueprint</div>
+    </div>
+
+    <!-- CADÊNCIAS -->
+    <div class="pane on" data-pane="cad">
+      <h2>Cadências de follow-up</h2>
+      <div class="hint">Sequências de tarefas que o vendedor aplica num negócio com 1 clique (na ficha → aba Tarefas → "Aplicar cadência"). Crie quantas quiser.</div>
+      <div id="cad-list">
+        <% cadencias.forEach(function(c){ %>
+          <div class="cad">
+            <div class="cad-hd"><span class="cad-nm"><%= c.nome %></span><% if(c.id!=='default'){ %><button class="cad-del" onclick="excluirCadencia('<%= c.id %>')">excluir</button><% } %></div>
+            <% (c.passos||[]).forEach(function(p){ var ic={ligacao:'📞',whatsapp:'💬',followup:'🔄',visita:'📍',email:'✉️'}[p.tipo]||'📋'; %>
+              <div class="step"><span class="dia"><%= p.dia===0?'hoje':'+'+p.dia+'d' %></span><span class="ic"><%= ic %></span><%= p.titulo %></div>
+            <% }); %>
+          </div>
+        <% }); %>
+      </div>
+      <h2 style="margin-top:18px">Nova cadência</h2>
+      <div class="editor">
+        <input class="ed-nome" id="ed-nome" placeholder="Nome da cadência — ex: Reativação poço">
+        <div id="ed-passos">
+          <div class="ed-row"><input class="ed-dia" type="number" min="0" value="0" title="dias"><select class="ed-tipo"><option value="ligacao">📞 Ligação</option><option value="whatsapp">💬 WhatsApp</option><option value="followup">🔄 Follow-up</option><option value="visita">📍 Visita</option><option value="email">✉️ E-mail</option></select><input class="ed-tit" placeholder="O que fazer"><button class="ed-del" onclick="edDel(this)">✕</button></div>
+        </div>
+        <button class="ed-add" onclick="edAdd()">+ passo</button><br>
+        <button class="btn" onclick="salvarCadencia()">Salvar cadência</button>
+      </div>
+    </div>
+
+    <!-- AUTOMAÇÕES -->
+    <div class="pane" data-pane="auto">
+      <h2>Suas regras de automação</h2>
+      <div class="hint"><b>Quando</b> [gatilho] <b>e</b> [condição] → <b>então</b> [ação] para [alvo]. Ex: caiu um lead → distribuir entre SDRs + criar tarefa de ligação.</div>
+      <div id="auto-list">
+        <% (typeof automacoes!=='undefined'?automacoes:[]).forEach(function(a){ %>
+          <div class="auto">
+            <div class="ai"><%= acaoIcon(a.acao) %></div>
+            <div style="flex:1;min-width:0">
+              <div class="at"><%= a.nome %></div>
+              <div class="ad"><b>Quando</b> <%= gatilhoLabel(a.gatilho) %><%= a.gatilhoParam?(' ('+a.gatilhoParam+')'):'' %><%= a.condicao?(' · se '+a.condicao):'' %> → <b>então</b> <%= acaoLabel(a.acao) %><%= a.acaoParam?(' ('+a.acaoParam+')'):'' %> · para <b><%= alvoLabel(a.alvo) %></b></div>
+            </div>
+            <button class="sw <%= a.ativo?'on':'' %>" onclick="toggleAuto('<%= a.id %>',this)" title="Ativar/desativar"><span></span></button>
+            <button class="cad-del" onclick="excluirAuto('<%= a.id %>')" style="margin-left:6px">excluir</button>
+          </div>
+        <% }); %>
+        <% if(!(typeof automacoes!=='undefined'&&automacoes.length)){ %><div class="hint" style="font-style:italic">Nenhuma regra criada ainda — crie a primeira abaixo.</div><% } %>
+      </div>
+
+      <h2 style="margin-top:18px">Nova regra</h2>
+      <div class="editor">
+        <input class="ed-nome" id="au-nome" placeholder="Nome da regra — ex: Lead novo → distribuir + ligar">
+        <div class="au-grid">
+          <label>Quando (gatilho)<select id="au-gatilho"><option value="lead_novo">Caiu um lead / negócio novo</option><option value="mudou_estagio">Mudou de estágio</option><option value="lead_parado">Lead parado X horas</option><option value="tarefa_vencida">Tarefa venceu</option></select></label>
+          <label>Parâmetro do gatilho<input id="au-gparam" placeholder="ex: 48 (horas) ou 'Proposta'"></label>
+          <label>Se (condição, opcional)<input id="au-cond" placeholder="ex: produto = poço · cidade = SJC"></label>
+          <label>Então (ação)<select id="au-acao"><option value="criar_tarefa_ligacao">Criar tarefa de LIGAÇÃO</option><option value="disparar_ligacao">Disparar ligação (GoTo)</option><option value="enviar_whatsapp">Enviar WhatsApp (template)</option><option value="criar_tarefa">Criar tarefa</option><option value="alertar">Alertar / notificar</option></select></label>
+          <label>Parâmetro da ação<input id="au-aparam" placeholder="ex: template, ou título da tarefa"></label>
+          <label>Atribuir a (distribuição)<select id="au-alvo"><option value="dono">Dono do negócio</option><option value="rr_sdr">Round-robin entre SDRs</option><option value="todos">Todos os usuários</option></select></label>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin:6px 0 12px;font-size:12px;color:var(--muted)"><input type="checkbox" id="au-ativo" checked> Ativar a regra ao salvar</label>
+        <button class="btn" onclick="salvarAuto()">Salvar regra</button>
+        <div style="font-size:11px;color:var(--amber);margin-top:10px;line-height:1.5">⚠ As regras são salvas e ficam visíveis aqui. O <b>disparo automático real</b> (ligação/WhatsApp ao cliente) é ativado numa fase seguinte com validação — pra não disparar errado em produção.</div>
+      </div>
+
+      <h2 style="margin-top:18px">Automações do sistema (já rodando)</h2>
+      <div class="auto"><div class="ai">🆘</div><div><div class="at">Lead parado (decay score)</div><div class="ad">Score de inatividade alto → alerta o dono + tarefa de resgate.</div></div><span class="badge-on">● ativo</span></div>
+      <div class="auto"><div class="ai">💎</div><div><div class="at">Diamante/Ouro parado &gt;2h</div><div class="ad">Tier alto parado → notifica o closer.</div></div><span class="badge-on">● ativo</span></div>
+      <div class="auto"><div class="ai">🔀</div><div><div class="at">Round-robin de leads</div><div class="ad">Distribui leads órfãos respeitando escala/folga.</div></div><span class="badge-on">● ativo</span></div>
+    </div>
+
+    <!-- BLUEPRINT -->
+    <div class="pane" data-pane="bp">
+      <h2>Blueprint (processo por estágio)</h2>
+      <div class="hint">Define o que é obrigatório em cada estágio e quais transições são permitidas — como o Blueprint do Zoho.</div>
+      <div class="soon-box">🧭 Em breve.<br>O Blueprint vai amarrar o funil: ex. só sai de <b>Qualificado → Proposta</b> se a qualificação de água estiver preenchida; ao entrar em <b>Proposta</b>, dispara a cadência automaticamente; ao <b>Fechar Ganho</b>, gera a OS de instalação.<br><span style="font-size:11px">Construído sobre a máquina de estados que o módulo de Assistência Técnica já prevê.</span></div>
+    </div>
+  </div>
+
+<script>
+  document.querySelectorAll('.tab').forEach(function(t){ t.addEventListener('click', function(){
+    var p=t.getAttribute('data-pane');
+    document.querySelectorAll('.tab').forEach(function(x){ x.classList.toggle('on', x===t); });
+    document.querySelectorAll('.pane').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-pane')===p); });
+  }); });
+  function edAdd(){
+    var d=document.createElement('div'); d.className='ed-row';
+    d.innerHTML='<input class="ed-dia" type="number" min="0" value="1" title="dias"><select class="ed-tipo"><option value="ligacao">📞 Ligação</option><option value="whatsapp">💬 WhatsApp</option><option value="followup">🔄 Follow-up</option><option value="visita">📍 Visita</option><option value="email">✉️ E-mail</option></select><input class="ed-tit" placeholder="O que fazer"><button class="ed-del" onclick="edDel(this)">✕</button>';
+    document.getElementById('ed-passos').appendChild(d);
+  }
+  function edDel(b){ var r=b.closest('.ed-row'); if(document.querySelectorAll('#ed-passos .ed-row').length>1) r.remove(); }
+  function salvarCadencia(){
+    var nome=document.getElementById('ed-nome').value.trim();
+    if(!nome){ document.getElementById('ed-nome').focus(); return; }
+    var passos=[];
+    document.querySelectorAll('#ed-passos .ed-row').forEach(function(r){
+      var tit=r.querySelector('.ed-tit').value.trim(); if(!tit) return;
+      passos.push({ dia:parseInt(r.querySelector('.ed-dia').value)||0, tipo:r.querySelector('.ed-tipo').value, titulo:tit });
+    });
+    if(!passos.length){ alert('adicione ao menos 1 passo'); return; }
+    fetch('/crm/cadencias',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:nome,passos:passos})})
+      .then(function(r){return r.json();}).then(function(j){ if(j.ok) location.reload(); else alert(j.error||'erro'); }).catch(function(){alert('erro ao salvar');});
+  }
+  function excluirCadencia(id){ if(!confirm('Excluir esta cadência?'))return;
+    fetch('/crm/cadencias/'+id+'/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+      .then(function(r){return r.json();}).then(function(j){ if(j.ok) location.reload(); }).catch(function(){});
+  }
+  function salvarAuto(){
+    var nome=document.getElementById('au-nome').value.trim(); if(!nome){ document.getElementById('au-nome').focus(); return; }
+    var body={ nome:nome, gatilho:document.getElementById('au-gatilho').value, gatilhoParam:document.getElementById('au-gparam').value, condicao:document.getElementById('au-cond').value, acao:document.getElementById('au-acao').value, acaoParam:document.getElementById('au-aparam').value, alvo:document.getElementById('au-alvo').value, ativo:document.getElementById('au-ativo').checked };
+    fetch('/crm/automacoes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){return r.json();}).then(function(j){ if(j.ok) location.reload(); else alert(j.error||'erro'); }).catch(function(){ alert('erro ao salvar'); });
+  }
+  function excluirAuto(id){ if(!confirm('Excluir esta regra?'))return;
+    fetch('/crm/automacoes/'+id+'/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+      .then(function(r){return r.json();}).then(function(j){ if(j.ok) location.reload(); }).catch(function(){});
+  }
+  function toggleAuto(id,btn){
+    fetch('/crm/automacoes/'+id+'/toggle',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+      .then(function(r){return r.json();}).then(function(j){ if(j.ok) btn.classList.toggle('on'); }).catch(function(){});
+  }
+</script>
+</body>
+</html>

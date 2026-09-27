@@ -1,0 +1,2054 @@
+<% const activePage = 'gestao'; const pageTitle = 'Torre de Comando'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+/* === TORRE DE COMANDO === */
+:root{
+  --bg:#0a0a0a; --panel:#151515; --panel-2:#1a1a1a; --line:#222; --line-2:#2a2a2a;
+  --txt:#e6edf3; --muted:#8b949e; --dim:#555;
+  --green:#22c55e; --red:#ef4444; --yellow:#eab308; --blue:#5ba3f5; --purple:#a371f7; --orange:#f97316;
+  --green-bg:#0d2818; --red-bg:#2d1215; --yellow-bg:#2d2513; --blue-bg:#0d1f3a; --purple-bg:#1e1225;
+}
+html[data-theme="light"]{
+  --bg:#F2F4F8; --panel:#FFFFFF; --panel-2:#F0F3F7; --line:#D8DEE6; --line-2:#C9D1DB;
+  --txt:#1F2328; --muted:#59636E; --dim:#8A93A0;
+  --green:#15803D; --red:#DC2626; --yellow:#A16207; --blue:#2563EB; --purple:#7C3AED; --orange:#C2410C;
+  --green-bg:#DCFCE7; --red-bg:#FEE2E2; --yellow-bg:#FEF9C3; --blue-bg:#DBEAFE; --purple-bg:#EDE9FE;
+}
+
+
+/* Header fixo (sticky) */
+.tc-header{
+  position:sticky; top:0; z-index:50;
+  background:linear-gradient(135deg,var(--panel),var(--panel-2));
+  border-bottom:1px solid var(--line);
+  padding:14px 24px;
+  box-shadow:0 4px 12px rgba(0,0,0,.4);
+}
+.tc-hrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.tc-title{font-size:14px;font-weight:700;color:var(--text);letter-spacing:.5px;display:flex;align-items:center;gap:8px;margin-right:auto}
+.tc-title .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.tc-kpi{display:flex;flex-direction:column;padding:6px 12px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;min-width:110px}
+.tc-kpi .k-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.tc-kpi .k-v{font-size:16px;font-weight:800;color:var(--text);line-height:1.2}
+.tc-kpi.green .k-v{color:var(--green)}
+.tc-kpi.red .k-v{color:var(--red)}
+.tc-kpi.yellow .k-v{color:var(--yellow)}
+.tc-kpi.blue .k-v{color:var(--blue)}
+.tc-status{padding:8px 14px;border-radius:8px;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.5px}
+.tc-status.green{background:rgba(34,197,94,.15);color:var(--green);border:1px solid var(--green)}
+.tc-status.yellow{background:rgba(234,179,8,.15);color:var(--yellow);border:1px solid var(--yellow)}
+.tc-status.red{background:rgba(239,68,68,.15);color:var(--red);border:1px solid var(--red);animation:pulseRed 1.2s infinite}
+@keyframes pulseRed{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}
+.tc-clock{font-family:'SF Mono',Menlo,monospace;font-size:14px;color:var(--muted);font-weight:700;padding:6px 10px;background:rgba(0,0,0,.35);border-radius:6px}
+.tc-btn{padding:8px 14px;border-radius:8px;border:1px solid var(--line-2);background:var(--bg-hover);color:var(--text);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.3px}
+.tc-btn:hover{background:#222;border-color:#333}
+.tc-btn.danger{background:var(--red-bg);color:#fca5a5;border-color:var(--red)}
+.tc-btn.danger:hover{background:#3a1518}
+.tc-btn.warn{background:var(--yellow-bg);color:#fbbf24;border-color:var(--yellow)}
+.tc-btn.success{background:var(--green-bg);color:#4ade80;border-color:var(--green)}
+.tc-btn.info{background:var(--blue-bg);color:#7cb9f5;border-color:var(--blue)}
+.tc-btn.purple{background:var(--purple-bg);color:#c084fc;border-color:var(--purple)}
+.tc-btn.active{background:var(--red-bg);color:var(--text);border-color:var(--red);box-shadow:0 0 10px rgba(239,68,68,.4)}
+
+/* Botões globais */
+.tc-globals{
+  position:sticky; top:64px; z-index:40;
+  background:#0e0e10; border-bottom:1px solid var(--line);
+  padding:10px 24px; display:flex; gap:8px; flex-wrap:wrap;
+}
+
+/* Conteúdo */
+.tc-wrap{max-width:1500px;margin:0 auto;padding:20px 24px 80px}
+.tc-block{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:18px;overflow:hidden}
+.tc-block.crit{border-color:#3a1f23}
+.tc-bhead{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--bg-card);border-bottom:1px solid var(--line)}
+.tc-bnum{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:#222;color:var(--muted);font-size:11px;font-weight:800}
+.tc-btitle{font-size:14px;font-weight:800;color:var(--text);letter-spacing:.3px;flex:1;display:flex;align-items:center;gap:8px}
+.tc-bicon{font-size:18px}
+.tc-bsub{font-size:11px;color:var(--muted);font-weight:600}
+.tc-bbody{padding:16px 18px}
+
+.tc-grid{display:grid;gap:12px}
+.tc-grid-4{grid-template-columns:repeat(4,1fr)}
+.tc-grid-3{grid-template-columns:repeat(3,1fr)}
+.tc-grid-2{grid-template-columns:1fr 1fr}
+@media(max-width:900px){.tc-grid-4,.tc-grid-3,.tc-grid-2{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.tc-grid-4,.tc-grid-3,.tc-grid-2{grid-template-columns:1fr}.tc-globals{top:auto}}
+
+.card{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.card .big{font-size:24px;font-weight:800;color:var(--text);margin-top:4px;line-height:1.1}
+.card .sub{font-size:11px;color:var(--muted);margin-top:4px}
+.card.green{border-color:var(--green);background:linear-gradient(180deg,var(--green-bg),var(--panel-2))}
+.card.red{border-color:var(--red);background:linear-gradient(180deg,var(--red-bg),var(--panel-2))}
+.card.yellow{border-color:var(--yellow);background:linear-gradient(180deg,var(--yellow-bg),var(--panel-2))}
+.card.blue{border-color:var(--blue);background:linear-gradient(180deg,var(--blue-bg),var(--panel-2))}
+.card.purple{border-color:var(--purple);background:linear-gradient(180deg,var(--purple-bg),var(--panel-2))}
+.card.green .big{color:#4ade80}.card.red .big{color:#f87171}.card.yellow .big{color:#fbbf24}.card.blue .big{color:#7cb9f5}.card.purple .big{color:#c084fc}
+
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:8px 10px;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--line);font-weight:700}
+.tbl td{padding:9px 10px;border-bottom:1px solid #1a1a1a;color:var(--text)}
+.tbl tr:hover td{background:var(--bg-hover)}
+.tbl a{color:var(--blue);text-decoration:none;font-weight:600}
+.tbl a:hover{text-decoration:underline}
+
+.row-act{display:flex;gap:5px;flex-wrap:wrap}
+.btn-mini{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;text-decoration:none;border:1px solid;cursor:pointer;background:transparent}
+.btn-mini.wati{color:#25D366;border-color:#25D366}
+.btn-mini.crm{color:var(--blue);border-color:var(--blue)}
+.btn-mini.goto{color:var(--purple);border-color:var(--purple)}
+.btn-mini.alert{color:var(--red);border-color:var(--red)}
+.btn-mini:hover{background:rgba(255,255,255,.06)}
+
+.feed-item{display:flex;gap:12px;padding:12px;border-radius:8px;margin-bottom:8px;border-left:3px solid var(--line);background:var(--bg-card);align-items:flex-start}
+.feed-item.crit{border-left-color:var(--red);background:linear-gradient(90deg,rgba(239,68,68,.08),var(--bg-card))}
+.feed-item.warn{border-left-color:var(--yellow);background:linear-gradient(90deg,rgba(234,179,8,.08),var(--bg-card))}
+.feed-item.info{border-left-color:var(--blue);background:linear-gradient(90deg,rgba(91,163,245,.08),var(--bg-card))}
+.feed-item.opp{border-left-color:var(--green);background:linear-gradient(90deg,rgba(34,197,94,.08),var(--bg-card))}
+.feed-item .icon{font-size:18px}
+.feed-item .body{flex:1;min-width:0}
+.feed-item .title{color:var(--text);font-weight:700;font-size:13px;margin-bottom:3px}
+.feed-item .meta{color:var(--muted);font-size:11px;margin-bottom:6px}
+.feed-item .impact{color:#fbbf24;font-weight:700;font-size:12px;margin-bottom:6px}
+.feed-item .acts{display:flex;gap:6px;flex-wrap:wrap}
+
+.disc-bar{display:inline-block;width:60px;height:6px;background:#222;border-radius:3px;overflow:hidden;vertical-align:middle;margin-left:6px}
+.disc-bar > span{display:block;height:100%}
+
+.status-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase}
+.status-pill.green{background:rgba(34,197,94,.18);color:#4ade80}
+.status-pill.yellow{background:rgba(234,179,8,.18);color:#fbbf24}
+.status-pill.red{background:rgba(239,68,68,.18);color:#f87171}
+
+.proj-bar{height:14px;background:#222;border-radius:7px;overflow:hidden;margin:8px 0;position:relative}
+.proj-bar > .fill{height:100%;border-radius:7px;transition:width .4s}
+.proj-bar > .target{position:absolute;top:-2px;height:18px;width:2px;background:#fff;left:100%}
+
+.empty{padding:20px;text-align:center;color:var(--muted);font-size:13px}
+.empty.good{color:#4ade80}
+
+.coach-box{background:linear-gradient(180deg,rgba(167,113,247,.06),var(--bg-card));border:1px solid var(--purple);border-radius:10px;padding:18px;font-size:13px;line-height:1.7;color:var(--txt);white-space:pre-wrap;min-height:100px}
+.coach-box h3{color:#c084fc;font-size:13px;margin:14px 0 6px;font-weight:800;text-transform:uppercase;letter-spacing:.3px}
+.coach-box strong{color:var(--text)}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg-hover);border:1px solid var(--green);color:#4ade80;padding:14px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:200;animation:slideIn .25s}
+.toast.err{border-color:var(--red);color:#f87171}
+@keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* Núbia a Loucaaa das Vendas — modo alerta extremo */
+.nubia-louca{
+  background:linear-gradient(135deg,#ef4444,#f97316,#ef4444) !important;
+  background-size:200% 200% !important;
+  color:#fff !important;
+  border:2px solid #fff !important;
+  font-weight:900 !important;
+  letter-spacing:.4px !important;
+  animation:nubiaLouca 1.2s infinite, gradient 2s ease infinite !important;
+  text-shadow:0 0 8px rgba(255,255,255,.4) !important;
+  box-shadow:0 0 16px rgba(239,68,68,.6) !important;
+}
+@keyframes nubiaLouca{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.04)}
+}
+@keyframes gradient{
+  0%,100%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+}
+
+/* Modo Guerra */
+body.guerra .tc-header{background:linear-gradient(135deg,#1a0a0a,#2a0e0e);border-bottom-color:var(--red)}
+body.guerra .tc-block.guerra-hide{display:none}
+body.guerra .tc-globals{background:#1a0e0e;border-bottom-color:var(--red)}
+body.guerra .tc-block{border-color:#3a1f23}
+
+/* Loading */
+.skeleton{background:linear-gradient(90deg,var(--bg-hover),#222,var(--bg-hover));background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px;height:14px;margin:6px 0}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+/* Pipeline Drawer */
+.card.clickable{cursor:pointer;transition:transform .12s ease, box-shadow .12s ease}
+.card.clickable:hover{transform:translateY(-2px);box-shadow:0 4px 18px rgba(124,185,245,.18);filter:brightness(1.08)}
+#pipe-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;opacity:0;pointer-events:none;transition:opacity .18s ease}
+#pipe-overlay.open{opacity:1;pointer-events:auto}
+#pipe-drawer{position:fixed;top:0;right:0;height:100vh;width:min(900px,92vw);background:var(--bg-card);border-left:1px solid var(--border);z-index:9001;transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column}
+#pipe-drawer.open{transform:translateX(0)}
+#pipe-drawer .pd-head{padding:14px 18px;border-bottom:1px solid #1a1a1a;display:flex;align-items:flex-start;gap:14px}
+#pipe-drawer .pd-title{flex:1;color:var(--text);font-size:15px;font-weight:800}
+#pipe-drawer .pd-stats{color:var(--text-muted);font-size:11px;margin-top:4px}
+#pipe-drawer .pd-close{background:#222;color:#ddd;border:1px solid var(--border);border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:14px}
+#pipe-drawer .pd-close:hover{background:#333;color:#fff}
+#pipe-drawer .pd-body{flex:1;overflow:auto;padding:0 18px 18px}
+</style>
+
+<!-- HEADER FIXO -->
+<div class="tc-header">
+  <div class="tc-hrow">
+    <div class="tc-title"><span class="dot"></span>TORRE DE COMANDO</div>
+    <div class="tc-kpi green"><div class="k-l">Faturamento Hoje</div><div class="k-v" id="h-fat">--</div></div>
+    <div class="tc-kpi blue"><div class="k-l">Meta do Dia</div><div class="k-v" id="h-meta">--</div></div>
+    <div class="tc-kpi red"><div class="k-l">Gap</div><div class="k-v" id="h-gap">--</div></div>
+    <div class="tc-status" id="h-status">--</div>
+    <div class="tc-clock" id="h-clock">--:--</div>
+    <button class="tc-btn danger" id="btn-guerra" onclick="toggleGuerra()">⚔️ Modo Guerra</button>
+    <button class="tc-btn" onclick="reloadAll()">🔄 Atualizar</button>
+    <button class="tc-btn info" onclick="showHelp()" title="Ajuda — o que cada coisa faz">❓ Ajuda</button>
+  </div>
+</div>
+
+<!-- MODAL PERÍODO CUSTOMIZADO (Núbia) -->
+<div id="tc-periodo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;overflow-y:auto;padding:30px 20px" onclick="if(event.target===this)fecharModalPeriodo()">
+  <div style="max-width:560px;margin:40px auto;background:var(--bg-card);border:2px solid #f97316;border-radius:14px;padding:26px 28px;color:var(--txt)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <h2 style="font-size:18px;color:var(--text);margin:0;flex:1">📅 Núbia em Período Customizado</h2>
+      <button class="tc-btn" onclick="fecharModalPeriodo()">✕</button>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin:0 0 16px">Escolha a janela de <strong>última atividade</strong> dos leads. Sempre exclui leads em Proposta.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div>
+        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;margin-bottom:4px">De (data inicial)</label>
+        <input type="date" id="periodo-inicio" style="width:100%;padding:10px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;margin-bottom:4px">Até (data final)</label>
+        <input type="date" id="periodo-fim" style="width:100%;padding:10px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="tc-btn" onclick="setPeriodo(0,7)">Últimos 7 dias</button>
+      <button class="tc-btn" onclick="setPeriodo(7,30)">7-30 dias atrás</button>
+      <button class="tc-btn" onclick="setPeriodo(30,60)">30-60 dias atrás</button>
+      <button class="tc-btn" onclick="setPeriodo(60,90)">60-90 dias atrás</button>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;margin-bottom:6px">Tiers (quais leads)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:4px;padding:6px 12px;background:var(--bg-hover);border:1px solid #a371f7;border-radius:6px;cursor:pointer"><input type="checkbox" class="tier-cb" value="Diamante" checked> 💎 Diamante</label>
+        <label style="display:flex;align-items:center;gap:4px;padding:6px 12px;background:var(--bg-hover);border:1px solid #f0c040;border-radius:6px;cursor:pointer"><input type="checkbox" class="tier-cb" value="Ouro" checked> 🥇 Ouro</label>
+        <label style="display:flex;align-items:center;gap:4px;padding:6px 12px;background:var(--bg-hover);border:1px solid #9ca3af;border-radius:6px;cursor:pointer"><input type="checkbox" class="tier-cb" value="Prata" checked> 🥈 Prata</label>
+        <label style="display:flex;align-items:center;gap:4px;padding:6px 12px;background:var(--bg-hover);border:1px solid #b45309;border-radius:6px;cursor:pointer"><input type="checkbox" class="tier-cb" value="Bronze"> 🥉 Bronze</label>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;margin-bottom:6px">Limite de disparo</label>
+      <select id="periodo-limite" style="width:100%;padding:10px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px">
+        <option value="10">10 leads (teste)</option>
+        <option value="30" selected>30 leads (recomendado)</option>
+        <option value="50">50 leads</option>
+        <option value="100">100 leads (máximo)</option>
+      </select>
+    </div>
+
+    <div id="periodo-preview" style="background:#0d1f3a;border:1px solid #1e3a5f;border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:#7cb9f5;display:none"></div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="tc-btn" onclick="fecharModalPeriodo()">Cancelar</button>
+      <button class="tc-btn info" id="btn-preview" onclick="previewPeriodo()">🔍 Pré-visualizar</button>
+      <button class="tc-btn danger" id="btn-disparar" onclick="dispararPeriodo()" disabled>🚀 Disparar Núbia</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALHE DE CANAL (drill-down por produto + vendas convertidas) -->
+<div id="tc-canal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;overflow-y:auto;padding:30px 20px" onclick="if(event.target===this)fecharCanalDetalhe()">
+  <div style="max-width:1000px;margin:30px auto;background:var(--bg-card);border:2px solid #5ba3f5;border-radius:14px;padding:24px 28px;color:var(--txt)">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+      <h2 style="font-size:20px;color:var(--text);margin:0;flex:1" id="canal-titulo">📊 Detalhe do Canal</h2>
+      <button class="tc-btn" onclick="fecharCanalDetalhe()">✕ Fechar</button>
+    </div>
+
+    <div id="canal-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px"></div>
+
+    <div class="g-section" style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin:6px 0 10px">📦 Produtos · Pipeline (proposta) vs Vendas Fechadas</div>
+    <div id="canal-produtos" style="margin-bottom:14px">
+      <div class="empty">Carregando produtos...</div>
+    </div>
+  </div>
+</div>
+
+<!-- HELP MODAL -->
+<div id="tc-help" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;overflow-y:auto;padding:30px 20px" onclick="if(event.target===this)hideHelp()">
+  <div style="max-width:900px;margin:0 auto;background:var(--bg-card);border:1px solid var(--line);border-radius:14px;padding:30px 32px;color:var(--txt)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+      <h2 style="font-size:20px;color:var(--text);margin:0;flex:1">🎯 Como usar a Torre de Comando</h2>
+      <button class="tc-btn" onclick="hideHelp()">✕ Fechar</button>
+    </div>
+    <div style="font-size:13px;line-height:1.7;color:var(--text)">
+
+      <h3 style="color:var(--blue);font-size:14px;margin:18px 0 8px;text-transform:uppercase">⚔️ Modo Guerra</h3>
+      <p>Modo de foco total em conversão imediata. Quando ativado:</p>
+      <ul style="margin:6px 0 6px 20px">
+        <li><strong>Esconde:</strong> Bloco 4 (Time), Bloco 5 (Erros do Dia), Bloco 7 (Pipeline) — métricas de gestão</li>
+        <li><strong>Mantém:</strong> Bloco 1 (Dinheiro Hoje), Bloco 2 (Diretor IA), Bloco 3 (Faça Isso Agora), Bloco 6 (Oportunidades), Bloco 8 (Meta) — só o que gera venda</li>
+        <li><strong>Header fica vermelho pulsante</strong> — sinal visual pro time</li>
+      </ul>
+      <p style="color:var(--muted)"><em>Quando usar: última hora do dia, semana fechando abaixo da meta, ou quando está acumulando R$ em propostas paradas.</em></p>
+
+      <h3 style="color:var(--green);font-size:14px;margin:18px 0 8px;text-transform:uppercase">🤖 Núbia Reengaja</h3>
+      <p>Dispara a Núbia (SDR IA) pra reengajar leads via WhatsApp <strong>quando o closer não atender</strong>. 7 modos:</p>
+      <ul style="margin:6px 0 6px 20px">
+        <li><strong>Sem Contato</strong> — leads em Primeiro Contato/Etapa IA criados há 2-168h sem ação</li>
+        <li><strong>🌡️ Lead Morno</strong> — ativos NÃO em Proposta, parados 24-72h (janela WATI ainda viva)</li>
+        <li><strong>🎯 Fora de Proposta</strong> — todos ativos fora de Proposta, parados 24h-30d</li>
+        <li><strong>🔥 Modo Hardcore (Proposta Fria)</strong> — propostas paradas &gt;24h, top 30 por valor</li>
+        <li><strong>Lead Atenção</strong> — Diamante/Ouro em estágio inicial parado &gt;2h</li>
+        <li><strong>📅 Período Customizado</strong> — você escolhe a janela de datas, tiers e limite (10/30/50/100). Sempre exclui Proposta. Tem preview antes de disparar.</li>
+        <li><strong>Manual</strong> — IDs específicos clicando no 🤖 da linha do deal</li>
+      </ul>
+      <p style="color:var(--muted)"><em>A Núbia recebe os leads via POST e dispara a sequência de outreach configurada no serviço Python (Railway).</em></p>
+
+      <h3 style="color:var(--red);font-size:14px;margin:18px 0 8px;text-transform:uppercase">🔥 Núbia a Loucaaa das Vendas</h3>
+      <p>Quando o risco da meta é alto (projeção &lt;80% da meta, ou após 15h sem cobrir o gap), os botões da Núbia entram em modo agressivo:</p>
+      <ul style="margin:6px 0 6px 20px">
+        <li>Cor vermelho/laranja pulsante</li>
+        <li>Label muda pra "🔥🔥 NÚBIA A LOOUCAAAA DAS VENDAS 🔥🔥"</li>
+        <li>Sinaliza visualmente que é hora de fazer barulho na base</li>
+      </ul>
+
+      <h3 style="color:var(--blue);font-size:14px;margin:18px 0 8px;text-transform:uppercase">📋 Quadro de Tarefas (FAB flutuante)</h3>
+      <p>O botão flutuante "📋 Tarefas (X)" no canto inferior direito aparece em todas as páginas pros closers. Mostra:</p>
+      <ul style="margin:6px 0 6px 20px">
+        <li>Tasks pendentes geradas pelas cobranças do admin</li>
+        <li>Botão "✓ Concluir" — quando clicado, notifica o Paulo via Z-API com tempo de execução</li>
+        <li>Pulsa vermelho quando tem pendentes</li>
+        <li>Refresh automático a cada 60s</li>
+      </ul>
+      <p style="color:var(--muted)"><em>Quando você cobra um closer, ele recebe a mensagem Z-API <strong>e</strong> uma task aparece no FAB dele.</em></p>
+
+      <h3 style="color:var(--purple);font-size:14px;margin:18px 0 8px;text-transform:uppercase">📊 Score 80/20 (0-100)</h3>
+      <p>Score de disciplina por closer baseado em 6 dimensões da spec metricas-8020:</p>
+      <ul style="margin:6px 0 6px 20px">
+        <li><strong>20pts</strong> SLA primeiro contato (% leads novos contatados)</li>
+        <li><strong>20pts</strong> Volume ligações (GoTo outbound real, fallback atividades Zoho)</li>
+        <li><strong>20pts</strong> Follow-up propostas (% propostas com atividade &lt;24h)</li>
+        <li><strong>15pts</strong> CRM completo (Cidade + Tipo de Água preenchidos)</li>
+        <li><strong>15pts</strong> Atividades reais (penaliza deals parados &gt;48h)</li>
+        <li><strong>10pts</strong> WATI (placeholder — sem integração ainda)</li>
+      </ul>
+      <p>Hover na coluna Disc. da tabela do Bloco 4 mostra o detalhe de cada dimensão.</p>
+
+      <h3 style="color:var(--yellow);font-size:14px;margin:18px 0 8px;text-transform:uppercase">🎯 Metas Diárias</h3>
+      <ul style="margin:6px 0 6px 20px">
+        <li><strong>Lig.</strong> = ligações outbound hoje (meta 25, alerta &lt;15)</li>
+        <li><strong>PC</strong> = primeiro contato &lt;5min de criação (meta 100% dos leads novos)</li>
+        <li><strong>F-Up</strong> = propostas com follow-up em dia (meta 100%, &lt;24h sem atividade)</li>
+      </ul>
+
+      <h3 style="color:var(--red);font-size:14px;margin:18px 0 8px;text-transform:uppercase">🚦 Indicadores de Risco — Bloco 1</h3>
+      <ul style="margin:6px 0 6px 20px">
+        <li><span class="status-pill green">verde</span> &lt;2h — proposta quente, agir agora</li>
+        <li><span class="status-pill yellow">amarelo</span> 2-4h — esfriando, follow-up urgente</li>
+        <li><span class="status-pill red">vermelho</span> &gt;4h — perdendo, ligar imediatamente</li>
+      </ul>
+
+      <h3 style="color:var(--text);font-size:14px;margin:18px 0 8px;text-transform:uppercase">📋 Botões Globais (header)</h3>
+      <ul style="margin:6px 0 6px 20px">
+        <li><strong>🚨 Auto-Alertas</strong> — varre operação e dispara Z-API pros closers fora do padrão</li>
+        <li><strong>📋 Plano do Dia</strong> — envia o relatório consolidado do dia no seu WhatsApp</li>
+        <li><strong>⚡ Correção Completa</strong> — alerta closers + reativa frios via Núbia em uma jogada</li>
+        <li><strong>👁️ Leads sem Contato</strong> — scroll/foco no bloco 3 (top ações)</li>
+        <li><strong>💰 Propostas &gt;R$5k</strong> — scroll no bloco 1 (dinheiro)</li>
+        <li><strong>📊 Enviar Ranking</strong> — manda ranking parcial no seu Z-API</li>
+      </ul>
+
+      <h3 style="color:var(--text);font-size:14px;margin:18px 0 8px;text-transform:uppercase">🧱 Os 9 Blocos</h3>
+      <ol style="margin:6px 0 6px 20px;padding-left:14px">
+        <li><strong>Dinheiro Hoje</strong> — propostas a fechar, com canal, nível, risco e ação sugerida</li>
+        <li><strong>Diretor IA</strong> — feed dinâmico de problemas detectados (com botões de ação)</li>
+        <li><strong>Faça Isso Agora</strong> — top 10 ações urgentes ranqueadas</li>
+        <li><strong>Time em Tempo Real</strong> — closers + metas diárias + score 80/20</li>
+        <li><strong>Erros do Dia</strong> — red flags consolidadas (sem contato, sem follow-up, etc.)</li>
+        <li><strong>Oportunidades Quentes</strong> — Diamantes novos, indicações, leads recém-qualificados</li>
+        <li><strong>Pipeline Inteligente</strong> — alta/média/baixa probabilidade + previsão ponderada</li>
+        <li><strong>Projeção de Meta</strong> — pipeline ponderado cobre o gap?</li>
+        <li><strong>Coach do Dono</strong> — análise estratégica via Claude (sob demanda)</li>
+      </ol>
+
+      <h3 style="color:var(--green);font-size:14px;margin:18px 0 8px;text-transform:uppercase">📞 Taxa de Conversão (Rei do Mês / Cockpit)</h3>
+      <p>Calculada como <code>vendas Prata+/Ouro/Diamante / total qualificados recebidos no mês</code>. O denominador inclui ativos qualificados + ganhos qualificados + perdidos qualificados — janelas iguais, sem inflar.</p>
+
+    </div>
+  </div>
+</div>
+
+<!-- BOTÕES GLOBAIS -->
+<div class="tc-globals">
+  <button class="tc-btn danger" onclick="runAutoAlerts()">🚨 Auto-Alertas</button>
+  <button class="tc-btn success" onclick="sendRelatorio()">📋 Plano do Dia</button>
+  <button class="tc-btn purple" onclick="runCorrecao('full_scan')">⚡ Correção Completa</button>
+  <button class="tc-btn info" onclick="abrirDirectorMsg()">📢 Mensagem ao Time</button>
+  <button class="tc-btn warn" onclick="filterSemContato()">👁️ Leads sem Contato</button>
+  <button class="tc-btn info" onclick="filterPropostas()">💰 Propostas &gt;R$5k</button>
+  <button class="tc-btn" onclick="enviarRanking()">📊 Enviar Ranking</button>
+</div>
+
+<!-- MODAL: ENVIAR MENSAGEM AO TIME (Live Director manual) -->
+<div id="tc-director-msg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;overflow-y:auto;padding:30px 20px" onclick="if(event.target===this)fecharDirectorMsg()">
+  <div style="max-width:560px;margin:40px auto;background:var(--bg-card);border:2px solid #c084fc;border-radius:14px;padding:26px 28px;color:var(--txt)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <h2 style="font-size:18px;color:var(--text);margin:0;flex:1">📢 Enviar Mensagem ao Time (Live Director)</h2>
+      <button class="tc-btn" onclick="fecharDirectorMsg()">✕</button>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin:0 0 14px">Mensagem aparece no Live Director do(s) closer(s) selecionado(s). Crítico faz a tela <strong>tremer</strong> e dispara overlay vermelho.</p>
+
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;margin-bottom:4px">Para quem</label>
+      <select id="dm-closer" style="width:100%;padding:10px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px">
+        <option value="all">📣 Todo o time</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;margin-bottom:4px">Título (opcional)</label>
+      <input type="text" id="dm-titulo" maxlength="100" placeholder="Ex: Reunião agora" style="width:100%;padding:10px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px">
+    </div>
+
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;margin-bottom:4px">Mensagem</label>
+      <textarea id="dm-texto" maxlength="500" rows="4" placeholder="O que você quer dizer?" style="width:100%;padding:10px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;resize:vertical"></textarea>
+      <div style="font-size:10px;color:var(--muted);text-align:right;margin-top:2px"><span id="dm-count">0</span>/500</div>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;margin-bottom:6px">Intensidade</label>
+      <div style="display:flex;gap:8px">
+        <label style="flex:1;display:flex;align-items:center;gap:6px;padding:10px;background:var(--bg-hover);border:1px solid #5ba3f5;border-radius:6px;cursor:pointer"><input type="radio" name="dm-int" value="normal" checked> 💬 Normal</label>
+        <label style="flex:1;display:flex;align-items:center;gap:6px;padding:10px;background:var(--bg-hover);border:1px solid #f97316;border-radius:6px;cursor:pointer"><input type="radio" name="dm-int" value="importante"> 📢 Importante (yabadabadooo)</label>
+        <label style="flex:1;display:flex;align-items:center;gap:6px;padding:10px;background:var(--bg-hover);border:1px solid #ef4444;border-radius:6px;cursor:pointer"><input type="radio" name="dm-int" value="critico"> 🚨 Crítico (treme tela)</label>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;display:block;margin-bottom:4px">Expira em</label>
+      <select id="dm-expira" style="width:100%;padding:10px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px">
+        <option value="15">15 minutos</option>
+        <option value="60" selected>1 hora</option>
+        <option value="240">4 horas</option>
+        <option value="480">Fim do dia (8h)</option>
+      </select>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="tc-btn" onclick="fecharDirectorMsg()">Cancelar</button>
+      <button class="tc-btn purple" onclick="enviarDirectorMsg()" id="dm-send">📢 Enviar</button>
+    </div>
+
+    <hr style="margin:16px 0;border:none;border-top:1px solid var(--border)">
+    <div style="font-size:11px;color:var(--muted)">
+      <strong>Próximo:</strong> chat interno entre o time (em construção). Por enquanto, use mensagens diretas como canal admin → closer.
+    </div>
+  </div>
+</div>
+
+<div class="tc-wrap">
+
+<!-- BLOCO 1 — DINHEIRO HOJE -->
+<section class="tc-block crit" data-block="1">
+  <div class="tc-bhead">
+    <span class="tc-bnum">1</span>
+    <div class="tc-btitle"><span class="tc-bicon">💰</span>DINHEIRO HOJE — PRIORIDADE MÁXIMA</div>
+    <span class="tc-bsub">propostas que podem virar venda agora</span>
+  </div>
+  <div class="tc-bbody">
+    <!-- Cards de prioridade -->
+    <div class="tc-grid tc-grid-4" id="b1-cards" style="margin-bottom:12px"></div>
+
+    <!-- Resumo por canal -->
+    <div class="g-section" style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin:6px 0 8px">Faturamento Potencial por Canal</div>
+    <div id="b1-canais" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
+
+    <!-- Ações rápidas — sempre visíveis, JS só ajusta label/classe quando dados chegam -->
+    <div id="b1-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="tc-btn danger" id="btn-nubia-hardcore" onclick="nubiaReengajaConfirma('proposta_fria',this)">🔥 Núbia Hardcore — Propostas Frias</button>
+      <button class="tc-btn warn" id="btn-nubia-fora" onclick="nubiaReengajaConfirma('fora_proposta',this)">🎯 Núbia em Leads Fora de Proposta</button>
+      <button class="tc-btn warn" onclick="nubiaReengajaConfirma('lead_morno',this)">🌡️ Núbia em Mornos (24-72h)</button>
+      <button class="tc-btn info" id="btn-nubia-base" onclick="abrirModalPeriodo()">📅 Núbia em Período Customizado (escolher datas)</button>
+      <button class="tc-btn" onclick="cobrarParados()">📢 Cobrar Vendedores com Valor Parado</button>
+      <button class="tc-btn" onclick="gerarListaLigacao()">📞 Lista de Ligação</button>
+      <button class="tc-btn success" onclick="copiarTelefones()">📋 Copiar Telefones</button>
+    </div>
+
+    <!-- Tabela de propostas -->
+    <div style="overflow-x:auto"><table class="tbl" id="b1-tbl">
+      <thead><tr>
+        <th>Cliente</th><th>Origem</th><th>Estágio</th><th>Valor</th>
+        <th title="Risco temporal: <2h verde, 2-4h amarelo, >4h vermelho">Risco</th>
+        <th title="Probabilidade convertida em nível">Nível</th>
+        <th title="% do valor sobre meta diária do time">% Meta</th>
+        <th>Vendedor</th><th>Ação Sugerida</th><th>Ações</th>
+      </tr></thead>
+      <tbody id="b1-body"><tr><td colspan="10" class="empty">Carregando...</td></tr></tbody>
+    </table></div>
+
+    <!-- Ranking valor parado -->
+    <div class="g-section" style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin:18px 0 8px">Vendedores com Maior Valor Parado</div>
+    <div id="b1-ranking"></div>
+  </div>
+</section>
+
+<!-- BLOCO 2 — DIRETOR IA (FEED AO VIVO) -->
+<section class="tc-block" data-block="2">
+  <div class="tc-bhead">
+    <span class="tc-bnum">2</span>
+    <div class="tc-btitle"><span class="tc-bicon">🚨</span>DIRETOR IA — FEED AO VIVO</div>
+    <span class="tc-bsub">detecção → diagnóstico → impacto → ação</span>
+  </div>
+  <div class="tc-bbody" id="b2-body"><div class="empty">Analisando operação...</div></div>
+</section>
+
+<!-- BLOCO 3 — FAÇA ISSO AGORA -->
+<section class="tc-block crit" data-block="3">
+  <div class="tc-bhead">
+    <span class="tc-bnum">3</span>
+    <div class="tc-btitle"><span class="tc-bicon">⚡</span>FAÇA ISSO AGORA</div>
+    <span class="tc-bsub">top 10 ações urgentes</span>
+  </div>
+  <div class="tc-bbody" id="b3-body"><div class="empty">Carregando...</div></div>
+</section>
+
+<!-- BLOCO 4 — TIME EM TEMPO REAL + METAS DIÁRIAS -->
+<section class="tc-block guerra-hide" data-block="4">
+  <div class="tc-bhead">
+    <span class="tc-bnum">4</span>
+    <div class="tc-btitle"><span class="tc-bicon">📊</span>TIME EM TEMPO REAL — METAS DIÁRIAS</div>
+    <span class="tc-bsub">80/20 + meta de ligações, primeiro contato e follow-up</span>
+  </div>
+  <div class="tc-bbody">
+    <div class="tc-grid tc-grid-4" id="b4-cards" style="margin-bottom:14px"></div>
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr>
+        <th>Vendedor</th><th>Hoje</th><th>Mês</th><th>Meta</th>
+        <th title="Ligações/atividades hoje (meta 25)">Lig.</th>
+        <th title="Primeiro contato &lt;5min (meta 100%)">PC</th>
+        <th title="Follow-up de propostas em dia (meta 100%)">F-Up</th>
+        <th title="Score 80/20 — passe o mouse pra ver as 6 dimensões">Score</th>
+        <th>💎/🥇</th><th>Ação</th>
+      </tr></thead>
+      <tbody id="b4-body"><tr><td colspan="10" class="empty">Carregando...</td></tr></tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- BLOCO 5 — ERROS DO DIA -->
+<section class="tc-block guerra-hide" data-block="5">
+  <div class="tc-bhead">
+    <span class="tc-bnum">5</span>
+    <div class="tc-btitle"><span class="tc-bicon">❌</span>ERROS DO DIA</div>
+    <span class="tc-bsub">red flags + execução suspeita</span>
+  </div>
+  <div class="tc-bbody" id="b5-body"><div class="empty">Carregando...</div></div>
+</section>
+
+<!-- BLOCO 6 — OPORTUNIDADES QUENTES -->
+<section class="tc-block" data-block="6">
+  <div class="tc-bhead">
+    <span class="tc-bnum">6</span>
+    <div class="tc-btitle"><span class="tc-bicon">🟢</span>OPORTUNIDADES QUENTES</div>
+    <span class="tc-bsub">leads novos, indicações, janelas WATI abertas</span>
+  </div>
+  <div class="tc-bbody" id="b6-body"><div class="empty">Carregando...</div></div>
+</section>
+
+<!-- BLOCO IA — STATUS DA NÚBIA -->
+<section class="tc-block guerra-hide" data-block="ia">
+  <div class="tc-bhead">
+    <span class="tc-bnum" style="background:#4c1d95;color:#c084fc">IA</span>
+    <div class="tc-btitle"><span class="tc-bicon">🤖</span>STATUS DA NÚBIA (IA)</div>
+    <span class="tc-bsub">qualificando agora · qualificou · fechou</span>
+  </div>
+  <div class="tc-bbody">
+    <div class="tc-grid tc-grid-4" id="bia-cards" style="margin-bottom:12px"></div>
+    <div id="bia-tabs" style="display:flex;gap:6px;margin-bottom:10px;border-bottom:1px solid var(--border)">
+      <button class="tc-btn" id="bia-tab-1" onclick="biaTab(1)" style="background:#1e3a5f;color:#7cb9f5;border:1px solid #5ba3f5">🔄 Qualificando agora</button>
+      <button class="tc-btn" id="bia-tab-2" onclick="biaTab(2)">✅ Qualificou (foi pro closer)</button>
+      <button class="tc-btn" id="bia-tab-3" onclick="biaTab(3)">🏆 Closer fechou</button>
+    </div>
+    <div id="bia-pane-1" class="bia-pane"></div>
+    <div id="bia-pane-2" class="bia-pane" style="display:none"></div>
+    <div id="bia-pane-3" class="bia-pane" style="display:none"></div>
+    <div style="margin-top:10px;padding:8px 12px;background:var(--bg-card);border-radius:6px;font-size:11px;color:var(--muted);font-style:italic" id="bia-disclaimer"></div>
+  </div>
+</section>
+
+<!-- BLOCO RAIO-X — RAIO-X DO DIA POR CLOSER -->
+<section class="tc-block guerra-hide" data-block="raiox">
+  <div class="tc-bhead">
+    <span class="tc-bnum" style="background:#1e3a5f;color:#7cb9f5">RX</span>
+    <div class="tc-btitle"><span class="tc-bicon">📊</span>RAIO-X DO DIA POR CLOSER</div>
+    <span class="tc-bsub">o que cada um fez · onde estão os leads · gargalos</span>
+    <select id="rx-closer-sel" onchange="loadRaioxAdmin()" style="margin-left:auto;background:var(--bg-hover);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;min-width:240px">
+      <option value="">Selecione um closer...</option>
+    </select>
+  </div>
+  <div class="tc-bbody" id="rx-bbody">
+    <div class="empty">Escolha um closer no dropdown acima pra ver o raio-x do dia dele.</div>
+  </div>
+</section>
+
+<!-- BLOCO 7 — PIPELINE INTELIGENTE -->
+<section class="tc-block guerra-hide" data-block="7">
+  <div class="tc-bhead">
+    <span class="tc-bnum">7</span>
+    <div class="tc-btitle"><span class="tc-bicon">📉</span>PIPELINE INTELIGENTE</div>
+    <span class="tc-bsub">previsão ponderada por probabilidade</span>
+  </div>
+  <div class="tc-bbody">
+    <div class="tc-grid tc-grid-4" id="b7-cards"></div>
+  </div>
+</section>
+
+<!-- BLOCO 8 — PROJEÇÃO DE META -->
+<section class="tc-block" data-block="8">
+  <div class="tc-bhead">
+    <span class="tc-bnum">8</span>
+    <div class="tc-btitle"><span class="tc-bicon">🎯</span>PROJEÇÃO DE META</div>
+    <span class="tc-bsub">vai bater? quanto falta? em quantos dias?</span>
+  </div>
+  <div class="tc-bbody">
+    <div class="tc-grid tc-grid-4" id="b8-cards" style="margin-bottom:14px"></div>
+    <div id="b8-analysis"></div>
+  </div>
+</section>
+
+<!-- BLOCO 9 — COACH DO DONO -->
+<section class="tc-block" data-block="9">
+  <div class="tc-bhead">
+    <span class="tc-bnum">9</span>
+    <div class="tc-btitle"><span class="tc-bicon">🧠</span>COACH DO DONO</div>
+    <span class="tc-bsub">análise estratégica via Claude</span>
+    <button class="tc-btn purple" onclick="loadCoach()" style="margin-left:auto">Gerar Análise</button>
+  </div>
+  <div class="tc-bbody">
+    <div class="coach-box" id="b9-body"><span style="color:var(--muted)">Clique em "Gerar Análise" para o Diretor IA avaliar a operação.</span></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+// ============= STATE =============
+let DATA = null;       // /gestao/data
+let GUERRA = null;     // /gestao/guerra
+let DISCIPLINA = null; // /gestao/disciplina (map crmOwner -> score)
+let IA_STATUS = null;  // /gestao/ia-status
+let GUERRA_MODE = false;
+
+// ============= UTILS =============
+const fmtR$ = v => 'R$ ' + (Math.round(v||0)/1000).toFixed(1) + 'k';
+const fmtR$Full = v => 'R$ ' + Math.round(v||0).toLocaleString('pt-BR');
+const hrs = h => h<1?'agora':h<24?Math.round(h)+'h':Math.round(h/24)+'d';
+const wpp = phone => phone ? 'https://live-2708.wati.io/2708/teamInbox/'+String(phone).replace(/\D/g,'') : '#';
+
+function tickClock(){
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  const ss = String(d.getSeconds()).padStart(2,'0');
+  document.getElementById('h-clock').textContent = `${hh}:${mm}:${ss}`;
+}
+setInterval(tickClock,1000); tickClock();
+
+function toast(msg, isErr){
+  const t = document.createElement('div');
+  t.className = 'toast' + (isErr?' err':'');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 4000);
+}
+
+// ============= HEADER =============
+function renderHeader(){
+  if(!DATA || !GUERRA) return;
+  const fatHoje = DATA.global.fatHoje || 0;
+  const sim = GUERRA.simulacao || {};
+  // Meta do dia: necessário/dia da simulação OU meta mensal / dias úteis
+  const metaDia = sim.necessarioDia || (sim.metaGlobal && sim.diasUteis ? sim.metaGlobal/sim.diasUteis : 0);
+  const gap = Math.max(0, metaDia - fatHoje);
+  document.getElementById('h-fat').textContent = fmtR$(fatHoje);
+  document.getElementById('h-meta').textContent = fmtR$(metaDia);
+  document.getElementById('h-gap').textContent = fmtR$(gap);
+
+  // Status: baseado na projeção mensal vs meta global
+  const projPct = sim.metaGlobal ? (sim.projecao / sim.metaGlobal) : 0;
+  const st = document.getElementById('h-status');
+  if(projPct >= 1){ st.textContent = '✓ NO RITMO'; st.className = 'tc-status green'; }
+  else if(projPct >= 0.7){ st.textContent = '! ATENÇÃO'; st.className = 'tc-status yellow'; }
+  else { st.textContent = '⚠ RISCO'; st.className = 'tc-status red'; }
+}
+
+// ============= BLOCO 1 — DINHEIRO HOJE =============
+const CANAL_COLOR = {
+  'Google':'#4285F4','Facebook':'#1877F2','Instagram':'#E1306C','WhatsApp':'#25D366',
+  'Indicação':'#F0C040','Loja':'#a371f7','Orgânico':'#22c55e','Outros':'#6b7280'
+};
+
+function renderBloco1(){
+  if(!GUERRA) return;
+  const din = GUERRA.dinheiro || {};
+  const altas = GUERRA.propostasAltas || [];
+  const sim = GUERRA.simulacao || {};
+  const metaDia = sim.necessarioDia || (sim.metaGlobal && sim.diasUteis ? sim.metaGlobal/sim.diasUteis : 0);
+
+  // Núbia em modo crítico? (risco alto OU >70% do gap não coberto OU horário >15h e baixa cobertura)
+  const hr = new Date().getHours();
+  const cobre = (din.previsaoPonderada||0) >= (sim.gap||0);
+  const nubiaModo = (sim.risco === 'alto' || (!cobre && hr >= 15)) ? 'looucaa' : 'normal';
+
+  // Aplica visual "Núbia a Loucaaa" nos 3 botões principais quando risco alto
+  const hardBtn = document.getElementById('btn-nubia-hardcore');
+  const foraBtn = document.getElementById('btn-nubia-fora');
+  const baseBtn = document.getElementById('btn-nubia-base');
+  if (nubiaModo === 'looucaa') {
+    if (hardBtn) { hardBtn.classList.add('nubia-louca'); hardBtn.textContent = '🔥🔥 NÚBIA A LOOUCAAAA — PROPOSTAS FRIAS 🔥🔥'; }
+    if (foraBtn) { foraBtn.classList.add('nubia-louca'); foraBtn.textContent = '🔥 NÚBIA LOUCAAA — FORA DE PROPOSTA 🔥'; }
+    if (baseBtn) { baseBtn.classList.add('nubia-louca'); baseBtn.textContent = '🔥 NÚBIA LOUCAAA NA BASE INTEIRA 🔥'; }
+  } else {
+    if (hardBtn) { hardBtn.classList.remove('nubia-louca'); hardBtn.textContent = '🔥 Núbia Hardcore — Propostas Frias'; }
+    if (foraBtn) { foraBtn.classList.remove('nubia-louca'); foraBtn.textContent = '🎯 Núbia em Leads Fora de Proposta'; }
+    if (baseBtn) { baseBtn.classList.remove('nubia-louca'); baseBtn.textContent = '🤖 Soltar Núbia na Base (24h–30d)'; }
+  }
+
+  // Cards de prioridade
+  document.getElementById('b1-cards').innerHTML = `
+    <div class="card green"><div class="lbl">🔥 Fechamento Previsto Hoje</div><div class="big">${fmtR$(din.previsaoAlta||0)}</div><div class="sub">${din.quente?.count||0} propostas alta prob</div></div>
+    <div class="card yellow"><div class="lbl">⏳ Quente / Em Negociação</div><div class="big">${fmtR$(din.quente?.valor||0)}</div><div class="sub">${din.quente?.count||0} propostas atividade &lt;24h</div></div>
+    <div class="card red"><div class="lbl">⚠️ Sem Follow-up &gt;24h</div><div class="big">${fmtR$(din.semFollowup||0)}</div><div class="sub">parado, esfriando</div></div>
+    <div class="card red"><div class="lbl">❄️ Frio — Perdendo Valor</div><div class="big">${fmtR$(din.frio?.valor||0)}</div><div class="sub">${din.frio?.count||0} propostas sem resposta</div></div>
+  `;
+
+  // Faturamento potencial por canal — cards CLICÁVEIS pra drill-down por produto
+  const canais = GUERRA.propostasPorCanal || [];
+  document.getElementById('b1-canais').innerHTML = canais.length
+    ? canais.map(c => {
+        const col = CANAL_COLOR[c.canal] || '#6b7280';
+        return `<div onclick="abrirCanalDetalhe('${c.canal}')" style="background:#101010;border:1px solid ${col};border-left:4px solid ${col};border-radius:8px;padding:10px 14px;min-width:140px;cursor:pointer;transition:all .15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,.4)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <div style="font-size:11px;color:${col};font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:4px">${c.canal} <span style="margin-left:auto;font-size:10px;opacity:.7">▸</span></div>
+          <div style="font-size:18px;font-weight:800;color:#fff">${fmtR$(c.valor)}</div>
+          <div style="font-size:11px;color:var(--muted)">${c.count} propostas · clique pra detalhar</div>
+        </div>`;
+      }).join('')
+    : '<div class="empty" style="padding:8px">Sem propostas categorizadas por canal</div>';
+
+  // Tabela detalhada
+  const top = [...altas].sort((a,b)=>(b.valor||0)-(a.valor||0)).slice(0,20);
+  if(!top.length){
+    document.getElementById('b1-body').innerHTML = '<tr><td colspan="10" class="empty good">Nenhuma proposta crítica</td></tr>';
+  } else {
+    // Cor por estágio (proposta quente=verde, fria=vermelho, neutra=cinza)
+    const stageCor = (s) => {
+      if (/Quente/i.test(s)) return '#22c55e';
+      if (/Fria/i.test(s)) return '#ef4444';
+      if (/Em Atendimento/i.test(s)) return '#5ba3f5';
+      return '#9ca3af';
+    };
+    document.getElementById('b1-body').innerHTML = top.map(d=>{
+      const pctMeta = metaDia > 0 ? Math.round((d.valor / metaDia) * 100) : 0;
+      const acaoIcon = { 'ligar agora':'📞', 'follow-up':'💬', 'fechamento':'🤝', 'enviar proposta':'📤' }[d.acaoSugerida] || '⚡';
+      const canalCol = CANAL_COLOR[d.canal] || '#6b7280';
+      const sCor = stageCor(d.stage||'');
+      return `<tr>
+        <td><a href="${d.crmLink||'#'}" target="_blank">${d.name||'?'}</a> <span style="color:var(--dim);font-size:11px">${d.tier||''}</span></td>
+        <td><span style="color:${canalCol};font-weight:700">${d.canal}</span></td>
+        <td><span style="color:${sCor};font-weight:600;font-size:12px">${d.stage||'-'}</span></td>
+        <td style="font-weight:700;color:#fff">
+          ${fmtR$Full(d.valor)}
+          <div class="b1-prod" data-deal="${d.id||''}" style="font-size:10px;color:var(--muted);font-weight:500;font-style:italic;margin-top:2px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="">…produtos</div>
+        </td>
+        <td><span class="status-pill ${d.risco}">${hrs(d.hoursAgo)}</span></td>
+        <td><span class="status-pill ${d.nivel==='Alta'?'green':d.nivel==='Média'?'yellow':'red'}">${d.nivel}</span></td>
+        <td style="font-weight:700;color:${pctMeta>=50?'#4ade80':pctMeta>=20?'#fbbf24':'#9ca3af'}">${pctMeta}%</td>
+        <td>${d.owner||'?'}</td>
+        <td title="ação recomendada para esta proposta">${acaoIcon} ${d.acaoSugerida}</td>
+        <td><div class="row-act">
+          ${d.phone?`<a class="btn-mini wati" href="${wpp(d.phone)}" target="_blank">WATI</a>`:''}
+          <a class="btn-mini crm" href="${d.crmLink||'#'}" target="_blank">CRM</a>
+          <button class="btn-mini alert" title="Núbia reengaja este lead" onclick="nubiaReengajaDeals(['${d.id||''}'],'manual')">🤖</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+
+    // Lazy-load produtos via Quoted_Items
+    const dealIds = top.map(d => d.id).filter(Boolean);
+    if (dealIds.length) carregarProdutosBloco1(dealIds);
+  }
+
+  // Ranking valor parado
+  const rk = GUERRA.rankingValorParado || [];
+  document.getElementById('b1-ranking').innerHTML = rk.length === 0
+    ? '<div class="empty good">✓ Nenhum vendedor com valor significativo parado</div>'
+    : `<div style="display:flex;flex-direction:column;gap:6px">${rk.slice(0,10).map((v,i)=>{
+        const col = i===0?'#ef4444':i===1?'#f97316':'#eab308';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#101010;border:1px solid var(--line);border-radius:8px">
+          <div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:${col};color:#000;font-weight:800;font-size:11px">${i+1}</div>
+          <div style="flex:1;font-weight:600;color:#fff">${v.owner}</div>
+          <div style="color:var(--muted);font-size:12px">${v.count} propostas</div>
+          <div style="font-weight:800;color:${col}">${fmtR$(v.valor)}</div>
+          <button class="btn-mini alert" onclick="sendAlert('${v.owner}','proposta_parada',{count:${v.count},valor:${Math.round(v.valor)}})" title="Cobrar via Z-API">📢 Cobrar</button>
+          <button class="btn-mini alert" onclick="nubiaReengajaDeals(${JSON.stringify(v.dealIds||[]).replace(/"/g,'&quot;')},'manual')" title="Núbia reengaja todas">🤖 Núbia</button>
+        </div>`;
+      }).join('')}</div>`;
+}
+
+// Lazy-load produtos das linhas do Bloco 1 (Quoted_Items)
+async function carregarProdutosBloco1(dealIds){
+  for (let i = 0; i < dealIds.length; i += 30) {
+    const lote = dealIds.slice(i, i+30);
+    try {
+      const res = await fetch('/gestao/deal-products', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ dealIds: lote })
+      });
+      const d = await res.json();
+      if (d.error) continue;
+      for (const id of Object.keys(d.products||{})) {
+        const cell = document.querySelector(`.b1-prod[data-deal="${id}"]`);
+        if (!cell) continue;
+        const items = d.products[id] || [];
+        if (!items.length) { cell.textContent = '— sem produto cadastrado —'; continue; }
+        const top = items.sort((a,b)=>(b.valor||0)-(a.valor||0))[0];
+        const extra = items.length > 1 ? ` +${items.length-1}` : '';
+        cell.textContent = top.nome + extra;
+        cell.title = items.map(it => `${it.qtd}x ${it.nome} — R$ ${(it.valor||0).toLocaleString('pt-BR')}`).join('\n');
+      }
+    } catch(e){ console.warn('produtos b1:', e); }
+  }
+}
+
+// Ações rápidas do Bloco 1
+const NUBIA_LABELS = {
+  sem_contato: 'Leads sem primeiro contato',
+  proposta_fria: 'Propostas paradas >24h (modo hardcore)',
+  lead_atencao: 'Diamante/Ouro inicial parado >2h',
+  lead_morno: 'Mornos: ativos fora de Proposta, 24-72h',
+  fora_proposta: 'TODOS leads ativos fora de Proposta (24h-30d)',
+  reengajar_base: 'Toda a base elegível (24h-30d)',
+};
+
+// Preview: conta candidatos antes de disparar e pede confirmação detalhada
+async function nubiaReengajaConfirma(tipo, btn){
+  const labelOriginal = btn?.textContent;
+  if (btn) { btn.disabled = true; btn.textContent = 'Calculando candidatos...'; }
+  try {
+    const res = await fetch('/gestao/nubia-preview?tipo=' + encodeURIComponent(tipo));
+    const p = await res.json();
+    if (p.error) { toast('Erro preview: '+p.error, true); return; }
+
+    if (p.total === 0) {
+      toast('Nenhum candidato pra esse modo agora — não tem o que disparar');
+      return;
+    }
+
+    const tiers = Object.entries(p.porTier||{}).map(([t,n])=>`${t}: ${n}`).join('  ');
+    const owners = Object.entries(p.porOwner||{}).slice(0,5).map(([o,n])=>`${o}: ${n}`).join('\n  ');
+    const sample = (p.sample||[]).map(s=>`• ${s.name} (${s.tier||'-'}, ${s.stage})`).join('\n');
+
+    const msg =
+`🤖 NÚBIA REENGAJA — ${NUBIA_LABELS[tipo]||tipo}
+
+Encontrei ${p.total} lead(s) elegível(is).
+Vou disparar para os ${p.atingidos} primeiros (priorizando Diamante/Ouro).
+
+Por tier:
+  ${tiers || '(sem tiers)'}
+
+Top 5 vendedores afetados:
+  ${owners || '(sem dados)'}
+
+Amostra:
+${sample}
+
+Confirma?`;
+    if (!confirm(msg)) {
+      toast('Cancelado — nenhum disparo enviado');
+      return;
+    }
+    await nubiaReengaja(tipo, btn);
+  } catch(e) {
+    toast('Erro: '+e.message, true);
+  } finally {
+    if (btn) { btn.disabled = false; if (labelOriginal) btn.textContent = labelOriginal; }
+  }
+}
+
+async function nubiaReengaja(tipo, btn){
+  if(btn) { btn.disabled=true; btn.textContent='Disparando...'; }
+  toast('Núbia reengajando ('+tipo+')...');
+  try{
+    const res = await fetch('/gestao/nubia-reengaja', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ tipo })
+    });
+    const r = await res.json();
+    if(r.error) toast('Erro: '+r.error, true);
+    else toast(`✅ Núbia disparou para ${r.sent||0} leads (${r.candidates||0} candidatos)`);
+  }catch(e){ toast('Erro: '+e.message, true); }
+}
+
+async function nubiaReengajaDeals(dealIds, tipo){
+  if(!dealIds || !dealIds.length || !dealIds[0]) { toast('Nenhum deal selecionado', true); return; }
+  toast(`Núbia disparando para ${dealIds.length} lead(s)...`);
+  try{
+    const res = await fetch('/gestao/nubia-reengaja', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ tipo:tipo||'manual', dealIds })
+    });
+    const r = await res.json();
+    if(r.error) toast('Erro: '+r.error, true);
+    else toast(`✓ Núbia disparou para ${r.sent||0} leads`);
+  }catch(e){ toast('Erro: '+e.message, true); }
+}
+
+function cobrarParados(){
+  const rk = GUERRA?.rankingValorParado || [];
+  if(!rk.length) { toast('Nenhum vendedor com valor parado'); return; }
+  if(!confirm(`Cobrar ${rk.length} vendedor(es) via Z-API?`)) return;
+  rk.forEach((v,i) => setTimeout(()=>sendAlert(v.owner,'proposta_parada',{count:v.count,valor:Math.round(v.valor)}), i*1500));
+}
+
+function gerarListaLigacao(){
+  const altas = GUERRA?.propostasAltas || [];
+  if(!altas.length) { toast('Nenhuma proposta'); return; }
+  const lista = altas
+    .filter(a => a.phone)
+    .sort((a,b) => (b.valor||0) - (a.valor||0))
+    .map((a,i) => `${i+1}. ${a.name} — R$ ${(a.valor||0).toLocaleString('pt-BR')} — ${a.owner} — ${a.phone} — ${a.acaoSugerida}`)
+    .join('\n');
+  const w = window.open('', '_blank');
+  w.document.write(`<pre style="font-family:monospace;padding:20px;white-space:pre-wrap">${lista}</pre>`);
+  toast(`Lista de ${altas.filter(a=>a.phone).length} ligações aberta em nova aba`);
+}
+
+function copiarTelefones(){
+  const altas = GUERRA?.propostasAltas || [];
+  const phones = altas.filter(a => a.phone).map(a => String(a.phone).replace(/\D/g,''));
+  if(!phones.length) { toast('Nenhum telefone disponível', true); return; }
+  navigator.clipboard.writeText(phones.join('\n'))
+    .then(()=>toast(`✓ ${phones.length} telefones copiados`))
+    .catch(()=>toast('Erro ao copiar', true));
+}
+
+// ============= BLOCO 2 — DIRETOR IA =============
+function renderBloco2(){
+  if(!DATA || !GUERRA) return;
+  const items = [];
+
+  // Lead Google sem contato
+  if(GUERRA.googleSemContato > 0){
+    items.push({lvl:'crit', icon:'🔴', title:`${GUERRA.googleSemContato} leads do Google sem contato`,
+      meta:'CAC alto, lead pago esfriando', impact:'R$ em risco: alto', actions:[
+        {t:'Alertar Closers', fn:`runCorrecao('alertar_todos')`},
+        {t:'🤖 Núbia Reengaja', fn:`nubiaReengaja('sem_contato')`}
+      ]});
+  }
+
+  // Sem contato geral
+  if((GUERRA.semContato||[]).length > 0){
+    const n = GUERRA.semContato.length;
+    items.push({lvl:'warn', icon:'⏰', title:`${n} leads de hoje ainda sem contato`,
+      meta:'SLA quebrado — primeiro contato &gt;5min', impact:`Cada minuto reduz conversão`,
+      actions:[
+        {t:'Auto-Alertas', fn:`runAutoAlerts()`},
+        {t:'🤖 Núbia Chama', fn:`nubiaReengaja('sem_contato')`}
+      ]});
+  }
+
+  // Propostas sem follow-up
+  if(GUERRA.propostasSemFollowup > 0){
+    items.push({lvl:'crit', icon:'💸', title:`${GUERRA.propostasSemFollowup} propostas &gt;R$3k sem follow-up 24h`,
+      meta:'Cliente esperando — chance esfriando', impact:`R$ ${(GUERRA.valorSemFollowup/1000).toFixed(0)}k em risco`,
+      actions:[{t:'Cobrar Closers', fn:`runCorrecao('alertar_todos')`}]});
+  }
+
+  // Tier alto parado
+  if(GUERRA.tierAltoParado > 0){
+    items.push({lvl:'crit', icon:'💎', title:`${GUERRA.tierAltoParado} Diamantes/Ouros parados`,
+      meta:'Lead premium esfriando — alta probabilidade convertível', impact:'Maior LTV em risco',
+      actions:[
+        {t:'Reativar (frios)', fn:`runCorrecao('reativar_frios')`},
+        {t:'🤖 Núbia Reengaja Tier Alto', fn:`nubiaReengaja('lead_atencao')`}
+      ]});
+  }
+
+  // Closers sem atividade
+  (GUERRA.closersSemAtividade||[]).forEach(c=>{
+    items.push({lvl:'warn', icon:'😴', title:`${c.name} — ${c.hoursAgo}h sem atividade`,
+      meta:'Vendedor inativo no horário comercial', impact:'Time perdendo ritmo',
+      actions:[{t:'Cobrar Atividade', fn:`sendAlert('${c.name}','baixa_atividade',{})`}]});
+  });
+
+  // Closers sem venda + flags
+  Object.values(DATA.closers||{}).forEach(c=>{
+    if(c.diamantesParados >= 2){
+      items.push({lvl:'crit', icon:'⚠️', title:`${c.name}: ${c.diamantesParados} Diamantes parados`,
+        meta:'Não está priorizando lead premium', impact:'Maior dinheiro escapando',
+        actions:[{t:'Cobrar Diamantes', fn:`sendAlert('${c.crmOwner}','diamante_parado',{count:${c.diamantesParados},horas:4})`}]});
+    }
+  });
+
+  if(!items.length){
+    document.getElementById('b2-body').innerHTML = '<div class="empty good">✓ Operação rodando bem agora — nenhum problema crítico detectado.</div>';
+    return;
+  }
+
+  document.getElementById('b2-body').innerHTML = items.map(i=>`
+    <div class="feed-item ${i.lvl}">
+      <div class="icon">${i.icon}</div>
+      <div class="body">
+        <div class="title">${i.title}</div>
+        <div class="meta">${i.meta}</div>
+        <div class="impact">⚡ ${i.impact}</div>
+        <div class="acts">${i.actions.map(a=>`<button class="tc-btn ${i.lvl==='crit'?'danger':'warn'}" style="font-size:10px;padding:5px 10px" onclick="${a.fn}">${a.t}</button>`).join('')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============= BLOCO 3 — FAÇA ISSO AGORA =============
+function renderBloco3(){
+  if(!DATA || !GUERRA) return;
+  const acts = [];
+
+  // Top propostas paradas (alta prob, parada >12h)
+  (GUERRA.propostasAltas||[]).filter(p=>p.hoursAgo>12 && p.prob>=40)
+    .sort((a,b)=>(parseFloat(b.amount)||0)-(parseFloat(a.amount)||0)).slice(0,5)
+    .forEach(p=>{
+      const v = parseFloat(p.amount)||0;
+      acts.push({
+        text:`Cobrar ${p.owner} — proposta ${p.name} ${fmtR$Full(v)} parada ${hrs(p.hoursAgo)}`,
+        crm:p.crmLink, phone:p.phone,
+        owner:p.owner
+      });
+    });
+
+  // Closers com diamantes parados
+  Object.values(DATA.closers||{}).filter(c=>c.diamantesParados>=2)
+    .sort((a,b)=>b.diamantesParados-a.diamantesParados).slice(0,3)
+    .forEach(c=>{
+      acts.push({
+        text:`Cobrar ${c.name} — ${c.diamantesParados} 💎 Diamantes parados`,
+        action:{t:'Cobrar', fn:`sendAlert('${c.crmOwner}','diamante_parado',{count:${c.diamantesParados},horas:4})`}
+      });
+    });
+
+  // Leads sem contato (top 3)
+  (GUERRA.semContato||[]).slice(0,3).forEach(l=>{
+    acts.push({
+      text:`Ligar para ${l.name} — sem contato (${l.source}, vendedor: ${l.owner})`,
+      crm:l.crmLink, phone:l.phone, owner:l.owner
+    });
+  });
+
+  // Closers sem venda
+  Object.values(DATA.closers||{}).filter(c=>c.vendas===0)
+    .slice(0,2).forEach(c=>{
+      acts.push({
+        text:`${c.name} ainda sem venda no mês — cobrar`,
+        action:{t:'Cobrar', fn:`sendAlert('${c.crmOwner}','sem_venda',{dias:${new Date().getDate()}})`}
+      });
+    });
+
+  // Metas diárias no vermelho (spec metricas-8020-metas-diarias-spec.md)
+  if(DISCIPLINA?.closers){
+    DISCIPLINA.closers
+      .filter(d => d.metas?.ligacoes?.status === 'red' && d.metas.ligacoes.real < 15)
+      .slice(0,3).forEach(d => acts.push({
+        text:`${d.name} com ${d.metas.ligacoes.real} atividades hoje (meta 25, alerta <15)`,
+        action:{t:'Cobrar Ligações', fn:`sendAlert('${d.crmOwner}','baixa_atividade',{ligacoes:${d.metas.ligacoes.real},meta:25})`}
+      }));
+    DISCIPLINA.closers
+      .filter(d => d.metas?.primeiroContato?.status === 'red')
+      .slice(0,3).forEach(d => acts.push({
+        text:`${d.name}: ${d.metas.primeiroContato.semContato} leads novos sem primeiro contato`,
+        action:{t:'Cobrar Contato', fn:`sendAlert('${d.crmOwner}','lead_sem_contato',{count:${d.metas.primeiroContato.semContato}})`}
+      }));
+  }
+
+  if(!acts.length){
+    document.getElementById('b3-body').innerHTML = '<div class="empty good">✓ Nenhuma ação urgente no momento</div>';
+    return;
+  }
+
+  document.getElementById('b3-body').innerHTML = acts.slice(0,10).map((a,i)=>`
+    <div class="feed-item crit">
+      <div class="icon" style="font-weight:800;color:var(--red)">#${i+1}</div>
+      <div class="body">
+        <div class="title">${a.text}</div>
+        <div class="acts">
+          ${a.phone?`<a class="btn-mini wati" href="${wpp(a.phone)}" target="_blank">WATI</a>`:''}
+          ${a.crm?`<a class="btn-mini crm" href="${a.crm}" target="_blank">CRM</a>`:''}
+          ${a.action?`<button class="btn-mini alert" onclick="${a.action.fn}">${a.action.t}</button>`:''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============= BLOCO 4 — TIME EM TEMPO REAL + METAS DIÁRIAS =============
+function renderBloco4(){
+  if(!DATA) return;
+  const closers = Object.values(DATA.closers||{}).sort((a,b)=>b.faturamento-a.faturamento);
+  if(!closers.length){
+    document.getElementById('b4-body').innerHTML = '<tr><td colspan="10" class="empty">Sem dados</td></tr>';
+    return;
+  }
+  const discMap = {};
+  if(DISCIPLINA && DISCIPLINA.closers){
+    DISCIPLINA.closers.forEach(d => discMap[d.crmOwner] = d);
+  }
+
+  // Cards agregados de metas diárias
+  const ag = DISCIPLINA?.agregado;
+  if(ag){
+    const tot = ag.totalClosers || 1;
+    const ligColor = ag.ligacoesAlerta>=3?'red':ag.ligacoesOk===tot?'green':'yellow';
+    const pcColor = ag.primeiroContatoAlerta>=2?'red':ag.semContatoTime===0?'green':'yellow';
+    const fupColor = ag.followupAlerta>=2?'red':ag.followupOk===tot?'green':'yellow';
+    const scoreColor = ag.scoreMedio>=70?'green':ag.scoreMedio>=50?'yellow':'red';
+    document.getElementById('b4-cards').innerHTML = `
+      <div class="card ${ligColor}">
+        <div class="lbl">📞 Ligações Time</div>
+        <div class="big">${ag.ligacoesOk}/${tot}</div>
+        <div class="sub">closers ≥25 atividades hoje${ag.ligacoesAlerta?` • ${ag.ligacoesAlerta} no vermelho`:''}</div>
+      </div>
+      <div class="card ${pcColor}">
+        <div class="lbl">⏱️ Primeiro Contato</div>
+        <div class="big">${ag.semContatoTime===0?'✓':ag.semContatoTime}</div>
+        <div class="sub">${ag.semContatoTime===0?'todos contatados':'leads sem contato hoje'}</div>
+      </div>
+      <div class="card ${fupColor}">
+        <div class="lbl">📋 Follow-up Propostas</div>
+        <div class="big">${ag.propostasParadasTime===0?'✓':ag.propostasParadasTime}</div>
+        <div class="sub">${ag.propostasParadasTime===0?'tudo em dia':'propostas paradas >24h'}</div>
+      </div>
+      <div class="card ${scoreColor}">
+        <div class="lbl">🎯 Score 80/20 Médio</div>
+        <div class="big">${ag.scoreMedio}</div>
+        <div class="sub">média do time (0-100)</div>
+      </div>
+    `;
+  } else {
+    document.getElementById('b4-cards').innerHTML = '<div class="empty">Score 80/20 indisponível (verifique /gestao/disciplina)</div>';
+  }
+
+  document.getElementById('b4-body').innerHTML = closers.map(c=>{
+    const pct = c.pctMeta||0;
+    const d = discMap[c.crmOwner];
+    const disc = d ? d.score : 50;
+    const discCol = disc>=70?'#22c55e':disc>=40?'#eab308':'#ef4444';
+    const userKey = (window._usersMap && window._usersMap[c.crmOwner]) || '';
+
+    // Cells de meta
+    const m = d?.metas;
+    const ligCell = m ? `<span class="status-pill ${m.ligacoes.status}">${m.ligacoes.real}/${m.ligacoes.meta}</span>` : '—';
+    const pcCell = m ? (m.primeiroContato.meta===0
+      ? '<span style="color:var(--muted)">—</span>'
+      : `<span class="status-pill ${m.primeiroContato.status}">${m.primeiroContato.real}/${m.primeiroContato.meta}</span>`) : '—';
+    const fupCell = m ? (m.followup.meta===0
+      ? '<span style="color:var(--muted)">—</span>'
+      : `<span class="status-pill ${m.followup.status}">${m.followup.real}/${m.followup.meta}</span>`) : '—';
+
+    const tipBreak = d ? Object.entries(d.breakdown).map(([k,v]) =>
+      `${k.toUpperCase()}: ${v.pts}/${v.max} — ${v.detail||''}`
+    ).join('\n') : 'sem dados';
+
+    // Botões de cobrança específicos por meta vermelha
+    const cobrarLig = m?.ligacoes?.status==='red' ? `<button class="btn-mini alert" title="${m.ligacoes.real}/${m.ligacoes.meta} ligações" onclick="sendAlert('${c.crmOwner}','baixa_atividade',{ligacoes:${m.ligacoes.real},meta:${m.ligacoes.meta}})">📞</button>` : '';
+    const cobrarPc = m?.primeiroContato?.status==='red' ? `<button class="btn-mini alert" title="${m.primeiroContato.semContato} sem contato" onclick="sendAlert('${c.crmOwner}','lead_sem_contato',{count:${m.primeiroContato.semContato}})">⏱️</button>` : '';
+    const cobrarFup = m?.followup?.status==='red' ? `<button class="btn-mini alert" title="${m.followup.parados} propostas paradas" onclick="sendAlert('${c.crmOwner}','proposta_parada',{count:${m.followup.parados}})">📋</button>` : '';
+    const cobrarDmd = c.diamantesParados>0 ? `<button class="btn-mini alert" onclick="sendAlert('${c.crmOwner}','diamante_parado',{count:${c.diamantesParados},horas:4})">💎</button>` : '';
+
+    return `<tr>
+      <td style="font-weight:700"><a href="/cockpit?closer=${userKey}" target="_blank" style="color:#fff;text-decoration:none">${c.name}</a> <span style="color:var(--dim);font-size:11px">${c.team||''}</span></td>
+      <td>${c.vendasHoje||0}</td>
+      <td style="font-weight:700;color:#fff">${c.vendas} <span style="color:var(--muted);font-size:11px">${fmtR$(c.faturamento)}</span></td>
+      <td><span class="status-pill ${pct>=80?'green':pct>=50?'yellow':'red'}">${pct}%</span></td>
+      <td>${ligCell}</td>
+      <td>${pcCell}</td>
+      <td>${fupCell}</td>
+      <td title="${tipBreak.replace(/"/g,'&quot;')}" style="cursor:help">
+        <span style="color:${discCol};font-weight:700">${disc}</span>
+        <span class="disc-bar"><span style="width:${disc}%;background:${discCol}"></span></span>
+      </td>
+      <td>${c.diamantesParados||0}/${c.ourosParados||0}</td>
+      <td><div class="row-act">${cobrarLig}${cobrarPc}${cobrarFup}${cobrarDmd}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ============= BLOCO 5 — ERROS DO DIA =============
+function renderBloco5(){
+  if(!DATA || !GUERRA) return;
+  const errors = [];
+
+  // Leads sem contato
+  if((GUERRA.semContato||[]).length > 0){
+    errors.push({type:'Leads sem contato', count:GUERRA.semContato.length, color:'red',
+      details:GUERRA.semContato.slice(0,5).map(l=>`${l.name} (${l.owner})`).join(', ')});
+  }
+  // Follow-up não feito
+  if(GUERRA.propostasSemFollowup > 0){
+    errors.push({type:'Follow-up não feito', count:GUERRA.propostasSemFollowup, color:'red',
+      details:`Propostas paradas &gt;24h, total R$ ${((GUERRA.valorSemFollowup||0)/1000).toFixed(0)}k`});
+  }
+  // Closers sem atividade
+  if((GUERRA.closersSemAtividade||[]).length > 0){
+    errors.push({type:'Vendedores sem atividade &gt;2h', count:GUERRA.closersSemAtividade.length, color:'yellow',
+      details:GUERRA.closersSemAtividade.map(c=>`${c.name} (${c.hoursAgo}h)`).join(', ')});
+  }
+  // Tier alto parado
+  if(GUERRA.tierAltoParado > 0){
+    errors.push({type:'Diamantes/Ouros abandonados', count:GUERRA.tierAltoParado, color:'red',
+      details:'Lead premium parado &gt;2h sem ação'});
+  }
+  // Red flags por closer
+  let totalFlags = 0;
+  Object.values(DATA.closers||{}).forEach(c=>{ totalFlags += (c.flags?.length||0); });
+  if(totalFlags > 0){
+    errors.push({type:'Red flags ativas', count:totalFlags, color:'yellow',
+      details:'Distribuídas pelo time — ver Bloco 4'});
+  }
+
+  if(!errors.length){
+    document.getElementById('b5-body').innerHTML = '<div class="empty good">✓ Nenhum erro detectado hoje</div>';
+    return;
+  }
+
+  document.getElementById('b5-body').innerHTML = `<div class="tc-grid tc-grid-2">${
+    errors.map(e=>`<div class="card ${e.color}">
+      <div class="lbl">${e.type}</div>
+      <div class="big">${e.count}</div>
+      <div class="sub" style="margin-top:6px">${e.details}</div>
+    </div>`).join('')
+  }</div>`;
+}
+
+// ============= BLOCO 6 — OPORTUNIDADES QUENTES =============
+function renderBloco6(){
+  if(!DATA) return;
+  const novos = DATA.novos || [];
+  const parados = DATA.parados || [];
+  const indicacao = novos.filter(n=>(n.source||'').toLowerCase().includes('indica'));
+  const diamantes = novos.filter(n=>n.tier==='Diamante');
+  const todayNew = novos.length;
+
+  let html = `<div class="tc-grid tc-grid-3" style="margin-bottom:14px">
+    <div class="card green"><div class="lbl">Novos Hoje</div><div class="big">${todayNew}</div><div class="sub">leads na operação</div></div>
+    <div class="card purple"><div class="lbl">Diamantes Novos</div><div class="big">${diamantes.length}</div><div class="sub">premium recém-qualificados</div></div>
+    <div class="card yellow"><div class="lbl">Indicações</div><div class="big">${indicacao.length}</div><div class="sub">conversão histórica alta</div></div>
+  </div>`;
+
+  // Lista priorizada: Diamantes + Indicações + outros
+  const priority = [...diamantes, ...indicacao.filter(i=>!diamantes.includes(i)), ...novos.filter(n=>!diamantes.includes(n) && !indicacao.includes(n))].slice(0,12);
+  if(priority.length){
+    html += `<div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>Tier</th><th>Lead</th><th>Fonte</th><th>Stage</th><th>Vendedor</th><th>Ações</th></tr></thead>
+      <tbody>${priority.map(n=>{
+        const tCol = n.tier==='Diamante'?'#A371F7':n.tier==='Ouro'?'#F0C040':'#9ca3af';
+        return `<tr>
+          <td style="color:${tCol};font-weight:700">${n.tier||'-'}</td>
+          <td>${n.name}</td>
+          <td style="color:var(--muted)">${n.source}</td>
+          <td>${n.stage}</td>
+          <td>${n.owner}</td>
+          <td><a class="btn-mini crm" href="${n.crmLink}" target="_blank">CRM</a></td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`;
+  } else {
+    html += '<div class="empty">Nenhum lead novo ainda hoje</div>';
+  }
+
+  // === Diamante/Ouro/Prata parados ANTES de Proposta ===
+  // (todos qualificados que ainda não viraram proposta — oportunidade real)
+  if (parados.length) {
+    const porTier = { Diamante: parados.filter(p=>p.tier==='Diamante'), Ouro: parados.filter(p=>p.tier==='Ouro'), Prata: parados.filter(p=>p.tier==='Prata') };
+    html += `<div class="g-section" style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin:20px 0 8px">💎🥇🥈 Tier Alto Parado ANTES de Proposta — Oportunidade Real</div>`;
+    html += `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <div class="card purple" style="flex:1;min-width:130px"><div class="lbl">💎 Diamante</div><div class="big">${porTier.Diamante.length}</div><div class="sub">parados pré-proposta</div></div>
+      <div class="card yellow" style="flex:1;min-width:130px"><div class="lbl">🥇 Ouro</div><div class="big">${porTier.Ouro.length}</div><div class="sub">parados pré-proposta</div></div>
+      <div class="card" style="flex:1;min-width:130px;border-color:#9ca3af"><div class="lbl">🥈 Prata</div><div class="big" style="color:#9ca3af">${porTier.Prata.length}</div><div class="sub">parados pré-proposta</div></div>
+    </div>`;
+    const tierOrd = { Diamante:0, Ouro:1, Prata:2 };
+    const lista = [...parados].sort((a,b) => (tierOrd[a.tier]??9) - (tierOrd[b.tier]??9) || (b.hoursAgo||0) - (a.hoursAgo||0)).slice(0, 25);
+    html += `<div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>Tier</th><th>Lead</th><th>Stage</th><th>Score</th><th>Vendedor</th><th>Parado</th><th>Ações</th></tr></thead>
+      <tbody>${lista.map(p => {
+        const tCol = p.tier==='Diamante'?'#A371F7':p.tier==='Ouro'?'#F0C040':'#9ca3af';
+        const tIcon = p.tier==='Diamante'?'💎':p.tier==='Ouro'?'🥇':'🥈';
+        const ageCls = p.hoursAgo>48?'red':p.hoursAgo>12?'yellow':'green';
+        const wati = p.phone ? wpp(p.phone) : '';
+        return `<tr>
+          <td style="color:${tCol};font-weight:700">${tIcon} ${p.tier}</td>
+          <td><a href="${p.crmLink}" target="_blank">${p.name}</a></td>
+          <td style="color:var(--muted);font-size:12px">${p.stage}</td>
+          <td>${p.score||'-'}</td>
+          <td>${p.owner||'?'}</td>
+          <td><span class="status-pill ${ageCls}">${hrs(p.hoursAgo)}</span></td>
+          <td><div class="row-act">
+            ${wati?`<a class="btn-mini wati" href="${wati}" target="_blank">WATI</a>`:''}
+            <a class="btn-mini crm" href="${p.crmLink}" target="_blank">CRM</a>
+            <button class="btn-mini alert" title="Núbia reengaja" onclick="nubiaReengajaDeals(['${p.id||''}'],'manual')">🤖</button>
+          </div></td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`;
+    if (parados.length > 25) html += `<div style="text-align:center;color:var(--muted);font-size:11px;margin-top:6px">+ ${parados.length-25} parados não exibidos. Total: ${parados.length}</div>`;
+  }
+
+  document.getElementById('b6-body').innerHTML = html;
+}
+
+// ============= BLOCO IA — STATUS DA NÚBIA =============
+function renderBlocoIA(){
+  if (!IA_STATUS) {
+    document.getElementById('bia-cards').innerHTML = '<div class="empty">Status IA indisponível</div>';
+    return;
+  }
+  const s = IA_STATUS.stats || {};
+  const followupPct = s.totalIA > 0 ? Math.round(s.followupOk / s.totalIA * 100) : 0;
+
+  document.getElementById('bia-cards').innerHTML = `
+    <div class="card blue"><div class="lbl">🔄 IA Trabalhando (tag ia sdr)</div><div class="big">${s.totalIA||0}</div><div class="sub">${s.apenasAtendidos||0} apenas atendidos sem qualificar</div></div>
+    <div class="card ${followupPct>=70?'green':followupPct>=40?'yellow':'red'}"><div class="lbl">📅 Follow-up Hoje</div><div class="big">${s.followupOk||0}/${s.totalIA||0}</div><div class="sub">${followupPct}% com atividade hoje</div></div>
+    <div class="card purple"><div class="lbl">✅ IA Qualificou</div><div class="big">${s.totalQualificou||0}</div><div class="sub">tag "ia qualificado" no funil</div></div>
+    <div class="card green"><div class="lbl">🏆 Closer Fechou (via IA)</div><div class="big">${s.totalFechou||0}</div><div class="sub">${fmtR$(s.fatFechou||0)} • ${s.pctFatViaIA||0}% do faturamento mês</div></div>
+  `;
+  document.getElementById('bia-disclaimer').textContent = 'Atribuição via tags Zoho: "ia qualificado" = Núbia passou pro closer · "ia sdr" = apenas atendeu (sem qualificar)';
+
+  // Pane 1 — Qualificando agora
+  const qa = IA_STATUS.qualificandoAgora || [];
+  if (!qa.length) {
+    document.getElementById('bia-pane-1').innerHTML = '<div class="empty good">✓ Núbia sem leads ativos no momento</div>';
+  } else {
+    document.getElementById('bia-pane-1').innerHTML = `<div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>Lead</th><th>Tier</th><th>Stage</th><th>Origem</th><th>Dias no funil</th><th>Última atividade</th><th>Follow-up hoje</th><th>Ações</th></tr></thead>
+      <tbody>${qa.map(q => {
+        const tCol = q.tier==='Diamante'?'#A371F7':q.tier==='Ouro'?'#F0C040':q.tier==='Prata'?'#9ca3af':'#666';
+        const diasCls = q.diasNoFunil>=7?'red':q.diasNoFunil>=3?'yellow':'green';
+        return `<tr>
+          <td><a href="${q.crmLink}" target="_blank">${q.name}</a>${q.stuck?' <span style="color:#ef4444;font-size:11px">⚠ sem ação real</span>':''}</td>
+          <td style="color:${tCol};font-weight:700">${q.tier}</td>
+          <td style="font-size:12px;color:#aaa">${q.stage}</td>
+          <td style="font-size:11px;color:var(--muted)">${q.source}</td>
+          <td><span class="status-pill ${diasCls}">${q.diasNoFunil}d</span></td>
+          <td style="font-size:11px;color:var(--muted)">${q.horasUltimaAt < 24 ? q.horasUltimaAt+'h' : Math.round(q.horasUltimaAt/24)+'d'}</td>
+          <td>${q.followupHoje ? '<span style="color:#22c55e;font-weight:700">✓</span>' : '<span style="color:#ef4444;font-weight:700">✗</span>'}</td>
+          <td><div class="row-act"><a class="btn-mini crm" href="${q.crmLink}" target="_blank">CRM</a><button class="btn-mini alert" onclick="nubiaReengajaDeals(['${q.id||''}'],'manual')" title="Núbia força reengajamento">🤖</button></div></td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`;
+  }
+
+  // Pane 2 — Qualificou (passou pro closer)
+  const ql = IA_STATUS.qualificouLista || [];
+  if (!ql.length) {
+    document.getElementById('bia-pane-2').innerHTML = '<div class="empty">Sem qualificados recentes</div>';
+  } else {
+    document.getElementById('bia-pane-2').innerHTML = `<div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>Lead</th><th>Tier</th><th>Stage Atual</th><th>Closer</th><th>Valor Proposta</th><th>Dias no funil</th><th>Status</th><th>Ações</th></tr></thead>
+      <tbody>${ql.map(q => {
+        const tCol = q.tier==='Diamante'?'#A371F7':q.tier==='Ouro'?'#F0C040':q.tier==='Prata'?'#9ca3af':'#666';
+        const atrasada = q.diasNoFunil > 14;
+        return `<tr>
+          <td><a href="${q.crmLink}" target="_blank">${q.name}</a></td>
+          <td style="color:${tCol};font-weight:700">${q.tier}</td>
+          <td style="font-size:12px">${q.stage}</td>
+          <td>${q.owner}</td>
+          <td style="font-weight:700">${q.amount?fmtR$Full(q.amount):'-'}</td>
+          <td style="color:${atrasada?'#ef4444':q.diasNoFunil>7?'#fbbf24':'#888'};font-weight:${atrasada?'700':'400'}">${q.diasNoFunil}d</td>
+          <td><span class="status-pill ${atrasada?'red':q.diasNoFunil>7?'yellow':'green'}">${atrasada?'⚠️ Atrasada':q.diasNoFunil>7?'Em dia':'Recente'}</span></td>
+          <td><div class="row-act">
+            <a class="btn-mini crm" href="${q.crmLink}" target="_blank">CRM</a>
+            <button class="btn-mini alert" title="Núbia reengaja este lead" onclick="nubiaReengajaDeals(['${q.id||''}'],'manual')">🤖 Núbia</button>
+          </div></td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`;
+  }
+
+  // Pane 3 — Closer fechou
+  const fl = IA_STATUS.fechouLista || [];
+  if (!fl.length) {
+    document.getElementById('bia-pane-3').innerHTML = '<div class="empty">Nenhuma venda no mês ainda</div>';
+  } else {
+    // Sub-resumo: por closer
+    const porCloser = {};
+    for (const f of fl) {
+      if (!porCloser[f.owner]) porCloser[f.owner] = { qtd:0, total:0 };
+      porCloser[f.owner].qtd++;
+      porCloser[f.owner].total += f.amount;
+    }
+    const ranking = Object.entries(porCloser).sort((a,b) => b[1].total - a[1].total);
+    let html = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${
+      ranking.map(([name, v]) =>
+        `<div style="background:#161616;border:1px solid #222;border-left:3px solid #22c55e;border-radius:6px;padding:8px 12px;font-size:12px"><strong>${name}</strong> — ${v.qtd} venda(s) <span style="color:#4ade80;font-weight:700">${fmtR$(v.total)}</span></div>`
+      ).join('')
+    }</div>`;
+    html += `<div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>Data</th><th>Closer</th><th>Lead</th><th>Produto</th><th>Origem</th><th>Valor</th><th>Ciclo</th><th>CRM</th></tr></thead>
+      <tbody>${fl.map(f => `
+        <tr>
+          <td style="font-size:11px;color:var(--muted)">${f.dataFechamento}</td>
+          <td style="font-weight:700">${f.owner}</td>
+          <td>${f.name}</td>
+          <td style="font-size:11px;color:#aaa">${f.produto}</td>
+          <td style="font-size:11px;color:var(--muted)">${f.source}</td>
+          <td style="font-weight:800;color:#4ade80">${fmtR$Full(f.amount)}</td>
+          <td>${f.cicloDias}d</td>
+          <td><a class="btn-mini crm" href="${f.crmLink}" target="_blank">Abrir</a></td>
+        </tr>
+      `).join('')}</tbody></table></div>`;
+    document.getElementById('bia-pane-3').innerHTML = html;
+  }
+}
+
+// ============= RAIO-X DOS CLOSERS NA TORRE =============
+function popularDropdownRx(){
+  if (!DATA?.closers) return;
+  const sel = document.getElementById('rx-closer-sel');
+  if (!sel || sel.options.length > 1) return;
+  const closers = Object.entries(DATA.closers)
+    .map(([username, c]) => ({ username, name: c.name, team: c.team, vendas: c.vendas, fat: c.faturamento }))
+    .sort((a,b) => (b.fat||0) - (a.fat||0));
+  sel.innerHTML = '<option value="">Selecione um closer...</option>' +
+    closers.map(c => `<option value="${c.username}">${c.name} (${c.team||'-'}) · ${c.vendas} vendas · ${fmtR$(c.fat)}</option>`).join('');
+}
+
+async function loadRaioxAdmin(){
+  const username = document.getElementById('rx-closer-sel').value;
+  const body = document.getElementById('rx-bbody');
+  if (!username) { body.innerHTML = '<div class="empty">Escolha um closer no dropdown acima.</div>'; return; }
+
+  body.innerHTML = '<div class="empty">Carregando raio-x...</div>';
+  try {
+    const res = await fetch('/cockpit/raiox-dia?closer=' + encodeURIComponent(username) + '&nocache=1');
+    const d = await res.json();
+    if (d.error) { body.innerHTML = `<div class="empty" style="color:var(--red)">Erro: ${d.error}</div>`; return; }
+    renderRxAdmin(d, username);
+  } catch(e) {
+    body.innerHTML = `<div class="empty" style="color:var(--red)">Erro: ${e.message}</div>`;
+  }
+}
+
+function renderRxAdmin(d, username){
+  const body = document.getElementById('rx-bbody');
+  const closerInfo = DATA.closers[username] || {};
+  const sCol = { critico:'#ef4444', urgente:'#f97316', media:'#eab308', info:'#5ba3f5', positivo:'#22c55e' };
+  const tierCol = { Diamante:'#A371F7', Ouro:'#F0C040', Prata:'#9ca3af', Bronze:'#87592A' };
+
+  const a = d.atividades, v = d.vendasHoje;
+
+  // KPIs
+  const kpis = `
+    <div class="tc-grid tc-grid-4" style="margin-bottom:14px">
+      <div class="card blue"><div class="lbl">📞 Ligações Hoje</div><div class="big">${a.ligacoes}</div><div class="sub">${a.ligacoesAtendidas} atendidas · ${a.minMedia||0}min/lig</div></div>
+      <div class="card purple"><div class="lbl">⚡ Atividades</div><div class="big">${a.atividadesTotais}</div><div class="sub">deals movidos</div></div>
+      <div class="card yellow"><div class="lbl">📋 Propostas Movidas</div><div class="big">${a.propsMovidas}</div><div class="sub">${fmtR$(a.valorPropsMovidas)}</div></div>
+      <div class="card ${v.count>0?'green':'red'}"><div class="lbl">🏆 Vendas Hoje</div><div class="big">${v.count}</div><div class="sub">${fmtR$(v.fat)}</div></div>
+    </div>
+  `;
+
+  // Sugestões
+  const sugestoesHtml = (d.sugestoes||[]).map(s => `
+    <div style="display:flex;gap:10px;padding:10px 12px;background:#101010;border-left:3px solid ${sCol[s.tipo]||'#666'};border-radius:6px;margin-bottom:6px;font-size:12px;line-height:1.5">
+      <div style="font-size:18px">${s.icon}</div>
+      <div style="flex:1">
+        <strong style="color:#fff;font-size:12px">${s.titulo}</strong>
+        <div style="color:#bbb;margin-top:2px">${s.texto}</div>
+      </div>
+    </div>
+  `).join('') || '<div style="color:#888;font-size:12px;padding:8px 0">Nenhuma sugestão do Diretor agora.</div>';
+
+  // 4 painéis lado a lado
+  const novos = d.leadsNovos.lista || [];
+  const grupos = d.leadsNovos.ondePararam || {};
+  const parados = d.parados.lista || [];
+  const sem = d.semAtividade.lista || [];
+  const vendas = v.deals || [];
+
+  const renderRow = (rows, kind) => {
+    if (!rows.length) return `<div style="color:#4ade80;padding:14px;text-align:center;font-size:12px">${kind==='novos'?'Sem leads novos hoje':kind==='vendas'?'Sem vendas hoje':'✓ Limpo'}</div>`;
+    return `<table class="tbl" style="font-size:11px"><thead><tr>
+      <th>Lead</th><th>Tier</th><th>Stage</th><th>${kind==='novos'?'Status':kind==='vendas'?'Valor':'Tempo'}</th><th>Ações</th>
+    </tr></thead><tbody>${rows.slice(0, 12).map(r => {
+      const status = kind==='novos' ? (r.contatado?'<span style="color:#4ade80;font-weight:700">✓</span>':'<span style="color:#ef4444;font-weight:700">✗</span>')
+                  : kind==='vendas' ? `<span style="color:#4ade80;font-weight:700">${fmtR$Full(r.valor)}</span>`
+                  : kind==='parados' ? `<span style="color:${r.horas>96?'#ef4444':'#fbbf24'};font-weight:700">${r.horas}h</span>`
+                  : `${r.horasNoFunil}h`;
+      const wpp = r.phone ? `https://live-2708.wati.io/2708/teamInbox/${String(r.phone).replace(/\D/g,'')}` : '';
+      const acts = `<div class="row-act">
+        <a class="btn-mini crm" href="${r.crmLink}" target="_blank">CRM</a>
+        ${wpp?`<a class="btn-mini wati" href="${wpp}" target="_blank">WATI</a>`:''}
+        ${kind!=='vendas'?`<button class="btn-mini alert" onclick="nubiaReengajaDeals(['${r.id}'],'manual')">🤖</button>`:''}
+      </div>`;
+      return `<tr>
+        <td style="font-weight:600">${r.name}</td>
+        <td style="color:${tierCol[r.tier]||'#666'};font-weight:700">${r.tier||'-'}</td>
+        <td style="font-size:10px;color:#aaa">${r.stage||'-'}</td>
+        <td>${status}</td>
+        <td>${acts}</td>
+      </tr>`;
+    }).join('')}${rows.length > 12 ? `<tr><td colspan="5" style="color:#888;text-align:center;font-size:10px">+ ${rows.length-12}</td></tr>`:''}</tbody></table>`;
+  };
+
+  const ondePararamPills = Object.entries(grupos).map(([s,arr]) => `<span style="display:inline-block;background:#1a1a1a;color:#7cb9f5;border:1px solid #30363D;border-radius:14px;padding:3px 10px;margin:3px 4px 0 0;font-size:11px">${s}: <strong>${arr.length}</strong></span>`).join('');
+
+  body.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:12px;background:#101010;border-radius:8px;border:1px solid #222">
+      <span style="font-size:24px">👤</span>
+      <div style="flex:1">
+        <div style="color:#fff;font-weight:800;font-size:14px">${closerInfo.name||username}</div>
+        <div style="color:#888;font-size:11px">${closerInfo.team||''} · ${closerInfo.vendas||0} vendas no mês · ${fmtR$(closerInfo.faturamento||0)} · meta ${closerInfo.pctMeta||0}%</div>
+      </div>
+      <div style="color:#7cb9f5;font-family:monospace;font-size:12px">⏰ ${d.hora} BRT</div>
+    </div>
+
+    ${kpis}
+
+    <div class="g-section" style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin:10px 0 6px">🎙️ Diretor IA fala</div>
+    ${sugestoesHtml}
+
+    <div class="tc-grid tc-grid-2" style="margin-top:14px;gap:14px">
+      <div>
+        <h4 style="margin:0 0 8px;font-size:12px;color:#fff;text-transform:uppercase;letter-spacing:.4px">🆕 Leads Novos Hoje (${d.leadsNovos.total}) ${d.leadsNovos.semContato?`<span style="color:#ef4444">· ${d.leadsNovos.semContato} sem contato</span>`:''}</h4>
+        ${ondePararamPills?`<div style="background:#101010;border:1px solid #222;border-radius:6px;padding:8px;margin-bottom:8px"><div style="font-size:9px;color:#888;text-transform:uppercase;font-weight:700;margin-bottom:4px">Onde pararam:</div>${ondePararamPills}</div>`:''}
+        ${renderRow(novos, 'novos')}
+      </div>
+      <div>
+        <h4 style="margin:0 0 8px;font-size:12px;color:#fff;text-transform:uppercase;letter-spacing:.4px">🏆 Vendas Hoje (${v.count})</h4>
+        ${renderRow(vendas, 'vendas')}
+      </div>
+      <div>
+        <h4 style="margin:14px 0 8px;font-size:12px;color:#fff;text-transform:uppercase;letter-spacing:.4px">⏰ Parados +48h (${d.parados.total})</h4>
+        ${renderRow(parados, 'parados')}
+      </div>
+      <div>
+        <h4 style="margin:14px 0 8px;font-size:12px;color:#fff;text-transform:uppercase;letter-spacing:.4px">🚧 Sem Nenhuma Atividade (${d.semAtividade.total})</h4>
+        ${renderRow(sem, 'sem')}
+      </div>
+    </div>
+  `;
+}
+
+function biaTab(n){
+  for (let i=1; i<=3; i++) {
+    const tab = document.getElementById('bia-tab-'+i);
+    const pane = document.getElementById('bia-pane-'+i);
+    if (i===n) {
+      tab.style.background = '#1e3a5f'; tab.style.color = '#7cb9f5'; tab.style.border = '1px solid #5ba3f5';
+      pane.style.display = '';
+    } else {
+      tab.style.background = ''; tab.style.color = ''; tab.style.border = '';
+      pane.style.display = 'none';
+    }
+  }
+}
+
+// ============= BLOCO 7 — PIPELINE INTELIGENTE =============
+function renderBloco7(){
+  if(!GUERRA) return;
+  const din = GUERRA.dinheiro || {};
+  const totalCount = (din.quente?.count||0)+(din.morno?.count||0)+(din.frio?.count||0);
+  const altaCount = (din.dealsAlta||[]).length;
+  const mediaCount = (din.dealsMedia||[]).length;
+  const baixaCount = (din.dealsBaixa||[]).length;
+  const semFolCount = (din.dealsSemFollowup||[]).length;
+  document.getElementById('b7-cards').innerHTML = `
+    <div class="card blue clickable" onclick="abrirPipeDrawer('todos')" title="Ver leads"><div class="lbl">Total Pipeline 🔍</div><div class="big">${fmtR$(din.total||0)}</div><div class="sub">${totalCount} propostas</div></div>
+    <div class="card green clickable" onclick="abrirPipeDrawer('alta')" title="Ver leads"><div class="lbl">Alta Prob &gt;70% 🔍</div><div class="big">${fmtR$(din.previsaoAlta||0)}</div><div class="sub">${altaCount} propostas</div></div>
+    <div class="card yellow clickable" onclick="abrirPipeDrawer('media')" title="Ver leads"><div class="lbl">Média 40-70% 🔍</div><div class="big">${fmtR$(din.previsaoMedia||0)}</div><div class="sub">${mediaCount} propostas</div></div>
+    <div class="card red clickable" onclick="abrirPipeDrawer('baixa')" title="Ver leads"><div class="lbl">Baixa &lt;40% 🔍</div><div class="big">${fmtR$(din.previsaoBaixa||0)}</div><div class="sub">${baixaCount} propostas</div></div>
+    <div class="card red clickable" onclick="abrirPipeDrawer('semFollowup')" title="Ver leads"><div class="lbl">Sem Follow-up 🔍</div><div class="big">${fmtR$(din.semFollowup||0)}</div><div class="sub">${semFolCount} parado &gt;24h</div></div>
+    <div class="card purple clickable" onclick="abrirPipeDrawer('ponderada')" title="Ver leads"><div class="lbl">Previsão Ponderada 🔍</div><div class="big">${fmtR$(din.previsaoPonderada||0)}</div><div class="sub">soma(valor × prob)</div></div>
+  `;
+}
+
+// === Drawer Pipeline Inteligente ===
+const PIPE_CAT_LABELS = {
+  todos: 'Total Pipeline (todas as propostas)',
+  alta: 'Alta Probabilidade (>70%)',
+  media: 'Média Probabilidade (40-70%)',
+  baixa: 'Baixa Probabilidade (<40%)',
+  semFollowup: 'Sem Follow-up (parado >24h)',
+  ponderada: 'Previsão Ponderada (ordenado por valor × prob)',
+};
+function abrirPipeDrawer(cat){
+  const din = (GUERRA && GUERRA.dinheiro) || {};
+  const map = { todos: din.dealsTodos, alta: din.dealsAlta, media: din.dealsMedia,
+    baixa: din.dealsBaixa, semFollowup: din.dealsSemFollowup, ponderada: din.dealsPonderada };
+  const list = map[cat] || [];
+  const drawer = document.getElementById('pipe-drawer');
+  const overlay = document.getElementById('pipe-overlay');
+  const total = list.reduce((s,d)=>s+(d.valor||0),0);
+  const ponderada = list.reduce((s,d)=>s+(d.valor||0)*((d.prob||0)/100),0);
+  const tempBadge = t => {
+    if (t==='quente') return '<span style="background:#22c55e22;color:#22c55e;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700">🔥 QUENTE</span>';
+    if (t==='morno')  return '<span style="background:#eab30822;color:#eab308;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700">🌡️ MORNO</span>';
+    return '<span style="background:#ef444422;color:#ef4444;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700">❄️ FRIO</span>';
+  };
+  const probBadge = p => {
+    const cor = p>=70 ? '#22c55e' : p>=40 ? '#eab308' : '#ef4444';
+    return `<span style="color:${cor};font-weight:800">${p||0}%</span>`;
+  };
+  const wppLink = phone => phone ? `<a href="${wpp(phone)}" target="_blank" style="color:#25D366;text-decoration:none;font-size:11px">📱 WATI</a>` : '';
+  const crmA = link => link ? `<a href="${link}" target="_blank" style="color:#3b82f6;text-decoration:none;font-size:11px">🔗 Zoho</a>` : '';
+  const escName = s => String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+  const chatBtn = (dealId, phone, name) => phone ? `<button onclick="window.abrirChat&&abrirChat('${dealId||''}','${String(phone).replace(/\D/g,'')}','${escName(name)}')" style="background:#0d2818;color:#22c55e;border:1px solid #22c55e;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">💬 Chat</button>` : '';
+  const rows = list.length === 0
+    ? `<tr><td colspan="7" style="text-align:center;padding:24px;color:#888">Nenhum deal nessa categoria</td></tr>`
+    : list.map(d => `
+        <tr>
+          <td style="padding:8px 6px;border-bottom:1px solid #1a1a1a;font-size:12px">${(d.name||'?').slice(0,40)}</td>
+          <td style="padding:8px 6px;border-bottom:1px solid #1a1a1a;font-size:11px;color:#888">${d.owner||'?'}</td>
+          <td style="padding:8px 6px;border-bottom:1px solid #1a1a1a;font-size:11px;color:#aaa">${d.stage||'-'}</td>
+          <td style="padding:8px 6px;border-bottom:1px solid #1a1a1a;font-size:12px;font-weight:700;text-align:right">${fmtR$Full(d.valor||0)}</td>
+          <td style="padding:8px 6px;border-bottom:1px solid #1a1a1a;font-size:11px;text-align:center">${probBadge(d.prob)}</td>
+          <td style="padding:8px 6px;border-bottom:1px solid #1a1a1a;font-size:11px;text-align:center">${tempBadge(d.temp)} <span style="color:#666;font-size:10px">${hrs(d.hoursAgo||0)}</span></td>
+          <td style="padding:8px 6px;border-bottom:1px solid #1a1a1a;text-align:right;white-space:nowrap">${chatBtn(d.id, d.phone, d.name)} ${crmA(d.crmLink)} ${wppLink(d.phone)}</td>
+        </tr>`).join('');
+  drawer.querySelector('.pd-title').textContent = PIPE_CAT_LABELS[cat] || cat;
+  drawer.querySelector('.pd-stats').innerHTML = `
+    <span style="margin-right:14px"><strong>${list.length}</strong> deals</span>
+    <span style="margin-right:14px">Total <strong>${fmtR$Full(total)}</strong></span>
+    <span>Ponderada <strong>${fmtR$Full(ponderada)}</strong></span>`;
+  drawer.querySelector('.pd-body').innerHTML = `
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:#0f0f0f">
+        <th style="padding:8px 6px;text-align:left;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.5px">Deal</th>
+        <th style="padding:8px 6px;text-align:left;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.5px">Closer</th>
+        <th style="padding:8px 6px;text-align:left;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.5px">Stage</th>
+        <th style="padding:8px 6px;text-align:right;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.5px">Valor</th>
+        <th style="padding:8px 6px;text-align:center;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.5px">Prob</th>
+        <th style="padding:8px 6px;text-align:center;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.5px">Temperatura</th>
+        <th style="padding:8px 6px;text-align:right;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.5px">Ação</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  drawer.classList.add('open');
+  overlay.classList.add('open');
+}
+function fecharPipeDrawer(){
+  document.getElementById('pipe-drawer').classList.remove('open');
+  document.getElementById('pipe-overlay').classList.remove('open');
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') fecharPipeDrawer(); });
+
+// ============= BLOCO 8 — PROJEÇÃO DE META =============
+function renderBloco8(){
+  if(!GUERRA) return;
+  const sim = GUERRA.simulacao || {};
+  const din = GUERRA.dinheiro || {};
+  const pctMeta = sim.metaGlobal ? Math.round(sim.fatMes/sim.metaGlobal*100) : 0;
+  const projPct = sim.metaGlobal ? Math.round(sim.projecao/sim.metaGlobal*100) : 0;
+  const riscoCol = sim.risco==='alto'?'#ef4444':sim.risco==='medio'?'#eab308':'#22c55e';
+
+  document.getElementById('b8-cards').innerHTML = `
+    <div class="card blue"><div class="lbl">Meta Mensal</div><div class="big">${fmtR$(sim.metaGlobal||0)}</div></div>
+    <div class="card green"><div class="lbl">Vendido</div><div class="big">${fmtR$(sim.fatMes||0)}</div><div class="sub">${sim.vendasMes||0} vendas (${pctMeta}%)</div></div>
+    <div class="card red"><div class="lbl">Gap</div><div class="big">${fmtR$(sim.gap||0)}</div><div class="sub">${sim.diasUteis||0} dias úteis</div></div>
+    <div class="card yellow"><div class="lbl">Necessário/Dia</div><div class="big">${fmtR$(sim.necessarioDia||0)}</div><div class="sub">ritmo atual ${fmtR$(sim.mediaDiaAtual||0)}</div></div>
+  `;
+
+  const cobreGap = (din.previsaoPonderada||0) >= (sim.gap||0);
+  document.getElementById('b8-analysis').innerHTML = `
+    <div style="padding:14px;background:#101010;border:1px solid var(--line);border-radius:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px">
+        <span>Progresso: ${fmtR$(sim.fatMes||0)} / ${fmtR$(sim.metaGlobal||0)}</span>
+        <span style="color:${riscoCol};font-weight:800">${pctMeta}% • Projeção: ${projPct}%</span>
+      </div>
+      <div class="proj-bar">
+        <div class="fill" style="width:${Math.min(pctMeta,100)}%;background:${riscoCol}"></div>
+      </div>
+      <div style="font-size:13px;line-height:1.7;color:#ddd;margin-top:10px">
+        <strong style="color:${riscoCol};text-transform:uppercase">${sim.risco==='alto'?'⚠ Risco Alto':sim.risco==='medio'?'! Risco Médio':'✓ No Caminho'}.</strong>
+        Projeção ${fmtR$(sim.projecao||0)} ${sim.risco==='alto'?`fica ${Math.round((1-(sim.projecao||0)/(sim.metaGlobal||1))*100)}% abaixo da meta. Necessário ${fmtR$(sim.necessarioDia||0)}/dia nos próximos ${sim.diasUteis||0} dias úteis.`:'mantém ritmo até o fim do mês.'}
+        <br><br>
+        <strong>Pipeline disponível:</strong> ${fmtR$(din.total||0)} em propostas. <strong>Previsão ponderada:</strong> ${fmtR$(din.previsaoPonderada||0)}.
+        ${cobreGap?'<br><span style="color:#22c55e;font-weight:700">✓ Previsão ponderada cobre o gap.</span>':`<br><span style="color:#ef4444;font-weight:700">✗ Falta ${fmtR$((sim.gap||0)-(din.previsaoPonderada||0))} além do pipeline atual — precisa abrir mais oportunidades.</span>`}
+      </div>
+    </div>
+  `;
+}
+
+// ============= BLOCO 9 — COACH (lazy) =============
+async function loadCoach(){
+  const el = document.getElementById('b9-body');
+  el.innerHTML = '<span style="color:var(--muted)">Analisando operação... (pode levar até 30s)</span>';
+  try{
+    const res = await fetch('/gestao/coach');
+    const d = await res.json();
+    if(d.error) throw new Error(d.error);
+    el.innerHTML = (d.coach||'')
+      .replace(/## (.*)/g, '<h3>$1</h3>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n- /g, '\n• ')
+      .replace(/\n(\d+)\. /g, '\n<strong style="color:#c084fc">$1.</strong> ');
+  }catch(e){
+    el.innerHTML = '<span style="color:var(--red)">Erro: '+e.message+'</span>';
+  }
+}
+
+// ============= BOTÕES GLOBAIS =============
+function toggleGuerra(){
+  GUERRA_MODE = !GUERRA_MODE;
+  document.body.classList.toggle('guerra', GUERRA_MODE);
+  const btn = document.getElementById('btn-guerra');
+  btn.classList.toggle('active', GUERRA_MODE);
+  btn.textContent = GUERRA_MODE ? '🛑 Sair Modo Guerra' : '⚔️ Modo Guerra';
+}
+
+async function runAutoAlerts(){
+  toast('Disparando auto-alertas...');
+  try{
+    const res = await fetch('/gestao/auto-alerts');
+    const r = await res.json();
+    toast(`${r.total||0} alertas enviados via Z-API`);
+  }catch(e){ toast('Erro: '+e.message, true); }
+}
+
+async function sendRelatorio(){
+  toast('Enviando plano do dia...');
+  try{
+    const res = await fetch('/gestao/relatorio-diario?send=true');
+    const r = await res.json();
+    if(r.sent) toast('Plano enviado no seu WhatsApp ✓');
+    else toast('Erro: '+(r.error||'falha'), true);
+  }catch(e){ toast('Erro: '+e.message, true); }
+}
+
+async function runCorrecao(action){
+  toast('Executando '+action+'...');
+  try{
+    const res = await fetch('/gestao/correcao', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action})
+    });
+    const r = await res.json();
+    toast(`Concluído. Alertas: ${(r.alerts||[]).length} • Reativados: ${r.reactivated||0}`);
+  }catch(e){ toast('Erro: '+e.message, true); }
+}
+
+async function sendAlert(closerName, preset, data){
+  try{
+    const res = await fetch('/gestao/alert-preset', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({closerName, preset, data})
+    });
+    const r = await res.json();
+    if(r.sent) toast(`Alerta enviado para ${closerName} ✓`);
+    else toast('Erro: '+(r.error||'falha'), true);
+  }catch(e){ toast('Erro: '+e.message, true); }
+}
+
+function filterSemContato(){
+  // Scroll to bloco 2 / 3 (where leads sem contato show up) and highlight
+  document.querySelector('[data-block="3"]').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function filterPropostas(){
+  document.querySelector('[data-block="1"]').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+async function enviarRanking(){
+  // Reusa relatorio-diario que envia plano + ranking via Z-API
+  toast('Enviando ranking parcial...');
+  try{
+    const res = await fetch('/gestao/relatorio-diario?send=true&type=ranking');
+    const r = await res.json();
+    if(r.sent) toast('Ranking enviado ✓');
+    else toast('Erro: '+(r.error||'falha'), true);
+  }catch(e){ toast('Erro: '+e.message, true); }
+}
+
+// ============= LOAD =============
+async function loadData(){
+  try{
+    const [d1, d2, d3, d4] = await Promise.all([
+      fetch('/gestao/data').then(r=>r.json()),
+      fetch('/gestao/guerra').then(r=>r.json()),
+      fetch('/gestao/disciplina').then(r=>r.json()).catch(()=>null),
+      fetch('/gestao/ia-status').then(r=>r.json()).catch(()=>null)
+    ]);
+    if(d1.error) throw new Error('data: '+d1.error);
+    if(d2.error) throw new Error('guerra: '+d2.error);
+    DATA = d1; GUERRA = d2;
+    DISCIPLINA = (d3 && !d3.error) ? d3 : null;
+    IA_STATUS = (d4 && !d4.error) ? d4 : null;
+    renderHeader();
+    renderBloco1();
+    renderBloco2();
+    renderBloco3();
+    renderBloco4();
+    renderBloco5();
+    renderBloco6();
+    renderBlocoIA();
+    popularDropdownRx();
+    renderBloco7();
+    renderBloco8();
+  }catch(e){
+    toast('Falha ao carregar: '+e.message, true);
+    console.error(e);
+  }
+}
+
+function reloadAll(){
+  toast('Atualizando...');
+  loadData();
+}
+
+// ============= MODAL: ENVIAR MENSAGEM AO TIME =============
+function abrirDirectorMsg(){
+  // Popula select de closers
+  const sel = document.getElementById('dm-closer');
+  sel.innerHTML = '<option value="all">📣 Todo o time</option>';
+  if (DATA?.closers) {
+    Object.entries(DATA.closers).forEach(([username, c]) => {
+      sel.innerHTML += `<option value="${username}">${c.name} (${c.team||''})</option>`;
+    });
+  }
+  document.getElementById('dm-titulo').value = '';
+  document.getElementById('dm-texto').value = '';
+  document.getElementById('dm-count').textContent = '0';
+  document.querySelector('input[name="dm-int"][value="normal"]').checked = true;
+  document.getElementById('dm-expira').value = '60';
+  document.getElementById('tc-director-msg').style.display = 'block';
+}
+function fecharDirectorMsg(){
+  document.getElementById('tc-director-msg').style.display = 'none';
+}
+document.addEventListener('input', e => {
+  if (e.target.id === 'dm-texto') {
+    document.getElementById('dm-count').textContent = e.target.value.length;
+  }
+});
+async function enviarDirectorMsg(){
+  const closer = document.getElementById('dm-closer').value;
+  const titulo = document.getElementById('dm-titulo').value.trim();
+  const texto = document.getElementById('dm-texto').value.trim();
+  const intensidade = document.querySelector('input[name="dm-int"]:checked')?.value || 'normal';
+  const expira_em_min = parseInt(document.getElementById('dm-expira').value) || 60;
+
+  if (!texto) { toast('Escreva a mensagem', true); return; }
+
+  const btn = document.getElementById('dm-send');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try{
+    const res = await fetch('/gestao/director-message', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ closer, titulo, texto, intensidade, expira_em_min })
+    });
+    const r = await res.json();
+    if (r.error) { toast('Erro: '+r.error, true); return; }
+    const dest = closer === 'all' ? 'todo o time' : DATA.closers[closer]?.name || closer;
+    toast(`✅ Mensagem ${intensidade} enviada para ${dest}`);
+    fecharDirectorMsg();
+  }catch(e){ toast('Erro: '+e.message, true); }
+  finally{ btn.disabled = false; btn.textContent = '📢 Enviar'; }
+}
+
+// ============= MODAL: DETALHE DO CANAL (produtos + vendas convertidas) =============
+async function abrirCanalDetalhe(canal){
+  document.getElementById('canal-titulo').textContent = `📊 ${canal} — Pipeline & Conversão`;
+  document.getElementById('canal-stats').innerHTML = '<div style="grid-column:1/-1;color:var(--muted);font-size:13px;text-align:center;padding:20px">Buscando deals e produtos...</div>';
+  document.getElementById('canal-produtos').innerHTML = '<div class="empty">Carregando...</div>';
+  document.getElementById('tc-canal').style.display = 'block';
+
+  try {
+    const res = await fetch('/gestao/canal-detalhe?canal=' + encodeURIComponent(canal));
+    const d = await res.json();
+    if (d.error) {
+      document.getElementById('canal-stats').innerHTML = `<div style="color:var(--red);grid-column:1/-1;text-align:center;padding:20px">Erro: ${d.error}</div>`;
+      return;
+    }
+
+    const canalCol = CANAL_COLOR[canal] || '#6b7280';
+    const s = d.stats;
+
+    // Stats cards
+    document.getElementById('canal-stats').innerHTML = `
+      <div class="card" style="border-color:${canalCol}"><div class="lbl">📋 Propostas Ativas</div><div class="big" style="color:${canalCol}">${s.totalPropostas}</div><div class="sub">${fmtR$(s.valorPropostas)}</div></div>
+      <div class="card green"><div class="lbl">✅ Vendas Fechadas (mês)</div><div class="big">${s.totalVendas}</div><div class="sub">${fmtR$(s.valorVendas)}</div></div>
+      <div class="card red"><div class="lbl">❌ Perdas (mês)</div><div class="big">${s.totalPerdas}</div></div>
+      <div class="card ${s.conversao>=20?'green':s.conversao>=10?'yellow':'red'}"><div class="lbl">🎯 Conversão</div><div class="big">${s.conversao}%</div><div class="sub">vendas / decididos</div></div>
+      <div class="card blue"><div class="lbl">💰 Ticket Médio</div><div class="big">${fmtR$(s.ticketMedioVendas)}</div><div class="sub">por venda</div></div>
+    `;
+
+    // Produtos com expansão de deals (vendas + propostas)
+    if (!d.produtos || !d.produtos.length) {
+      document.getElementById('canal-produtos').innerHTML = '<div class="empty">Nenhum produto identificado pra esse canal</div>';
+      return;
+    }
+    document.getElementById('canal-produtos').innerHTML = d.produtos.map((p, i) => {
+      const conversaoP = (p.vendas + p.propostas) > 0 ? Math.round(p.vendas / (p.vendas + p.propostas) * 100) : 0;
+      const idSafe = 'p' + i;
+      return `
+        <div style="background:#101010;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;overflow:hidden">
+          <div onclick="document.getElementById('${idSafe}-body').style.display=document.getElementById('${idSafe}-body').style.display==='none'?'block':'none'" style="display:flex;align-items:center;gap:14px;padding:12px 14px;cursor:pointer;background:#161616">
+            <div style="font-weight:700;color:#fff;flex:1;font-size:13px">${p.produto || '— sem produto cadastrado —'}</div>
+            <div style="font-size:11px;color:var(--muted)">📋 ${p.propostas} prop · ${fmtR$(p.valorProp)}</div>
+            <div style="font-size:11px;color:#4ade80;font-weight:700">✅ ${p.vendas} vendas · ${fmtR$(p.valorVendas)}</div>
+            <div style="font-size:11px;color:${conversaoP>=20?'#4ade80':conversaoP>=10?'#fbbf24':'#f87171'};font-weight:800;width:50px;text-align:right">${conversaoP}%</div>
+            <span style="color:#666;font-size:14px">▸</span>
+          </div>
+          <div id="${idSafe}-body" style="display:none;padding:12px 14px;background:#0d0d0d">
+            ${p.dealsVendas.length ? `
+              <div style="font-size:10px;color:#4ade80;font-weight:800;text-transform:uppercase;margin-bottom:6px;letter-spacing:.4px">✅ ${p.dealsVendas.length} venda(s) fechada(s)</div>
+              <table class="tbl" style="margin-bottom:10px"><thead><tr><th>Lead</th><th>Vendedor</th><th>Data</th><th>Valor</th><th>CRM</th></tr></thead><tbody>
+                ${p.dealsVendas.map(v => `<tr>
+                  <td style="font-weight:600">${v.name}</td>
+                  <td>${v.owner}</td>
+                  <td style="color:var(--muted);font-size:11px">${v.dataFechamento}</td>
+                  <td style="color:#4ade80;font-weight:700">${fmtR$Full(v.amount)}</td>
+                  <td><a class="btn-mini crm" href="${v.crmLink}" target="_blank">Abrir</a></td>
+                </tr>`).join('')}
+              </tbody></table>
+            ` : ''}
+            ${p.dealsPropostas.length ? `
+              <div style="font-size:10px;color:var(--blue);font-weight:800;text-transform:uppercase;margin-bottom:6px;margin-top:${p.dealsVendas.length?'14px':'0'};letter-spacing:.4px">📋 ${p.dealsPropostas.length} proposta(s) ativa(s)</div>
+              <table class="tbl"><thead><tr><th>Lead</th><th>Vendedor</th><th>Stage</th><th>Valor</th><th>Ações</th></tr></thead><tbody>
+                ${p.dealsPropostas.slice(0, 20).map(pp => `<tr>
+                  <td>${pp.name}</td>
+                  <td>${pp.owner}</td>
+                  <td style="font-size:11px;color:var(--muted)">${pp.stage}</td>
+                  <td style="color:#fff;font-weight:700">${fmtR$Full(pp.amount)}</td>
+                  <td><div class="row-act">
+                    ${pp.phone?`<a class="btn-mini wati" href="${wpp(pp.phone)}" target="_blank">WATI</a>`:''}
+                    <a class="btn-mini crm" href="${pp.crmLink}" target="_blank">CRM</a>
+                  </div></td>
+                </tr>`).join('')}
+                ${p.dealsPropostas.length > 20 ? `<tr><td colspan="5" style="color:var(--muted);text-align:center;font-size:11px">+ ${p.dealsPropostas.length-20} propostas adicionais</td></tr>`:''}
+              </tbody></table>
+            ` : ''}
+            ${!p.dealsVendas.length && !p.dealsPropostas.length ? '<div class="empty">Sem deals</div>' : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch(e) {
+    document.getElementById('canal-stats').innerHTML = `<div style="color:var(--red);grid-column:1/-1;text-align:center;padding:20px">Erro: ${e.message}</div>`;
+  }
+}
+
+function fecharCanalDetalhe(){
+  document.getElementById('tc-canal').style.display = 'none';
+}
+
+function showHelp(){ document.getElementById('tc-help').style.display='block'; }
+function hideHelp(){ document.getElementById('tc-help').style.display='none'; }
+document.addEventListener('keydown', e => { if(e.key==='Escape') { hideHelp(); fecharModalPeriodo(); fecharCanalDetalhe(); } });
+
+// ============= MODAL PERÍODO CUSTOMIZADO =============
+function abrirModalPeriodo(){
+  // Default: 7-30 dias atrás
+  setPeriodo(7, 30);
+  document.getElementById('periodo-preview').style.display = 'none';
+  document.getElementById('btn-disparar').disabled = true;
+  document.getElementById('tc-periodo').style.display = 'block';
+}
+function fecharModalPeriodo(){
+  document.getElementById('tc-periodo').style.display = 'none';
+}
+function setPeriodo(diasFimAtras, diasInicioAtras){
+  // diasInicioAtras > diasFimAtras (mais antigo → mais recente)
+  const fim = new Date(); fim.setDate(fim.getDate() - diasFimAtras);
+  const ini = new Date(); ini.setDate(ini.getDate() - diasInicioAtras);
+  document.getElementById('periodo-inicio').value = ini.toISOString().slice(0,10);
+  document.getElementById('periodo-fim').value = fim.toISOString().slice(0,10);
+  document.getElementById('periodo-preview').style.display = 'none';
+  document.getElementById('btn-disparar').disabled = true;
+}
+
+function getPeriodoParams(){
+  const dataInicio = document.getElementById('periodo-inicio').value;
+  const dataFim = document.getElementById('periodo-fim').value;
+  const tiers = Array.from(document.querySelectorAll('.tier-cb:checked')).map(c => c.value);
+  const limite = parseInt(document.getElementById('periodo-limite').value);
+  return { dataInicio, dataFim, tiers, limite };
+}
+
+async function previewPeriodo(){
+  const p = getPeriodoParams();
+  if (!p.dataInicio || !p.dataFim) { toast('Preencha as duas datas', true); return; }
+  if (p.dataInicio > p.dataFim) { toast('Data inicial maior que a final', true); return; }
+  if (!p.tiers.length) { toast('Selecione pelo menos um tier', true); return; }
+
+  const box = document.getElementById('periodo-preview');
+  const btn = document.getElementById('btn-preview');
+  btn.disabled = true; btn.textContent = 'Buscando...';
+  box.style.display = 'block';
+  box.innerHTML = '<span style="color:var(--muted)">Buscando candidatos no Zoho...</span>';
+
+  try {
+    const url = `/gestao/nubia-preview?tipo=por_periodo&dataInicio=${p.dataInicio}&dataFim=${p.dataFim}&tiers=${encodeURIComponent(p.tiers.join(','))}`;
+    const res = await fetch(url);
+    const r = await res.json();
+    if (r.error) { box.innerHTML = '<span style="color:var(--red)">Erro: '+r.error+'</span>'; return; }
+
+    if (r.total === 0) {
+      box.innerHTML = '<strong style="color:var(--yellow)">⚠️ Nenhum lead encontrado nessa janela.</strong> Tenta outro período ou inclua mais tiers.';
+      document.getElementById('btn-disparar').disabled = true;
+      return;
+    }
+
+    const tiersTxt = Object.entries(r.porTier||{}).map(([t,n])=>`${t}: ${n}`).join(' • ');
+    const ownersTxt = Object.entries(r.porOwner||{}).slice(0,5).map(([o,n])=>`${o}: ${n}`).join(', ');
+    const lim = Math.min(r.total, p.limite);
+    box.innerHTML = `
+      <div style="font-size:13px;color:#fff;margin-bottom:6px"><strong>${r.total}</strong> leads elegíveis. Vou disparar pros <strong style="color:#22c55e">${lim}</strong> primeiros (priorizando Diamante/Ouro/maior valor).</div>
+      <div style="margin-top:6px"><strong>Por tier:</strong> ${tiersTxt}</div>
+      <div style="margin-top:4px"><strong>Top vendedores:</strong> ${ownersTxt}</div>
+      ${r.sample?.length?`<div style="margin-top:8px;font-size:11px;color:var(--muted)"><strong style="color:#fff">Amostra:</strong><br>${r.sample.map(s=>`• ${s.name} (${s.tier||'-'}, ${s.stage})`).join('<br>')}</div>`:''}
+    `;
+    document.getElementById('btn-disparar').disabled = false;
+  } catch(e) {
+    box.innerHTML = '<span style="color:var(--red)">Erro: '+e.message+'</span>';
+  } finally {
+    btn.disabled = false; btn.textContent = '🔍 Pré-visualizar';
+  }
+}
+
+async function dispararPeriodo(){
+  const p = getPeriodoParams();
+  if (!confirm(`Confirma disparar Núbia para até ${p.limite} leads no período ${p.dataInicio} → ${p.dataFim}?\n\nTiers: ${p.tiers.join(', ')}\n(Propostas sempre excluídas)`)) return;
+
+  const btn = document.getElementById('btn-disparar');
+  btn.disabled = true; btn.textContent = 'Disparando...';
+  try {
+    const res = await fetch('/gestao/nubia-reengaja', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ tipo:'por_periodo', ...p })
+    });
+    const r = await res.json();
+    if (r.error) { toast('Erro: '+r.error, true); return; }
+    toast(`✅ Núbia disparou para ${r.sent||0} leads (${r.candidates||0} elegíveis)`);
+    fecharModalPeriodo();
+  } catch(e) {
+    toast('Erro: '+e.message, true);
+  } finally {
+    btn.disabled = false; btn.textContent = '🚀 Disparar Núbia';
+  }
+}
+
+// Auto-load
+loadData();
+</script>
+
+<!-- Pipeline Inteligente Drawer -->
+<div id="pipe-overlay" onclick="fecharPipeDrawer()"></div>
+<div id="pipe-drawer" role="dialog" aria-label="Detalhes do pipeline">
+  <div class="pd-head">
+    <div style="flex:1">
+      <div class="pd-title">—</div>
+      <div class="pd-stats">—</div>
+    </div>
+    <button class="pd-close" onclick="fecharPipeDrawer()" title="Fechar (Esc)">×</button>
+  </div>
+  <div class="pd-body"></div>
+</div>
+
+</div></body></html>

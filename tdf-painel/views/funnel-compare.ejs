@@ -1,0 +1,135 @@
+<% const activePage = 'funnel'; const pageTitle = 'Funnel Compare · Coaching'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.fc-wrap{padding:14px 22px 80px;max-width:1500px;margin:0 auto}
+.fc-h{font-size:20px;color:var(--text);margin:0 0 4px;font-weight:800}
+.fc-sub{color:var(--text-muted);font-size:12px;margin:0 0 14px}
+.fc-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 14px}
+.fc-bar select{background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px}
+
+.fc-tbl{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{padding:8px 10px;background:var(--bg-card);color:var(--text-muted);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;text-align:left;border-bottom:2px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid #1a1a1a;color:var(--text-muted)}
+tr:hover td{background:var(--bg-card)}
+.col-owner{color:var(--text);font-weight:700}
+.col-conv{text-align:center;font-variant-numeric:tabular-nums}
+.col-conv.ok{color:#22c55e}
+.col-conv.warn{color:#f59e0b}
+.col-conv.danger{color:#ef4444;font-weight:700;background:rgba(239,68,68,.08)}
+.col-conv.median{color:#7cb9f5;font-weight:800}
+.col-win{color:#22c55e;font-weight:800;text-align:center}
+
+.fc-gaps{margin-top:18px;background:#1a0a0a;border:1px solid #4a1a1a;border-radius:10px;padding:14px}
+.fc-gaps h3{color:#ef4444;margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.4px}
+.fc-gap-item{padding:6px 0;border-bottom:1px solid #2a1010;font-size:12px}
+.fc-gap-item:last-child{border-bottom:none}
+.fc-gap-item .owner{color:var(--text);font-weight:700}
+.fc-gap-item .etapa{color:var(--text-muted)}
+.fc-gap-item .num{color:#ef4444;font-weight:800}
+
+.fc-loading{padding:40px;text-align:center;color:var(--text-muted);font-size:12px}
+</style>
+
+<div class="fc-wrap">
+  <h1 class="fc-h">📊 Funnel Compare · Coaching individual por vendedor</h1>
+  <p class="fc-sub">Taxa de conversão entre stages por vendedor vs mediana do time. Use pra identificar onde cada um perde leads — e coachear especificamente.</p>
+
+  <div class="fc-bar">
+    <label style="color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase">Janela:</label>
+    <select id="fc-dias" onchange="fcCarregar()">
+      <option value="30">Últimos 30 dias</option>
+      <option value="60">Últimos 60 dias</option>
+      <option value="90" selected>Últimos 90 dias</option>
+      <option value="180">Últimos 180 dias</option>
+    </select>
+  </div>
+
+  <div id="fc-content"><div class="fc-loading">⏳ Calculando funil por vendedor...</div></div>
+</div>
+
+<script>
+async function fcCarregar(){
+  const dias = document.getElementById('fc-dias').value;
+  const c = document.getElementById('fc-content');
+  c.innerHTML = '<div class="fc-loading">⏳ Calculando funil por vendedor...</div>';
+  try {
+    const r = await fetch('/gestao/funnel-compare?dias=' + dias);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    fcRender(d);
+  } catch(e) {
+    c.innerHTML = `<div class="fc-loading" style="color:#ef4444">Erro: ${e.message}</div>`;
+  }
+}
+
+function fcRender(d){
+  const c = document.getElementById('fc-content');
+  if (!d.owners.length) {
+    c.innerHTML = '<div class="fc-loading">Sem dados no período</div>';
+    return;
+  }
+  const conv = d.conversions;
+  const headers = conv.map(k => k.replace('Em Qualificação','Em Qualif.').replace('Primeiro Contato','1º Contato'));
+  const cls = (v, mediana) => {
+    if (v === null) return '';
+    if (mediana === null) return '';
+    if (mediana - v >= 10) return 'danger';
+    if (v >= mediana) return 'ok';
+    return 'warn';
+  };
+
+  let html = '<div class="fc-tbl"><table>';
+  html += '<thead><tr>';
+  html += '<th>Vendedor</th><th>Total</th>';
+  for (const h of headers) html += `<th class="col-conv">${h}</th>`;
+  html += '<th>Win Rate</th>';
+  html += '</tr></thead><tbody>';
+
+  // Linha mediana do time
+  html += '<tr><td class="col-owner">📊 Mediana do time</td><td class="col-conv">—</td>';
+  for (const k of conv) {
+    html += `<td class="col-conv median">${d.mediana[k] != null ? d.mediana[k]+'%' : '—'}</td>`;
+  }
+  html += '<td>—</td></tr>';
+
+  for (const o of d.owners) {
+    html += '<tr>';
+    html += `<td class="col-owner">${o.owner.replace(/</g,'&lt;')}</td>`;
+    html += `<td class="col-conv">${o.total}</td>`;
+    for (const k of conv) {
+      const v = o.conv[k];
+      html += `<td class="col-conv ${cls(v, d.mediana[k])}">${v != null ? v+'%' : '—'}</td>`;
+    }
+    html += `<td class="col-win">${o.winRate}%</td>`;
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+
+  // Lista de gaps
+  const allGaps = [];
+  for (const o of d.owners) {
+    for (const g of (o.gaps||[])) allGaps.push({ ...g, owner: o.owner });
+  }
+  allGaps.sort((a,b) => b.gap - a.gap);
+
+  if (allGaps.length) {
+    html += '<div class="fc-gaps"><h3>⚠️ Gaps de conversão identificados</h3>';
+    for (const g of allGaps.slice(0, 12)) {
+      html += `<div class="fc-gap-item">
+        <span class="owner">${g.owner.replace(/</g,'&lt;').split(' ')[0]}</span>
+        <span class="etapa"> · ${g.etapa.replace('Em Qualificação','Em Qualif.').replace('Primeiro Contato','1º Contato')}: </span>
+        <span class="num">${g.vendedor}%</span>
+        <span class="etapa"> vs time ${g.time}% · gap </span>
+        <span class="num">-${g.gap}pp</span>
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  c.innerHTML = html;
+}
+
+fcCarregar();
+</script>

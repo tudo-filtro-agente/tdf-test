@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script>try{if(localStorage.getItem('tdf-theme')==='light')document.documentElement.setAttribute('data-theme','light')}catch(_){}</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0F1420">
+<title>OS Materiais · TDF</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: #0a0e16; color:#fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; }
+  header { background: linear-gradient(135deg, #0066CC, #22C55E); color:#fff; padding: 14px 16px; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 10px rgba(0,0,0,.4); }
+  header h1 { margin: 0; font-size: 18px; font-weight: 800; }
+  header .sub { font-size: 12px; opacity: .85; margin-top: 2px; }
+  .container { padding: 12px; max-width: 720px; margin: 0 auto; }
+  .filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filtros input, .filtros button, .filtros select { background: #0F1420; color:#fff; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 14px; min-height: 40px; }
+  .filtros button.primary { background: linear-gradient(135deg, #0066CC, #4F8CFF); border-color: #4F8CFF; color:#fff; font-weight: 700; }
+  .stop-card { background: #131A24; border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+  .stop-card .titulo { font-weight: 700; font-size: 15px; margin-bottom: 4px; color: var(--text); }
+  .stop-card .info { font-size: 12.5px; color: #A0AEC0; line-height: 1.55; }
+  .stop-card .actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: #1a2333; color:#fff; font-size: 14px; font-weight: 600; cursor: pointer; min-height: 40px; }
+  .btn.primary { background: linear-gradient(135deg, #0066CC, #4F8CFF); border-color: #4F8CFF; color:#fff; }
+  .btn.danger { background: #2a1014; border-color: #EF4444; color: #FCA5A5; }
+  .btn.ok { background: #0a1a0a; border-color: #22C55E; color: #86EFAC; }
+  .btn.sm { padding: 6px 10px; font-size: 12.5px; min-height: 32px; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .pill.ok    { background: #0a3a1a; color: #86EFAC; }
+  .pill.warn  { background: #3a2a0a; color: #FCD34D; }
+  .pill.info  { background: #0a2a3a; color: #93C5FD; }
+  .pill.muted { background: var(--bg-hover); color: #6B7280; }
+
+  /* Tela detalhe */
+  .tela { display: none; }
+  .tela.active { display: block; }
+  .voltar { background: none; border: none; color: #4F8CFF; font-size: 14px; padding: 8px 0; cursor: pointer; margin-bottom: 8px; }
+  .item-row { background: #131A24; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .item-row .nome { flex: 1; }
+  .item-row .nome b { display: block; font-size: 14px; color: var(--text); }
+  .item-row .nome small { color: #A0AEC0; font-size: 11.5px; }
+  .item-row .qtd { font-weight: 700; min-width: 40px; text-align: right; color: #4F8CFF; }
+  .add-section { background: #0F1420; border: 1px dashed #4F8CFF; border-radius: 10px; padding: 12px; margin-top: 12px; }
+  .add-section input, .add-section select { width: 100%; background: #0a0e16; color:#fff; border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin: 4px 0; font-size: 14px; }
+  .footer-actions { position: sticky; bottom: 0; background: #0a0e16; padding: 12px; margin: 16px -12px -12px -12px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+  .footer-actions .btn { flex: 1; }
+  .empty { text-align: center; padding: 30px 20px; color: #6B7280; }
+  .toast { position: fixed; top: 70px; left: 12px; right: 12px; background: #22C55E; color:#fff; padding: 12px; border-radius: 8px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.5); display: none; }
+  .toast.err { background: #EF4444; }
+  .toast.show { display: block; animation: slidein 0.3s; }
+  @keyframes slidein { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+  .autocomp-results { background: #131A24; border: 1px solid var(--border); border-radius: 6px; margin-top: 4px; max-height: 240px; overflow-y: auto; }
+  .autocomp-results .item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #1f2937; }
+  .autocomp-results .item:hover, .autocomp-results .item.sel { background: #1a2333; }
+  .autocomp-results .item b { color: var(--text); display: block; font-size: 13.5px; }
+  .autocomp-results .item small { color: #A0AEC0; font-size: 11.5px; }
+  kbd { background:var(--bg-hover);padding:1px 6px;border-radius:4px;font-size:11px;border:1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔧 OS Materiais</h1>
+  <div class="sub">Olá, <b><%= user.username %></b> · Lance os materiais usados em cada atendimento</div>
+</header>
+
+<div class="toast" id="toast"></div>
+
+<div class="container">
+
+  <!-- TELA 1: Lista de paradas do dia -->
+  <div class="tela active" id="tela-lista">
+    <div class="filtros">
+      <input type="date" id="dataPicker" style="flex:1" onchange="carregarStops()">
+      <input type="text" id="tecFiltro" placeholder="Filtrar técnico..." style="flex:2" oninput="aplicarFiltroTec()">
+      <button class="btn primary" onclick="carregarStops()">🔄</button>
+    </div>
+    <div id="resumo" style="font-size:12.5px;color:#A0AEC0;margin-bottom:10px"></div>
+    <div id="stops-list">
+      <div class="empty">Escolha a data e atualize pra ver as paradas do dia.</div>
+    </div>
+  </div>
+
+  <!-- TELA 2: Detalhe da OS / lançamento de materiais -->
+  <div class="tela" id="tela-detalhe">
+    <button class="voltar" onclick="voltarLista()">← Voltar</button>
+    <div id="detalhe-cab" style="background:#131A24;border:1px solid #4F8CFF;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;line-height:1.5"></div>
+
+    <h3 style="margin:14px 0 8px 0;font-size:15px;color:#A0AEC0">📦 Materiais usados</h3>
+    <div id="itens-list">
+      <div class="empty" style="padding:14px">Nenhum material lançado ainda.</div>
+    </div>
+
+    <div class="add-section">
+      <div style="font-weight:700;margin-bottom:6px">+ Adicionar material</div>
+      <input type="text" id="addProdSearch" placeholder="Buscar produto por nome ou SKU..." oninput="buscarProd()" autocomplete="off">
+      <div id="addProdResults" class="autocomp-results" style="display:none"></div>
+      <div id="addProdSelected" style="display:none;margin-top:8px;padding:8px;background:#0a1a0a;border:1px solid #22C55E;border-radius:6px;font-size:13px"></div>
+      <input type="number" id="addProdQtd" placeholder="Quantidade" step="0.01" min="0.01" style="display:none;margin-top:6px">
+      <input type="text" id="addProdObs" placeholder="Observação (opcional)" style="display:none;margin-top:6px">
+      <button class="btn primary" id="addProdBtn" onclick="adicionarItem()" style="display:none;margin-top:8px;width:100%">+ Lançar material</button>
+    </div>
+
+    <div class="footer-actions">
+      <button class="btn danger" onclick="cancelarOS()">🚫 Cancelar OS</button>
+      <button class="btn ok" onclick="baixarOS()">✅ Fechar OS</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const state = {
+  stops: [],
+  filtroTec: '',
+  curr: null,             // OS atual aberta
+  prodSelecionado: null,  // produto sendo adicionado
+  produtosCache: null,    // cache de busca
+};
+
+function toast(msg, err = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (err ? ' err' : '');
+  setTimeout(() => { t.className = 'toast'; }, 3500);
+}
+function escapeHtml(s) { return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmtBRL(v) { return 'R$ ' + Number(v||0).toLocaleString('pt-BR', { minimumFractionDigits:2 }); }
+function hojeISO() { return new Date().toISOString().slice(0,10); }
+
+document.getElementById('dataPicker').value = hojeISO();
+document.getElementById('tecFiltro').value = '<%= user.username %>';
+carregarStops();
+
+async function carregarStops() {
+  const data = document.getElementById('dataPicker').value;
+  const tec = document.getElementById('tecFiltro').value.trim();
+  state.filtroTec = tec;
+  document.getElementById('stops-list').innerHTML = '<div class="empty">⏳ Carregando paradas do tdf-ops...</div>';
+  try {
+    const url = `/bi-financeiro/api/os-materiais/meus-stops/${data}` + (tec ? '?tecnico=' + encodeURIComponent(tec) : '');
+    const r = await fetch(url).then(r => r.json());
+    if (!r.ok) throw new Error(r.error || 'erro');
+    state.stops = r.stops || [];
+    renderStops();
+  } catch(e) {
+    document.getElementById('stops-list').innerHTML = `<div class="empty">❌ ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function aplicarFiltroTec() {
+  clearTimeout(window._fTec);
+  window._fTec = setTimeout(() => carregarStops(), 400);
+}
+
+function renderStops() {
+  const lista = document.getElementById('stops-list');
+  document.getElementById('resumo').textContent = `${state.stops.length} parada(s) no dia`;
+  if (state.stops.length === 0) {
+    lista.innerHTML = '<div class="empty">Nenhuma parada nessa data/técnico.</div>';
+    return;
+  }
+  lista.innerHTML = state.stops.map(s => {
+    const hora = s.scheduledStart ? new Date(s.scheduledStart).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '—';
+    const osPill = s.osPortal
+      ? (s.osPortal.status === 'baixado' ? '<span class="pill ok">✓ Baixada</span>'
+        : s.osPortal.status === 'pendente' ? '<span class="pill warn">📝 Em lançamento</span>'
+        : '<span class="pill muted">' + s.osPortal.status + '</span>')
+      : '<span class="pill info">+ Lançar materiais</span>';
+    const stopStatusPill = '<span class="pill muted">' + (s.status||'—') + '</span>';
+    return `<div class="stop-card">
+      <div class="titulo">🕐 ${hora} · ${escapeHtml(s.cliente || 'Sem cliente vinculado')}</div>
+      <div class="info">
+        👷 ${escapeHtml(s.tecnico||'—')} · 🆔 Stop ${escapeHtml(s.stopId)}
+        ${s.auvoTaskId ? '· AUVO ' + escapeHtml(s.auvoTaskId) : ''}
+        <br>${stopStatusPill} ${osPill}
+      </div>
+      <div class="actions">
+        <button class="btn primary" onclick='abrirOS(${JSON.stringify(s)})'>${s.osPortal ? '📝 Continuar lançamento' : '+ Nova OS'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function abrirOS(stop) {
+  try {
+    const body = {
+      routeStopId: stop.stopId,
+      auvoTaskId: stop.auvoTaskId || null,
+      routeIdExterno: String(stop.rotaId),
+      saleId: stop.saleId,
+      zohoDealId: stop.zohoDealId,
+      tecnicoUsername: stop.tecnico || '<%= user.username %>',
+      tecnicoNome: stop.tecnico,
+      clienteNome: stop.cliente,
+      dataAtendimento: stop.rotaData,
+    };
+    const r = await fetch('/bi-financeiro/api/os-materiais/por-stop', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+    }).then(r=>r.json());
+    if (!r.ok) throw new Error(r.error||'erro');
+    state.curr = r.os;
+    // Se não tem estoque_origem_id, pede pra técnico escolher
+    if (!state.curr.estoque_origem_id) {
+      await escolherEstoque();
+    }
+    mostrarDetalhe();
+  } catch(e) { toast('Erro: ' + e.message, true); }
+}
+
+async function escolherEstoque() {
+  try {
+    const r = await fetch('/bi-financeiro/api/estoque/locais').then(r=>r.json());
+    const estoques = r.estoques || [];
+    if (estoques.length === 0) { toast('Cadastre um estoque antes!', true); return; }
+    if (estoques.length === 1) {
+      // único — usa direto
+      await atualizarOS({ estoqueOrigemId: estoques[0].id });
+      return;
+    }
+    const opts = estoques.map((e,i) => `${i+1}. ${e.nome}`).join('\n');
+    const escolha = prompt('De qual estoque sai o material?\n\n' + opts + '\n\nDigite o número:');
+    const idx = parseInt(escolha, 10) - 1;
+    if (estoques[idx]) await atualizarOS({ estoqueOrigemId: estoques[idx].id });
+  } catch(e) { toast('Erro carregando estoques: ' + e.message, true); }
+}
+
+async function atualizarOS(patch) {
+  try {
+    const r = await fetch('/bi-financeiro/api/os-materiais/' + state.curr.id, {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(patch)
+    }).then(r=>r.json());
+    if (!r.ok) throw new Error(r.error);
+    state.curr = r.os;
+  } catch(e) { toast('Erro: ' + e.message, true); }
+}
+
+function mostrarDetalhe() {
+  document.getElementById('tela-lista').classList.remove('active');
+  document.getElementById('tela-detalhe').classList.add('active');
+  const c = state.curr;
+  document.getElementById('detalhe-cab').innerHTML = `
+    <div><b>👤 Cliente:</b> ${escapeHtml(c.cliente_nome || '—')}</div>
+    <div style="margin-top:3px"><b>👷 Técnico:</b> ${escapeHtml(c.tecnico_nome || c.tecnico_username || '—')}</div>
+    <div style="margin-top:3px"><b>📦 Estoque origem:</b> ${escapeHtml(c.estoque_nome || '(não definido)')}</div>
+    <div style="margin-top:3px"><b>📅 Data:</b> ${c.data_atendimento || '—'} · <b>🆔</b> ${escapeHtml(c.id)}</div>
+    ${c.zoho_deal_id ? `<div style="margin-top:3px;color:#22C55E"><b>🔗 Vinculada à venda Zoho</b> ${escapeHtml(c.zoho_deal_id)}</div>` : '<div style="margin-top:3px;color:#FCD34D">⚠️ Sem venda Zoho vinculada — custo não vai pra ficha</div>'}
+  `;
+  renderItens();
+  // limpa busca
+  document.getElementById('addProdSearch').value = '';
+  document.getElementById('addProdResults').style.display = 'none';
+  document.getElementById('addProdSelected').style.display = 'none';
+  document.getElementById('addProdQtd').style.display = 'none';
+  document.getElementById('addProdObs').style.display = 'none';
+  document.getElementById('addProdBtn').style.display = 'none';
+  state.prodSelecionado = null;
+}
+
+function voltarLista() {
+  state.curr = null;
+  document.getElementById('tela-detalhe').classList.remove('active');
+  document.getElementById('tela-lista').classList.add('active');
+  carregarStops();
+}
+
+function renderItens() {
+  const lista = document.getElementById('itens-list');
+  const itens = state.curr.itens || [];
+  if (itens.length === 0) {
+    lista.innerHTML = '<div class="empty" style="padding:14px">Nenhum material lançado ainda.</div>';
+    return;
+  }
+  lista.innerHTML = itens.map(it => {
+    const saldoTxt = `Saldo estoque: ${Number(it.saldo_estoque_origem||0).toFixed(2)}`;
+    const saldoCor = Number(it.qtd) > Number(it.saldo_estoque_origem||0) ? '#EF4444' : '#86EFAC';
+    return `<div class="item-row">
+      <div class="nome">
+        <b>${escapeHtml(it.produto_nome)}</b>
+        <small>SKU: ${escapeHtml(it.produto_sku||'—')} · <span style="color:${saldoCor}">${saldoTxt}</span></small>
+      </div>
+      <div class="qtd">${Number(it.qtd).toFixed(2)} ${escapeHtml(it.produto_unidade||'')}</div>
+      <button class="btn sm danger" onclick="removerItem('${it.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+async function buscarProd() {
+  const q = document.getElementById('addProdSearch').value.trim();
+  const box = document.getElementById('addProdResults');
+  if (q.length < 2) { box.style.display = 'none'; return; }
+  try {
+    if (!state.produtosCache) {
+      const r = await fetch('/bi-financeiro/api/estoque/produtos').then(r=>r.json());
+      state.produtosCache = r.produtos || [];
+    }
+    const qL = q.toLowerCase();
+    const matches = state.produtosCache
+      .filter(p => (p.nome||'').toLowerCase().includes(qL) || (p.sku||'').toLowerCase().includes(qL))
+      .slice(0, 10);
+    if (matches.length === 0) { box.innerHTML = '<div class="item">Nenhum produto encontrado.</div>'; }
+    else {
+      box.innerHTML = matches.map(p => `<div class="item" onclick='selecionarProd(${JSON.stringify(p)})'>
+        <b>${escapeHtml(p.nome)}</b>
+        <small>SKU: ${escapeHtml(p.sku||'—')} · Custo médio: ${fmtBRL(p.custo_medio)}</small>
+      </div>`).join('');
+    }
+    box.style.display = 'block';
+  } catch(e) { toast('Erro buscando produtos: ' + e.message, true); }
+}
+
+function selecionarProd(p) {
+  state.prodSelecionado = p;
+  document.getElementById('addProdSearch').value = p.nome;
+  document.getElementById('addProdResults').style.display = 'none';
+  document.getElementById('addProdSelected').textContent = `✓ ${p.nome} (${p.sku||'s/sku'}) — custo médio ${fmtBRL(p.custo_medio)}`;
+  document.getElementById('addProdSelected').style.display = 'block';
+  document.getElementById('addProdQtd').style.display = 'block';
+  document.getElementById('addProdObs').style.display = 'block';
+  document.getElementById('addProdBtn').style.display = 'block';
+  document.getElementById('addProdQtd').focus();
+}
+
+async function adicionarItem() {
+  if (!state.prodSelecionado) return;
+  const qtd = +document.getElementById('addProdQtd').value || 0;
+  if (qtd <= 0) { toast('Quantidade inválida', true); return; }
+  const obs = document.getElementById('addProdObs').value;
+  try {
+    const r = await fetch(`/bi-financeiro/api/os-materiais/${state.curr.id}/itens`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ produtoId: state.prodSelecionado.id, qtd, observacoes: obs })
+    }).then(r=>r.json());
+    if (!r.ok) throw new Error(r.error);
+    state.curr = r.os;
+    renderItens();
+    // limpa form
+    document.getElementById('addProdSearch').value = '';
+    document.getElementById('addProdQtd').value = '';
+    document.getElementById('addProdObs').value = '';
+    document.getElementById('addProdSelected').style.display = 'none';
+    document.getElementById('addProdQtd').style.display = 'none';
+    document.getElementById('addProdObs').style.display = 'none';
+    document.getElementById('addProdBtn').style.display = 'none';
+    state.prodSelecionado = null;
+    toast('✓ Material adicionado');
+  } catch(e) { toast('Erro: ' + e.message, true); }
+}
+
+async function removerItem(itemId) {
+  if (!confirm('Remover este item?')) return;
+  try {
+    const r = await fetch('/bi-financeiro/api/os-materiais/itens/' + itemId, { method:'DELETE' }).then(r=>r.json());
+    if (!r.ok) throw new Error(r.error);
+    state.curr = r.os;
+    renderItens();
+  } catch(e) { toast('Erro: ' + e.message, true); }
+}
+
+async function baixarOS() {
+  if (!state.curr) return;
+  if (!state.curr.itens || state.curr.itens.length === 0) {
+    if (!confirm('OS sem itens. Cancelar ao invés de baixar?')) return;
+    return cancelarOS();
+  }
+  if (!confirm(`Confirmar fechamento da OS?\n\n${state.curr.itens.length} item(ns) vão sair do estoque "${state.curr.estoque_nome}".\nIsso não pode ser desfeito facilmente.`)) return;
+  try {
+    const r = await fetch(`/bi-financeiro/api/os-materiais/${state.curr.id}/baixar`, { method:'POST' }).then(r=>r.json());
+    if (r.error) throw new Error(r.error);
+    if (r.erros && r.erros.length) {
+      toast(`⚠️ ${r.erros.length} item(ns) com erro. Primeiro: ${r.erros[0].motivo}`, true);
+    } else {
+      toast(`✅ OS fechada! Custo total: ${fmtBRL(r.total)}`);
+    }
+    setTimeout(() => voltarLista(), 1500);
+  } catch(e) { toast('Erro: ' + e.message, true); }
+}
+
+async function cancelarOS() {
+  if (!state.curr) return;
+  const motivo = prompt('Motivo do cancelamento (opcional):') || 'cancelada pelo técnico';
+  try {
+    const r = await fetch(`/bi-financeiro/api/os-materiais/${state.curr.id}/cancelar`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ motivo })
+    }).then(r=>r.json());
+    if (!r.ok) throw new Error(r.error);
+    toast('OS cancelada');
+    setTimeout(() => voltarLista(), 800);
+  } catch(e) { toast('Erro: ' + e.message, true); }
+}
+</script>
+</body>
+</html>

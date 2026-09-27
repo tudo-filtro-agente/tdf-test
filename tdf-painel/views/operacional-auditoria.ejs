@@ -1,0 +1,548 @@
+<% const activePage = 'operacional'; const pageTitle = 'Operacional · Auditoria de Campo'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+  .au-shell { padding: 16px 20px 40px; max-width: 1640px; margin: 0 auto; }
+  .au-h { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+  .au-h h1 { margin: 0; font-size: 20px; color: var(--text); }
+  .au-h .sub { color: var(--text-muted); font-size: 12px; }
+
+  .au-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .au-tab { padding: 10px 16px; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; font-size: 13px; font-weight: 600; }
+  .au-tab.active { color: var(--text); border-bottom-color: #eab308; }
+
+  .au-pad { display: none; }
+  .au-pad.active { display: block; }
+
+  .au-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  .au-section h2 { font-size: 14px; color: var(--text); margin: 0 0 14px; text-transform: uppercase; letter-spacing: .4px; display: flex; justify-content: space-between; align-items: center; }
+  .au-info { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 16px; }
+  .kpi { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .kpi .v { font-size: 22px; font-weight: 800; color: var(--text); }
+  .kpi .l { font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); margin-top: 2px; }
+  .kpi.danger .v { color: #f87171; }
+  .kpi.warn .v   { color: #fbbf24; }
+  .kpi.ok .v     { color: #4ade80; }
+
+  table.au-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+  table.au-table th { text-align: left; padding: 10px 12px; background: var(--bg); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1; }
+  table.au-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+  table.au-table tr:hover td { background: rgba(234, 179, 8, .05); }
+
+  .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 700; }
+  .b-normal   { background: rgba(148,163,184,.15); color: #cbd5e1; border: 1px solid #475569; }
+  .b-atencao  { background: rgba(234,179,8,.15);  color: #fbbf24; border: 1px solid #eab308; }
+  .b-suspeito { background: rgba(249,115,22,.15); color: #fb923c; border: 1px solid #f97316; }
+  .b-critico  { background: rgba(239,68,68,.18);  color: #f87171; border: 1px solid #ef4444; }
+  .b-justified{ background: rgba(34,197,94,.15);  color: #4ade80; }
+  .b-open     { background: rgba(96,165,250,.15); color: #93c5fd; }
+  .b-resolved { background: rgba(148,163,184,.15);color: #94a3b8; }
+  .b-escalated{ background: rgba(239,68,68,.18);  color: #f87171; }
+
+  .btn { padding: 7px 12px; border-radius: 6px; border: 1px solid; font-size: 11px; font-weight: 700; cursor: pointer; background: transparent; }
+  .btn-pri { background: #eab308; color: #000; border-color: #eab308; }
+  .btn-sec { color: #93c5fd; border-color: #1f6feb; }
+  .btn-warn { color: #fbbf24; border-color: #eab308; }
+  .btn-danger { color: #f87171; border-color: #ef4444; }
+  .btn-ghost { color: var(--text-muted); border-color: var(--border); }
+  .btn:hover { filter: brightness(1.1); }
+
+  .score-bar { width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .score-bar .fill { height: 100%; background: linear-gradient(90deg, #ef4444 0%, #fbbf24 50%, #4ade80 100%); }
+
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--bg-card); border: 1px solid var(--border); padding: 12px 16px; border-radius: 8px; color: var(--text); font-size: 13px; z-index: 9999; max-width: 400px; }
+  .toast.success { border-color: #25D366; }
+  .toast.error { border-color: #ef4444; }
+
+  /* Modal narrativa IA */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; align-items: center; justify-content: center; z-index: 9000; }
+  .modal-bg.active { display: flex; }
+  .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; max-width: 720px; width: 90%; max-height: 85vh; overflow-y: auto; padding: 24px; }
+  .modal h2 { margin-top: 0; color: var(--text); font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
+  .modal .close { background: none; border: none; color: var(--text-muted); font-size: 22px; cursor: pointer; }
+  .modal .narrative { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin: 12px 0; color: var(--text); font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+</style>
+
+<div class="au-shell">
+  <div class="au-h">
+    <div>
+      <h1>📊 Auditoria de Campo</h1>
+      <div class="sub">KM real vs previsto · tempo no atendimento · check-in geofence · score técnico · análise IA</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-warn" onclick="trigger('time')">⏱ Audit tempo agora</button>
+      <button class="btn btn-warn" onclick="trigger('km')">🛣 Audit KM agora</button>
+      <button class="btn btn-warn" onclick="trigger('scores')">⭐ Recalcular scores</button>
+      <a href="/operacional" class="btn btn-sec">← Painel</a>
+    </div>
+  </div>
+
+  <div class="au-tabs" id="tabs">
+    <div class="au-tab active" data-pad="dashboard">📈 Dashboard</div>
+    <div class="au-tab" data-pad="suspicious">🚨 Eventos suspeitos <span id="susp-badge" class="badge b-critico" style="margin-left:6px;display:none">0</span></div>
+    <div class="au-tab" data-pad="scores">⭐ Scores técnicos</div>
+    <div class="au-tab" data-pad="audits">🛣 Auditorias KM/Tempo</div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="pad-dashboard" class="au-pad active">
+    <div class="kpi-grid">
+      <div class="kpi danger"><div class="v" id="k-critico">—</div><div class="l">Eventos críticos</div></div>
+      <div class="kpi warn"><div class="v" id="k-suspeito">—</div><div class="l">Eventos suspeitos</div></div>
+      <div class="kpi warn"><div class="v" id="k-atencao">—</div><div class="l">Eventos atenção</div></div>
+      <div class="kpi"><div class="v" id="k-techs">—</div><div class="l">Técnicos auditados hoje</div></div>
+      <div class="kpi ok"><div class="v" id="k-overall">—</div><div class="l">Score médio (último dia)</div></div>
+    </div>
+
+    <div class="au-section">
+      <h2>🏆 Ranking de técnicos (overall_score)</h2>
+      <table class="au-table">
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th>Técnico</th>
+            <th style="width:100px">Data</th>
+            <th>Overall</th>
+            <th style="width:90px">Pontual</th>
+            <th style="width:90px">KM</th>
+            <th style="width:90px">Tempo</th>
+            <th style="width:90px">Check-in</th>
+            <th style="width:90px">Resposta</th>
+            <th style="width:90px">Conclusão</th>
+            <th style="width:120px">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="ranking-body"><tr><td colspan="11" style="text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- EVENTOS SUSPEITOS -->
+  <div id="pad-suspicious" class="au-pad">
+    <div class="au-section">
+      <h2>
+        🚨 Eventos suspeitos
+        <span style="display:flex;gap:6px">
+          <select id="filter-severity" style="padding:5px 10px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:12px">
+            <option value="">Todas severidades</option>
+            <option value="critico">🔴 Crítico</option>
+            <option value="suspeito">🟠 Suspeito</option>
+            <option value="atencao">🟡 Atenção</option>
+            <option value="normal">⚪ Normal</option>
+          </select>
+          <select id="filter-status" style="padding:5px 10px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:12px">
+            <option value="open">Em aberto</option>
+            <option value="">Todos</option>
+            <option value="justified">Justificados</option>
+            <option value="resolved">Resolvidos</option>
+            <option value="escalated">Escalados</option>
+          </select>
+        </span>
+      </h2>
+      <div class="au-info">
+        Eventos detectados pelos workers (KM, tempo, check-in). Críticos sem
+        justificativa são automaticamente escalados pro Cliq pela IA a cada 10 minutos.
+      </div>
+      <table class="au-table">
+        <thead>
+          <tr>
+            <th style="width:80px">Severidade</th>
+            <th style="width:140px">Tipo</th>
+            <th>Descrição</th>
+            <th style="width:80px">Tech</th>
+            <th style="width:80px">Rota</th>
+            <th style="width:90px">Status</th>
+            <th style="width:140px">Quando</th>
+            <th style="width:200px">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="suspicious-body"><tr><td colspan="8" style="text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SCORES -->
+  <div id="pad-scores" class="au-pad">
+    <div class="au-section">
+      <h2>⭐ Scores técnicos (8 dimensões)</h2>
+      <div class="au-info">
+        Cron diário 03:30 UTC. Pesos: tempo 18% · km 15% · satisfação 13% · pontualidade 12% · check-in 12% · conclusão 12% · resposta 10% · retrabalho 8%.
+      </div>
+      <table class="au-table">
+        <thead>
+          <tr>
+            <th>Técnico</th>
+            <th style="width:90px">Data</th>
+            <th>Overall</th>
+            <th>Pontualidade</th>
+            <th>KM</th>
+            <th>Tempo</th>
+            <th>Check-in</th>
+            <th>Resposta</th>
+            <th>Satisfação</th>
+            <th>Retrabalho</th>
+            <th>Conclusão</th>
+          </tr>
+        </thead>
+        <tbody id="scores-body"><tr><td colspan="11" style="text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- AUDITS -->
+  <div id="pad-audits" class="au-pad">
+    <div class="au-section">
+      <h2>🛣 Auditorias de KM (últimas)</h2>
+      <table class="au-table">
+        <thead>
+          <tr>
+            <th style="width:60px">ID</th>
+            <th>Técnico</th>
+            <th>Rota</th>
+            <th>Previsto KM</th>
+            <th>Real KM</th>
+            <th>Δ km</th>
+            <th>Δ %</th>
+            <th>Δ R$</th>
+            <th>Severidade</th>
+            <th>Quando</th>
+            <th>IA</th>
+          </tr>
+        </thead>
+        <tbody id="km-body"><tr><td colspan="11" style="text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="au-section">
+      <h2>⏱ Auditorias de Tempo (em curso + recentes)</h2>
+      <table class="au-table">
+        <thead>
+          <tr>
+            <th style="width:60px">ID</th>
+            <th>Stop</th>
+            <th>Padrão</th>
+            <th>Tolerância</th>
+            <th>Real</th>
+            <th>Δ min</th>
+            <th>Severidade</th>
+            <th>Justificativa</th>
+            <th>Tech notif</th>
+            <th>Cliente notif</th>
+          </tr>
+        </thead>
+        <tbody id="dur-body"><tr><td colspan="10" style="text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal IA -->
+<div class="modal-bg" id="modal" onclick="if(event.target===this) closeModal()">
+  <div class="modal">
+    <h2><span>🤖 Análise IA</span><button class="close" onclick="closeModal()">×</button></h2>
+    <div id="modal-body">
+      <div style="text-align:center;color:var(--text-muted);padding:30px">Gerando análise…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toast(msg, kind='success') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4500);
+}
+
+async function api(path, opts={}) {
+  const r = await fetch(path, {
+    method: opts.method || 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`${r.status} — ${t.substring(0,200)}`);
+  }
+  return r.json();
+}
+
+function fmtDate(s) {
+  if (!s) return '—';
+  const d = new Date(s);
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+}
+
+function sevBadge(s) {
+  return `<span class="badge b-${s||'normal'}">${s||'normal'}</span>`;
+}
+function statusBadge(s) {
+  return `<span class="badge b-${s||'open'}">${s||'open'}</span>`;
+}
+
+function scoreCell(s) {
+  if (s == null) return '<td>—</td>';
+  const n = parseFloat(s);
+  return `<td><div style="font-weight:700;color:${n>=80?'#4ade80':n>=60?'#fbbf24':'#f87171'}">${n.toFixed(0)}</div><div class="score-bar"><div class="fill" style="width:${n}%"></div></div></td>`;
+}
+
+// ===== Dashboard =====
+async function loadDashboard() {
+  try {
+    const [crit, susp, aten, scores] = await Promise.all([
+      api('/operacional/api/audits/suspicious?status=open&severity=critico&limit=200'),
+      api('/operacional/api/audits/suspicious?status=open&severity=suspeito&limit=200'),
+      api('/operacional/api/audits/suspicious?status=open&severity=atencao&limit=200'),
+      api('/operacional/api/audits/scores'),
+    ]);
+    document.getElementById('k-critico').textContent = crit.length;
+    document.getElementById('k-suspeito').textContent = susp.length;
+    document.getElementById('k-atencao').textContent = aten.length;
+    document.getElementById('k-techs').textContent = scores.length;
+    if (scores.length) {
+      const avg = scores.reduce((a,s) => a + parseFloat(s.overall_score||0), 0) / scores.length;
+      document.getElementById('k-overall').textContent = avg.toFixed(0);
+    } else {
+      document.getElementById('k-overall').textContent = '—';
+    }
+
+    // Badge na aba suspicious
+    const totalOpen = crit.length + susp.length + aten.length;
+    const badge = document.getElementById('susp-badge');
+    if (totalOpen > 0) { badge.style.display = 'inline-block'; badge.textContent = totalOpen; }
+
+    // Ranking
+    const techRes = await api('/operacional/api/technicians');
+    const techMap = Object.fromEntries((techRes||[]).map(t => [t.id, t.name]));
+    const ranked = [...scores].sort((a,b) => parseFloat(b.overall_score||0) - parseFloat(a.overall_score||0));
+    const body = document.getElementById('ranking-body');
+    if (!ranked.length) {
+      body.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#666">Sem scores ainda — clique em "⭐ Recalcular scores"</td></tr>';
+      return;
+    }
+    body.innerHTML = ranked.slice(0, 20).map((s, i) => {
+      const overall = parseFloat(s.overall_score||0);
+      return `
+        <tr>
+          <td style="color:#888">${i+1}</td>
+          <td><b>${techMap[s.technician_id] || ('Tech ' + s.technician_id)}</b></td>
+          <td>${s.date}</td>
+          <td><div style="font-weight:800;font-size:16px;color:${overall>=80?'#4ade80':overall>=60?'#fbbf24':'#f87171'}">${overall.toFixed(0)}</div><div class="score-bar"><div class="fill" style="width:${overall}%"></div></div></td>
+          ${scoreCell(s.punctuality_score)}
+          ${scoreCell(s.km_score)}
+          ${scoreCell(s.time_score)}
+          ${scoreCell(s.checkin_score)}
+          ${scoreCell(s.response_rate_score)}
+          ${scoreCell(s.completion_score)}
+          <td><button class="btn btn-pri" onclick="narrateTech(${s.technician_id}, '${s.date}')">🤖 IA</button></td>
+        </tr>
+      `;
+    }).join('');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ===== Suspicious =====
+let _techMapCache = null;
+async function loadSuspicious() {
+  try {
+    const sev = document.getElementById('filter-severity').value;
+    const st = document.getElementById('filter-status').value;
+    const params = { limit: 100 };
+    if (sev) params.severity = sev;
+    if (st) params.status = st;
+    const events = await api('/operacional/api/audits/suspicious?' + new URLSearchParams(params));
+    if (!_techMapCache) {
+      const techs = await api('/operacional/api/technicians');
+      _techMapCache = Object.fromEntries(techs.map(t => [t.id, t.name]));
+    }
+    const body = document.getElementById('suspicious-body');
+    if (!events.length) {
+      body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#666">Sem eventos com esse filtro</td></tr>';
+      return;
+    }
+    body.innerHTML = events.map(e => `
+      <tr>
+        <td>${sevBadge(e.severity)}</td>
+        <td><code style="font-size:11px;color:#fbbf24">${e.event_type}</code></td>
+        <td>${e.description}</td>
+        <td>${_techMapCache[e.technician_id] || (e.technician_id ? 'Tech '+e.technician_id : '—')}</td>
+        <td>${e.route_id || '—'}</td>
+        <td>${statusBadge(e.status)}</td>
+        <td style="font-size:11px;color:#888">${fmtDate(e.created_at)}</td>
+        <td>
+          ${e.status === 'open' ? `
+            <button class="btn btn-sec" onclick="justifySuspicious(${e.id})">📝 Justificar</button>
+            ${e.route_id ? `<button class="btn btn-warn" onclick="narrateRoute(${e.route_id})">🤖 IA</button>` : ''}
+          ` : ''}
+        </td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    document.getElementById('suspicious-body').innerHTML = `<tr><td colspan="8" style="color:#f87171">${e.message}</td></tr>`;
+  }
+}
+
+async function justifySuspicious(id) {
+  const j = prompt('Justificativa:');
+  if (!j) return;
+  try {
+    await api(`/operacional/api/audits/suspicious/${id}/justify`, { method: 'POST', body: { justification: j } });
+    toast('Evento justificado ✓');
+    loadSuspicious();
+    loadDashboard();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ===== Scores =====
+async function loadScores() {
+  try {
+    const [scores, techs] = await Promise.all([
+      api('/operacional/api/audits/scores'),
+      api('/operacional/api/technicians'),
+    ]);
+    const techMap = Object.fromEntries(techs.map(t => [t.id, t.name]));
+    const body = document.getElementById('scores-body');
+    if (!scores.length) {
+      body.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#666">Sem scores ainda</td></tr>';
+      return;
+    }
+    body.innerHTML = scores.map(s => `
+      <tr>
+        <td><b>${techMap[s.technician_id] || s.technician_id}</b></td>
+        <td>${s.date}</td>
+        ${scoreCell(s.overall_score)}
+        ${scoreCell(s.punctuality_score)}
+        ${scoreCell(s.km_score)}
+        ${scoreCell(s.time_score)}
+        ${scoreCell(s.checkin_score)}
+        ${scoreCell(s.response_rate_score)}
+        ${scoreCell(s.satisfaction_score)}
+        ${scoreCell(s.rework_score)}
+        ${scoreCell(s.completion_score)}
+      </tr>
+    `).join('');
+  } catch (e) {
+    document.getElementById('scores-body').innerHTML = `<tr><td colspan="11" style="color:#f87171">${e.message}</td></tr>`;
+  }
+}
+
+// ===== Audits KM/Tempo =====
+async function loadAudits() {
+  try {
+    const [km, durs, techs] = await Promise.all([
+      api('/operacional/api/audits/routes?limit=50'),
+      api('/operacional/api/audits/durations?limit=50'),
+      api('/operacional/api/technicians'),
+    ]);
+    const techMap = Object.fromEntries(techs.map(t => [t.id, t.name]));
+    const kmBody = document.getElementById('km-body');
+    if (!km.length) {
+      kmBody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#666">Sem auditorias de KM ainda</td></tr>';
+    } else {
+      kmBody.innerHTML = km.map(a => `
+        <tr>
+          <td>${a.id}</td>
+          <td>${techMap[a.technician_id] || a.technician_id}</td>
+          <td>${a.route_id}</td>
+          <td>${parseFloat(a.planned_km||0).toFixed(1)}</td>
+          <td>${parseFloat(a.actual_km||0).toFixed(1)}</td>
+          <td>${parseFloat(a.delta_km||0).toFixed(1)}</td>
+          <td>${parseFloat(a.delta_pct||0).toFixed(1)}%</td>
+          <td>R$ ${parseFloat(a.delta_cost||0).toFixed(2)}</td>
+          <td>${sevBadge(a.severity)}</td>
+          <td style="font-size:11px;color:#888">${fmtDate(a.computed_at)}</td>
+          <td><button class="btn btn-warn" onclick="narrateRoute(${a.route_id})">🤖</button></td>
+        </tr>
+      `).join('');
+    }
+
+    const durBody = document.getElementById('dur-body');
+    if (!durs.length) {
+      durBody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#666">Sem auditorias de tempo ainda</td></tr>';
+    } else {
+      durBody.innerHTML = durs.map(d => `
+        <tr>
+          <td>${d.id}</td>
+          <td>${d.route_stop_id}</td>
+          <td>${d.standard_minutes||'—'} min</td>
+          <td>${d.tolerance_minutes||'—'} min</td>
+          <td><b>${d.actual_minutes||'—'} min</b></td>
+          <td>${d.delta_minutes!=null ? (d.delta_minutes>0?'+':'')+d.delta_minutes : '—'}</td>
+          <td>${sevBadge(d.severity)}</td>
+          <td>${d.justification_code ? `<code style="font-size:11px;color:#4ade80">${d.justification_code}</code>` : '—'}</td>
+          <td>${d.technician_notified_at ? '✓ '+fmtDate(d.technician_notified_at) : '—'}</td>
+          <td>${d.customer_notified_at ? '✓ '+fmtDate(d.customer_notified_at) : '—'}</td>
+        </tr>
+      `).join('');
+    }
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ===== Modais IA =====
+function openModal() { document.getElementById('modal').classList.add('active'); }
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+
+async function narrateRoute(routeId) {
+  document.getElementById('modal-body').innerHTML = '<div style="text-align:center;color:#888;padding:30px">🤔 Gerando análise IA…</div>';
+  openModal();
+  try {
+    const r = await api(`/operacional/api/audits/narrate/route/${routeId}`, { method: 'POST' });
+    document.getElementById('modal-body').innerHTML = `
+      <div class="narrative">${(r.narrative || '(vazio)').replace(/</g,'&lt;')}</div>
+      <details style="font-size:11px;color:#666">
+        <summary style="cursor:pointer">Ver dados brutos enviados ao Claude</summary>
+        <pre style="background:#0D1117;padding:10px;border-radius:6px;overflow:auto;font-size:11px">${JSON.stringify(r.payload, null, 2)}</pre>
+      </details>
+    `;
+  } catch (e) {
+    document.getElementById('modal-body').innerHTML = `<div style="color:#f87171">${e.message}</div>`;
+  }
+}
+
+async function narrateTech(techId, date) {
+  document.getElementById('modal-body').innerHTML = '<div style="text-align:center;color:#888;padding:30px">🤔 Gerando análise do dia do técnico…</div>';
+  openModal();
+  try {
+    const r = await api(`/operacional/api/audits/narrate/technician/${techId}?date=${date}`, { method: 'POST' });
+    document.getElementById('modal-body').innerHTML = `
+      <div class="narrative">${(r.narrative || '(vazio)').replace(/</g,'&lt;')}</div>
+      <details style="font-size:11px;color:#666">
+        <summary style="cursor:pointer">Ver dados brutos</summary>
+        <pre style="background:#0D1117;padding:10px;border-radius:6px;overflow:auto;font-size:11px">${JSON.stringify(r.payload, null, 2)}</pre>
+      </details>
+    `;
+  } catch (e) {
+    document.getElementById('modal-body').innerHTML = `<div style="color:#f87171">${e.message}</div>`;
+  }
+}
+
+async function trigger(job) {
+  toast(`Disparando job ${job}…`);
+  try {
+    const r = await api(`/operacional/api/audits/triggers/${job}`, { method: 'POST' });
+    toast(`Job ${job}: ${JSON.stringify(r).substring(0,80)}`, 'success');
+    setTimeout(() => { loadDashboard(); loadSuspicious(); loadAudits(); loadScores(); }, 800);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ===== Tabs =====
+document.getElementById('tabs').addEventListener('click', (e) => {
+  if (!e.target.dataset.pad) return;
+  const pad = e.target.dataset.pad;
+  document.querySelectorAll('.au-tab').forEach(t => t.classList.toggle('active', t.dataset.pad === pad));
+  document.querySelectorAll('.au-pad').forEach(p => p.classList.toggle('active', p.id === `pad-${pad}`));
+  if (pad === 'suspicious') loadSuspicious();
+  else if (pad === 'scores') loadScores();
+  else if (pad === 'audits') loadAudits();
+});
+
+document.getElementById('filter-severity').addEventListener('change', loadSuspicious);
+document.getElementById('filter-status').addEventListener('change', loadSuspicious);
+
+// INIT
+loadDashboard();
+setInterval(loadDashboard, 60000);
+</script>

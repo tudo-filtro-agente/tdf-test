@@ -1,0 +1,312 @@
+<% var pageTitle = 'Scripts RAV — TDF'; var activePage = 'treinamento'; %>
+<%- include('../layout', { user, activePage, pageTitle }) %>
+
+<div class="container" style="max-width:1200px">
+  <div style="margin:18px 0 24px">
+    <a href="/treinamento" style="color:#5ba3f5;text-decoration:none;font-size:13px">← Voltar ao Hub de Treinamento</a>
+  </div>
+
+  <div style="background:linear-gradient(135deg,#0d1117,#1a0e2a);border:2px solid #a371f7;border-radius:14px;padding:22px;margin-bottom:22px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:32px">📚</span>
+      <div style="flex:1;min-width:240px">
+        <h1 style="margin:0;color:#c084fc;font-size:22px">Scripts de Vendas RAV — adaptados TDF</h1>
+        <p style="margin:6px 0 0;color:#aaa;font-size:13px">110+ scripts copy-paste pra abordagem, qualificação, oferta e quebra de objeção. Adaptados do e-book <strong>Scripts RAV (Niury Martins)</strong> pra realidade da Tudo de Filtro: Estação, Iron Free, Bebedouro, Filtro de Entrada, Refis.</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center">
+      <input id="rav-search" type="text" placeholder="🔍 Buscar nos scripts (ex: 'esposa', 'caro', 'condomínio')..." style="flex:1;min-width:260px;padding:10px 14px;background:#0a0a0f;border:1px solid #30363D;border-radius:8px;color:#fff;font-size:13px;outline:none">
+      <button onclick="ravBuscar()" style="background:#a371f7;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-weight:700;cursor:pointer;font-size:13px">Buscar</button>
+      <button onclick="ravLimpar()" style="background:transparent;color:#aaa;border:1px solid #30363D;border-radius:8px;padding:10px 16px;font-size:12px;cursor:pointer">Limpar</button>
+    </div>
+    <div id="rav-search-info" style="color:#888;font-size:11px;margin-top:8px;display:none"></div>
+  </div>
+
+  <!-- Cards dos módulos -->
+  <div id="rav-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:22px">
+    <% modulos.forEach(function(m){ %>
+      <a href="#" onclick="ravAbrir('<%= m.slug %>');return false" data-slug="<%= m.slug %>" class="rav-card" style="display:block;background:#161725;border:1px solid #30363D;border-radius:12px;padding:18px;text-decoration:none;color:#e5e7eb;transition:all .15s;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:28px"><%= m.icon %></span>
+          <span style="background:rgba(167,113,247,.15);color:#c084fc;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:800;text-transform:uppercase">Módulo <%= modulos.indexOf(m) %></span>
+        </div>
+        <h3 style="margin:0 0 6px;color:#fff;font-size:15px;font-weight:800"><%= m.titulo %></h3>
+        <p style="margin:0;color:#9ca3af;font-size:12px;line-height:1.5"><%= m.desc %></p>
+        <div style="margin-top:12px;color:#a371f7;font-size:11px;font-weight:700">📖 Abrir scripts →</div>
+      </a>
+    <% }); %>
+  </div>
+
+  <!-- Bonus: respostas rápidas WATI -->
+  <div style="background:#0d2818;border:1px solid #22c55e;border-radius:12px;padding:16px;margin-bottom:22px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:24px">⚡</span>
+      <div style="flex:1;min-width:200px">
+        <h3 style="margin:0;color:#22c55e;font-size:15px">Bônus — 30 Respostas Rápidas WATI</h3>
+        <p style="margin:4px 0 0;color:#9ca3af;font-size:12px">Atalhos pré-cadastrados no WATI: <code style="background:#000;padding:1px 5px;border-radius:3px;color:#22c55e">/tacaro</code> <code style="background:#000;padding:1px 5px;border-radius:3px;color:#22c55e">/pensar</code> <code style="background:#000;padding:1px 5px;border-radius:3px;color:#22c55e">/conjuge</code> <code style="background:#000;padding:1px 5px;border-radius:3px;color:#22c55e">/assembleia</code> e mais 26.</p>
+      </div>
+      <button onclick="ravAbrir('respostas-rapidas')" style="background:#22c55e;color:#000;border:none;border-radius:8px;padding:8px 16px;font-weight:800;cursor:pointer;font-size:12px">Ver atalhos</button>
+    </div>
+  </div>
+
+  <!-- Conteúdo do módulo aberto -->
+  <div id="rav-content" style="display:none;background:#0d1117;border:1px solid #30363D;border-radius:12px;padding:24px;color:#e5e7eb">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid #30363D">
+      <button onclick="ravFechar()" style="background:#1a1a1a;border:1px solid #30363D;color:#aaa;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">← Voltar</button>
+      <h2 id="rav-titulo" style="flex:1;margin:0;color:#fff;font-size:18px"></h2>
+      <button onclick="ravCopiar()" title="Copiar conteúdo todo" style="background:#1a1a1a;border:1px solid #30363D;color:#aaa;border-radius:6px;padding:6px 12px;font-size:11px;cursor:pointer">📋 Copiar tudo</button>
+    </div>
+    <div id="rav-md" class="rav-md-body"></div>
+  </div>
+
+</div>
+
+<style>
+.rav-card:hover{border-color:#a371f7;transform:translateY(-2px);box-shadow:0 8px 24px rgba(167,113,247,.25)}
+.rav-md-body{font-size:14px;line-height:1.7;color:#e5e7eb}
+.rav-md-body h1{color:#c084fc;font-size:24px;margin:24px 0 14px;border-bottom:1px solid #30363D;padding-bottom:8px}
+.rav-md-body h2{color:#a371f7;font-size:19px;margin:24px 0 12px}
+.rav-md-body h3{color:#7cb9f5;font-size:16px;margin:18px 0 10px;font-weight:700}
+.rav-md-body h4{color:#fbbf24;font-size:14px;margin:14px 0 8px;font-weight:700}
+.rav-md-body p{margin:8px 0}
+.rav-md-body ul,.rav-md-body ol{padding-left:24px;margin:8px 0}
+.rav-md-body li{margin:4px 0;color:#cbd5db}
+.rav-md-body strong{color:#fff}
+.rav-md-body em{color:#fbbf24;font-style:normal;font-weight:600}
+.rav-md-body code{background:#1a1a1a;color:#22c55e;padding:2px 6px;border-radius:4px;font-size:12px;font-family:monospace}
+.rav-md-body pre{background:#0a0a0a;border:1px solid #30363D;border-radius:8px;padding:14px;overflow-x:auto;margin:12px 0}
+.rav-md-body pre code{background:transparent;color:#cbd5db;padding:0;font-size:12.5px;line-height:1.6;display:block}
+.rav-md-body blockquote{background:rgba(167,113,247,.08);border-left:3px solid #a371f7;padding:10px 16px;margin:14px 0;color:#cbd5db;font-style:italic;border-radius:0 6px 6px 0;position:relative}
+.rav-md-body table{border-collapse:collapse;margin:14px 0;width:100%;font-size:13px}
+.rav-md-body th{background:#161725;color:#c084fc;padding:8px 12px;text-align:left;border:1px solid #30363D;font-weight:700}
+.rav-md-body td{padding:8px 12px;border:1px solid #30363D;vertical-align:top}
+.rav-md-body td strong{color:#fff}
+.rav-md-body hr{border:none;border-top:1px solid #30363D;margin:20px 0}
+.rav-md-body a{color:#5ba3f5;text-decoration:underline}
+.rav-md-body .rav-highlight{background:#fbbf24;color:#000;padding:0 4px;border-radius:3px}
+
+/* Botão copiar individual em cada script */
+.rav-copy-wrap{position:relative;margin:14px 0}
+.rav-copy-wrap > .rav-copy-btn{
+  position:absolute;top:8px;right:8px;
+  background:rgba(167,113,247,.15);color:#c084fc;
+  border:1px solid #a371f7;border-radius:5px;
+  padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;
+  text-transform:uppercase;letter-spacing:.4px;
+  opacity:.5;transition:all .15s;z-index:2
+}
+.rav-copy-wrap:hover > .rav-copy-btn{opacity:1}
+.rav-copy-wrap > .rav-copy-btn:hover{background:#a371f7;color:#fff}
+.rav-copy-wrap > .rav-copy-btn.copied{background:#22c55e;color:#000;border-color:#22c55e}
+.rav-md-body li.rav-script-li{position:relative;background:rgba(34,197,94,.06);border-left:2px solid #22c55e;padding:6px 50px 6px 12px;margin:6px 0;border-radius:0 4px 4px 0;list-style:none;color:#dcfce7}
+.rav-md-body li.rav-script-li .rav-copy-btn-inline{
+  position:absolute;top:50%;right:6px;transform:translateY(-50%);
+  background:rgba(34,197,94,.15);color:#22c55e;
+  border:1px solid #22c55e;border-radius:4px;
+  padding:2px 8px;font-size:9px;font-weight:800;cursor:pointer;
+  opacity:.6;transition:all .15s
+}
+.rav-md-body li.rav-script-li:hover .rav-copy-btn-inline{opacity:1}
+.rav-md-body li.rav-script-li .rav-copy-btn-inline:hover{background:#22c55e;color:#000}
+.rav-md-body li.rav-script-li .rav-copy-btn-inline.copied{background:#22c55e;color:#000}
+.rav-md-body ul:has(li.rav-script-li){list-style:none;padding-left:0}
+</style>
+
+<!-- marked.js pra render markdown (CDN, leve) -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+<script>
+const RAV_MODULOS = <%- JSON.stringify(modulos) %>;
+let _RAV_RAW = '';
+
+async function ravAbrir(slug){
+  document.getElementById('rav-titulo').textContent = '⏳ Carregando...';
+  document.getElementById('rav-md').innerHTML = '<div style="text-align:center;color:#888;padding:30px">Carregando scripts...</div>';
+  document.getElementById('rav-content').style.display = 'block';
+  document.getElementById('rav-cards').style.display = 'none';
+  window.scrollTo({ top: document.getElementById('rav-content').offsetTop - 80, behavior: 'smooth' });
+  try {
+    const r = await fetch('/treinamento/scripts-rav/raw/' + encodeURIComponent(slug));
+    const d = await r.json();
+    if (d.error) { document.getElementById('rav-md').innerHTML = '<div style="color:#ef4444;padding:20px">❌ ' + d.error + '</div>'; return; }
+    _RAV_RAW = d.markdown || '';
+    document.getElementById('rav-titulo').textContent = (RAV_MODULOS.find(m => m.slug === slug)?.icon || '') + ' ' + (d.titulo || slug);
+    const html = marked.parse(_RAV_RAW);
+    document.getElementById('rav-md').innerHTML = html;
+    ravAddCopyBtns();
+  } catch(e) {
+    document.getElementById('rav-md').innerHTML = '<div style="color:#ef4444;padding:20px">❌ ' + e.message + '</div>';
+  }
+}
+
+// Pós-processa: adiciona botão "📋 Copiar" em cada script (blockquote, pre, li com aspas)
+function ravAddCopyBtns(){
+  const body = document.getElementById('rav-md');
+  if (!body) return;
+
+  // 1. Blockquotes (scripts em > "...")
+  body.querySelectorAll('blockquote').forEach(bq => {
+    const wrap = document.createElement('div');
+    wrap.className = 'rav-copy-wrap';
+    bq.parentNode.insertBefore(wrap, bq);
+    wrap.appendChild(bq);
+    const btn = document.createElement('button');
+    btn.className = 'rav-copy-btn';
+    btn.textContent = '📋 Copiar';
+    btn.onclick = (e) => { e.stopPropagation(); ravCopiarTexto(bq.innerText.trim(), btn); };
+    wrap.appendChild(btn);
+  });
+
+  // 2. Pre/code blocks
+  body.querySelectorAll('pre').forEach(pre => {
+    if (pre.parentElement?.classList.contains('rav-copy-wrap')) return; // já wrapado
+    const wrap = document.createElement('div');
+    wrap.className = 'rav-copy-wrap';
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+    const btn = document.createElement('button');
+    btn.className = 'rav-copy-btn';
+    btn.textContent = '📋 Copiar';
+    btn.onclick = (e) => { e.stopPropagation(); ravCopiarTexto(pre.innerText.trim(), btn); };
+    wrap.appendChild(btn);
+  });
+
+  // 3. <li> que parecem scripts (texto começa com aspas " ou frase entre aspas)
+  body.querySelectorAll('li').forEach(li => {
+    const txt = li.innerText.trim();
+    // Detecta script: começa com " ou tem 80%+ aspas
+    const looksLikeScript = (
+      txt.startsWith('"') ||
+      txt.startsWith('"') ||
+      // ou começa com colchete tipo [Nome] (placeholder de script)
+      /^\[[A-Z][a-z]+\]/.test(txt) ||
+      // ou frase longa de pergunta/script (>40 chars com pontuação)
+      (txt.length > 40 && /[?.!]$/.test(txt) && !li.querySelector('strong, em, code'))
+    );
+    if (!looksLikeScript) return;
+    li.classList.add('rav-script-li');
+    const btn = document.createElement('button');
+    btn.className = 'rav-copy-btn-inline';
+    btn.textContent = '📋';
+    btn.title = 'Copiar';
+    btn.onclick = (e) => { e.stopPropagation(); ravCopiarTexto(txt.replace(/^["""]|["""]$/g,''), btn); };
+    li.appendChild(btn);
+  });
+
+  // 4. Parágrafos curtos entre aspas (também são scripts)
+  body.querySelectorAll('p').forEach(p => {
+    const txt = p.innerText.trim();
+    if (txt.length < 30 || txt.length > 600) return;
+    const isQuote = (txt.startsWith('"') && txt.endsWith('"')) ||
+                    (txt.startsWith('"') && txt.endsWith('"'));
+    if (!isQuote) return;
+    if (p.parentElement?.classList?.contains('rav-copy-wrap')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'rav-copy-wrap';
+    p.parentNode.insertBefore(wrap, p);
+    wrap.appendChild(p);
+    p.style.background = 'rgba(34,197,94,.06)';
+    p.style.borderLeft = '2px solid #22c55e';
+    p.style.padding = '8px 50px 8px 14px';
+    p.style.borderRadius = '0 4px 4px 0';
+    p.style.color = '#dcfce7';
+    const btn = document.createElement('button');
+    btn.className = 'rav-copy-btn';
+    btn.textContent = '📋 Copiar';
+    btn.onclick = (e) => { e.stopPropagation(); ravCopiarTexto(txt.replace(/^["""]|["""]$/g,''), btn); };
+    wrap.appendChild(btn);
+  });
+}
+
+async function ravCopiarTexto(texto, btn){
+  try {
+    await navigator.clipboard.writeText(texto);
+    const original = btn.textContent;
+    btn.textContent = '✓ Copiado';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.classList.remove('copied');
+    }, 1500);
+  } catch(e) {
+    // Fallback pra browsers antigos
+    const ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); btn.textContent = '✓'; } catch(_){ alert('Erro: ' + e.message); }
+    document.body.removeChild(ta);
+  }
+}
+
+function ravFechar(){
+  document.getElementById('rav-content').style.display = 'none';
+  document.getElementById('rav-cards').style.display = 'grid';
+  document.getElementById('rav-search-info').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function ravBuscar(){
+  const q = document.getElementById('rav-search').value.trim().toLowerCase();
+  if (!q) { ravLimpar(); return; }
+  const info = document.getElementById('rav-search-info');
+  info.style.display = 'block';
+  info.textContent = '⏳ Buscando "' + q + '" em todos os módulos...';
+  // Faz fetch de todos os módulos em paralelo + filtra trechos que contêm o termo
+  const results = [];
+  await Promise.all(RAV_MODULOS.map(async m => {
+    try {
+      const r = await fetch('/treinamento/scripts-rav/raw/' + encodeURIComponent(m.slug));
+      const d = await r.json();
+      if (d.markdown && d.markdown.toLowerCase().includes(q)) {
+        // Pega trechos relevantes (parágrafos que contêm o termo)
+        const linhas = d.markdown.split(/\n\n+/);
+        const matches = linhas.filter(l => l.toLowerCase().includes(q)).slice(0, 5);
+        results.push({ ...m, matches });
+      }
+    } catch(_){}
+  }));
+  if (!results.length) {
+    info.innerHTML = '❌ Nenhum script encontrado com "<strong>' + q + '</strong>". Tenta outro termo.';
+    return;
+  }
+  info.innerHTML = '✅ Encontrado em <strong>' + results.length + '</strong> módulo(s)';
+  // Renderiza resultados como uma view própria
+  let html = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid #30363D">' +
+    '<button onclick="ravFechar()" style="background:#1a1a1a;border:1px solid #30363D;color:#aaa;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">← Voltar</button>' +
+    '<h2 style="flex:1;margin:0;color:#fff;font-size:18px">🔍 Resultados: "' + q + '"</h2></div>';
+  for (const r of results) {
+    html += '<div style="margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid #1a1a1a">';
+    html += '<h3 style="color:#c084fc;margin:0 0 10px"><a href="#" onclick="ravAbrir(\'' + r.slug + '\');return false" style="color:#c084fc">' + r.icon + ' ' + r.titulo + ' →</a></h3>';
+    for (const m of r.matches) {
+      const trecho = m.replace(new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi'), '<mark class="rav-highlight">$1</mark>');
+      html += '<div style="background:#161725;border-left:3px solid #a371f7;padding:10px 14px;margin-bottom:6px;border-radius:0 6px 6px 0;font-size:12.5px;line-height:1.6">' + marked.parseInline(trecho.slice(0, 400)) + (m.length > 400 ? '...' : '') + '</div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById('rav-titulo').textContent = '🔍 Busca: "' + q + '"';
+  document.getElementById('rav-md').innerHTML = html;
+  document.getElementById('rav-content').style.display = 'block';
+  document.getElementById('rav-cards').style.display = 'none';
+}
+
+function ravLimpar(){
+  document.getElementById('rav-search').value = '';
+  document.getElementById('rav-search-info').style.display = 'none';
+  ravFechar();
+}
+
+async function ravCopiar(){
+  if (!_RAV_RAW) return;
+  try {
+    await navigator.clipboard.writeText(_RAV_RAW);
+    alert('✅ Copiado pra área de transferência (' + _RAV_RAW.length + ' caracteres)');
+  } catch(e) { alert('Erro ao copiar: ' + e.message); }
+}
+
+// Enter na busca também dispara
+document.getElementById('rav-search').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); ravBuscar(); }
+});
+</script>

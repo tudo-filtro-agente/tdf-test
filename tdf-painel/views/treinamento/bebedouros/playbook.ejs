@@ -1,0 +1,197 @@
+<%- include('../../layout', { user, activePage, pageTitle }) %>
+<%- include('_shared') %>
+<style>
+.pb-nav{position:sticky;top:0;z-index:20;background:#0a0e14;border-bottom:1px solid #1f2b3a;display:flex;gap:6px;overflow-x:auto;padding:8px 4px;margin:0 -16px 12px;scrollbar-width:none}
+.pb-nav::-webkit-scrollbar{display:none}
+.pb-nav a{white-space:nowrap;color:#8899AA;text-decoration:none;font-size:.8rem;padding:6px 11px;border-radius:20px;border:1px solid #1f2b3a}
+.pb-nav a:hover{color:#c084fc;border-color:#c084fc55}
+.pb-sec{scroll-margin-top:60px;margin:26px 0}
+.pb-sec>h2{color:#c084fc;font-size:1.2rem;font-weight:800;border-left:3px solid #c084fc;padding-left:10px;margin:0 0 12px}
+.pb-step{background:#0D1117;border:1px solid #1f2b3a;border-radius:12px;padding:14px;margin:10px 0}
+.pb-step .h{display:flex;align-items:center;gap:9px;font-weight:700;color:#fff;font-size:1.02rem}
+.pb-step .h .n{background:#c084fc;color:#1a0a2e;font-weight:800;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0}
+.pb-step .obj{color:#8899AA;font-size:.86rem;margin:6px 0}
+.pb-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+@media(max-width:620px){.pb-grid2{grid-template-columns:1fr}}
+.pb-box{border-radius:9px;padding:9px 11px;font-size:.85rem}
+.pb-box h5{margin:0 0 5px;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px}
+.pb-box ul{margin:0;padding-left:16px;color:#c9d4de}.pb-box li{margin:3px 0}
+.pb-do{background:rgba(46,160,67,.07);border:1px solid #3FB95033}.pb-do h5{color:#3FB950}
+.pb-ask{background:rgba(0,170,255,.06);border:1px solid #00AAFF33}.pb-ask h5{color:#00AAFF}
+.pb-dont{background:rgba(239,68,68,.06);border:1px solid #ef444433}.pb-dont h5{color:#ef6a6a}
+.pb-ex{margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:620px){.pb-ex{grid-template-columns:1fr}}
+.pb-ex .g,.pb-ex .b{border-radius:9px;padding:9px 11px;font-size:.85rem}
+.pb-ex .g{background:rgba(46,160,67,.07);border:1px solid #3FB95033;color:#c8f0d4}
+.pb-ex .b{background:rgba(239,68,68,.06);border:1px solid #ef444433;color:#f2c4c4}
+.pb-ex b{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+.pb-crit{margin-top:8px;font-size:.8rem;color:#F59E0B}
+.pb-script{background:#160e22;border:1px solid #c084fc33;border-left:3px solid #c084fc;border-radius:10px;padding:12px 40px 12px 13px;margin:9px 0;position:relative;color:#e7dcf5;line-height:1.55}
+.pb-script .cx{color:#a78bce;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.pb-cp{position:absolute;top:8px;right:8px;background:#2a1a3d;border:1px solid #c084fc44;color:#c084fc;border-radius:7px;font-size:11px;padding:4px 9px;cursor:pointer}
+.pb-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.pb-pocket{background:#0b1220;border:1px solid #1f2b3a;border-radius:12px;padding:13px}
+.pb-pocket .t{font-weight:800;color:#c084fc;font-size:.95rem;margin-bottom:7px}
+.pb-pocket ul{margin:0;padding-left:16px;color:#dbe7f0;font-size:.85rem}.pb-pocket li{margin:4px 0}
+.pb-obj{background:#0D1117;border:1px solid #1f2b3a;border-radius:10px;padding:12px;margin:8px 0}
+.pb-obj .q{color:#ef9a9a;font-weight:700;margin-bottom:6px}
+</style>
+<%
+function esc(s){ return String(s==null?'':s).replace(/"/g,'&quot;'); }
+var ICONMAP={ 'clipboard':'📋','hand-wave':'👋','handshake':'🤝','search':'🔍','target':'🎯','ruler':'📏','users':'👥','layout-grid':'💡','gem':'💎','receipt':'🧾','shield':'🛡️','scale':'⚖️','check-circle':'✅','plus-circle':'🎁','flag':'🚩','database':'🗂️','repeat':'🔁','life-buoy':'🛟','phone':'📞','message':'💬','money':'💰','clock':'⏱️' };
+function ic(n){ if(!n) return ''; return /[^\x00-\x7F]/.test(n) ? n : (ICONMAP[n]||'▸'); }
+%>
+<div class="tb-wrap">
+  <a class="tb-back" href="<%= base %>">← Voltar à academia</a>
+
+  <% if (!PB) { %>
+    <h1 style="color:#fff;margin:12px 0">🎯 Playbook Prático do Closer</h1>
+    <div class="tb-callout alerta"><div class="ct">Em preparação</div><div>O conteúdo do playbook está sendo finalizado e aparece aqui automaticamente.</div></div>
+  <% } else { %>
+    <div style="margin:12px 0 4px">
+      <h1 style="color:#fff;margin:0;font-size:1.5rem">🎯 <%= (PB.META&&PB.META.titulo)||'Playbook Prático do Closer' %></h1>
+      <p style="color:#8899AA;margin:4px 0"><%= (PB.META&&PB.META.subtitulo)||'Do primeiro oi ao CRM: o que falar, perguntar e fazer em cada etapa.' %></p>
+    </div>
+
+    <div class="pb-nav">
+      <a href="#fluxo">Fluxo</a><a href="#abertura">Abertura</a><a href="#rapport">Rapport</a><a href="#descoberta">Descoberta</a>
+      <a href="#bantdp">BANT-DP</a><a href="#recomendacao">Recomendação</a><a href="#valor">Valor</a><a href="#proposta">Proposta</a>
+      <a href="#objecoes">Objeções</a><a href="#negociacao">Negociação</a><a href="#fechamento">Fechamento</a><a href="#upsell">Upsell</a>
+      <a href="#followup">Follow-up</a><a href="#cartoes">Cartões</a><a href="#checklist">Checklist</a>
+    </div>
+
+    <!-- FLUXO -->
+    <div class="pb-sec" id="fluxo"><h2>1. Fluxo completo da venda</h2>
+      <% (PB.FLUXO||[]).forEach(function(s){ %>
+        <div class="pb-step">
+          <div class="h"><span class="n"><%= s.num %></span><span><%= ic(s.icon) %> <%= s.titulo %></span></div>
+          <% if(s.objetivo){ %><div class="obj">🎯 <%= s.objetivo %></div><% } %>
+          <div class="pb-grid2">
+            <% if(s.fazer&&s.fazer.length){ %><div class="pb-box pb-do"><h5>Fazer</h5><ul><% s.fazer.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% } %>
+            <% if(s.perguntar&&s.perguntar.length){ %><div class="pb-box pb-ask"><h5>Perguntar</h5><ul><% s.perguntar.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% } %>
+          </div>
+          <% if(s.evitar&&s.evitar.length){ %><div class="pb-box pb-dont" style="margin-top:8px"><h5>Evitar</h5><ul><% s.evitar.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% } %>
+          <% if(s.exemploBom||s.exemploRuim){ %><div class="pb-ex"><div class="g"><b>✅ Exemplo bom</b><%- s.exemploBom||'' %></div><div class="b"><b>⛔ Exemplo ruim</b><%- s.exemploRuim||'' %></div></div><% } %>
+          <% if(s.criterio){ %><div class="pb-crit">➡️ Critério para avançar: <%- s.criterio %></div><% } %>
+        </div>
+      <% }) %>
+    </div>
+
+    <%
+    function scriptBlock(cx, fala){ %>
+      <div class="pb-script"><button class="pb-cp" onclick="TB.copy(this, this.parentNode.querySelector('.fl').innerText)">copiar</button><% if(cx){ %><div class="cx"><%= cx %></div><% } %><div class="fl"><%- fala %></div></div>
+    <% }
+    %>
+
+    <!-- ABERTURA -->
+    <div class="pb-sec" id="abertura"><h2>2. Abertura</h2>
+      <% (PB.ABERTURAS||[]).forEach(function(a){ scriptBlock(a.canal, a.fala); }) %>
+      <% if(PB.ABERTURA_PORQUE&&PB.ABERTURA_PORQUE.length){ %><div class="pb-box pb-do"><h5>Por que funciona</h5><ul><% PB.ABERTURA_PORQUE.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% } %>
+    </div>
+
+    <!-- RAPPORT -->
+    <% if(PB.RAPPORT){ %><div class="pb-sec" id="rapport"><h2>3. Rapport direto</h2>
+      <% if(PB.RAPPORT.intro&&PB.RAPPORT.intro.length){ %><div class="pb-box pb-ask"><h5>Rapport é transmitir</h5><ul><% PB.RAPPORT.intro.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% } %>
+      <% (PB.RAPPORT.tecnicas||[]).forEach(function(t){ scriptBlock(t.nome, t.exemplo); }) %>
+      <% (PB.RAPPORT.segmentos||[]).forEach(function(s){ scriptBlock('Segmento: '+s.seg, s.fala); }) %>
+      <% if(PB.RAPPORT.bom||PB.RAPPORT.ruim){ %><div class="pb-ex"><div class="g"><b>✅ Rapport certo</b><%- PB.RAPPORT.bom||'' %></div><div class="b"><b>⛔ Rapport errado</b><%- PB.RAPPORT.ruim||'' %></div></div><% } %>
+    </div><% } %>
+
+    <!-- DESCOBERTA -->
+    <% if(PB.DESCOBERTA){ %><div class="pb-sec" id="descoberta"><h2>4. Descoberta do motivo</h2>
+      <% if(PB.DESCOBERTA.perguntas){ %><div class="pb-box pb-ask"><h5>Perguntas</h5><ul><% PB.DESCOBERTA.perguntas.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% } %>
+      <% if(PB.DESCOBERTA.identificar){ %><div class="pb-box pb-do" style="margin-top:8px"><h5>Identificar</h5><ul><% PB.DESCOBERTA.identificar.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% } %>
+    </div><% } %>
+
+    <!-- BANT-DP -->
+    <% if(PB.BANTDP){ var bd=PB.BANTDP; %><div class="pb-sec" id="bantdp"><h2>5. Qualificação BANT-DP</h2>
+      <% function qlist(tit,arr){ if(!arr||!arr.length)return; %><div class="pb-box pb-ask" style="margin:8px 0"><h5><%= tit %></h5><ul><% arr.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% }
+      qlist('Need (necessidade)', bd.need); qlist('Dimensionamento', bd.dimensionamento); %>
+      <% if(bd.checklist&&bd.checklist.length){ %><div class="tb-callout perigo"><div class="ct">⛔ Checklist obrigatório para "qualificado"</div><div style="font-size:.85rem"><%= bd.checklist.join(' · ') %></div></div><% } %>
+      <% if(bd.budget){ qlist('Budget', bd.budget.perguntas); if(bd.budget.evitar){ %><div class="pb-box pb-dont"><h5>Evitar</h5><ul><li><%- bd.budget.evitar %></li></ul></div><% } } %>
+      <% qlist('Authority (decisor)', bd.authority); qlist('Timing (prazo)', bd.timing); qlist('Processo de compra', bd.processo); %>
+    </div><% } %>
+
+    <!-- CONFIRMAÇÃO + RECOMENDAÇÃO -->
+    <div class="pb-sec" id="recomendacao"><h2>6. Confirmar diagnóstico e recomendar</h2>
+      <% if(PB.CONFIRMACAO){ scriptBlock('Confirmação do diagnóstico', PB.CONFIRMACAO.script); if(PB.CONFIRMACAO.avaliar){ %><div class="pb-box pb-ask"><h5>Avaliar</h5><ul><% PB.CONFIRMACAO.avaliar.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% } } %>
+      <% if(PB.RECOMENDACAO){ if(PB.RECOMENDACAO.estrutura){ %><div class="pb-box pb-do"><h5>Estrutura da recomendação</h5><ul><% PB.RECOMENDACAO.estrutura.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% }
+        if(PB.RECOMENDACAO.script) scriptBlock('Script de recomendação', PB.RECOMENDACAO.script);
+        (PB.RECOMENDACAO.porModelo||[]).forEach(function(m){ scriptBlock(m.litros+' litros', m.fala); }); } %>
+    </div>
+
+    <!-- VALOR -->
+    <% if(PB.VALOR&&PB.VALOR.length){ %><div class="pb-sec" id="valor"><h2>7. Apresentação de valor (Característica → Benefício → Impacto)</h2>
+      <div style="overflow-x:auto"><table class="tb-table"><thead><tr><th>Componente</th><th>Característica</th><th>Benefício</th><th>Impacto</th></tr></thead><tbody>
+      <% PB.VALOR.forEach(function(v){ %><tr><td><b><%= v.componente %></b></td><td><%- v.caracteristica %></td><td><%- v.beneficio %></td><td><%- v.impacto %></td></tr><% }) %>
+      </tbody></table></div>
+    </div><% } %>
+
+    <!-- PROPOSTA -->
+    <% if(PB.PROPOSTA){ %><div class="pb-sec" id="proposta"><h2>8. Apresentação da proposta</h2>
+      <% if(PB.PROPOSTA.itens){ %><div class="pb-box pb-do"><h5>Apresentar</h5><ul><% PB.PROPOSTA.itens.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% } %>
+      <% if(PB.PROPOSTA.script) scriptBlock('Script da proposta', PB.PROPOSTA.script); %>
+      <% if(PB.PROPOSTA.perguntaCerta){ %><div class="pb-ex"><div class="g"><b>✅ Pergunte</b><%- PB.PROPOSTA.perguntaCerta %></div><div class="b"><b>⛔ Não pergunte</b><%- PB.PROPOSTA.perguntaEvitar||'"Vai fechar?"' %></div></div><% } %>
+    </div><% } %>
+
+    <!-- OBJEÇÕES -->
+    <% if(PB.OBJECOES&&PB.OBJECOES.length){ %><div class="pb-sec" id="objecoes"><h2>9. Biblioteca de objeções</h2>
+      <% if(PB.OBJECAO_ESTRUTURA&&PB.OBJECAO_ESTRUTURA.length){ %><div class="pb-box pb-do"><h5>Estrutura (sempre)</h5><ul><% PB.OBJECAO_ESTRUTURA.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% } %>
+      <% PB.OBJECOES.forEach(function(o){ %>
+        <div class="pb-obj"><div class="q">“<%= o.objecao %>”</div>
+          <div class="pb-script" style="margin:0"><button class="pb-cp" onclick="TB.copy(this, this.parentNode.querySelector('.fl').innerText)">copiar</button><div class="fl"><%- o.resposta %></div></div>
+          <% if(o.investigar&&o.investigar.length){ %><div style="font-size:.8rem;color:#8899AA;margin-top:6px">Investigar: <%= o.investigar.join(' · ') %></div><% } %>
+        </div>
+      <% }) %>
+    </div><% } %>
+
+    <!-- NEGOCIAÇÃO -->
+    <% if(PB.NEGOCIACAO){ var ng=PB.NEGOCIACAO; %><div class="pb-sec" id="negociacao"><h2>10. Negociação</h2>
+      <div class="pb-grid2">
+        <% if(ng.regras){ %><div class="pb-box pb-dont"><h5>Nunca</h5><ul><% ng.regras.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% } %>
+        <% if(ng.concessoes){ %><div class="pb-box pb-do"><h5>Trocar desconto por</h5><ul><% ng.concessoes.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% } %>
+      </div>
+      <% if(ng.ruim||ng.bom){ %><div class="pb-ex"><div class="b"><b>⛔ Negociação ruim</b><%- (ng.ruim&&('Cliente: '+ng.ruim.cliente+'<br>Closer: '+ng.ruim.closer))||'' %></div><div class="g"><b>✅ Negociação correta</b><%- (ng.bom&&('Cliente: '+ng.bom.cliente+'<br>Closer: '+ng.bom.closer))||'' %></div></div><% } %>
+    </div><% } %>
+
+    <!-- FECHAMENTO -->
+    <% if(PB.FECHAMENTOS&&PB.FECHAMENTOS.length){ %><div class="pb-sec" id="fechamento"><h2>11. Fechamento</h2>
+      <% PB.FECHAMENTOS.forEach(function(f){ scriptBlock(f.nome, f.fala); }) %>
+    </div><% } %>
+
+    <!-- UPSELL -->
+    <% if(PB.UPSELL){ var up=PB.UPSELL; %><div class="pb-sec" id="upsell"><h2>12. Upsell dos 3 refis</h2>
+      <% if(up.momento){ %><div class="tb-callout sucesso"><div><b>Momento:</b> <%- up.momento %></div></div><% } %>
+      <% if(up.scriptPrincipal) scriptBlock('Script principal', up.scriptPrincipal); %>
+      <% (up.scripts||[]).forEach(function(s){ scriptBlock(s.contexto, s.fala); }) %>
+      <% if(up.objecoes&&up.objecoes.length){ %><div class="pb-box pb-dont"><h5>Objeções comuns</h5><ul><% up.objecoes.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% } %>
+    </div><% } %>
+
+    <!-- FOLLOW-UP -->
+    <% if(PB.FOLLOWUP){ %><div class="pb-sec" id="followup"><h2>13. Follow-up</h2>
+      <% (PB.FOLLOWUP.scripts||[]).forEach(function(s){ scriptBlock(s.contexto, s.fala); }) %>
+      <% if(PB.FOLLOWUP.nuncaEscrever&&PB.FOLLOWUP.nuncaEscrever.length){ %><div class="pb-box pb-dont"><h5>Nunca escreva só</h5><ul><% PB.FOLLOWUP.nuncaEscrever.forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% } %>
+    </div><% } %>
+
+    <!-- CARTÕES DE BOLSO -->
+    <% if(PB.CARTOES&&PB.CARTOES.length){ %><div class="pb-sec" id="cartoes"><h2>14. Cartões de bolso</h2>
+      <p style="color:#8899AA;font-size:.85rem;margin:0 0 10px">Consulta rápida durante o atendimento (funciona bem no celular).</p>
+      <div class="pb-cards">
+        <% PB.CARTOES.forEach(function(c){ %><div class="pb-pocket"><div class="t"><%= c.icon||'' %> <%= c.titulo %></div><ul><% (c.itens||[]).forEach(function(x){ %><li><%- x %></li><% }) %></ul></div><% }) %>
+      </div>
+    </div><% } %>
+
+    <!-- CHECKLIST -->
+    <% if(PB.CHECKLIST){ var ck=PB.CHECKLIST; %><div class="pb-sec" id="checklist"><h2>15. Checklist de atendimento</h2>
+      <div class="pb-cards">
+        <% function ckcol(tit,arr){ if(!arr)return; %><div class="pb-pocket"><div class="t"><%= tit %></div><% arr.forEach(function(x){ %><label style="display:flex;gap:7px;align-items:flex-start;color:#dbe7f0;font-size:.84rem;margin:4px 0;cursor:pointer"><input type="checkbox" style="margin-top:3px"> <span><%- x %></span></label><% }) %></div><% }
+        ckcol('Antes da proposta', ck.antesProposta); ckcol('Antes do fechamento', ck.antesFechamento); ckcol('Depois do fechamento', ck.depoisFechamento); %>
+      </div>
+    </div><% } %>
+
+    <div class="tb-navrow">
+      <a class="tb-btn" href="<%= base %>/prova-pratica" style="background:#F59E0B;color:#1a1204">🎬 Fazer a prova prática</a>
+      <a class="tb-btn ghost" href="<%= base %>">Voltar à academia</a>
+    </div>
+  <% } %>
+</div>

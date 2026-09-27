@@ -1,0 +1,45 @@
+<% var pageTitle = 'Documentação do Processo'; var activePage = 'processos'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<div class="page-header">
+  <h1>📘 Documentação do Processo</h1>
+  <p class="subtitle">A fonte oficial de como a operação comercial funciona: regras, robôs, cadências, campanhas e o histórico de mudanças. Atualizada a cada ajuste — última revisão em <%= atualizadoEm.split('-').reverse().join('/') %>.</p>
+</div>
+
+<div class="container" style="max-width:1080px;display:grid;grid-template-columns:230px 1fr;gap:26px;align-items:start;">
+
+  <nav style="position:sticky;top:86px;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px;">
+    <div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);padding:2px 8px 8px;">Seções</div>
+    <% secoes.forEach(function(s){ %>
+      <a href="#<%= s.id %>" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;color:var(--text);text-decoration:none;font-size:.88rem;font-weight:600;">
+        <span><%= s.icon %></span><span><%= s.titulo.split('—')[0].split('(')[0].trim() %></span>
+      </a>
+    <% }); %>
+  </nav>
+
+  <div>
+    <% secoes.forEach(function(s){ %>
+      <section id="<%= s.id %>" style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px 26px;margin-bottom:22px;scroll-margin-top:86px;">
+        <h2 style="margin:0 0 12px;font-size:1.15rem;color:var(--text);display:flex;align-items:center;gap:10px;"><span><%= s.icon %></span><%= s.titulo %></h2>
+        <div class="doc-body"><%- s.html %></div>
+      </section>
+    <% }); %>
+  </div>
+</div>
+
+<style>
+  .doc-body { color: var(--text-muted); font-size: .93rem; line-height: 1.65; }
+  .doc-body b { color: var(--text); }
+  .doc-body a { color: #00AAFF; text-decoration: none; }
+  .doc-body ul, .doc-body ol { margin: 8px 0 8px 20px; padding: 0; }
+  .doc-body li { margin: 6px 0; }
+  .doc-body code { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; font-size: .85em; color: var(--text); }
+  .doc-body table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: .88rem; }
+  .doc-body th { text-align: left; color: var(--text); font-weight: 800; padding: 8px 10px; border-bottom: 2px solid var(--border); white-space: nowrap; }
+  .doc-body td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .doc-body tr td:first-child { color: var(--text); font-weight: 700; white-space: nowrap; }
+  @media (max-width: 860px) {
+    .container { grid-template-columns: 1fr !important; }
+    nav[style*="sticky"] { position: static !important; }
+  }
+</style>

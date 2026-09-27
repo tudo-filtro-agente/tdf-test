@@ -1,0 +1,313 @@
+<% const activePage = 'cockpit'; const pageTitle = 'Leads parados hoje'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.lp-wrap{max-width:1400px;margin:0 auto;padding:24px;color:var(--text)}
+.lp-hero{background:linear-gradient(135deg,var(--bg),#3a0a0a);border:2px solid #ef4444;border-radius:12px;padding:18px;margin-bottom:18px}
+.lp-hero h1{color:#fca5a5;margin:0;font-size:20px}
+.lp-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
+.lp-stat{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.lp-stat .v{color:var(--text);font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.lp-stat .k{color:#9ca3af;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+.lp-controls{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.lp-controls select{background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:6px;padding:6px 10px;font-size:12px}
+.lp-bulk-bar{background:linear-gradient(135deg,#1a0e2a,#2a0e3a);border:2px solid #a371f7;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.lp-bulk-bar h3{color:#c084fc;margin:0;font-size:14px;font-weight:800;flex:1 1 auto;min-width:200px}
+.lp-bulk-btn{background:linear-gradient(135deg,#7c3aed,#a371f7);color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:12px;font-weight:800;cursor:pointer;text-decoration:none}
+.lp-bulk-btn:hover{filter:brightness(1.15)}
+.lp-bulk-btn:disabled{opacity:.5;cursor:not-allowed}
+.lp-stage-section{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px}
+.lp-stage-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #1a1a1a}
+.lp-stage-head h3{margin:0;font-size:14px;color:var(--text);font-weight:800;flex:1 1 auto;min-width:160px}
+.lp-stage-head .stage-pill{background:rgba(167,113,247,.15);color:#c084fc;padding:3px 10px;border-radius:5px;font-size:11px;font-weight:800}
+.lp-stage-head .nubia-stage-btn{background:linear-gradient(135deg,#a371f7,#c084fc);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer}
+.lp-stage-head .nubia-stage-btn:hover{filter:brightness(1.15)}
+.lp-stage-head .nubia-stage-btn:disabled{opacity:.5;cursor:not-allowed}
+.lp-card{background:#161725;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;border-left:4px solid var(--c, #ef4444)}
+.lp-card .head{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.lp-card .nm{flex:1;font-weight:800;color:var(--text);font-size:13px}
+.lp-tier{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:800}
+.lp-tier-Diamante{background:rgba(6,182,212,.15);color:#06b6d4}
+.lp-tier-Ouro{background:rgba(251,191,36,.15);color:#fbbf24}
+.lp-tier-Prata{background:rgba(148,163,184,.15);color:#94a3b8}
+.lp-tier-Bronze{background:rgba(161,98,7,.15);color:#a16207}
+.lp-meta{display:flex;gap:10px;flex-wrap:wrap;color:#9ca3af;font-size:11px;margin-bottom:8px}
+.lp-acts{display:flex;gap:5px;flex-wrap:wrap}
+.lp-acts a, .lp-acts button{background:#1f1f2e;color:#ddd;border:1px solid var(--border);border-radius:5px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;text-decoration:none}
+.lp-acts .chat{background:linear-gradient(135deg,#0f3a1a,#22c55e22);color:#22c55e;border-color:#22c55e}
+.lp-acts .ligar{background:rgba(31,111,235,.1);color:#5ba3f5;border-color:#1f6feb}
+.lp-acts .nubia{background:linear-gradient(135deg,#7c3aed,#a371f7);color:#fff;border-color:#a371f7;font-weight:800}
+.lp-acts .drawer{background:rgba(34,197,94,.1);color:#22c55e;border-color:#22c55e}
+</style>
+
+<div class="lp-wrap">
+  <div class="lp-hero">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:24px">⏰</span>
+      <h1>Leads parados HOJE — sem atividade</h1>
+    </div>
+    <p style="color:var(--text-muted);font-size:12px;margin:6px 0 0">
+      Leads que entraram hoje no CRM e ainda <strong>NÃO foram contatados</strong>.
+      Lead novo esfria em minutos — &lt;5min converte 3x mais.
+    </p>
+    <div class="lp-controls">
+      <label style="color:var(--text-muted);font-size:11px">Sem contato há mais de:</label>
+      <select id="lp-min" onchange="lpCarregar()">
+        <option value="5">5 minutos</option>
+        <option value="15">15 minutos</option>
+        <option value="30" selected>30 minutos</option>
+        <option value="60">1 hora</option>
+        <option value="120">2 horas</option>
+      </select>
+      <% if (user.role === 'admin') { %>
+        <label style="color:var(--text-muted);font-size:11px">Closer:</label>
+        <select id="lp-closer" onchange="lpCarregar()">
+          <option value="">— Todos —</option>
+        </select>
+      <% } %>
+      <button onclick="lpCarregar()" style="background:#5ba3f5;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">🔄 Atualizar</button>
+      <span id="lp-status" style="color:var(--text-muted);font-size:11px;margin-left:auto"></span>
+    </div>
+    <div id="lp-stats" class="lp-stats"></div>
+  </div>
+
+  <!-- Bulk Núbia bar -->
+  <div id="lp-bulk-bar" class="lp-bulk-bar" style="display:none">
+    <h3>🤖 Núbia em massa</h3>
+    <button class="lp-bulk-btn" id="lp-bulk-todos" onclick="lpNubiaMassa('todos')">
+      🚀 Disparar Núbia em TODOS os parados (<span id="lp-bulk-count">0</span>)
+    </button>
+    <button class="lp-bulk-btn" id="lp-bulk-sem-contato" onclick="lpNubiaMassa('sem_contato')" style="background:linear-gradient(135deg,#dc2626,#ef4444)">
+      ⏰ Só os SEM contato algum (<span id="lp-bulk-sem-contato-count">0</span>)
+    </button>
+  </div>
+
+  <div id="lp-content"><div style="text-align:center;color:var(--text-muted);padding:30px">⏳ Carregando...</div></div>
+</div>
+
+<script>
+let _LP_DATA = null;
+
+async function lpInit(){
+  const sel = document.getElementById('lp-closer');
+  if (sel) {
+    try {
+      const r = await fetch('/manutencao/operadoras');
+      const d = await r.json();
+      const ops = d.operadoras || [];
+      sel.innerHTML = '<option value="">— Todos —</option>' + ops.map(o => `<option value="${o.username}">${o.name||o.username}</option>`).join('');
+    } catch(_){}
+  }
+  lpCarregar();
+}
+
+async function lpCarregar(){
+  const min = document.getElementById('lp-min').value;
+  const closer = document.getElementById('lp-closer')?.value || '';
+  const status = document.getElementById('lp-status');
+  status.textContent = '⏳ Buscando leads de hoje...';
+  try {
+    const qs = new URLSearchParams({ min_min: min });
+    if (closer) qs.set('closer', closer);
+    const r = await fetch('/leads-parados-hoje/data?'+qs.toString());
+    const d = await r.json();
+    if (d.error) { document.getElementById('lp-content').innerHTML = `<div style="color:#ef4444;padding:20px">${d.error}</div>`; status.textContent = '❌'; return; }
+    _LP_DATA = d;
+    lpRender();
+    status.textContent = '✅ '+new Date().toLocaleTimeString('pt-BR');
+  } catch(e) { status.textContent = '❌ '+e.message; }
+}
+
+function lpFmtR(v){ if (!v) return ''; return 'R$ '+Math.round(v).toLocaleString('pt-BR'); }
+
+function lpAgruparPorEtapa(parados){
+  const map = {};
+  parados.forEach(l => {
+    const stage = l.stage || '— Sem etapa —';
+    if (!map[stage]) map[stage] = [];
+    map[stage].push(l);
+  });
+  // Ordena: etapas com mais leads primeiro, mas com prioridade pras etapas iniciais
+  const PRIO = {
+    'Leads Novos': 1, 'Primeiro Contato': 2, 'IA sem Contato': 3, 'Etapa IA': 4,
+    'Em Qualificação': 5, 'Qualificado': 6, 'Follow Up': 7, 'Em Negociação': 8,
+    'Proposta': 9, 'Proposta Quente': 10, 'Proposta Fria': 11,
+  };
+  return Object.entries(map).sort((a, b) => {
+    const pa = PRIO[a[0]] || 99;
+    const pb = PRIO[b[0]] || 99;
+    if (pa !== pb) return pa - pb;
+    return b[1].length - a[1].length; // por volume
+  });
+}
+
+function lpRender(){
+  const d = _LP_DATA;
+  document.getElementById('lp-stats').innerHTML = `
+    <div class="lp-stat"><div class="v">${d.total_criados_hoje}</div><div class="k">Leads hoje</div></div>
+    <div class="lp-stat"><div class="v" style="color:${d.total_parados>0?'#ef4444':'#22c55e'}">${d.total_parados}</div><div class="k">Sem contato</div></div>
+    <div class="lp-stat"><div class="v" style="color:#22c55e">${d.total_tratados}</div><div class="k">Já contatados</div></div>
+    <div class="lp-stat"><div class="v" style="color:${d.pct_atendidos>=80?'#22c55e':d.pct_atendidos>=50?'#fbbf24':'#ef4444'}">${d.pct_atendidos}%</div><div class="k">% atendidos</div></div>
+  `;
+
+  // Atualiza barra de Núbia em massa
+  const bar = document.getElementById('lp-bulk-bar');
+  const semContatoTotal = (d.parados || []).filter(l => !l.iaAtendendo).length;
+  document.getElementById('lp-bulk-count').textContent = (d.parados || []).length;
+  document.getElementById('lp-bulk-sem-contato-count').textContent = semContatoTotal;
+  bar.style.display = d.parados?.length ? '' : 'none';
+
+  let html = '';
+  if (d.por_owner?.length) {
+    html += `<div class="lp-card" style="border-left-color:#fbbf24">
+      <h3 style="color:#fbbf24;margin:0 0 10px;font-size:14px">📊 Por closer (quem está deixando passar)</h3>
+      <table style="width:100%;font-size:12px;color:#ccc;border-collapse:collapse">
+        <thead><tr style="background:#0a0a0f;color:#9ca3af;font-size:10px;text-transform:uppercase">
+          <th style="padding:6px;text-align:left">Closer</th>
+          <th style="padding:6px;text-align:right">Leads parados</th>
+          <th style="padding:6px;text-align:right">Valor parado</th>
+        </tr></thead><tbody>
+        ${d.por_owner.map(o => `<tr style="border-bottom:1px solid #1a1a1a">
+          <td style="padding:6px;color:#fff;font-weight:700">${o.owner||'?'}</td>
+          <td style="padding:6px;text-align:right;color:${o.count>5?'#ef4444':'#fbbf24'};font-weight:800">${o.count}</td>
+          <td style="padding:6px;text-align:right;color:#fbbf24">${lpFmtR(o.valor)}</td>
+        </tr>`).join('')}
+      </tbody></table>
+    </div>`;
+  }
+
+  if (!d.parados.length) {
+    html += '<div style="text-align:center;color:#22c55e;padding:30px;font-size:14px">✅ Nenhum lead parado nessa janela. Time atendendo.</div>';
+  } else {
+    // AGRUPADO POR ETAPA DO FUNIL
+    const agrupado = lpAgruparPorEtapa(d.parados);
+    html += '<h3 style="color:#9ca3af;font-size:12px;text-transform:uppercase;font-weight:800;letter-spacing:.4px;margin:18px 0 10px">🚨 ' + d.parados.length + ' leads sem contato agrupados por etapa</h3>';
+    agrupado.forEach(([stage, leads]) => {
+      const stageId = stage.replace(/[^a-z0-9]/gi, '_');
+      const valorEtapa = leads.reduce((s, l) => s + (l.valor || 0), 0);
+      html += `<div class="lp-stage-section">
+        <div class="lp-stage-head">
+          <h3>📋 ${stage}</h3>
+          <span class="stage-pill">${leads.length} lead${leads.length>1?'s':''}</span>
+          ${valorEtapa > 0 ? `<span style="color:#22c55e;font-weight:800;font-size:12px">${lpFmtR(valorEtapa)}</span>` : ''}
+          <button class="nubia-stage-btn" onclick='lpNubiaEtapa(${JSON.stringify(stage)}, ${JSON.stringify(leads.map(l=>l.id))})'>
+            🤖 Núbia em todos dessa etapa (${leads.length})
+          </button>
+        </div>`;
+      leads.forEach(l => {
+        const phoneClean = (l.telefone||'').replace(/\D/g,'');
+        const watiUrl = phoneClean ? `https://live-2708.wati.io/2708/teamInbox/${phoneClean}` : '#';
+        const cor = l.tier === 'Diamante' || l.tier === 'Ouro' ? '#ef4444' : l.minSemContato > 120 ? '#f97316' : '#fbbf24';
+        const nomeEsc = (l.nome||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+        html += `
+          <div class="lp-card" style="--c:${cor}" id="lp-card-${l.id}">
+            <div class="head">
+              ${l.tier ? `<span class="lp-tier lp-tier-${l.tier}">${l.tier}</span>` : ''}
+              ${l.iaAtendendo ? '<span style="background:rgba(167,113,247,.15);color:#c084fc;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:800">🤖 Núbia já atendendo</span>' : ''}
+              <span class="nm">${l.nome}</span>
+              ${l.valor > 0 ? '<span style="color:#22c55e;font-weight:800">'+lpFmtR(l.valor)+'</span>' : ''}
+              <span style="color:${cor};font-weight:800;font-size:11px">${l.minSemContato < 60 ? l.minSemContato+'min' : Math.round(l.minSemContato/60)+'h'} parado</span>
+            </div>
+            <div class="lp-meta">
+              ${l.telefone ? `<span>📞 <span onclick="window.copyTel&&copyTel('${l.telefone.replace(/'/g,"\\'")}',this)" title="Click pra copiar" style="cursor:pointer;user-select:all;padding:1px 6px;border-radius:4px;background:rgba(34,197,94,.08);border:1px solid #22c55e44;color:#86efac;font-family:monospace">${l.telefone}</span> <button onclick="window.copyTel&&copyTel('${l.telefone.replace(/'/g,"\\'")}',this)" style="background:transparent;border:1px solid #30363D;color:#9ca3af;border-radius:4px;padding:1px 5px;font-size:9px;cursor:pointer;margin-left:2px" title="Copiar">📋</button></span>` : '<span>📞 —</span>'}
+              <span>🌐 ${(l.source||'—').slice(0,40)}</span>
+              <span>👤 ${l.owner||'—'}</span>
+              <span>🕐 ${l.horasNoFunil}h no funil</span>
+            </div>
+            <div class="lp-acts">
+              <button class="nubia" onclick="lpNubiaIndividual('${l.id}', '${nomeEsc}', this)">🤖 Núbia entra em contato</button>
+              ${phoneClean ? `<button class="chat" onclick="window.abrirChat&&abrirChat('${l.id}','${phoneClean}','${nomeEsc}')">💬 Chat</button>` : ''}
+              ${phoneClean ? `<a class="ligar" href="tel:+${phoneClean}">📞 Ligar</a>` : ''}
+              ${phoneClean ? `<a class="ligar" href="${watiUrl}" target="_blank">🌐 WATI</a>` : ''}
+              <a class="drawer" href="/manutencao?open=${l.id}" target="_blank">📂 Drawer</a>
+              <a href="${l.crmLink}" target="_blank">🌐 Zoho</a>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+    });
+  }
+  document.getElementById('lp-content').innerHTML = html;
+}
+
+// === NÚBIA: dispara individual ===
+async function lpNubiaIndividual(dealId, nome, btn){
+  if (!confirm('🤖 Núbia vai entrar em contato com:\n\n' + nome + '\n\nConfirma?')) return;
+  btn.disabled = true; btn.textContent = '⏳ Disparando...';
+  try {
+    const r = await fetch('/gestao/nubia-reengaja', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dealIds: [dealId] }),
+    });
+    const d = await r.json();
+    if (d.error) { alert('Erro: ' + d.error); btn.disabled = false; btn.textContent = '🤖 Núbia'; return; }
+    btn.style.background = 'linear-gradient(135deg,#10b981,#22c55e)';
+    btn.textContent = '✅ Disparada';
+    setTimeout(() => lpCarregar(), 2000);
+  } catch(e) { alert('Erro: ' + e.message); btn.disabled = false; btn.textContent = '🤖 Núbia'; }
+}
+
+// === NÚBIA: dispara para uma etapa específica ===
+async function lpNubiaEtapa(stage, dealIds){
+  if (!confirm(`🤖 Núbia vai disparar mensagem inicial para TODOS os ${dealIds.length} leads da etapa "${stage}".\n\nIsso vai enviar mensagem real no WATI/WhatsApp dos clientes. Confirma?`)) return;
+  const status = document.getElementById('lp-status');
+  status.textContent = `⏳ Disparando Núbia em ${dealIds.length} leads (${stage})...`;
+  try {
+    // Quebra em chunks de 30 (limite do endpoint)
+    const chunks = [];
+    for (let i=0; i<dealIds.length; i+=30) chunks.push(dealIds.slice(i, i+30));
+    let totalDisp = 0;
+    for (const ch of chunks) {
+      const r = await fetch('/gestao/nubia-reengaja', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dealIds: ch }),
+      });
+      const d = await r.json();
+      if (d.error) { alert('Erro: ' + d.error); return; }
+      totalDisp += (d.disparados || d.total || ch.length);
+    }
+    status.textContent = `✅ Núbia disparada em ${totalDisp} leads da etapa "${stage}"`;
+    alert(`✅ Sucesso!\nNúbia disparou em ${totalDisp} leads da etapa "${stage}".`);
+    setTimeout(() => lpCarregar(), 2000);
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+// === NÚBIA: dispara em massa (todos os parados ou só sem contato algum) ===
+async function lpNubiaMassa(modo){
+  const todos = (_LP_DATA?.parados || []);
+  const lista = modo === 'sem_contato' ? todos.filter(l => !l.iaAtendendo) : todos;
+  if (!lista.length) { alert('Nenhum lead pra disparar.'); return; }
+  const label = modo === 'sem_contato' ? 'sem nenhum contato (Núbia ainda não falou)' : 'parados';
+  if (!confirm(`🤖 NÚBIA EM MASSA\n\nVai disparar mensagem inicial para ${lista.length} leads ${label}.\n\nIsso envia WhatsApp REAL pros clientes. Tem certeza?`)) return;
+  const btn = modo === 'sem_contato' ? document.getElementById('lp-bulk-sem-contato') : document.getElementById('lp-bulk-todos');
+  const txtOriginal = btn.textContent;
+  btn.disabled = true; btn.textContent = '⏳ Disparando...';
+  try {
+    const ids = lista.map(l => l.id);
+    const chunks = [];
+    for (let i=0; i<ids.length; i+=30) chunks.push(ids.slice(i, i+30));
+    let totalDisp = 0;
+    for (const ch of chunks) {
+      const r = await fetch('/gestao/nubia-reengaja', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dealIds: ch }),
+      });
+      const d = await r.json();
+      if (d.error) { alert('Erro: ' + d.error); btn.disabled = false; btn.textContent = txtOriginal; return; }
+      totalDisp += (d.disparados || d.total || ch.length);
+    }
+    btn.style.background = 'linear-gradient(135deg,#10b981,#22c55e)';
+    btn.textContent = `✅ ${totalDisp} disparados`;
+    alert(`✅ Sucesso!\nNúbia disparou em ${totalDisp} leads.`);
+    setTimeout(() => { lpCarregar(); }, 2000);
+  } catch(e) { alert('Erro: ' + e.message); btn.disabled = false; btn.textContent = txtOriginal; }
+}
+
+lpInit();
+// Auto-refresh a cada 2min
+setInterval(lpCarregar, 2*60*1000);
+</script>

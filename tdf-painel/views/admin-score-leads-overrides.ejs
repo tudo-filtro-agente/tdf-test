@@ -1,0 +1,156 @@
+<% const activePage = 'admin-score-leads'; const pageTitle = 'Score de Leads — Overrides Manuais'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.lso-wrap{max-width:1400px;margin:0 auto;padding:24px;color:var(--text)}
+.lso-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #a371f7;border-radius:12px;padding:18px;margin-bottom:14px}
+.lso-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.lso-tab{background:transparent;color:#9ca3af;border:none;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;text-decoration:none}
+.lso-tab.active{color:#c084fc;border-bottom-color:#a371f7}
+.lso-card{background:#161725;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px}
+.lso-row{display:grid;grid-template-columns:120px 1fr 90px 90px 1.5fr 130px 110px;gap:10px;align-items:center;font-size:12px}
+.lso-row .deal{color:#c084fc;font-weight:700;font-family:monospace;font-size:11px}
+.lso-row .score{font-size:18px;font-weight:800;color:#10b981;text-align:center}
+.lso-row .tier{text-align:center;font-weight:800;color:#c084fc}
+.lso-row .reason{color:#9ca3af;font-size:11px;font-style:italic}
+.lso-row .actor{color:#9ca3af;font-size:10px}
+.lso-row .actions{display:flex;gap:4px;justify-content:flex-end}
+.lso-btn{background:#a371f7;color:#fff;border:none;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer}
+.lso-btn.d{background:#ef4444}
+.lso-btn.s{background:#10b981;color:#000}
+.lso-form{background:#0a0a0f;border:1px solid var(--border);border-radius:8px;padding:12px;display:grid;grid-template-columns:130px 100px 100px 1fr 120px;gap:8px;align-items:end;margin-bottom:14px}
+.lso-form label{display:block;color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:3px}
+.lso-form input, .lso-form select{width:100%;background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:6px 8px;font-size:12px;box-sizing:border-box}
+</style>
+
+<div class="lso-wrap">
+  <div class="lso-header">
+    <h1 style="color:#c084fc;margin:0;font-size:20px">✋ Overrides Manuais de Score/Tier</h1>
+    <p style="color:#9ca3af;font-size:12px;margin:8px 0 0">
+      Gestor pode forçar um score ou tier num lead específico — mas precisa <strong>justificar</strong>.
+      Override fica ativo até ser limpo. O recálculo automático respeita o override.
+    </p>
+  </div>
+
+  <div class="lso-tabs">
+    <a class="lso-tab" href="/admin/score-leads">📋 Critérios</a>
+    <a class="lso-tab" href="/admin/score-leads/distancia">📍 Distância & Cidades</a>
+    <a class="lso-tab" href="/admin/score-leads/cadencia">⏱️ Cadência por Tier</a>
+    <a class="lso-tab" href="/admin/score-leads/teste">🧪 Testar Lead</a>
+    <a class="lso-tab active" href="/admin/score-leads/overrides">✋ Overrides Manuais</a>
+    <a class="lso-tab" href="/admin/score-leads/auditoria">📜 Auditoria</a>
+  </div>
+
+  <div class="lso-form">
+    <div>
+      <label>Deal ID Zoho</label>
+      <input id="lso-deal" placeholder="ex: 6890600000123456">
+    </div>
+    <div>
+      <label>Score manual (opcional)</label>
+      <input type="number" id="lso-score" placeholder="0-100">
+    </div>
+    <div>
+      <label>Tier manual (opcional)</label>
+      <select id="lso-tier">
+        <option value="">(manter auto)</option>
+        <option value="DIAMANTE">DIAMANTE</option>
+        <option value="OURO">OURO</option>
+        <option value="PRATA">PRATA</option>
+        <option value="BRONZE">BRONZE</option>
+        <option value="PEDRA">PEDRA</option>
+      </select>
+    </div>
+    <div>
+      <label>Motivo (obrigatório, mín 3 chars)</label>
+      <input id="lso-reason" placeholder="ex: cliente CEO empresa-alvo, escalar">
+    </div>
+    <div>
+      <button class="lso-btn s" onclick="lsoApply()">✋ Aplicar override</button>
+    </div>
+  </div>
+
+  <h3 style="color:#c084fc;font-size:13px;margin:14px 0 8px">Overrides ativos</h3>
+  <div id="lso-list"></div>
+</div>
+
+<script>
+async function lsoLoad(){
+  const r = await fetch('/api/lead-score/manual-overrides').then(r=>r.json());
+  if (!r.ok) { document.getElementById('lso-list').innerHTML = `<div style="color:#ef4444">${r.error}</div>`; return; }
+  const items = r.items || [];
+  if (!items.length) {
+    document.getElementById('lso-list').innerHTML = '<div style="color:#888;padding:20px;text-align:center">Nenhum override ativo no momento.</div>';
+    return;
+  }
+  document.getElementById('lso-list').innerHTML = items.map(o => `
+    <div class="lso-card">
+      <div class="lso-row">
+        <div class="deal">
+          <code style="cursor:pointer;padding:3px 6px;border-radius:3px;background:rgba(167,113,247,.08);border:1px solid rgba(167,113,247,.3);font-size:11px"
+                onclick="copyText('${escapeHtml(o.deal_id)}', this, 'Deal ID')"
+                title="Clique pra copiar">📋 ${escapeHtml(o.deal_id)}</code>
+          <a href="https://crmplus.zoho.com/tudodefiltro3711/index.do/cxapp/crm/org856385701/tab/Potentials/${escapeHtml(o.deal_id)}" target="_blank" style="margin-left:4px;color:#06b6d4;text-decoration:none" title="Abrir no Zoho">↗</a>
+        </div>
+        <div>
+          <div style="color:#fff;font-weight:700">Override forçado</div>
+          <div class="reason">${escapeHtml(o.reason)}</div>
+        </div>
+        <div class="score">${o.score_manual!=null?o.score_manual:'-'}</div>
+        <div class="tier">${o.tier_manual||'-'}</div>
+        <div></div>
+        <div class="actor">${escapeHtml(o.actor)}<br>${new Date(o.created_at).toLocaleString('pt-BR')}</div>
+        <div class="actions">
+          <button class="lso-btn d" onclick="lsoClear('${o.deal_id}')">🗑️ Remover</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function lsoApply(){
+  const deal_id = document.getElementById('lso-deal').value.trim();
+  const score = document.getElementById('lso-score').value;
+  const tier = document.getElementById('lso-tier').value;
+  const reason = document.getElementById('lso-reason').value;
+  if (!deal_id) return alert('Deal ID obrigatório.');
+  if (!reason || reason.trim().length < 3) return alert('Motivo obrigatório (mín 3 chars).');
+  if (!score && !tier) return alert('Informe score OU tier (ou os dois).');
+  const r = await fetch('/api/lead-score/manual-override', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      deal_id,
+      score_manual: score ? Number(score) : null,
+      tier_manual: tier || null,
+      reason,
+    })
+  }).then(r=>r.json());
+  if (!r.ok) { alert(r.error||'erro'); return; }
+  alert('Override aplicado. Recalculando deal e enviando ao Zoho...');
+  document.getElementById('lso-deal').value = '';
+  document.getElementById('lso-score').value = '';
+  document.getElementById('lso-tier').value = '';
+  document.getElementById('lso-reason').value = '';
+  // dispara recalc explicitamente
+  await fetch(`/api/lead-score/recalc/${encodeURIComponent(deal_id)}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ trigger_event: 'manual_override_applied', push_zoho: true })
+  });
+  lsoLoad();
+}
+
+async function lsoClear(dealId){
+  const reason = prompt('Motivo pra remover o override:'); if (!reason) return;
+  await fetch(`/api/lead-score/manual-override/${encodeURIComponent(dealId)}?reason=${encodeURIComponent(reason)}`, { method:'DELETE' });
+  // recalcula sem override
+  await fetch(`/api/lead-score/recalc/${encodeURIComponent(dealId)}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ trigger_event: 'manual_override_cleared', push_zoho: true })
+  });
+  lsoLoad();
+}
+
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+lsoLoad();
+</script>

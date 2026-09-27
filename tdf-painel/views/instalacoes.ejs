@@ -1,0 +1,129 @@
+<% var pageTitle = 'Fotos de Instalação'; var activePage = 'instalacoes'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<div class="page-header">
+  <h1>📸 Fotos de Instalação</h1>
+  <p class="subtitle">Instalações reais por modelo de produto. Filtre, baixe e mande pro cliente no WhatsApp — prova social pronta pra usar na venda.</p>
+</div>
+
+<div class="container" style="max-width:1100px;">
+
+  <% if (!fotos.length) { %>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;color:var(--text-muted);margin-top:24px;">
+      Ainda não há fotos publicadas. As primeiras instalações chegam aqui em breve.
+    </div>
+  <% } else { %>
+
+    <div id="filtros" style="display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 6px;">
+      <button class="inst-chip inst-chip-on" data-modelo="__todos__">Todos (<%= fotos.length %>)</button>
+      <% modelos.forEach(function(m){ var n = fotos.filter(function(f){ return f.modelo === m; }).length; %>
+        <button class="inst-chip" data-modelo="<%= m %>"><%= m %> (<%= n %>)</button>
+      <% }); %>
+    </div>
+
+    <div id="galeria" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-top:16px;">
+      <% fotos.forEach(function(f){ %>
+        <figure class="inst-card" data-modelo="<%= f.modelo %>" style="margin:0;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;">
+          <a href="/instalacoes-files/<%= f.arq %>" class="inst-zoom" data-titulo="<%= f.titulo || f.modelo %>" style="display:block;aspect-ratio:3/4;overflow:hidden;background:var(--bg);">
+            <img src="/instalacoes-files/<%= f.arq %>" alt="<%= f.titulo || f.modelo %>" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">
+          </a>
+          <figcaption style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+            <span style="font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:3px 10px;border-radius:10px;background:rgba(0,170,255,.14);color:#00AAFF;align-self:flex-start;"><%= f.modelo %></span>
+            <% if (f.titulo) { %><span style="font-size:.85rem;color:var(--text);font-weight:700;line-height:1.3;"><%= f.titulo %></span><% } %>
+            <% if (f.cidade) { %><span style="font-size:.78rem;color:var(--text-muted);"><%= f.cidade %></span><% } %>
+            <div style="display:flex;gap:6px;margin-top:2px;">
+              <a href="/instalacoes-files/<%= f.arq %>" download style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 6px;color:var(--text);text-decoration:none;font-weight:700;font-size:.8rem;">⬇️ Baixar</a>
+              <button class="inst-copy" data-src="/instalacoes-files/<%= f.arq %>" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:rgba(0,170,255,.14);border:1px solid #00AAFF;border-radius:8px;padding:8px 6px;color:#00AAFF;font-weight:700;font-size:.8rem;cursor:pointer;">📋 Copiar</button>
+            </div>
+          </figcaption>
+        </figure>
+      <% }); %>
+    </div>
+
+  <% } %>
+
+  <div style="margin:34px 0;text-align:center;">
+    <a href="/home" style="color:#00AAFF;text-decoration:none;">← Voltar pra Home</a>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div id="inst-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:20px;cursor:zoom-out;">
+  <img id="inst-lightbox-img" src="" alt="" style="max-width:96vw;max-height:82vh;border-radius:10px;object-fit:contain;">
+  <div id="inst-lightbox-cap" style="color:#fff;font-weight:700;font-size:.95rem;text-align:center;"></div>
+  <div style="display:flex;gap:10px;">
+    <a id="inst-lightbox-dl" href="" download style="background:#00AAFF;color:#fff;border-radius:10px;padding:10px 22px;text-decoration:none;font-weight:800;font-size:.9rem;">⬇️ Baixar</a>
+    <button id="inst-lightbox-copy" class="inst-copy" data-src="" style="background:#fff;color:#003B73;border:none;border-radius:10px;padding:10px 22px;font-weight:800;font-size:.9rem;cursor:pointer;">📋 Copiar</button>
+  </div>
+</div>
+
+<style>
+  .inst-chip{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:7px 14px;color:var(--text-muted);font-weight:700;font-size:.82rem;cursor:pointer;transition:all .15s;}
+  .inst-chip:hover{color:var(--text);border-color:#00AAFF;}
+  .inst-chip-on{background:rgba(0,170,255,.14);color:#00AAFF;border-color:#00AAFF;}
+</style>
+
+<script>
+(function(){
+  // filtro por modelo
+  document.querySelectorAll('.inst-chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      document.querySelectorAll('.inst-chip').forEach(function(c){ c.classList.remove('inst-chip-on'); });
+      chip.classList.add('inst-chip-on');
+      var m = chip.dataset.modelo;
+      document.querySelectorAll('.inst-card').forEach(function(card){
+        card.style.display = (m === '__todos__' || card.dataset.modelo === m) ? '' : 'none';
+      });
+    });
+  });
+  // lightbox
+  var lb = document.getElementById('inst-lightbox');
+  var lbImg = document.getElementById('inst-lightbox-img');
+  var lbCap = document.getElementById('inst-lightbox-cap');
+  var lbDl = document.getElementById('inst-lightbox-dl');
+  document.querySelectorAll('.inst-zoom').forEach(function(a){
+    a.addEventListener('click', function(e){
+      e.preventDefault();
+      lbImg.src = a.href; lbDl.href = a.href; lbCap.textContent = a.dataset.titulo || '';
+      lb.style.display = 'flex';
+    });
+  });
+  var lbCopy = document.getElementById('inst-lightbox-copy');
+  lb.addEventListener('click', function(e){ if (e.target !== lbDl && e.target !== lbCopy) lb.style.display = 'none'; });
+
+  // copiar imagem pro clipboard (colar direto no WhatsApp Web)
+  function copiarImagem(btn, src){
+    var original = btn.textContent;
+    fetch(src).then(function(r){ return r.blob(); }).then(function(blob){
+      return new Promise(function(resolve, reject){
+        var img = new Image();
+        img.onload = function(){
+          var c = document.createElement('canvas');
+          c.width = img.naturalWidth; c.height = img.naturalHeight;
+          c.getContext('2d').drawImage(img, 0, 0);
+          c.toBlob(function(png){ png ? resolve(png) : reject(new Error('canvas')); }, 'image/png');
+        };
+        img.onerror = reject;
+        img.src = URL.createObjectURL(blob);
+      });
+    }).then(function(png){
+      return navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+    }).then(function(){
+      btn.textContent = '✅ Copiada! Cola no WhatsApp';
+      setTimeout(function(){ btn.textContent = original; }, 2500);
+    }).catch(function(){
+      btn.textContent = '⚠️ Use o Baixar';
+      setTimeout(function(){ btn.textContent = original; }, 2500);
+    });
+  }
+  document.querySelectorAll('.inst-copy').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var src = btn.dataset.src || lbImg.src;
+      if (src) copiarImagem(btn, src);
+    });
+  });
+})();
+</script>
+</body>
+</html>

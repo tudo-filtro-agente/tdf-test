@@ -1,0 +1,148 @@
+<% const activePage = 'meta-pessoal'; const pageTitle = 'Meta Pessoal'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<div class="page-header">
+  <h1 style="display:flex;align-items:center;gap:10px;"><span style="font-size:28px;">&#127919;</span> Meta Pessoal</h1>
+  <p class="subtitle">Escolha seu premio, defina sua meta e acompanhe seu progresso diario</p>
+</div>
+
+<div class="container">
+  <div id="mp-loading" style="text-align:center;padding:40px;color:var(--text-muted);">Carregando...</div>
+  <div id="mp-content" style="display:none;">
+
+    <!-- META ATIVA -->
+    <div id="mp-meta-ativa" style="margin-bottom:24px;"></div>
+
+    <!-- SIMULADOR -->
+    <div style="background:var(--bg-card);border:1px solid #F0C040;border-radius:16px;padding:24px;margin-bottom:24px;">
+      <h2 style="color:#F0C040;font-size:1.1rem;margin:0 0 16px;">&#129518; Simulador — Escolha seu Premio</h2>
+      <div id="mp-simulador" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;"></div>
+    </div>
+
+    <!-- RESULTADO SIMULACAO -->
+    <div id="mp-resultado" style="display:none;background:var(--bg-card);border:1px solid #06b6d4;border-radius:16px;padding:24px;margin-bottom:24px;"></div>
+  </div>
+</div>
+
+<script>
+const storeData = <%- store %>;
+let currentData = null;
+
+async function loadMetaPessoal() {
+  try {
+    const res = await fetch('/meta-pessoal/data');
+    currentData = await res.json();
+    if (currentData.error) throw new Error(currentData.error);
+    document.getElementById('mp-loading').style.display = 'none';
+    document.getElementById('mp-content').style.display = 'block';
+    renderMetaAtiva();
+    renderSimulador();
+  } catch(e) { document.getElementById('mp-loading').textContent = 'Erro: ' + e.message; }
+}
+
+function renderMetaAtiva() {
+  const d = currentData;
+  const el = document.getElementById('mp-meta-ativa');
+
+  if (!d.minhaMeta) {
+    el.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#161B22);border:2px dashed #F0C040;border-radius:16px;padding:24px;text-align:center;"><div style="font-size:36px;margin-bottom:8px;">&#127919;</div><div style="color:#F0C040;font-size:18px;font-weight:700;">Nenhuma meta definida</div><div style="color:#8B949E;font-size:13px;margin-top:6px;">Escolha um premio abaixo e defina como sua meta pessoal!</div></div>';
+    return;
+  }
+
+  const m = d.minhaMeta;
+  const statusColors = {atingiu:'#22c55e',acima:'#22c55e',no_caminho:'#eab308',abaixo:'#ef4444'};
+  const statusLabels = {atingiu:'META ATINGIDA!',acima:'Acima do esperado',no_caminho:'No caminho',abaixo:'Abaixo do esperado'};
+  const sc = statusColors[m.status] || '#8B949E';
+
+  el.innerHTML = `
+    <div style="background:linear-gradient(135deg,#2d2513,#1a1a2e);border:2px solid #F0C040;border-radius:20px;padding:28px;">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="font-size:48px;">${m.premio.icon}</div>
+        <div style="flex:1;min-width:200px;">
+          <div style="font-size:20px;font-weight:800;color:#F0C040;">${m.premio.nome}</div>
+          <div style="font-size:13px;color:#8B949E;">${m.premio.desc}</div>
+          <div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;">
+            <div><span style="color:#E6EDF3;font-weight:700;font-size:18px;">&#129689; ${d.coinsAtual}</span><span style="color:#8B949E;font-size:12px;"> / ${m.premio.custo}</span></div>
+            <div style="color:${sc};font-weight:700;font-size:14px;">${statusLabels[m.status]}</div>
+          </div>
+          <div class="progress-bar" style="margin-top:8px;height:10px;"><div class="progress-fill" style="width:${m.pct}%;background:${m.pct>=100?'#22c55e':'#F0C040'};height:100%;"></div></div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:#8B949E;">
+            <span>Falta &#129689; ${m.falta}</span>
+            <span>~${m.mesesPraAlcancar} meses no ritmo atual</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #F0C04040;">
+        <div style="font-size:14px;font-weight:700;color:#E6EDF3;margin-bottom:8px;">&#129504; Coach diz:</div>
+        <div style="font-size:13px;color:#ccc;line-height:1.7;">
+          ${m.status === 'atingiu' ? 'Parabens! Voce atingiu os coins necessarios. Va na loja e resgate seu premio!' :
+            m.status === 'acima' ? 'Voce esta acima do ritmo necessario. Continue assim e vai conquistar <strong>'+m.premio.nome+'</strong> antes do prazo!' :
+            m.status === 'abaixo' ? 'Voce esta abaixo do ritmo. Precisa de <strong>~'+m.metaDiaria+' coins/dia</strong> pra alcançar. Foque em vendas de ticket alto (AF 2500+, Iron Free) pra acelerar.' :
+            'Voce esta no caminho. Media de <strong>'+d.mediaCoins+' coins/mes</strong>. Em ~'+m.mesesPraAlcancar+' meses chega la. Nao gaste coins em premios menores!'}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderSimulador() {
+  document.getElementById('mp-simulador').innerHTML = storeData.map(item =>
+    `<div onclick="simularPremio('${item.id}')" style="background:#0D1117;border:1px solid #30363D;border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#F0C040'" onmouseout="this.style.borderColor='#30363D'">
+      <div style="font-size:32px;margin-bottom:6px;">${item.icon}</div>
+      <div style="font-size:14px;font-weight:700;color:#E6EDF3;">${item.nome}</div>
+      <div style="font-size:16px;font-weight:800;color:#F0C040;margin:4px 0;">&#129689; ${item.custo}</div>
+      <div style="font-size:11px;color:#8B949E;">${item.desc.slice(0,40)}</div>
+    </div>`
+  ).join('');
+}
+
+function simularPremio(itemId) {
+  const item = storeData.find(i => i.id === itemId);
+  if (!item || !currentData) return;
+  const d = currentData;
+  const falta = Math.max(0, item.custo - d.coinsAtual);
+  const meses = d.mediaCoins > 0 ? Math.ceil(falta / d.mediaCoins) : 99;
+  const vendas15 = Math.ceil(falta / 40); // avg 40 coins/venda
+  const ironFrees = Math.ceil(falta / 600);
+
+  const el = document.getElementById('mp-resultado');
+  el.style.display = 'block';
+  el.innerHTML = `
+    <h3 style="color:#06b6d4;margin:0 0 16px;">${item.icon} Simulacao: ${item.nome} (${item.custo} coins)</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-value" style="color:#F0C040;">${d.coinsAtual}</div><div class="kpi-label">Coins atuais</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:#ef4444;">${falta}</div><div class="kpi-label">Falta</div></div>
+      <div class="kpi-card"><div class="kpi-value">${d.mediaCoins}/mes</div><div class="kpi-label">Ritmo atual</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:#06b6d4;">${meses} meses</div><div class="kpi-label">Tempo estimado</div></div>
+    </div>
+    <div style="font-size:14px;color:#E6EDF3;line-height:2;">
+      <strong>O que voce precisa fazer:</strong><br>
+      &#128200; ~<strong>${vendas15} vendas</strong> de filtro entrada (ticket medio R$4k)<br>
+      &#128293; OU <strong>${ironFrees} vendas Iron Free</strong> (~R$18k cada = 600 coins)<br>
+      &#127919; OU manter <strong>${d.mediaCoins} coins/mes</strong> por ${meses} meses sem gastar<br>
+      ${falta > 0 && meses <= 12 ? '<br>&#9989; <span style="color:#22c55e;">Possivel em 12 meses se manter o ritmo!</span>' : falta > 0 ? '<br>&#9888; <span style="color:#eab308;">Precisa aumentar vendas ou ticket pra alcançar antes de expirar</span>' : '<br>&#127881; <span style="color:#22c55e;">Voce ja tem coins suficientes! Va pra loja e resgate!</span>'}
+    </div>
+    ${falta > 0 ? '<button onclick="definirMeta(\''+item.id+'\')" style="margin-top:16px;background:#F0C040;color:#000;border:none;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">&#127919; Definir como Minha Meta</button>' : '<a href="/coins" style="margin-top:16px;display:inline-block;background:#22c55e;color:#000;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;">&#129689; Ir pra Loja e Resgatar</a>'}
+  `;
+  el.scrollIntoView({ behavior: 'smooth' });
+}
+
+async function definirMeta(premioId) {
+  try {
+    const res = await fetch('/meta-pessoal/set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ premioId })
+    });
+    const r = await res.json();
+    if (r.success) {
+      alert('Meta definida: ' + r.premio + '! Agora seu coach vai te guiar ate la.');
+      location.reload();
+    } else alert('Erro: ' + r.error);
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+loadMetaPessoal();
+</script>
+</div></body></html>

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="sn_bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </radialGradient>
+    <linearGradient id="sn_border" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="30%" stop-color="#475569"/>
+      <stop offset="50%" stop-color="#cbd5e1"/>
+      <stop offset="70%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="sn_border2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="50%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+    <radialGradient id="sn_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.4"/>
+      <stop offset="60%" stop-color="#6366f1" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sn_icon" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#a5b4fc"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="sn_shine" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="sn_shadow">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#6366f1" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+  <circle cx="60" cy="60" r="56" fill="url(#sn_glow)"/>
+  <circle cx="60" cy="60" r="54" fill="url(#sn_border)" opacity="0.8"/>
+  <circle cx="60" cy="60" r="53" fill="url(#sn_border2)" opacity="0.3"/>
+  <circle cx="60" cy="60" r="50" fill="url(#sn_bg)"/>
+  <circle cx="60" cy="60" r="46" fill="none" stroke="#312e81" stroke-width="1" opacity="0.6"/>
+  <!-- Crosshair -->
+  <g filter="url(#sn_shadow)" stroke="url(#sn_icon)" fill="none" stroke-width="2.5" stroke-linecap="round">
+    <!-- Outer ring -->
+    <circle cx="60" cy="60" r="20"/>
+    <!-- Inner ring -->
+    <circle cx="60" cy="60" r="8" stroke-width="1.5"/>
+    <!-- Cross lines -->
+    <line x1="60" y1="32" x2="60" y2="46"/>
+    <line x1="60" y1="74" x2="60" y2="88"/>
+    <line x1="32" y1="60" x2="46" y2="60"/>
+    <line x1="74" y1="60" x2="88" y2="60"/>
+    <!-- Center dot -->
+    <circle cx="60" cy="60" r="2" fill="#a5b4fc" stroke="none"/>
+  </g>
+  <!-- Tick marks -->
+  <g stroke="#a5b4fc" stroke-width="1" opacity="0.4" stroke-linecap="round">
+    <line x1="60" y1="36" x2="60" y2="38"/>
+    <line x1="60" y1="82" x2="60" y2="84"/>
+    <line x1="36" y1="60" x2="38" y2="60"/>
+    <line x1="82" y1="60" x2="84" y2="60"/>
+  </g>
+  <ellipse cx="60" cy="38" rx="30" ry="22" fill="url(#sn_shine)"/>
+</svg>

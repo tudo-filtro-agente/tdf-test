@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="fc_bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#292524"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </radialGradient>
+    <linearGradient id="fc_border" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="30%" stop-color="#475569"/>
+      <stop offset="50%" stop-color="#cbd5e1"/>
+      <stop offset="70%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="fc_border2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="50%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+    <radialGradient id="fc_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.4"/>
+      <stop offset="60%" stop-color="#f97316" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fc_flame" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="30%" stop-color="#fb923c"/>
+      <stop offset="60%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#c2410c"/>
+    </linearGradient>
+    <linearGradient id="fc_inner" x1="50%" y1="20%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#fef3c7"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="fc_shine" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="fc_shadow">
+      <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#f97316" flood-opacity="0.7"/>
+    </filter>
+  </defs>
+  <circle cx="60" cy="60" r="56" fill="url(#fc_glow)"/>
+  <circle cx="60" cy="60" r="54" fill="url(#fc_border)" opacity="0.8"/>
+  <circle cx="60" cy="60" r="53" fill="url(#fc_border2)" opacity="0.3"/>
+  <circle cx="60" cy="60" r="50" fill="url(#fc_bg)"/>
+  <circle cx="60" cy="60" r="46" fill="none" stroke="#44403c" stroke-width="1" opacity="0.6"/>
+  <!-- Flame with speed trails -->
+  <g filter="url(#fc_shadow)">
+    <!-- Speed trails (left side) -->
+    <path d="M 30 52 L 42 52" stroke="#fb923c" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+    <path d="M 26 60 L 40 60" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+    <path d="M 30 68 L 42 68" stroke="#fb923c" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+    <!-- Main flame -->
+    <path d="M 60 30 C 50 42, 44 48, 44 62 C 44 72, 50 82, 60 88 C 70 82, 76 72, 76 62 C 76 48, 70 42, 60 30 Z" fill="url(#fc_flame)"/>
+    <!-- Inner flame -->
+    <path d="M 60 50 C 55 58, 52 62, 52 68 C 52 74, 55 80, 60 84 C 65 80, 68 74, 68 68 C 68 62, 65 58, 60 50 Z" fill="url(#fc_inner)" opacity="0.9"/>
+  </g>
+  <!-- Hot core -->
+  <ellipse cx="60" cy="72" rx="4" ry="6" fill="#fef3c7" opacity="0.8"/>
+  <ellipse cx="60" cy="38" rx="30" ry="22" fill="url(#fc_shine)"/>
+</svg>

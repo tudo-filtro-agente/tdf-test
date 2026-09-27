@@ -1,0 +1,206 @@
+<% const activePage = 'conquistas'; const pageTitle = 'Conquistas'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.badge-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; transition: transform 0.2s, border-color 0.2s; position: relative; overflow: hidden; }
+.badge-card:hover { transform: translateY(-2px); }
+.badge-card.unlocked { border-color: var(--badge-color); }
+.badge-card.locked { opacity: 0.5; }
+.badge-card.locked::after { content: '🔒'; position: absolute; top: 10px; right: 12px; font-size: 16px; }
+.badge-icon { font-size: 48px; margin-bottom: 8px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
+.badge-card.locked .badge-icon { filter: grayscale(1) brightness(0.5); }
+.badge-nome { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+.badge-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+.badge-nivel { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.badge-prog { margin-top: 10px; }
+.badge-prog-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.badge-prog-fill { height: 100%; border-radius: 3px; transition: width 1s; }
+.badge-prog-text { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+@keyframes lendario-pulse { 0%,100% { box-shadow: 0 0 20px rgba(239,68,68,0.4); } 50% { box-shadow: 0 0 30px rgba(239,68,68,0.6), 0 0 60px rgba(239,68,68,0.2); } }
+
+.hall-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.hall-card { background: linear-gradient(135deg, #1a1a2e, var(--bg-card)); border: 1px solid #F0C040; border-radius: 16px; padding: 24px; text-align: center; }
+.hall-icon { font-size: 40px; margin-bottom: 8px; }
+.hall-cat { font-size: 14px; color: #F0C040; font-weight: 700; margin-bottom: 8px; }
+.hall-closer { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+.hall-metrica { font-size: 13px; color: var(--text-muted); }
+</style>
+
+<div class="page-header">
+  <h1 style="display:flex;align-items:center;gap:12px;">
+    <span style="font-size:28px;">🏅</span> Minhas Conquistas
+    <% if (user.role === 'admin') { %>
+    <select id="badge-closer" onchange="loadBadges(this.value)" style="background:var(--bg-card);color:#F0C040;border:2px solid #F0C040;border-radius:10px;padding:8px 14px;font-size:14px;font-weight:700;cursor:pointer;">
+      <option value="">Meu perfil</option>
+      <% closers.forEach(c => { %>
+        <option value="<%= c.username %>"><%= c.name %></option>
+      <% }); %>
+    </select>
+    <% } %>
+  </h1>
+</div>
+
+<div class="container">
+  <div id="badges-loading" style="text-align:center;padding:40px;color:var(--text-muted);">Carregando conquistas...</div>
+
+  <div id="badges-content" style="display:none;">
+    <!-- Summary -->
+    <div id="badges-summary" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;"></div>
+
+    <!-- Badges Grid -->
+    <h2 style="color:var(--text);font-size:1.1rem;margin-bottom:14px;">Badges</h2>
+    <div class="badge-grid" id="badges-grid"></div>
+
+    <!-- Bonzão + Rei -->
+    <div id="especiais-section" style="margin-bottom:24px;"></div>
+
+    <!-- Rankings Semanal + Mensal -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+      <div style="background:var(--bg-card);border:1px solid #F0C040;border-radius:16px;padding:20px;">
+        <h2 style="color:#F0C040;font-size:1rem;margin:0 0 12px;">👑 Ranking Semanal</h2>
+        <div id="ranking-semanal"></div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid #A371F7;border-radius:16px;padding:20px;">
+        <h2 style="color:#A371F7;font-size:1rem;margin:0 0 12px;">🏅 Ranking Mensal (Rei do Mes)</h2>
+        <div id="ranking-mensal"></div>
+      </div>
+    </div>
+
+    <!-- Hall da Fama -->
+    <h2 style="color:#F0C040;font-size:1.1rem;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:22px;">🏛️</span> Hall da Fama — Abril 2026
+    </h2>
+    <div class="hall-grid" id="hall-grid"></div>
+  </div>
+</div>
+
+<script>
+const nivelCores = { lendario: '#ef4444', diamante: '#A371F7', ouro: '#F0C040', prata: '#C0C0C0', bronze: '#CD7F32' };
+const nivelLabels = { lendario: 'LENDARIO', diamante: 'DIAMANTE', ouro: 'OURO', prata: 'PRATA', bronze: 'BRONZE' };
+
+async function loadBadges(closer) {
+  const url = closer ? `/cockpit/badges?closer=${closer}` : '/cockpit/badges';
+  document.getElementById('badges-loading').style.display = 'block';
+  document.getElementById('badges-content').style.display = 'none';
+
+  try {
+    const res = await fetch(url);
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+
+    document.getElementById('badges-loading').style.display = 'none';
+    document.getElementById('badges-content').style.display = 'block';
+
+    // Summary
+    const unlocked = d.badges.filter(b => b.nivel).length;
+    const diamantes = d.badges.filter(b => b.nivel === 'diamante').length;
+    const ouros = d.badges.filter(b => b.nivel === 'ouro').length;
+    document.getElementById('badges-summary').innerHTML = `
+      <div style="background:#161B22;border:1px solid #30363D;border-radius:12px;padding:16px;text-align:center;flex:1;min-width:120px;">
+        <div style="font-size:2rem;font-weight:800;color:#E6EDF3;">${unlocked}/${d.badges.length}</div>
+        <div style="font-size:12px;color:#8B949E;">Badges Desbloqueados</div>
+      </div>
+      <div style="background:#161B22;border:1px solid #A371F7;border-radius:12px;padding:16px;text-align:center;flex:1;min-width:120px;">
+        <div style="font-size:2rem;font-weight:800;color:#A371F7;">${diamantes}</div>
+        <div style="font-size:12px;color:#8B949E;">Diamante</div>
+      </div>
+      <div style="background:#161B22;border:1px solid #F0C040;border-radius:12px;padding:16px;text-align:center;flex:1;min-width:120px;">
+        <div style="font-size:2rem;font-weight:800;color:#F0C040;">${ouros}</div>
+        <div style="font-size:12px;color:#8B949E;">Ouro</div>
+      </div>
+    `;
+
+    // Badges
+    document.getElementById('badges-grid').innerHTML = d.badges.map(b => {
+      const isUnlocked = !!b.nivel;
+      const nColor = isUnlocked ? (nivelCores[b.nivel] || '#8B949E') : '#484F58';
+      const nLabel = isUnlocked ? nivelLabels[b.nivel] : 'BLOQUEADO';
+      const progPct = Math.min(b.pct, 100);
+      const faltaText = b.falta > 0 ? `Falta ${b.falta} ${b.unidade} para ${b.proximoNivel ? nivelLabels[b.proximoNivel] : 'completar'}` : 'Nivel maximo!';
+
+      const isLendario = b.nivel === 'lendario';
+      const glowStyle = isLendario ? 'box-shadow:0 0 20px rgba(239,68,68,0.4),0 0 40px rgba(239,68,68,0.2);' : b.nivel === 'diamante' ? 'box-shadow:0 0 15px rgba(163,113,247,0.3);' : b.nivel === 'ouro' ? 'box-shadow:0 0 12px rgba(240,192,64,0.2);' : '';
+      const pontosLabel = b.pontos > 0 ? '<span style="color:#F0C040;font-size:10px;margin-left:6px;">+'+b.pontos+' pts</span>' : '';
+      const downgradeIcon = b.canDowngrade && isUnlocked ? '<span title="Pode perder nivel se performance cair" style="font-size:10px;color:#ef4444;position:absolute;top:8px;left:10px;">↕</span>' : '';
+
+      return `<div class="badge-card ${isUnlocked ? 'unlocked' : 'locked'}" style="--badge-color:${b.color};${glowStyle}${isLendario ? 'animation:lendario-pulse 2s ease infinite;' : ''}">
+        ${downgradeIcon}
+        <div class="badge-icon"><img src="/badges/${b.id}.svg" alt="${b.nome}" style="width:64px;height:64px;${isUnlocked ? '' : 'filter:grayscale(1) brightness(0.4);'}${isLendario ? 'filter:drop-shadow(0 0 12px rgba(239,68,68,0.6));' : ''}" onerror="this.outerHTML='<span style=\\'font-size:48px\\'>${b.icon}</span>'"></div>
+        <div class="badge-nome">${b.nome}</div>
+        <div class="badge-desc">${b.desc}</div>
+        <div class="badge-nivel" style="background:${nColor}20;color:${nColor};border:1px solid ${nColor};">${nLabel}${pontosLabel}</div>
+        <div class="badge-prog">
+          <div class="badge-prog-bar"><div class="badge-prog-fill" style="width:${progPct}%;background:${isLendario ? 'linear-gradient(90deg,#ef4444,#f97316)' : nColor};"></div></div>
+          <div class="badge-prog-text">${b.progresso} ${b.unidade} | ${faltaText}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Hall da Fama
+    document.getElementById('hall-grid').innerHTML = d.hall.map(h =>
+      `<div class="hall-card">
+        <div class="hall-icon">${h.icon}</div>
+        <div class="hall-cat">${h.cat}</div>
+        <div class="hall-closer">${h.closer}</div>
+        <div class="hall-metrica">${h.metrica}</div>
+      </div>`
+    ).join('');
+
+  } catch(e) {
+    document.getElementById('badges-loading').textContent = 'Erro: ' + e.message;
+  }
+}
+
+loadBadges();
+
+// Load Rankings Especiais
+(async function() {
+  try {
+    const res = await fetch('/cockpit/rankings-especiais');
+    const d = await res.json();
+    if (d.error) return;
+
+    // Bonzão + Rei cards
+    let especiaisHtml = '<div style="display:flex;gap:16px;flex-wrap:wrap;">';
+    if (d.bonzao) {
+      especiaisHtml += `<div style="flex:1;min-width:250px;background:linear-gradient(135deg,#2d2513,#1a1a2e);border:2px solid #F0C040;border-radius:16px;padding:20px;text-align:center;">
+        <div style="font-size:40px;">👑</div>
+        <div style="font-size:16px;font-weight:800;color:#F0C040;">Bonzao da Semana</div>
+        <div style="font-size:24px;font-weight:800;color:#E6EDF3;margin:8px 0;">${d.bonzao.name}</div>
+        <div style="color:#8B949E;font-size:13px;">${d.bonzao.vendasWeek} vendas | R$ ${(d.bonzao.fatWeek/1000).toFixed(0)}k | Score ${d.bonzao.scoreWeek}</div>
+      </div>`;
+    }
+    if (d.rei) {
+      especiaisHtml += `<div style="flex:1;min-width:250px;background:linear-gradient(135deg,#1e1225,#1a1a2e);border:2px solid #A371F7;border-radius:16px;padding:20px;text-align:center;">
+        <div style="font-size:40px;">🏅</div>
+        <div style="font-size:16px;font-weight:800;color:#A371F7;">Rei do Mes</div>
+        <div style="font-size:24px;font-weight:800;color:#E6EDF3;margin:8px 0;">${d.rei.name}</div>
+        <div style="color:#8B949E;font-size:13px;">Score ${d.rei.scoreRei} | Fat R$ ${Math.round(d.rei.fat/1000)}k | Conv ${d.rei.conversao}%</div>
+      </div>`;
+    }
+    especiaisHtml += '</div>';
+    document.getElementById('especiais-section').innerHTML = especiaisHtml;
+
+    // Ranking tables
+    function renderRanking(data, containerId, scoreField, scoreLabel) {
+      const posColors = ['#F0C040','#C0C0C0','#CD7F32'];
+      document.getElementById(containerId).innerHTML = data.map(r => {
+        const pc = r.pos <= 3 ? posColors[r.pos-1] : '#6b7280';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #21262D;font-size:13px;">
+          <span style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:11px;font-weight:700;background:${pc}20;color:${pc};">${r.pos}</span>
+          <span style="flex:1;font-weight:600;color:#E6EDF3;">${r.name}</span>
+          <span style="color:#F0C040;font-weight:700;">${r[scoreField]}</span>
+          <span style="color:#8B949E;font-size:11px;">${scoreLabel}</span>
+        </div>`;
+      }).join('');
+    }
+
+    renderRanking(d.rankingSemanal, 'ranking-semanal', 'scoreWeek', 'pts');
+    renderRanking(d.rankingMensal, 'ranking-mensal', 'scoreRei', 'pts');
+
+  } catch(e) { console.error('Rankings error:', e); }
+})();
+</script>
+
+</div></body></html>

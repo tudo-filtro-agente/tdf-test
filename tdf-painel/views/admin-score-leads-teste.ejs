@@ -1,0 +1,329 @@
+<% const activePage = 'admin-score-leads'; const pageTitle = 'Score de Leads — Testar Lead'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.lst-wrap{max-width:1500px;margin:0 auto;padding:24px;color:var(--text)}
+.lst-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #a371f7;border-radius:12px;padding:18px;margin-bottom:14px}
+.lst-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.lst-tab{background:transparent;color:#9ca3af;border:none;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;text-decoration:none}
+.lst-tab.active{color:#c084fc;border-bottom-color:#a371f7}
+.lst-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:14px}
+.lst-card{background:#161725;border:1px solid var(--border);border-radius:10px;padding:14px}
+.lst-card h3{margin:0 0 10px;color:#c084fc;font-size:14px}
+.lst-card label{display:block;color:#9ca3af;font-size:11px;font-weight:700;text-transform:uppercase;margin:8px 0 3px}
+.lst-card input, .lst-card select, .lst-card textarea{width:100%;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:6px 9px;font-size:12px;box-sizing:border-box}
+.lst-card .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lst-card .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.lst-btn{background:#a371f7;color:#fff;border:none;border-radius:5px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer}
+.lst-btn.s{background:#10b981;color:#000}
+.lst-btn.g{background:#374151}
+.lst-tier{font-size:42px;font-weight:900;margin:10px 0;display:flex;align-items:center;gap:14px}
+.lst-tier .icon{font-size:48px}
+.lst-tier .score{color:#10b981}
+.lst-tier .score.neg{color:#ef4444}
+.lst-hit{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#0a0a0f;border:1px solid var(--border);border-radius:5px;margin-bottom:4px;font-size:12px}
+.lst-hit .pts{font-weight:800;font-family:monospace}
+.lst-hit .pts.pos{color:#10b981} .lst-hit .pts.neg{color:#ef4444}
+.lst-band-info{background:rgba(167,113,247,.1);border:1px solid rgba(167,113,247,.4);border-radius:5px;padding:8px 12px;font-size:11px;margin-bottom:10px}
+.lst-special{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.4);border-radius:5px;padding:8px 12px;font-size:11px;margin-bottom:8px}
+.lst-adj{background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.3);border-radius:5px;padding:6px 10px;font-size:11px;margin-bottom:4px;color:#fca5a5}
+</style>
+
+<div class="lst-wrap">
+  <div class="lst-header">
+    <h1 style="color:#c084fc;margin:0;font-size:20px">🧪 Testar Lead — Sandbox de Score</h1>
+    <p style="color:#9ca3af;font-size:12px;margin:8px 0 0">
+      Preencha o contexto e veja exatamente como o engine calcula o score e o tier.
+      Útil pra validar mudanças em pesos antes de aplicar em produção. Você também pode rodar contra um dealId real do Zoho.
+    </p>
+  </div>
+
+  <div class="lst-tabs">
+    <a class="lst-tab" href="/admin/score-leads">📋 Critérios</a>
+    <a class="lst-tab" href="/admin/score-leads/distancia">📍 Distância & Cidades</a>
+    <a class="lst-tab" href="/admin/score-leads/cadencia">⏱️ Cadência por Tier</a>
+    <a class="lst-tab active" href="/admin/score-leads/teste">🧪 Testar Lead</a>
+    <a class="lst-tab" href="/admin/score-leads/overrides">✋ Overrides Manuais</a>
+    <a class="lst-tab" href="/admin/score-leads/auditoria">📜 Auditoria</a>
+  </div>
+
+  <div class="lst-grid">
+    <div class="lst-card">
+      <h3>Contexto do lead</h3>
+      <div class="row2">
+        <div>
+          <label>Produto</label>
+          <select id="t-product">
+            <option value="FILTRO_ENTRADA_AGUA_TRATADA">Filtro Entrada — Tratada</option>
+            <option value="FILTRO_ENTRADA_POCO">Filtro Entrada — Poço</option>
+            <option value="IRON_FREE" selected>Iron Free</option>
+            <option value="SCALE_STOP">Scale Stop</option>
+            <option value="BEBEDOURO_INDUSTRIAL">Bebedouro Industrial</option>
+            <option value="PURIFICADOR">Purificador</option>
+            <option value="REFIL_MANUTENCAO">Refil</option>
+            <option value="PECAS_ACESSORIOS">Peças</option>
+            <option value="OUTROS">Outros</option>
+          </select>
+        </div>
+        <div>
+          <label>Cidade</label>
+          <input id="t-cidade" placeholder="ex: Taubaté" value="Taubaté">
+        </div>
+      </div>
+
+      <label>Fonte da água</label>
+      <select id="t-water">
+        <option value="">(não informado)</option>
+        <option value="poco">Poço</option>
+        <option value="mina">Mina</option>
+        <option value="cachoeira">Cachoeira</option>
+        <option value="concessionaria">Concessionária / rua</option>
+      </select>
+
+      <label>Sintomas relatados (separe por vírgula)</label>
+      <input id="t-symptoms" placeholder="ex: amarela, ferrugem">
+
+      <label>Perfil do cliente (audience)</label>
+      <select id="t-audience">
+        <option value="">(não informado)</option>
+        <option value="empresa">Empresa</option>
+        <option value="industria">Indústria</option>
+        <option value="comercio">Comércio</option>
+        <option value="escola">Escola</option>
+        <option value="academia">Academia</option>
+        <option value="igreja">Igreja</option>
+        <option value="pousada">Pousada</option>
+        <option value="hotel">Hotel</option>
+        <option value="condominio">Condomínio</option>
+        <option value="fazenda">Fazenda</option>
+        <option value="alto_consumo">Alto consumo</option>
+      </select>
+
+      <div class="row2">
+        <div>
+          <label>Dias até comprar</label>
+          <input type="number" id="t-days" value="7">
+        </div>
+        <div>
+          <label>Telefone (vazio = válido)</label>
+          <input id="t-phone" placeholder="ex: 12999999999">
+        </div>
+      </div>
+
+      <div class="row3" style="margin-top:8px">
+        <label style="display:flex;align-items:center;gap:5px;text-transform:none;margin:0"><input type="checkbox" id="t-has-analysis" checked> Tem análise água</label>
+        <label style="display:flex;align-items:center;gap:5px;text-transform:none;margin:0"><input type="checkbox" id="t-accepts-visit"> Aceita análise/visita</label>
+        <label style="display:flex;align-items:center;gap:5px;text-transform:none;margin:0"><input type="checkbox" id="t-flow"> Informou vazão</label>
+        <label style="display:flex;align-items:center;gap:5px;text-transform:none;margin:0"><input type="checkbox" id="t-asked-price"> Pediu preço</label>
+        <label style="display:flex;align-items:center;gap:5px;text-transform:none;margin:0"><input type="checkbox" id="t-asked-install"> Pediu instalação</label>
+        <label style="display:flex;align-items:center;gap:5px;text-transform:none;margin:0"><input type="checkbox" id="t-sent-media"> Enviou mídia</label>
+        <label style="display:flex;align-items:center;gap:5px;text-transform:none;margin:0"><input type="checkbox" id="t-caixa"> Tem caixa d'água</label>
+        <label style="display:flex;align-items:center;gap:5px;text-transform:none;margin:0"><input type="checkbox" id="t-sensitive"> Tem equip. sensível</label>
+        <label style="display:flex;align-items:center;gap:5px;text-transform:none;margin:0"><input type="checkbox" id="t-pronta"> Pronta entrega</label>
+        <label style="display:flex;align-items:center;gap:5px;text-transform:none;margin:0"><input type="checkbox" id="t-people"> Informou nº pessoas</label>
+        <label style="display:flex;align-items:center;gap:5px;text-transform:none;margin:0"><input type="checkbox" id="t-pf"> Pessoa física</label>
+        <label style="display:flex;align-items:center;gap:5px;text-transform:none;margin:0"><input type="checkbox" id="t-curioso"> Curioso/sem intenção</label>
+      </div>
+
+      <div style="display:flex;gap:6px;margin-top:14px;flex-wrap:wrap">
+        <button class="lst-btn s" onclick="lstRun()">🧪 Calcular Score</button>
+        <button class="lst-btn g" onclick="lstClear()">↺ Limpar</button>
+        <span style="flex:1"></span>
+        <input id="t-deal-id" placeholder="dealId Zoho real" style="width:160px">
+        <button class="lst-btn" onclick="lstPreviewCadence()" title="Mostra o cronograma da cadência sem tocar no Zoho" style="background:#06b6d4">🔍 Preview Cadência</button>
+        <button class="lst-btn" onclick="lstRunReal()">🔥 Recalc Real</button>
+      </div>
+    </div>
+
+    <div class="lst-card">
+      <h3>Breakdown</h3>
+      <div id="lst-result" style="color:var(--text-muted);padding:30px;text-align:center">⬅️ Preencha e clique Calcular</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function buildCtx(){
+  const symptoms = document.getElementById('t-symptoms').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const phone = document.getElementById('t-phone').value.replace(/\D/g,'');
+  return {
+    product_type: document.getElementById('t-product').value,
+    cidade: document.getElementById('t-cidade').value,
+    water_source: document.getElementById('t-water').value || null,
+    symptoms,
+    audience: document.getElementById('t-audience').value || null,
+    days_to_buy: Number(document.getElementById('t-days').value) || null,
+    phone_invalid: phone.length > 0 && phone.length < 10,
+    has_water_analysis: document.getElementById('t-has-analysis').checked,
+    accepts_analysis_or_visit: document.getElementById('t-accepts-visit').checked,
+    flow_rate_known: document.getElementById('t-flow').checked,
+    asked_price: document.getElementById('t-asked-price').checked,
+    asked_install: document.getElementById('t-asked-install').checked,
+    sent_media: document.getElementById('t-sent-media').checked,
+    has_caixa_dagua: document.getElementById('t-caixa').checked,
+    has_sensitive_equipment: document.getElementById('t-sensitive').checked,
+    needs_pronta_entrega: document.getElementById('t-pronta').checked,
+    people_count_informed: document.getElementById('t-people').checked,
+    is_pessoa_fisica: document.getElementById('t-pf').checked,
+    has_business_context: document.getElementById('t-audience').value !== '' && document.getElementById('t-audience').value !== 'pousada',
+    curioso_sem_intencao: document.getElementById('t-curioso').checked,
+  };
+}
+
+async function lstRun(){
+  const ctx = buildCtx();
+  const r = await fetch('/api/lead-score/recalc/test', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ lead_ctx: ctx, trace_misses: false })
+  }).then(r=>r.json());
+  if (!r.ok) { document.getElementById('lst-result').innerHTML = `<div style="color:#ef4444">${r.error}</div>`; return; }
+  renderBreakdown(r.breakdown);
+}
+
+async function lstRunReal(){
+  const dealId = document.getElementById('t-deal-id').value.trim();
+  if (!dealId) { alert('Informe um dealId Zoho.'); return; }
+  if (!confirm(`Vai recalcular o deal ${dealId} no Zoho e ESCREVER Score_Lead/Tier_Lead. Confirma?`)) return;
+  const r = await fetch(`/api/lead-score/recalc/${encodeURIComponent(dealId)}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ trigger_event: 'manual-test-ui', push_zoho: true })
+  }).then(r=>r.json());
+  if (!r.ok) { alert(r.error||'erro'); return; }
+  const br = await fetch(`/api/lead-score/breakdown/${encodeURIComponent(dealId)}`).then(r=>r.json());
+  if (br.ok && br.last) {
+    const bd = typeof br.last.breakdown_json === 'string' ? JSON.parse(br.last.breakdown_json) : br.last.breakdown_json;
+    renderBreakdown(bd, r.result);
+  } else {
+    alert('Recalculado, mas falha ao ler histórico: ' + (br.error||'?'));
+  }
+}
+
+function renderBreakdown(b, realResult){
+  const tierIcon = { DIAMANTE:'💎', OURO:'🥇', PRATA:'🥈', BRONZE:'🥉', PEDRA:'🪨' }[b.tier_auto] || '•';
+  const cls = b.score_auto >= 0 ? '' : 'neg';
+  const dist = b.distance || {};
+  let html = `
+    <div class="lst-tier">
+      <span class="icon">${tierIcon}</span>
+      <div>
+        <div class="score ${cls}">${b.score_auto>=0?'+':''}${b.score_auto}</div>
+        <div style="color:#c084fc;font-size:14px;font-weight:700">${b.tier_auto}</div>
+      </div>
+    </div>
+    <div style="color:#9ca3af;font-size:11px">produto: <code>${b.product_type}</code> · calculado em ${new Date(b.calculated_at).toLocaleString('pt-BR')}</div>
+    ${realResult ? `<div style="background:rgba(16,185,129,.1);border:1px solid #10b981;border-radius:5px;padding:8px 12px;font-size:11px;margin-top:8px">
+      ✅ Aplicado no Zoho: ${realResult.zoho_push.pushed ? 'sim ('+realResult.zoho_push.updated_fields.join(', ')+')' : 'não — '+realResult.zoho_push.reason}
+    </div>` : ''}
+    <div class="lst-band-info" style="margin-top:14px">
+      📍 Distância: <strong>${dist.cidade_match || dist.cidade_input || '?'}</strong>
+      ${dist.km != null ? '· '+dist.km+' km' : '(km não cadastrado)'}
+      ${dist.band ? '· faixa <strong>'+dist.band.label+'</strong> ('+(dist.band.points>=0?'+':'')+dist.band.points+' pts)' : ''}
+    </div>
+    ${(b.special_rules_applied||[]).map(r => `<div class="lst-special">⚠️ Regra especial: <strong>${escapeHtml(r.rule)}</strong> ${r.from?'(de '+r.from+' → '+r.to+')':''}</div>`).join('')}
+    ${(b.adjustments||[]).map(a => `<div class="lst-adj">⚙️ Ajuste em ${escapeHtml(a.code)}: ${a.original} → ${a.applied} (${a.reason})</div>`).join('')}
+    <h4 style="color:#c084fc;font-size:12px;margin:14px 0 6px">Hits (${b.hits.length})</h4>
+    ${b.hits.map(h => `
+      <div class="lst-hit">
+        <div>
+          <div style="font-weight:700;color:#fff">${escapeHtml(h.name)}</div>
+          <div style="color:#9ca3af;font-size:10px"><code>${escapeHtml(h.code)}</code>${h.group_key?' · grupo '+escapeHtml(h.group_key):''}</div>
+        </div>
+        <div class="pts ${h.applied_points>=0?'pos':'neg'}">${h.applied_points>=0?'+':''}${h.applied_points}${h.applied_points!==h.points?' <small style="opacity:.6">(orig '+h.points+')</small>':''}</div>
+      </div>
+    `).join('') || '<div style="color:#888;padding:10px">Nenhum critério bateu.</div>'}
+  `;
+  document.getElementById('lst-result').innerHTML = html;
+}
+
+async function lstPreviewCadence(){
+  const dealId = document.getElementById('t-deal-id').value.trim();
+  const ctx = buildCtx();
+  let body;
+  if (dealId) {
+    // Modo real: usa deal_id pra buscar do Zoho
+    body = { deal_id: dealId };
+  } else {
+    // Modo fake: usa ctx + tier/produto inferidos do form
+    // precisa calcular tier primeiro
+    const sc = await fetch('/api/lead-score/recalc/test', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ lead_ctx: ctx })
+    }).then(r=>r.json());
+    if (!sc.ok) { alert(sc.error||'erro no score'); return; }
+    const tier = sc.breakdown.tier_auto;
+    const needsQualif = (sc.breakdown.special_rules_applied||[]).some(r=>r.rule==='needs_qualif_before_closer');
+    body = {
+      tier,
+      product_type: ctx.product_type,
+      layout: null, pipeline: null, stage: null,
+      owner_zoho_name: 'Lead fake',
+      force_assignee_role: needsQualif ? 'sdr' : null,
+    };
+  }
+  const r = await fetch('/api/lead-score/cadence-preview', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  }).then(r=>r.json());
+  if (!r.ok) { document.getElementById('lst-result').innerHTML = `<div style="color:#ef4444">${r.error}</div>`; return; }
+  renderCadencePreview(r);
+}
+
+function renderCadencePreview(p){
+  const c = p.cadence;
+  const v = p.owner_validation;
+  const willCreate = p.will_create_in_zoho;
+  const dryBadge = p.env_dry_run ? '<span style="background:rgba(167,113,247,.2);color:#c084fc;padding:2px 8px;border-radius:4px;font-size:10px">DRY_RUN ON</span>' : '';
+  const validBadge = v.ok
+    ? `<span style="background:rgba(16,185,129,.2);color:#10b981;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:700">✅ Owner válido</span>`
+    : `<span style="background:rgba(239,68,68,.2);color:#fca5a5;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:700">🚫 ${v.block_code}</span>`;
+  const headHtml = `
+    <div style="background:#0a0a0f;border:1px solid #a371f7;border-radius:8px;padding:14px;margin-bottom:10px">
+      <h3 style="color:#c084fc;margin:0 0 8px;font-size:14px">🔍 Preview da Cadência ${dryBadge}</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:8px">
+        <div><strong style="color:#fff;font-size:18px">${escapeHtml(c.tier)}</strong><br><small style="color:#9ca3af">tier</small></div>
+        <div><strong style="color:#fff">${escapeHtml(c.product_type||'-')}</strong><br><small style="color:#9ca3af">produto</small></div>
+        <div><strong style="color:#fff">${escapeHtml(c.assignee_role)}</strong>${c.original_assignee_role?'<br><small style="color:#f59e0b">(override de '+c.original_assignee_role+')</small>':''}<br><small style="color:#9ca3af">quem atende</small></div>
+        <div><strong style="color:#fff">${c.sla_first_call_minutes}min</strong><br><small style="color:#9ca3af">SLA 1ª ação</small></div>
+        <div><strong style="color:#fff">${c.max_attempts}</strong><br><small style="color:#9ca3af">max tentativas</small></div>
+        <div><strong style="color:#fff">${p.total_steps}</strong><br><small style="color:#9ca3af">passos config</small></div>
+      </div>
+      <div style="margin-top:8px">${validBadge}<span style="color:#9ca3af;font-size:11px;margin-left:8px">${escapeHtml(v.reason||'')}</span></div>
+      ${p.deal ? `<div style="color:#9ca3af;font-size:11px;margin-top:6px">📌 Deal real: <strong style="color:#fff">${escapeHtml(p.deal.name||p.deal.id)}</strong> · Owner: ${escapeHtml(p.deal.owner?.name||'?')} · Stage: ${escapeHtml(p.deal.stage||'?')}</div>` : ''}
+      <div style="color:#9ca3af;font-size:10px;margin-top:6px">Se aplicar agora: ${willCreate?'<strong style="color:#10b981">CRIARIA NO ZOHO</strong>':'<strong style="color:#fbbf24">só auditaria (dry-run ou owner inválido)</strong>'}</div>
+    </div>
+  `;
+  const tableHtml = `
+    <table style="width:100%;border-collapse:collapse;font-size:11px;background:#161725;border:1px solid #30363D;border-radius:8px;overflow:hidden">
+      <thead><tr style="background:#1a0e2a">
+        <th style="padding:7px;color:#c084fc;text-align:left;width:40px">#</th>
+        <th style="padding:7px;color:#c084fc;text-align:left;width:60px">Canal</th>
+        <th style="padding:7px;color:#c084fc;text-align:left">Tarefa</th>
+        <th style="padding:7px;color:#c084fc;text-align:left;width:80px">Prio</th>
+        <th style="padding:7px;color:#c084fc;text-align:left;width:50px">🔔</th>
+        <th style="padding:7px;color:#c084fc;text-align:left;width:180px">Quando exatamente</th>
+        <th style="padding:7px;color:#c084fc;text-align:left;width:90px">Módulo</th>
+      </tr></thead>
+      <tbody>
+        ${p.schedule.map(s => `
+          <tr style="border-bottom:1px solid #1a1a2a">
+            <td style="padding:5px 7px;color:#a371f7;font-family:monospace">${s.step_index+1}</td>
+            <td style="padding:5px 7px">${s.channel==='call'?'📞':(s.channel==='whatsapp'?'💬':s.channel)}${s.is_farewell?' 🙏':''}</td>
+            <td style="padding:5px 7px;color:#e5e7eb">${escapeHtml(s.label)}</td>
+            <td style="padding:5px 7px"><span style="color:${s.priority==='High'?'#ef4444':s.priority==='Low'?'#9ca3af':'#fbbf24'};font-weight:700">${s.priority}</span></td>
+            <td style="padding:5px 7px;text-align:center">${s.reminded?'🔔':'-'}</td>
+            <td style="padding:5px 7px;color:#9ca3af;font-size:10px">${new Date(s.due_at_effective).toLocaleString('pt-BR')}${s.rescheduled_from_past?'<br><span style="color:#f59e0b">(reagendado: era '+new Date(s.due_at_raw).toLocaleString('pt-BR')+')</span>':''}</td>
+            <td style="padding:5px 7px;color:#06b6d4;font-size:10px">${s.target_module}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+  document.getElementById('lst-result').innerHTML = headHtml + tableHtml;
+}
+
+function lstClear(){
+  document.getElementById('lst-result').innerHTML = '<div style="color:#888;padding:30px;text-align:center">⬅️ Preencha e clique Calcular</div>';
+}
+
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+</script>

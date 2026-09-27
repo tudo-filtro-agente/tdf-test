@@ -1,0 +1,149 @@
+<% const activePage = 'admin'; const pageTitle = 'GoTo Connect — Status & Reconectar'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.gt-wrap{max-width:1100px;margin:0 auto;padding:24px;color:var(--text)}
+.gt-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #fbbf24;border-radius:12px;padding:18px;margin-bottom:18px}
+.gt-header h1{color:#fbbf24;margin:0;font-size:20px}
+.gt-card{background:#161725;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px}
+.gt-card.ok{border-left:4px solid #22c55e}
+.gt-card.err{border-left:4px solid #ef4444}
+.gt-card.warn{border-left:4px solid #fbbf24}
+.gt-stat-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1a1a1a;font-size:13px}
+.gt-stat-row .k{color:#9ca3af;font-weight:700}
+.gt-stat-row .v{color:var(--text);font-weight:700;font-family:monospace;font-size:12px}
+.gt-stat-row .v.ok{color:#22c55e}
+.gt-stat-row .v.err{color:#ef4444}
+.gt-stat-row .v.warn{color:#fbbf24}
+.gt-btn{background:#fbbf24;color:#000;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block;margin:4px}
+.gt-btn-success{background:#22c55e}
+.gt-btn-secondary{background:#1f1f2e;color:#ddd;border:1px solid var(--border)}
+.gt-pre{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--warning);font-family:monospace;font-size:11px;overflow-x:auto;max-height:400px;overflow-y:auto}
+</style>
+
+<div class="gt-wrap">
+  <div class="gt-header">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:28px">📞</span>
+      <h1>GoTo Connect — Status & Reconectar</h1>
+    </div>
+    <p style="color:#9ca3af;font-size:12px;margin:6px 0 0;line-height:1.5">
+      Conecta o GoTo Connect pra puxar ligações dos closers automaticamente. Se as ligações não estão aparecendo no dossiê, reconecte aqui.
+    </p>
+    <div style="margin-top:14px">
+      <button class="gt-btn" onclick="gtCarregar()" id="gt-btn-test">🔍 Testar conexão</button>
+      <a href="/admin/goto-oauth/start" class="gt-btn gt-btn-success" target="_blank">🔄 Reconectar GoTo (OAuth)</a>
+      <a href="/admin/goto-debug" target="_blank" class="gt-btn gt-btn-secondary">📋 Ver JSON debug raw</a>
+    </div>
+  </div>
+
+  <div id="gt-status">
+    <div class="gt-card">
+      <div style="text-align:center;color:var(--text-muted);padding:30px">Click em <strong>"🔍 Testar conexão"</strong> pra ver o status atual.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function gtCarregar(){
+  const btn = document.getElementById('gt-btn-test');
+  btn.disabled = true; btn.textContent = '⏳ Testando...';
+  const cont = document.getElementById('gt-status');
+  cont.innerHTML = '<div class="gt-card"><div style="text-align:center;color:#888;padding:20px">⏳ Consultando GoTo...</div></div>';
+  try {
+    const hoje = new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});
+    const r = await fetch('/admin/goto-debug?date='+hoje);
+    const d = await r.json();
+    let html = '';
+
+    // Card 1: Credenciais
+    const credOk = d.has_creds && d.has_account_key;
+    html += `
+      <div class="gt-card ${credOk?'ok':'err'}">
+        <h3 style="margin:0 0 10px;color:${credOk?'#22c55e':'#ef4444'}">${credOk?'✅':'❌'} Credenciais (env vars Railway)</h3>
+        <div class="gt-stat-row"><span class="k">GOTO_CLIENT_ID</span><span class="v ${d.has_creds?'ok':'err'}">${d.has_creds?'Configurado':'❌ FALTANDO — set no Railway'}</span></div>
+        <div class="gt-stat-row"><span class="k">GOTO_CLIENT_SECRET</span><span class="v ${d.has_creds?'ok':'err'}">${d.has_creds?'Configurado':'❌ FALTANDO'}</span></div>
+        <div class="gt-stat-row"><span class="k">GOTO_REFRESH_TOKEN</span><span class="v ${d.has_creds?'ok':'err'}">${d.has_creds?'Configurado':'❌ FALTANDO'}</span></div>
+        <div class="gt-stat-row"><span class="k">GOTO_ACCOUNT_KEY</span><span class="v ${d.has_account_key?'ok':'err'}">${d.has_account_key?'Configurado':'❌ FALTANDO'}</span></div>
+        ${!credOk ? '<div style="margin-top:12px;padding:10px;background:rgba(239,68,68,.06);border-radius:6px;color:#fca5a5;font-size:12px">⚠️ Configure as env vars no Railway antes de continuar.</div>' : ''}
+      </div>
+    `;
+
+    // Card 2: Token
+    const tokenOk = d.token_status === 'OK';
+    html += `
+      <div class="gt-card ${tokenOk?'ok':'err'}">
+        <h3 style="margin:0 0 10px;color:${tokenOk?'#22c55e':'#ef4444'}">${tokenOk?'✅':'❌'} Token de Acesso</h3>
+        <div class="gt-stat-row"><span class="k">Status</span><span class="v ${tokenOk?'ok':'err'}">${d.token_status}</span></div>
+        ${!tokenOk ? `
+          <div style="margin-top:12px;padding:12px;background:rgba(239,68,68,.06);border:1px solid #ef4444;border-radius:6px">
+            <div style="color:#fca5a5;font-weight:800;margin-bottom:6px">🔧 SOLUÇÃO: Reconectar OAuth</div>
+            <div style="color:#aaa;font-size:12px;margin-bottom:10px">O refresh token expirou ou está inválido. Click pra reautorizar:</div>
+            <a href="/admin/goto-oauth/start" class="gt-btn gt-btn-success" target="_blank">🔄 Reconectar agora</a>
+          </div>
+        ` : ''}
+      </div>
+    `;
+
+    // Card 3: API call
+    const apiOk = d.http_status === 200;
+    html += `
+      <div class="gt-card ${apiOk?'ok':d.http_status?'err':'warn'}">
+        <h3 style="margin:0 0 10px;color:${apiOk?'#22c55e':d.http_status?'#ef4444':'#fbbf24'}">${apiOk?'✅':d.http_status?'❌':'⚠️'} Chamada à API GoTo</h3>
+        <div class="gt-stat-row"><span class="k">HTTP Status</span><span class="v ${apiOk?'ok':'err'}">${d.http_status||'(não chamada)'}</span></div>
+        <div class="gt-stat-row"><span class="k">Total de calls hoje</span><span class="v ${d.total_calls>0?'ok':'warn'}">${d.total_calls||0}</span></div>
+        <div class="gt-stat-row"><span class="k">Calls associadas a closer</span><span class="v ok">${d.calls_associadas||0}</span></div>
+        <div class="gt-stat-row"><span class="k">Calls sem vendedor (órfãs)</span><span class="v ${d.calls_sem_vendedor>0?'warn':'ok'}">${d.calls_sem_vendedor||0}</span></div>
+        ${d.http_body ? '<div style="margin-top:10px;padding:10px;background:#0a0a0a;border-radius:5px;font-family:monospace;font-size:11px;color:#fca5a5">Erro API: '+d.http_body+'</div>' : ''}
+        ${d.calls_sem_vendedor > 0 ? `
+          <details style="margin-top:10px">
+            <summary style="cursor:pointer;color:#fbbf24;font-size:12px">▸ Ver ${d.calls_sem_vendedor} calls órfãs (não casaram com nenhum vendedor)</summary>
+            <pre class="gt-pre" style="margin-top:8px">${JSON.stringify(d.sample_orphan_calls, null, 2)}</pre>
+          </details>
+        ` : ''}
+      </div>
+    `;
+
+    // Card 4: Stats por vendedor (se tem dados)
+    if (d.stats && Object.keys(d.stats).length) {
+      html += `<div class="gt-card"><h3 style="margin:0 0 10px;color:#7cb9f5">📊 Calls por vendedor hoje</h3><table style="width:100%;font-size:12px">
+        <thead><tr style="color:#9ca3af;font-size:10px;text-transform:uppercase">
+          <th style="text-align:left;padding:6px">Vendedor</th>
+          <th style="text-align:right;padding:6px">Total</th>
+          <th style="text-align:right;padding:6px">Outbound</th>
+          <th style="text-align:right;padding:6px">Atendidas</th>
+          <th style="text-align:right;padding:6px">Avg (min)</th>
+        </tr></thead><tbody>
+      `;
+      Object.entries(d.stats).forEach(([owner, s]) => {
+        const cor = s.total > 0 ? '#22c55e' : '#666';
+        html += `<tr style="border-top:1px solid #1a1a1a">
+          <td style="padding:6px">${s.nome||owner}</td>
+          <td style="padding:6px;text-align:right;color:${cor};font-weight:700">${s.total||0}</td>
+          <td style="padding:6px;text-align:right">${s.outbound||0}</td>
+          <td style="padding:6px;text-align:right">${s.answered||0}</td>
+          <td style="padding:6px;text-align:right">${s.avgDurMin||0}</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div>';
+    }
+
+    // Card 5: Mapeamento
+    html += `<div class="gt-card">
+      <h3 style="margin:0 0 10px;color:#9ca3af">👥 Vendedores mapeados (${(d.vendedores_mapeados||[]).length})</h3>
+      <div style="font-size:11px;color:#aaa">
+        ${(d.vendedores_mapeados||[]).map(v => `<div style="padding:4px 0;border-bottom:1px solid #1a1a1a">
+          <strong style="color:#fff">${v.nome}</strong> · CRM: ${v.crmOwner} · Ramal: ${v.ramal||'<span style=\"color:#ef4444\">SEM RAMAL</span>'} · UserKey: ${v.hasUserKey?'<span style=\"color:#22c55e\">✓</span>':'<span style=\"color:#ef4444\">✗ FALTANDO</span>'}
+        </div>`).join('')}
+      </div>
+    </div>`;
+
+    cont.innerHTML = html;
+  } catch(e) {
+    cont.innerHTML = `<div class="gt-card err"><h3 style="color:#ef4444">❌ Erro</h3><div>${e.message}</div></div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = '🔄 Testar de novo';
+  }
+}
+gtCarregar();
+</script>

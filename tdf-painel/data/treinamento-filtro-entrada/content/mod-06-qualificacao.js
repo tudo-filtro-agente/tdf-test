@@ -1,0 +1,51 @@
+// Módulo 6 — Qualificação do cliente de filtro de entrada. Roteiro + bloco 'perguntas'.
+module.exports = {
+  resumoCurto: 'Qualificar é confirmar origem da água (concessionária), dor principal, ponto de instalação, nº de moradores/consumo, cidade/CEP e prazo. Sem isso você recomenda no escuro.',
+  video: { url: '', thumb: '', duracaoSeg: 0, transcricao: '', legenda: '', assistidoTrackId: 'fe-qualificacao-video' },
+  blocos: [
+    { tipo: 'callout', variante: 'info', titulo: 'Por que qualificar primeiro',
+      html: 'O ciclo é curto (3 dias) e o lead vem de anúncio (73% pago). Você não tem tempo a perder, mas <strong>também não pode recomendar às cegas</strong>. Qualificar bem é o que te deixa recomendar o modelo certo e conduzir rápido.' },
+    { tipo: 'titulo', texto: 'O que você precisa descobrir' },
+    { tipo: 'perguntas', titulo: 'Roteiro de qualificação (na ordem)', itens: [
+      'Origem da água: "A água aí é da rua/concessionária ou de poço?" (confirmar que é concessionária — é o ICP do filtro de entrada)',
+      'Dor principal: "O que mais te incomoda na água hoje? Cor, cheiro/gosto de cloro, barro/sujeira, ou é mais desconfiança geral?"',
+      'Ponto de instalação: "A água entra por um ponto só no imóvel? Tem caixa d\'água? Onde fica o registro de entrada?"',
+      'Moradores / consumo: "Quantas pessoas moram na casa? É casa ou apartamento?" (dá porte pra recomendar o modelo certo)',
+      'Cidade / CEP: "Qual a cidade e o CEP?" (região influencia instalação, frete e logística)',
+      'Prazo: "Pra quando você pensa em resolver isso?" (curto = conduzir já; longo = nutrir sem largar)',
+    ]},
+    { tipo: 'titulo', texto: 'A pergunta que não pode faltar' },
+    { tipo: 'callout', variante: 'alerta', titulo: 'Sempre confirme a origem da água',
+      html: 'Se for <strong>poço</strong> ou água não tratada, não é filtro de entrada — é outra linha (água não tratada / Iron Free). Confirmar concessionária logo no começo evita recomendar o produto errado.' },
+    { tipo: 'especialista', nome: 'qualificação',
+      html: 'Antes de perguntar, <strong>leia o CRM</strong>: cidade, origem da água, queixa e prazo muitas vezes já estão lá. Não pergunte o que você já tem. Comece confirmando a dor ("vi que você falou de barro na água...") e complete só o que falta. Qualificação é conversa, não formulário.' },
+    { tipo: 'tabela', head: ['Informação', 'Por que importa'], rows: [
+      ['Origem da água', 'Define se é filtro de entrada (concessionária) ou outra linha (poço).'],
+      ['Dor principal', 'Ancora a apresentação de valor: cloro, barro, cor, desconfiança.'],
+      ['Ponto de instalação / caixa', 'Viabilidade técnica e recomendação do modelo.'],
+      ['Moradores / consumo', 'Porte da casa → modelo certo (confirmar na ficha).'],
+      ['Cidade / CEP', 'Instalação, logística e frete (frete grátis só SP).'],
+      ['Prazo', 'Define a condução: fechar já (ciclo curto) ou nutrir.'],
+    ]},
+    { tipo: 'checklist', titulo: 'Só avance para proposta quando tiver', itens: [
+      'Origem confirmada = concessionária',
+      'Dor principal identificada',
+      'Ponto de instalação / caixa entendido',
+      'Nº de moradores e tipo de imóvel',
+      'Cidade e CEP',
+      'Prazo do cliente',
+    ]},
+    { tipo: 'pendente', titulo: 'Modelo por porte da casa',
+      html: 'A relação entre número de moradores/consumo e o modelo indicado (vazão/capacidade) <strong>vem da ficha técnica oficial da TDF</strong>. Colete o dado de consumo na qualificação, mas confirme o modelo na ficha antes de recomendar.' },
+    { tipo: 'dodont',
+      fazer: ['Confirmar concessionária antes de tudo.', 'Ler o CRM e só perguntar o que falta.', 'Amarrar cada informação a uma decisão (modelo, prazo, logística).'],
+      evitar: ['Recomendar modelo sem saber o porte da casa.', 'Interrogar o cliente com perguntas que o CRM já responde.', 'Tratar poço como filtro de entrada.'] },
+  ],
+  perguntasRapidas: [
+    { pergunta: 'Qual pergunta de qualificação nunca pode faltar em filtro de entrada?', opcoes: ['A cor preferida do produto.', 'A origem da água (confirmar que é concessionária).', 'A marca do chuveiro.'], correta: 1, explicacao: 'Confirmar a origem evita recomendar filtro de entrada para quem tem poço (outra linha).' },
+    { pergunta: 'Para que serve saber nº de moradores e tipo de imóvel?', opcoes: ['Curiosidade.', 'Dar o porte da casa e ajudar a recomendar o modelo certo (confirmando na ficha).', 'Calcular o cloro.'], correta: 1, explicacao: 'O porte/consumo orienta o modelo indicado — que se confirma na ficha técnica.' },
+    { pergunta: 'O cliente diz que quer resolver "daqui uns 3 meses". O que isso muda?', opcoes: ['Nada, trato igual.', 'É prazo mais longo: mantenho nutrição sem largar, sem forçar fechamento imediato.', 'Descarto o lead.'], correta: 1, explicacao: 'Prazo longo pede nutrição; prazo curto pede condução imediata. O prazo define o ritmo.' },
+  ],
+  exercicio: { enunciado: 'Monte, em 6 perguntas, o roteiro de qualificação que você usaria em um lead novo de anúncio que só disse "quero saber sobre filtro pra casa". O que você confirma primeiro?', dica: 'Origem da água primeiro; depois dor, ponto de instalação/caixa, moradores/imóvel, cidade/CEP e prazo. Cheque o CRM antes para não repetir o que já tem.' },
+  resumo: 'Qualificar filtro de entrada é confirmar origem (concessionária), dor principal, ponto de instalação/caixa, nº de moradores/consumo, cidade/CEP e prazo. Leia o CRM antes e só pergunte o que falta. Confirme a origem sempre — poço é outra linha — e o modelo por porte vem da ficha técnica. Só avance à proposta com o checklist completo.'
+};

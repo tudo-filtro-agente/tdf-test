@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script>try{if(localStorage.getItem('tdf-theme')==='light')document.documentElement.setAttribute('data-theme','light')}catch(_){}</script>
+
+<meta charset="UTF-8">
+<title>TDF · Mapa Operacional · TV</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
+  #map-tv { position: absolute; inset: 0; background: var(--bg); }
+
+  /* HUD topo */
+  .hud-top {
+    position: absolute; top: 16px; left: 16px; right: 16px; z-index: 1000;
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+    pointer-events: none;
+  }
+  .hud-brand {
+    background: rgba(13,17,23,.88); backdrop-filter: blur(8px);
+    border: 1px solid var(--border); border-radius: 12px; padding: 12px 18px;
+    display: flex; align-items: center; gap: 14px; pointer-events: auto;
+  }
+  .hud-brand .logo { font-size: 26px; font-weight: 900; color: #25D366; letter-spacing: -.5px; }
+  .hud-brand .sub { font-size: 12px; color: var(--text-muted); }
+  .hud-brand .clock { font-size: 22px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+
+  .hud-counters {
+    display: flex; gap: 8px; pointer-events: auto;
+  }
+  .hud-card {
+    background: rgba(13,17,23,.88); backdrop-filter: blur(8px);
+    border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px;
+    text-align: center; min-width: 110px;
+    border-top: 3px solid var(--c);
+  }
+  .hud-card { cursor: pointer; transition: transform .15s, border-color .15s; }
+  .hud-card:hover { transform: translateY(-2px); border-color: var(--c); }
+  .hud-card.dimmed { opacity: .35; }
+  .hud-card .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); margin-bottom: 2px; }
+  .hud-card .val { font-size: 28px; font-weight: 900; color: var(--text); line-height: 1; font-variant-numeric: tabular-nums; }
+  .hud-card .ico { font-size: 14px; margin-right: 4px; }
+
+  /* HUD bottom */
+  .hud-bottom {
+    position: absolute; bottom: 14px; left: 16px; right: 16px; z-index: 1000;
+    display: flex; justify-content: space-between; align-items: center;
+    pointer-events: none;
+  }
+  .hud-status {
+    background: rgba(13,17,23,.88); backdrop-filter: blur(8px);
+    border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px;
+    font-size: 12px; color: var(--text-muted); display: flex; gap: 14px; align-items: center;
+    pointer-events: auto;
+  }
+  .hud-status .pulse { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px #22c55e; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .hud-status b { color: var(--text); }
+  .hud-back {
+    background: rgba(13,17,23,.88); border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 14px; color: #93c5fd; font-size: 12px; text-decoration: none; pointer-events: auto;
+  }
+  .hud-back:hover { color: var(--text); border-color: #1f6feb; }
+
+  /* Pins */
+  .mp-pin {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--text); font-weight: 700;
+  }
+  .mp-pin.tecnicos {
+    width: 40px; height: 40px; font-size: 20px;
+    border: 3px solid #fff;
+    animation: ping 2.5s infinite;
+  }
+  @keyframes ping { 0%{box-shadow:0 0 0 0 rgba(251,113,133,.7)} 70%{box-shadow:0 0 0 22px rgba(251,113,133,0)} 100%{box-shadow:0 0 0 0 rgba(251,113,133,0)} }
+
+  /* Popup */
+  .leaflet-popup-content-wrapper { border-radius: 10px; background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
+  .leaflet-popup-content { margin: 12px 14px; font-size: 13px; line-height: 1.5; }
+  .leaflet-popup-content b { color: var(--text); }
+  .leaflet-popup-tip { background: var(--bg-card); }
+  .pin-popup .badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--border); color: var(--text); margin-right: 4px; }
+
+  /* OSM dark filter (sutil) */
+  .leaflet-tile-pane { filter: brightness(.7) saturate(1.1) contrast(1.05); }
+</style>
+</head>
+<body>
+<div id="map-tv"></div>
+
+<div class="hud-top">
+  <div class="hud-brand">
+    <div>
+      <div class="logo">TUDO DE FILTRO</div>
+      <div class="sub">Mapa Operacional · Tempo Real</div>
+    </div>
+    <div class="clock" id="hud-clock">--:--</div>
+  </div>
+  <div class="hud-counters">
+    <div class="hud-card" data-layer="agendados" style="--c:#22c55e" onclick="focusLayer('agendados')">
+      <div class="lbl"><span class="ico">📅</span>Agendados</div>
+      <div class="val" id="ct-agendados">0</div>
+    </div>
+    <div class="hud-card" data-layer="a_agendar" style="--c:#fbbf24" onclick="focusLayer('a_agendar')">
+      <div class="lbl"><span class="ico">⏳</span>A agendar</div>
+      <div class="val" id="ct-a_agendar">0</div>
+    </div>
+    <div class="hud-card" data-layer="envios" style="--c:#a371f7" onclick="focusLayer('envios')">
+      <div class="lbl"><span class="ico">📦</span>Envios</div>
+      <div class="val" id="ct-envios">0</div>
+    </div>
+    <div class="hud-card" data-layer="tecnicos" style="--c:#fb7185" onclick="focusLayer('tecnicos')">
+      <div class="lbl"><span class="ico">🚗</span>Em campo</div>
+      <div class="val" id="ct-tecnicos">0</div>
+    </div>
+  </div>
+</div>
+
+<div class="hud-bottom">
+  <div class="hud-status">
+    <span class="pulse"></span>
+    <span>Atualizado <b id="last-update">—</b> · Refresh auto 30s</span>
+    <span style="color:var(--text-muted)">|</span>
+    <span>Origem: BrasilSat (carros) + AUVO (técnicos) + Zoho (envios)</span>
+  </div>
+  <a href="/operacional/mapa" class="hud-back">← Sair do modo TV</a>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+<script>
+const COLORS = { agendados: '#22c55e', a_agendar: '#fbbf24', envios: '#a371f7', tecnicos: '#fb7185' };
+const ICONS = { agendados: '📅', a_agendar: '⏳', envios: '📦', tecnicos: '🚗' };
+const State = { map: null, layerGroups: {}, fitted: false };
+
+function makePin(layer) {
+  const isTec = layer === 'tecnicos';
+  const size = isTec ? 40 : 28;
+  return L.divIcon({
+    className: 'mp-pin-wrap',
+    html: `<div class="mp-pin ${layer}" style="background:${COLORS[layer]}">${ICONS[layer]}</div>`,
+    iconSize: [size, size], iconAnchor: [size/2, size/2],
+  });
+}
+
+function popupHTML(layer, p) {
+  const lines = [];
+  if (p.customer_name) lines.push(`<b>${p.customer_name}</b>`);
+  if (p.product) lines.push(p.product.substring(0, 60));
+  if (p.tech_name) lines.push(`👷 ${p.tech_name}`);
+  if (p.vehicle_plate) lines.push(`🚗 ${p.vehicle_plate} (${p.vehicle_model || '—'})`);
+  if (p.scheduled_for) lines.push(`📅 ${new Date(p.scheduled_for).toLocaleString('pt-BR')}`);
+  if (p.scheduled_start) lines.push(`📅 ${new Date(p.scheduled_start).toLocaleString('pt-BR')}`);
+  if (p.stage) lines.push(`<span class="badge">${p.stage}</span>`);
+  if (p.status) lines.push(`<span class="badge">${p.status}</span>`);
+  if (p.tracking_code) lines.push(`📮 ${p.tracking_code}`);
+  if (p.amount) lines.push(`💰 R$ ${parseFloat(p.amount).toLocaleString('pt-BR',{minimumFractionDigits:2})}`);
+  if (p.speed_kmh != null) lines.push(`💨 ${p.speed_kmh} km/h`);
+  if (p.ts) lines.push(`<span style="color:#888">⏱ ${new Date(p.ts).toLocaleString('pt-BR')}</span>`);
+  if (p.address) lines.push(`<span style="color:#888;font-size:11px">📍 ${p.address}</span>`);
+  if (p.sale_id) lines.push(`<button onclick="window.open('/operacional/cliente/${p.sale_id}','_blank')" style="margin-top:6px;background:#1f6feb;color:#fff;border:0;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700">📋 Card cliente</button>`);
+  return `<div class="pin-popup">${lines.join('<br>')}</div>`;
+}
+
+function focusLayer(layer) {
+  // Dim outros cards
+  document.querySelectorAll('.hud-card').forEach(c => {
+    c.classList.toggle('dimmed', c.dataset.layer !== layer);
+  });
+  // Auto-fit nos pins desse layer
+  const data = window._lastData;
+  if (!data) return;
+  const items = data[layer] || [];
+  if (!items.length) return;
+  const bounds = items.map(p => [p.lat, p.lng]);
+  State.map.fitBounds(bounds, { padding: [80, 80], maxZoom: 13 });
+  // Clear dim depois de 4s
+  clearTimeout(window._dimTimer);
+  window._dimTimer = setTimeout(() => {
+    document.querySelectorAll('.hud-card').forEach(c => c.classList.remove('dimmed'));
+  }, 4000);
+}
+
+function initMap() {
+  State.map = L.map('map-tv', {
+    preferCanvas: true,
+    zoomControl: false,
+    attributionControl: false,
+  }).setView([-23.5505, -46.6333], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(State.map);
+  L.control.zoom({ position: 'bottomright' }).addTo(State.map);
+  for (const layer of Object.keys(COLORS)) {
+    State.layerGroups[layer] = L.layerGroup().addTo(State.map);
+  }
+}
+
+async function loadMap() {
+  try {
+    const data = await fetch('/operacional/api/map-data?days=30').then(r => r.json());
+    window._lastData = data;
+    document.getElementById('last-update').textContent = new Date().toLocaleTimeString('pt-BR');
+    for (const layer of Object.keys(COLORS)) {
+      State.layerGroups[layer].clearLayers();
+      const items = data[layer] || [];
+      document.getElementById('ct-' + layer).textContent = items.length;
+      const icon = makePin(layer);
+      for (const p of items) {
+        L.marker([p.lat, p.lng], { icon }).bindPopup(popupHTML(layer, p)).addTo(State.layerGroups[layer]);
+      }
+    }
+    if (!State.fitted) {
+      // Prioriza técnicos > envios > agendados+a_agendar pra evitar outlier zoom-out
+      let bounds = (data.tecnicos || []).map(p => [p.lat, p.lng]);
+      if (bounds.length < 2) bounds = bounds.concat((data.envios || []).map(p => [p.lat, p.lng]));
+      if (bounds.length === 0) {
+        for (const l of ['agendados','a_agendar']) {
+          for (const p of (data[l] || [])) bounds.push([p.lat, p.lng]);
+        }
+      }
+      if (bounds.length) {
+        State.map.fitBounds(bounds, { padding: [80, 80], maxZoom: 12 });
+        State.fitted = true;
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    document.getElementById('last-update').textContent = 'erro';
+  }
+}
+
+function tickClock() {
+  const now = new Date();
+  document.getElementById('hud-clock').textContent = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+initMap();
+loadMap();
+tickClock();
+setInterval(loadMap, 30000);
+setInterval(tickClock, 1000);
+
+// Fullscreen API: F key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'f' || e.key === 'F') {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  }
+});
+</script>
+</body>
+</html>

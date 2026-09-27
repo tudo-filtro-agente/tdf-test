@@ -1,0 +1,517 @@
+<% const activePage = 'gestao-closy'; const pageTitle = 'Gestão CRM Closy'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.gc-wrap{max-width:1700px;margin:0 auto;padding:18px 24px 80px}
+.gc-h{font-size:22px;color:var(--text);margin:0 0 4px;font-weight:800;display:flex;align-items:center;gap:10px}
+.gc-sub{color:var(--text-muted);font-size:13px;margin:0 0 14px}
+.gc-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px}
+.gc-bar input,.gc-bar select{background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 10px;font-size:12px;outline:none}
+.gc-bar button{background:#1f6feb;border:none;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-size:12px}
+.gc-bar button.ghost{background:#222}
+.gc-bar .gc-meta-input{display:flex;align-items:center;gap:4px}
+.gc-bar small{color:var(--text-muted);font-size:11px}
+
+/* === CARDS topo === */
+.gc-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px;margin-bottom:18px}
+.gc-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:11px 14px}
+.gc-card .l{font-size:10px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.4px}
+.gc-card .v{font-size:22px;font-weight:800;color:var(--text);line-height:1.1;margin:4px 0 2px}
+.gc-card .s{font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:4px}
+.gc-card .s.up{color:#4ade80}.gc-card .s.dn{color:#f87171}.gc-card .s.warn{color:#fbbf24}
+.gc-card.green{border-left:3px solid #22c55e}
+.gc-card.yellow{border-left:3px solid #eab308}
+.gc-card.red{border-left:3px solid #ef4444}
+.gc-card.blue{border-left:3px solid #3b82f6}
+.gc-card.click{cursor:pointer;transition:all .15s}
+.gc-card.click:hover{border-color:#5ba3f5;transform:translateY(-1px)}
+
+/* === blocks === */
+.gc-grid{display:grid;gap:14px}
+.gc-grid.c2{grid-template-columns:1fr 1fr}
+.gc-grid.c3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:1100px){.gc-grid.c2,.gc-grid.c3{grid-template-columns:1fr}}
+.gc-block{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.gc-block h3{margin:0;padding:11px 16px;border-bottom:1px solid var(--border);background:var(--bg-card);font-size:12px;color:var(--text);text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:8px}
+.gc-block h3 .badge{background:#1f6feb;color:#fff;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:800}
+.gc-block h3 .badge.crit{background:#ef4444}.gc-block h3 .badge.warn{background:#fbbf24;color:#000}
+.gc-block .body{padding:12px 16px}
+.gc-block.alerta h3{background:rgba(239,68,68,.08);border-bottom-color:rgba(239,68,68,.3)}
+
+/* alertas */
+.al-list{max-height:420px;overflow-y:auto}
+.al-item{display:flex;gap:10px;padding:9px 12px;border-bottom:1px solid #1a1a1a;align-items:center;font-size:12px}
+.al-item:last-child{border-bottom:none}
+.al-item .sev{width:6px;height:36px;border-radius:3px;flex-shrink:0}
+.al-item .sev.critico{background:#ef4444}
+.al-item .sev.atencao{background:#fbbf24}
+.al-item .info{flex:1;min-width:0}
+.al-item .nome{color:var(--text);font-weight:700;font-size:12px}
+.al-item .meta{color:var(--text-muted);font-size:11px;margin-top:2px}
+.al-item .vlr{color:#4ade80;font-weight:800;font-size:12px;margin-right:8px}
+.al-item .acoes{display:flex;gap:4px}
+.al-item button{background:var(--bg-hover);color:var(--text-muted);border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:600}
+.al-item button:hover{background:#1f6feb;color:#fff;border-color:#1f6feb}
+
+/* funil */
+.fn-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #1a1a1a;font-size:12px}
+.fn-row:last-child{border-bottom:none}
+.fn-row .ico{font-size:18px;width:30px;text-align:center}
+.fn-row .lbl{flex:1;color:var(--text);font-weight:700;font-size:12px}
+.fn-row .lbl small{display:block;color:var(--text-muted);font-weight:400;font-size:10px}
+.fn-row .qty{font-size:18px;font-weight:800;color:var(--text);min-width:50px;text-align:right}
+.fn-row .vlr{color:#4ade80;font-weight:700;font-size:12px;min-width:90px;text-align:right}
+.fn-row .conv{color:#7cb9f5;font-size:11px;min-width:60px;text-align:right}
+.fn-row .trav{color:#f87171;font-size:11px;min-width:60px;text-align:right}
+.fn-row .tmp{color:var(--text-muted);font-size:11px;min-width:60px;text-align:right}
+.fn-bar{height:6px;background:#222;border-radius:3px;overflow:hidden;flex:1.5;max-width:200px}
+.fn-bar i{display:block;height:100%}
+
+/* dinheiro travado */
+.dt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+.dt-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:13px;cursor:pointer;transition:all .15s}
+.dt-card:hover{border-color:#fbbf24}
+.dt-card .l{font-size:10px;color:var(--text-muted);text-transform:uppercase;font-weight:700;margin-bottom:5px}
+.dt-card .v{font-size:18px;font-weight:800;color:#fbbf24;margin-bottom:2px}
+.dt-card .s{font-size:11px;color:var(--text-muted)}
+
+/* operadoras */
+.op-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.op-tbl th{text-align:left;padding:8px 10px;color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);font-weight:700}
+.op-tbl td{padding:8px 10px;border-bottom:1px solid #1a1a1a;color:var(--text)}
+.op-tbl tr:hover td{background:rgba(255,255,255,.02)}
+.op-tbl .pos{font-weight:800;color:#fbbf24}
+.op-tbl .receita{color:#4ade80;font-weight:700}
+.op-tbl .conv{color:#7cb9f5}
+.op-tbl .nome{color:var(--text);font-weight:700}
+
+/* vel + recup mini cards */
+.mini-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.mini-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:11px}
+.mini-card .l{font-size:10px;color:var(--text-muted);text-transform:uppercase;font-weight:700}
+.mini-card .v{font-size:20px;font-weight:800;color:var(--text);margin:3px 0}
+.mini-card .v.green{color:#4ade80}.mini-card .v.blue{color:#7cb9f5}.mini-card .v.gray{color:#9ca3af}
+.mini-card .s{font-size:10px;color:var(--text-muted)}
+
+/* meses */
+.mes-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.mes-tbl th{padding:6px 8px;color:var(--text-muted);font-size:10px;text-transform:uppercase;text-align:right;border-bottom:1px solid var(--border)}
+.mes-tbl th:first-child{text-align:left}
+.mes-tbl td{padding:6px 8px;text-align:right;color:var(--text);border-bottom:1px solid #1a1a1a}
+.mes-tbl td:first-child{text-align:left;color:var(--text);font-weight:700}
+.mes-tbl tr.futuro td{color:var(--text-muted);font-style:italic}
+.mes-bar{display:inline-block;height:8px;background:#1f6feb;border-radius:2px;vertical-align:middle;margin-right:6px}
+
+/* prioridade do dia */
+.pri-list{max-height:380px;overflow-y:auto}
+.pri-item{padding:9px 14px;border-bottom:1px solid #1a1a1a;display:flex;gap:8px;align-items:center}
+.pri-item .nome{flex:1;color:var(--text);font-weight:700;font-size:12px}
+.pri-item .nome small{display:block;color:var(--text-muted);font-weight:400;font-size:10px;margin-top:2px}
+.pri-item .vlr{color:#4ade80;font-weight:800;font-size:12px}
+.pri-item button{background:#222;color:#ddd;border:1px solid var(--border);border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer}
+
+.gc-empty{padding:30px;text-align:center;color:var(--text-muted);font-size:12px}
+.gc-loading{padding:40px;text-align:center;color:var(--text-muted);font-size:13px}
+</style>
+
+<div class="gc-wrap">
+  <h1 class="gc-h">📊 Gestão Comercial · CRM Closy</h1>
+  <p class="gc-sub">Visão tempo real: receita, gargalos, performance, oportunidades. Atualiza a cada 90s.</p>
+
+  <!-- Filtros + Meta -->
+  <div class="gc-bar">
+    <select id="f-categoria"><option value="">Todas categorias</option></select>
+    <select id="f-operadora"><option value="">Todas operadoras</option></select>
+    <select id="f-cidade"><option value="">Todas cidades</option></select>
+    <select id="f-etapa"><option value="">Todas etapas</option></select>
+    <input type="number" id="f-valor-min" placeholder="Valor mín R$" style="width:110px">
+    <button onclick="gcLoad(true)">🔄 Atualizar</button>
+    <span style="flex:1"></span>
+    <div class="gc-meta-input">
+      <small>Meta do mês:</small>
+      <input type="number" id="meta-input" placeholder="0" style="width:120px">
+      <button onclick="salvarMeta()" class="ghost">💾</button>
+    </div>
+    <small id="gc-updated"></small>
+  </div>
+
+  <!-- 1. Cards principais -->
+  <div id="gc-cards" class="gc-cards"><div class="gc-loading">Carregando...</div></div>
+
+  <!-- 2. Alertas + Prioridade do dia -->
+  <div class="gc-grid c2">
+    <div class="gc-block alerta">
+      <h3>🚨 Alertas Prioritários <span class="badge crit" id="al-count">0</span></h3>
+      <div class="al-list" id="gc-alertas"><div class="gc-empty">—</div></div>
+    </div>
+    <div class="gc-block">
+      <h3>🎯 Prioridade do Dia <span class="badge" id="pri-count">0</span></h3>
+      <div class="pri-list" id="gc-prioridade"><div class="gc-empty">—</div></div>
+    </div>
+  </div>
+
+  <!-- 3. Funil -->
+  <div class="gc-block">
+    <h3>🪜 Funil CRM Closy</h3>
+    <div id="gc-funil"><div class="gc-empty">—</div></div>
+  </div>
+
+  <!-- 4. Dinheiro travado -->
+  <div class="gc-block">
+    <h3>💰 Dinheiro Travado</h3>
+    <div class="body"><div id="gc-dinheiro" class="dt-grid"></div></div>
+  </div>
+
+  <!-- 5. Performance operadoras + 7. Recuperação -->
+  <div class="gc-grid c2">
+    <div class="gc-block">
+      <h3>👥 Performance Operadoras</h3>
+      <div class="body" style="padding:0"><table class="op-tbl" id="gc-operadoras"><tbody><tr><td class="gc-empty" colspan="7">—</td></tr></tbody></table></div>
+    </div>
+    <div class="gc-block">
+      <h3>♻️ Recuperação de Base</h3>
+      <div class="body"><div id="gc-recup" class="mini-grid"></div></div>
+    </div>
+  </div>
+
+  <!-- 6. Velocidade da operação -->
+  <div class="gc-block">
+    <h3>⚡ Velocidade da Operação</h3>
+    <div class="body"><div id="gc-velocidade" class="mini-grid"></div></div>
+  </div>
+
+  <!-- 8. Visão mensal -->
+  <div class="gc-block">
+    <h3>📅 Visão Mensal — vencimento + receita</h3>
+    <div class="body" style="padding:0"><table class="mes-tbl" id="gc-meses"><thead><tr><th>Mês</th><th>Vencendo</th><th>Potencial</th><th>Realizada</th><th>Gap</th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <!-- 🤖 Painel IA -->
+  <div class="gc-block" style="border-color:#a371f7">
+    <h3 style="background:linear-gradient(135deg,#1a0f2e,#2d1525);border-bottom-color:#a371f7;color:#a371f7">🤖 Painel da IA (Núbia) <button onclick="carregarPainelIa(true)" style="margin-left:auto;background:#222;border:1px solid var(--border);color:#ddd;border-radius:5px;padding:3px 10px;font-size:10px;cursor:pointer">🔄</button></h3>
+    <div class="body">
+      <div id="ia-cards" class="mini-grid" style="margin-bottom:14px"></div>
+      <div class="gc-grid c2" style="gap:10px">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:10px">
+          <h4 style="margin:0 0 8px;color:#a371f7;font-size:11px;text-transform:uppercase;font-weight:700">Onde os leads da IA estão</h4>
+          <div id="ia-stages" style="font-size:11px"></div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:10px">
+          <h4 style="margin:0 0 8px;color:#a371f7;font-size:11px;text-transform:uppercase;font-weight:700">Por origem (conversão IA)</h4>
+          <div id="ia-fontes" style="font-size:11px"></div>
+        </div>
+      </div>
+      <h4 style="margin:14px 0 6px;color:#a371f7;font-size:11px;text-transform:uppercase;font-weight:700">Top leads que a IA tocou (ganhos primeiro)</h4>
+      <div id="ia-leads" style="max-height:340px;overflow-y:auto;background:var(--bg-card);border:1px solid var(--border);border-radius:6px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const fmt = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+const fmtCompact = v => v >= 1000000 ? 'R$ '+(v/1000000).toFixed(1)+'M' : v >= 1000 ? 'R$ '+(v/1000).toFixed(1)+'k' : 'R$ '+Math.round(v);
+let _GC = null;
+let _FILTROS = {};
+
+function gcQuery(force){
+  const params = new URLSearchParams();
+  const cat = document.getElementById('f-categoria')?.value;
+  const op = document.getElementById('f-operadora')?.value;
+  const ci = document.getElementById('f-cidade')?.value;
+  const et = document.getElementById('f-etapa')?.value;
+  const vm = document.getElementById('f-valor-min')?.value;
+  if (cat) params.set('categoria', cat);
+  if (op) params.set('operadora', op);
+  if (ci) params.set('cidade', ci);
+  if (et) params.set('etapa', et);
+  if (vm) params.set('valorMin', vm);
+  if (force) params.set('nocache', '1');
+  return params.toString();
+}
+
+async function gcLoad(force){
+  try {
+    const qs = gcQuery(force);
+    const url = '/gestao-closy/data' + (qs ? '?' + qs : '');
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.error){ document.getElementById('gc-cards').innerHTML = '<div class="gc-empty" style="grid-column:1/-1;color:#f87171">Erro: '+d.error+'</div>'; return; }
+    _GC = d;
+    montarFiltros(d.filtros);
+    renderCards(d.cards);
+    renderAlertas(d.alertas, d.alertasTotal);
+    renderFunil(d.funil);
+    renderDinheiroTravado(d.dinheiroTravado);
+    renderOperadoras(d.operadoras);
+    renderVelocidade(d.velocidade);
+    renderRecuperacao(d.recuperacao);
+    renderMeses(d.meses);
+    renderPrioridade(d.prioridadeDia);
+    carregarPainelIa(false);
+    document.getElementById('gc-updated').textContent = '🕐 ' + new Date(d.generatedAt).toLocaleTimeString('pt-BR');
+    carregarMeta();
+  } catch(e) {
+    document.getElementById('gc-cards').innerHTML = '<div class="gc-empty" style="grid-column:1/-1;color:#f87171">'+e.message+'</div>';
+  }
+}
+
+function montarFiltros(f){
+  if (!f) return;
+  const sel = (id, items) => {
+    const el = document.getElementById(id);
+    if (!el || el.dataset.filled) return;
+    el.dataset.filled = '1';
+    items.forEach(i => { const o = document.createElement('option'); o.value = i.value || i.id || i; o.textContent = i.label || i.name || i; el.appendChild(o); });
+    el.addEventListener('change', () => gcLoad(false));
+  };
+  sel('f-categoria', f.categorias || []);
+  sel('f-operadora', (f.operadoras||[]).map(o => ({value:o.username, label:o.name})));
+  sel('f-cidade',    (f.cidades||[]).map(c => ({value:c, label:c})));
+  sel('f-etapa',     (_GC?.etapas||[]).map(e => ({value:e.id, label:e.label})));
+  // valor mínimo: dispara após digitar (debounced)
+  const vmEl = document.getElementById('f-valor-min');
+  if (vmEl && !vmEl.dataset.bound) {
+    vmEl.dataset.bound = '1';
+    let t; vmEl.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => gcLoad(false), 600); });
+  }
+}
+
+function renderCards(c){
+  if (!c) return;
+  const arrow = (cur, ant) => {
+    if (!ant && !cur) return '';
+    if (cur > ant) return '<span class="s up">▲ '+(ant > 0 ? Math.round(((cur-ant)/ant)*100)+'%' : 'novo')+'</span>';
+    if (cur < ant) return '<span class="s dn">▼ '+(ant > 0 ? Math.round(((ant-cur)/ant)*100)+'%' : '')+'</span>';
+    return '<span class="s">≈ igual</span>';
+  };
+  const pctMeta = c.pctMeta?.valor || 0;
+  const pctClass = pctMeta >= 100 ? 'green' : pctMeta >= 70 ? 'yellow' : 'red';
+  const html = `
+    <div class="gc-card green"><div class="l">💵 ${c.receitaHoje.label}</div><div class="v">${fmtCompact(c.receitaHoje.valor)}</div>${arrow(c.receitaHoje.valor, c.receitaHoje.compara)||'<div class="s">—</div>'}</div>
+    <div class="gc-card green"><div class="l">📈 ${c.receitaMes.label}</div><div class="v">${fmtCompact(c.receitaMes.valor)}</div>${arrow(c.receitaMes.valor, c.receitaMes.compara)||'<div class="s">—</div>'}</div>
+    <div class="gc-card blue"><div class="l">🎯 ${c.metaMes.label}</div><div class="v">${c.metaMes.valor > 0 ? fmtCompact(c.metaMes.valor) : '—'}</div><div class="s">${c.metaMes.valor > 0 ? 'definida' : 'configure ↑'}</div></div>
+    <div class="gc-card ${pctClass}"><div class="l">📊 ${c.pctMeta.label}</div><div class="v">${pctMeta}%</div><div class="s">${pctMeta >= 100 ? '✅ batida' : pctMeta >= 70 ? '🔥 quase' : '⚠️ atrás'}</div></div>
+    <div class="gc-card blue"><div class="l">💎 ${c.receitaPotencial.label}</div><div class="v">${fmtCompact(c.receitaPotencial.valor)}</div><div class="s">base ativa</div></div>
+    <div class="gc-card yellow click" onclick="abrirCRMClosy('proposta_enviada')"><div class="l">⛔ ${c.receitaTravada.label}</div><div class="v">${fmtCompact(c.receitaTravada.valor)}</div><div class="s warn">propostas + vencidos</div></div>
+    <div class="gc-card red click" onclick="abrirCRMClosy('vencidos')"><div class="l">⏰ ${c.vencidos.label}</div><div class="v">${c.vencidos.valor}</div><div class="s dn">clientes</div></div>
+    <div class="gc-card yellow click" onclick="abrirCRMClosy('vencendo')"><div class="l">🔔 ${c.vencendoMes.label}</div><div class="v">${c.vencendoMes.valor}</div><div class="s warn">próximos 30d</div></div>
+    <div class="gc-card red click" onclick="abrirCRMClosy('base_sem_contato')"><div class="l">📵 ${c.semContato.label}</div><div class="v">${c.semContato.valor}</div><div class="s dn">sem ação</div></div>
+    <div class="gc-card"><div class="l">📋 ${c.tarefasAtrasadas.label}</div><div class="v">—</div><div class="s">em breve</div></div>
+  `;
+  document.getElementById('gc-cards').innerHTML = html;
+}
+
+function renderAlertas(arr, total){
+  const el = document.getElementById('gc-alertas');
+  document.getElementById('al-count').textContent = total || 0;
+  if (!arr || !arr.length){ el.innerHTML = '<div class="gc-empty">Sem alertas críticos ✅</div>'; return; }
+  el.innerHTML = arr.map(a => `
+    <div class="al-item">
+      <div class="sev ${a.sev}"></div>
+      <div class="info">
+        <div class="nome">${a.nome}</div>
+        <div class="meta">${a.msg}${a.operadora ? ' · 👤 '+a.operadora : ''}</div>
+      </div>
+      <div class="vlr">${fmtCompact(a.valor)}</div>
+      <div class="acoes">
+        <button onclick="abrirDeal('${a.dealId}')" title="Abrir cliente">📂</button>
+        <button onclick="atribuir('${a.dealId}')" title="Atribuir">👤</button>
+        <button onclick="enviarMsg('${a.dealId}')" title="Mensagem">💬</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderFunil(funil){
+  const el = document.getElementById('gc-funil');
+  if (!funil || !funil.length){ el.innerHTML = '<div class="gc-empty">—</div>'; return; }
+  const max = Math.max(...funil.map(e => e.count));
+  el.innerHTML = funil.map((e, i) => {
+    const pct = max > 0 ? (e.count / max) * 100 : 0;
+    const trav = e.travados > 0 ? `<span class="trav" title="travados >7d sem update">${e.travados} 🐢</span>` : '<span class="trav"></span>';
+    const tmp = e.tempoMedioDias !== null ? `<span class="tmp">${e.tempoMedioDias}d</span>` : '<span class="tmp">—</span>';
+    const conv = e.conversaoNext !== undefined ? `<span class="conv">→ ${e.conversaoNext}%</span>` : '<span class="conv"></span>';
+    return `<div class="fn-row">
+      <span class="ico">${e.icon}</span>
+      <span class="lbl">${e.label}<small>${e.pctBase}% da base ativa</small></span>
+      <div class="fn-bar"><i style="width:${pct}%;background:${e.cor}"></i></div>
+      <span class="qty">${e.count}</span>
+      <span class="vlr">${fmtCompact(e.valor)}</span>
+      ${conv}${tmp}${trav}
+    </div>`;
+  }).join('');
+}
+
+function renderDinheiroTravado(d){
+  if (!d) return;
+  const items = [
+    { l:'📨 Propostas Abertas', k:'propostasAbertas', etapa:'proposta_enviada' },
+    { l:'⏰ Vencidos',           k:'vencidos',         etapa:'vencidos' },
+    { l:'📵 Sem Contato',        k:'semContato',       etapa:'base_sem_contato' },
+    { l:'❓ Sem Responsável',    k:'semResponsavel',   etapa:'sem_resp' },
+  ];
+  document.getElementById('gc-dinheiro').innerHTML = items.map(i => `
+    <div class="dt-card" onclick="abrirCRMClosy('${i.etapa}')">
+      <div class="l">${i.l}</div>
+      <div class="v">${fmtCompact(d[i.k]?.valor||0)}</div>
+      <div class="s">${d[i.k]?.count||0} clientes</div>
+    </div>
+  `).join('');
+}
+
+function renderOperadoras(ops){
+  const tbl = document.querySelector('#gc-operadoras');
+  if (!ops || !ops.length){ tbl.innerHTML = '<thead></thead><tbody><tr><td colspan="9" class="gc-empty">—</td></tr></tbody>'; return; }
+  const fmtH = h => (h === null || h === undefined) ? '—' : (h >= 24 ? Math.round(h/24)+'d' : Math.round(h)+'h');
+  tbl.innerHTML = `
+    <thead><tr><th>#</th><th>Operadora</th><th>Receita</th><th>Conv.</th><th>Carteira</th><th>Sem Contato</th><th>Propostas</th><th>Tempo Resp.</th><th>Tarefas Atr.</th></tr></thead>
+    <tbody>${ops.map((o, i) => `
+      <tr>
+        <td class="pos">${i+1}º</td>
+        <td class="nome">${o.name}<br><small style="color:#666">${o.team}</small></td>
+        <td class="receita">${fmtCompact(o.receitaGerada)}</td>
+        <td class="conv">${o.conversao}%</td>
+        <td>${o.carteira}</td>
+        <td style="color:${o.semContato>0?'#f87171':'#666'}">${o.semContato}</td>
+        <td style="color:${o.propostasAbertas>0?'#fbbf24':'#666'}">${o.propostasAbertas}</td>
+        <td style="color:#7cb9f5">${fmtH(o.tempoMedioRespH)}</td>
+        <td style="color:${o.tarefasAtrasadas>0?'#ef4444':'#666'};font-weight:${o.tarefasAtrasadas>0?'700':'400'}">${o.tarefasAtrasadas||0}</td>
+      </tr>
+    `).join('')}</tbody>
+  `;
+}
+
+function renderVelocidade(v){
+  if (!v) return;
+  const el = document.getElementById('gc-velocidade');
+  const fmt = h => h === null || h === undefined ? '—' : (h >= 24 ? Math.round(h/24)+'d' : Math.round(h)+'h');
+  el.innerHTML = `
+    <div class="mini-card"><div class="l">⏱️ Primeiro Contato</div><div class="v blue">${fmt(v.primeiroContatoH)}</div><div class="s">base → tentativa</div></div>
+    <div class="mini-card"><div class="l">💬 Até Conversa</div><div class="v blue">${fmt(v.ateConversaH)}</div><div class="s">tentativa → conversa</div></div>
+    <div class="mini-card"><div class="l">📨 Até Proposta</div><div class="v blue">${fmt(v.ateProposta)}</div><div class="s">conversa → proposta</div></div>
+    <div class="mini-card"><div class="l">🏆 Até Fechamento</div><div class="v green">${fmt(v.ateFechamento)}</div><div class="s">proposta → ganho</div></div>
+  `;
+}
+
+function renderRecuperacao(r){
+  if (!r) return;
+  document.getElementById('gc-recup').innerHTML = `
+    <div class="mini-card"><div class="l">♻️ Reativados Mês</div><div class="v green">${r.reativadosMes||0}</div><div class="s">cliente que voltou</div></div>
+    <div class="mini-card"><div class="l">💵 Receita Recuperada</div><div class="v green">${fmtCompact(r.receitaRecuperada||0)}</div><div class="s">do que estava vencido</div></div>
+    <div class="mini-card"><div class="l">📊 Taxa Recuperação</div><div class="v blue">${r.taxaRecuperacao||0}%</div><div class="s">vencido → ganho</div></div>
+    <div class="mini-card"><div class="l">⏱️ Tempo Médio</div><div class="v gray">—</div><div class="s">em breve</div></div>
+  `;
+}
+
+function renderMeses(meses){
+  if (!meses) return;
+  const tb = document.querySelector('#gc-meses tbody');
+  const max = Math.max(...meses.map(m => Math.max(m.realizada, m.potencial)));
+  tb.innerHTML = meses.map(m => {
+    const gap = m.potencial - m.realizada;
+    const pctReal = max > 0 ? (m.realizada / max) * 100 : 0;
+    const pctPot = max > 0 ? (m.potencial / max) * 100 : 0;
+    return `<tr class="${m.futuro?'futuro':''}">
+      <td>${m.label}</td>
+      <td>${m.potencial > 0 ? '<span class="mes-bar" style="width:'+pctPot+'px;background:#7cb9f5"></span>' : ''}${fmtCompact(m.potencial)}</td>
+      <td>${fmtCompact(m.potencial)}</td>
+      <td>${m.realizada > 0 ? '<span class="mes-bar" style="width:'+pctReal+'px;background:#4ade80"></span>' : ''}${m.realizada > 0 ? fmtCompact(m.realizada) : '—'}</td>
+      <td style="color:${gap > 0 ? '#fbbf24' : '#4ade80'}">${gap > 0 ? '-' + fmtCompact(gap) : '✓'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPrioridade(arr){
+  const el = document.getElementById('gc-prioridade');
+  document.getElementById('pri-count').textContent = arr?.length || 0;
+  if (!arr || !arr.length){ el.innerHTML = '<div class="gc-empty">Sem prioridades agora ✅</div>'; return; }
+  el.innerHTML = arr.map(p => `
+    <div class="pri-item">
+      <div class="nome">${p.nome}<small>${p.motivo}${p.operadora ? ' · 👤 '+p.operadora : ' · ❓ sem operadora'}</small></div>
+      <div class="vlr">${fmtCompact(p.valor)}</div>
+      <button onclick="abrirDeal('${p.id}')">→</button>
+    </div>
+  `).join('');
+}
+
+// === META MENSAL ===
+async function carregarMeta(){
+  try {
+    const r = await fetch('/gestao-closy/meta');
+    const d = await r.json();
+    if (d.meta) document.getElementById('meta-input').value = d.meta;
+  } catch(_){}
+}
+async function salvarMeta(){
+  const valor = parseFloat(document.getElementById('meta-input').value || 0);
+  if (!valor || valor < 0){ alert('Informe um valor válido'); return; }
+  try {
+    const r = await fetch('/gestao-closy/meta', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ valor })});
+    const d = await r.json();
+    if (d.ok) { alert('Meta salva: ' + fmtCompact(valor)); gcLoad(true); }
+    else alert('Erro: ' + (d.error||'?'));
+  } catch(e){ alert(e.message); }
+}
+
+// === AÇÕES ===
+function abrirDeal(id){ window.open('/manutencao#deal='+id, '_blank'); }
+function abrirCRMClosy(filtro){ window.location.href = '/manutencao?filtro=' + filtro; }
+function atribuir(id){ window.open('/manutencao#deal='+id+'&action=atribuir', '_blank'); }
+function enviarMsg(id){ window.open('/manutencao#deal='+id+'&action=msg', '_blank'); }
+
+// === PAINEL IA ===
+async function carregarPainelIa(force){
+  try {
+    const r = await fetch('/gestao-closy/painel-ia' + (force ? '?nocache=1' : ''));
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.error) { document.getElementById('ia-cards').innerHTML = '<div style="color:#f87171;padding:10px;font-size:11px;grid-column:1/-1">'+d.error+'</div>'; return; }
+    const s = d.stats || {};
+    document.getElementById('ia-cards').innerHTML = `
+      <div class="mini-card" style="border-left:3px solid #a371f7"><div class="l">🤖 Atendidos pela IA</div><div class="v" style="color:#a371f7">${s.total||0}</div><div class="s">total</div></div>
+      <div class="mini-card" style="border-left:3px solid #5ba3f5"><div class="l">📊 Qualificados</div><div class="v blue">${s.qualificados||0}</div><div class="s">${s.taxaQualif||0}% taxa</div></div>
+      <div class="mini-card" style="border-left:3px solid #f97316"><div class="l">📨 Em Proposta</div><div class="v" style="color:#f97316">${s.propostas||0}</div><div class="s">${fmtCompact(s.valorPropostas||0)}</div></div>
+      <div class="mini-card" style="border-left:3px solid #22c55e"><div class="l">🏆 Ganhos</div><div class="v green">${s.ganhos||0}</div><div class="s">${fmtCompact(s.valorGanhos||0)} · ${s.taxaConversao||0}%</div></div>
+      <div class="mini-card" style="border-left:3px solid #22c55e"><div class="l">💰 Ganhos no mês</div><div class="v green">${fmtCompact(s.valorGanhosMes||0)}</div><div class="s">${s.ganhosNoMes||0} venda(s)</div></div>
+      <div class="mini-card" style="border-left:3px solid #ef4444"><div class="l">❌ Perdidos</div><div class="v" style="color:#f87171">${s.perdidos||0}</div><div class="s">${s.ainda||0} ativos</div></div>
+    `;
+    // Stages
+    const stagesEntries = Object.entries(d.porStage || {}).sort((a,b) => b[1]-a[1]);
+    document.getElementById('ia-stages').innerHTML = stagesEntries.length ? stagesEntries.map(([k,v]) => `
+      <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1a1a1a">
+        <span style="color:#ddd">${k}</span>
+        <strong style="color:#a371f7">${v}</strong>
+      </div>
+    `).join('') : '<div style="color:#666">—</div>';
+    // Fontes
+    const fontesEntries = Object.entries(d.porFonte || {}).sort((a,b) => b[1].total-a[1].total).slice(0,8);
+    document.getElementById('ia-fontes').innerHTML = fontesEntries.length ? fontesEntries.map(([k,v]) => {
+      const taxa = v.total > 0 ? Math.round((v.ganhos/v.total)*100) : 0;
+      return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1a1a1a">
+        <span style="color:#ddd">${k}</span>
+        <span><strong style="color:#a371f7">${v.total}</strong> <span style="color:#4ade80;font-size:10px">${v.ganhos}🏆 ${taxa}%</span></span>
+      </div>`;
+    }).join('') : '<div style="color:#666">—</div>';
+    // Leads
+    const tierIco = { Diamante:'💎', Ouro:'🥇', Prata:'🥈', Bronze:'🥉' };
+    document.getElementById('ia-leads').innerHTML = (d.leads||[]).map(l => {
+      const stageColor = l.ganhou ? '#22c55e' : /Proposta/.test(l.stage)?'#f97316' : /Qualificado|Atendimento/.test(l.stage)?'#5ba3f5' : '#888';
+      return `<div style="padding:7px 10px;border-bottom:1px solid #1a1a1a;display:flex;align-items:center;gap:8px;font-size:11px">
+        ${l.tier?`<span style="color:#fbbf24">${tierIco[l.tier]||''}</span>`:''}
+        <span style="flex:1;color:#fff;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.nome}</span>
+        ${l.amount?`<span style="color:#4ade80;font-weight:700">${fmtCompact(l.amount)}</span>`:''}
+        <span style="background:${stageColor}22;color:${stageColor};padding:2px 7px;border-radius:6px;font-size:9px;font-weight:700">${l.stage||'?'}</span>
+        <span style="color:#666;font-size:10px;min-width:90px;text-align:right">${l.owner?l.owner.split(' ')[0]:'?'}</span>
+      </div>`;
+    }).join('') || '<div style="color:#666;padding:20px;text-align:center">Sem leads tocados pela IA ainda</div>';
+  } catch(e) {
+    document.getElementById('ia-cards').innerHTML = '<div style="color:#f87171;padding:10px;font-size:11px;grid-column:1/-1">Erro: '+e.message+'</div>';
+  }
+}
+
+// init
+gcLoad();
+setInterval(() => gcLoad(false), 90 * 1000);
+</script>
+
+</div></body></html>

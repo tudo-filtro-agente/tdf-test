@@ -1,0 +1,196 @@
+<% const activePage = 'treinamento'; const pageTitle = 'Fechamento'; %>
+<%- include('../layout', { user, activePage, pageTitle }) %>
+
+<div class="treino-module">
+  <a href="/treinamento" class="treino-back">← Voltar ao Treinamento</a>
+
+  <div class="treino-header">
+    <span class="treino-badge">Modulo 5 de 7</span>
+    <h1>🎯 Fechamento</h1>
+    <p class="treino-subtitle">Fechamento nao e tecnica isolada — e consequencia de rapport, sondagem e construcao de valor bem feitos. Mas existem tecnicas que ajudam na hora H.</p>
+  </div>
+
+  <!-- ===================== INTRODUÇÃO ===================== -->
+  <section class="treino-section">
+    <h2>Quando fechar</h2>
+    <p>Voce so deve tentar fechar quando:</p>
+    <ul style="padding-left: 20px; color: var(--text-muted); margin-top: 8px;">
+      <li>O cliente reconheceu o problema (Sondagem SPIN feita)</li>
+      <li>O cliente entendeu o valor da solucao (nao so o preco)</li>
+      <li>O cliente deu sinais de compra (perguntas sobre prazo, instalacao, pagamento)</li>
+      <li>As objecoes foram tratadas</li>
+    </ul>
+
+    <div class="treino-tip">
+      <strong>Sinais de compra — preste atencao:</strong> "Quanto tempo demora pra instalar?", "Voces parcelam?", "Tem em inox?", "E se eu nao gostar?", "Meu vizinho tem um assim?". Quando o cliente faz perguntas sobre detalhes da compra, ele ja decidiu emocionalmente. Falta so a confirmacao.
+    </div>
+  </section>
+
+  <!-- ===================== TIPO 1: PRESUMIDO ===================== -->
+  <section class="treino-section">
+    <h2>1. Fechamento Presumido</h2>
+    <p>Voce age como se a venda ja estivesse fechada. Nao pergunta SE o cliente quer, pergunta COMO quer.</p>
+
+    <div class="treino-example">
+      <em>"Perfeito, Marcos. Vamos agendar a instalacao pra quando? Eu tenho quinta e sexta disponiveis essa semana."</em><br><br>
+      <em>"Otimo. Vou gerar o pedido. Voce prefere pagar no PIX com desconto ou parcelado no cartao?"</em><br><br>
+      <em>"Entao vou separar o bebedouro AF60 pra voce. Me confirma o endereco de entrega?"</em>
+    </div>
+
+    <div class="treino-tip">
+      <strong>Quando usar:</strong> Quando o cliente deu vários sinais de compra e a conversa fluiu naturalmente. E o fechamento mais elegante — parece a continuacao logica da conversa, nao uma pressao.
+    </div>
+  </section>
+
+  <!-- ===================== TIPO 2: ALTERNATIVO ===================== -->
+  <section class="treino-section">
+    <h2>2. Fechamento Alternativo</h2>
+    <p>Voce da duas opcoes. As duas sao "sim". Nao existe a opcao "nao".</p>
+
+    <div class="treino-example">
+      <em>"Prefere instalar essa semana ou na proxima?"</em><br><br>
+      <em>"Voce quer o American Filter Inox ou o Fibra?"</em><br><br>
+      <em>"O pagamento fica melhor no PIX com desconto ou em 7x no cartao?"</em><br><br>
+      <em>"Prefere o AF60 que atende ate 60 pessoas ou o AF100 pra ter folga?"</em>
+    </div>
+
+    <div class="treino-grid-2">
+      <div class="treino-do">
+        <h4>Funciona porque</h4>
+        <ul>
+          <li>O cerebro escolhe entre opcoes em vez de decidir sim/nao</li>
+          <li>Parece natural, nao parece pressao</li>
+          <li>O cliente sente que tem controle da decisao</li>
+        </ul>
+      </div>
+      <div class="treino-dont">
+        <h4>Cuidado com</h4>
+        <ul>
+          <li>Dar opcoes demais — maximo 2</li>
+          <li>Dar uma opcao ruim so pra forcar a outra</li>
+          <li>Usar antes de construir valor</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TIPO 3: URGÊNCIA ===================== -->
+  <section class="treino-section">
+    <h2>3. Fechamento por Urgencia</h2>
+    <p>Use quando o cliente ja quer mas esta adiando a decisao.</p>
+
+    <div class="treino-example">
+      <em>"Marcos, consigo manter a condicao de instalacao com valor diferenciado se fecharmos ate sexta. Depois volta ao valor padrao."</em><br><br>
+      <em>"Essa semana ainda tenho vaga na agenda de instalacao. Semana que vem ja ta bem apertado."</em><br><br>
+      <em>"O lote de bebedouro AF60 ta acabando. O proximo fornecedor so entrega em 15 dias."</em>
+    </div>
+
+    <div class="treino-dont" style="margin-top: 16px;">
+      <h4>Urgencia falsa NUNCA</h4>
+      <ul>
+        <li>Nao invente prazo que nao existe</li>
+        <li>Nao diga "so ate hoje" e depois repita amanha</li>
+        <li>O cliente descobre e voce perde credibilidade pra sempre</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== TIPO 4: CONSEQUÊNCIA ===================== -->
+  <section class="treino-section">
+    <h2>4. Fechamento por Consequencia</h2>
+    <p>Mostre o que acontece se o cliente NAO resolver. O medo de perder e mais forte que o desejo de ganhar.</p>
+
+    <div class="treino-example">
+      <em>"Cada dia sem filtro e mais sujeira acumulando no encanamento. Daqui a 6 meses nao e so o filtro — e trocar registro, chuveiro, e talvez ate tubulacao."</em><br><br>
+      <em>"O ferro nao para. Ele corroi por dentro, devagar, todo dia. Quando voce ve, o estrago ja ta feito."</em><br><br>
+      <em>"Voces estao gastando R$800 por mes com galao. Cada mes que passa sao mais R$800. Em 3 meses e R$2.400 — mais do que o bebedouro que resolve pra sempre."</em>
+    </div>
+  </section>
+
+  <!-- ===================== TIPO 5: TRIAL CLOSE ===================== -->
+  <section class="treino-section">
+    <h2>5. Trial Close — Testar ao longo da conversa</h2>
+    <p>Nao espere o final pra fechar. Teste a temperatura ao longo da conversa com perguntas suaves.</p>
+
+    <div class="treino-example">
+      <em>"Faz sentido pra voce ate aqui?"</em><br><br>
+      <em>"Isso atenderia o que voce precisa?"</em><br><br>
+      <em>"Se eu te mostrar que resolve, voce gostaria de avancar?"</em><br><br>
+      <em>"Ate aqui, o que voce achou?"</em>
+    </div>
+
+    <div class="treino-tip">
+      <strong>Se o trial close der "nao":</strong> Otimo. Voce descobriu uma objecao ANTES de tentar fechar. Agora trate a objecao. Se voce so tentasse fechar no final, ia levar um "vou pensar" e nao saberia o motivo.
+    </div>
+  </section>
+
+  <!-- ===================== QUANDO NÃO FECHAR ===================== -->
+  <section class="treino-section">
+    <h2>Quando NAO forcar o fechamento</h2>
+    <div class="treino-dont" style="margin: 0;">
+      <h4>Pare se voce perceber que:</h4>
+      <ul>
+        <li><strong>O cliente nao sabe o que quer:</strong> Ele precisa de mais sondagem, nao de fechamento</li>
+        <li><strong>O cliente esta irritado:</strong> Pressionar agora queima a venda definitivamente</li>
+        <li><strong>Voce nao fez sondagem:</strong> Fechar sem entender a dor e jogar dado</li>
+        <li><strong>O decisor nao esta na conversa:</strong> Voce vai fechar com quem nao pode dizer sim</li>
+        <li><strong>O cliente disse "nao" 3 vezes:</strong> Respeite. Agende follow-up e tente de novo com uma abordagem diferente</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== PRÓXIMO PASSO CONCRETO ===================== -->
+  <section class="treino-section">
+    <h2>O proximo passo CONCRETO</h2>
+    <p>Toda conversa termina com um proximo passo que tem 3 elementos: <strong>DATA + HORA + ACAO</strong>.</p>
+
+    <div class="treino-grid-2">
+      <div class="treino-do">
+        <h4>Proximo passo BOM</h4>
+        <ul>
+          <li>"Te ligo amanha as 14h pra fecharmos."</li>
+          <li>"Quinta as 10h a gente faz uma call com seu marido."</li>
+          <li>"Vou mandar a proposta agora e te ligo sexta as 9h."</li>
+        </ul>
+      </div>
+      <div class="treino-dont">
+        <h4>Proximo passo RUIM</h4>
+        <ul>
+          <li>"Me liga quando decidir." — nunca vai ligar</li>
+          <li>"Vou mandar por email." — sem data de retorno</li>
+          <li>"Fica com meu numero." — zero compromisso</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="treino-tip">
+      <strong>Regra de ouro:</strong> Se voce saiu da conversa sem um proximo passo com data e hora, voce nao fez uma venda — fez uma apresentacao. Apresentacoes nao geram receita.
+    </div>
+  </section>
+
+  <!-- ===================== EXERCÍCIO ===================== -->
+  <section class="treino-section">
+    <h2>Exercicio Pratico</h2>
+    <div class="treino-exercise">
+      <h4>Desafio: Feche a venda em 3 cenarios</h4>
+      <ol>
+        <li><strong>Cenario 1:</strong> Seu Carlos quer o American Filter Inox, entendeu o valor, perguntou sobre instalacao. Use fechamento presumido.</li>
+        <li><strong>Cenario 2:</strong> Dona Patricia gostou do bebedouro AF100 mas ta com medo de gastar. Ja fez toda a sondagem. Use fechamento por consequencia + alternativo.</li>
+        <li><strong>Cenario 3:</strong> Joao quer resolver o ferro do poco mas disse "vou pensar no fim de semana". Use trial close + proximo passo concreto.</li>
+      </ol>
+
+      <div class="treino-sim-btn-wrap">
+        <a href="https://closy-app-production.up.railway.app/dashboard/training" target="_blank" class="treino-sim-btn">Testar no Simulador Closy</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="treino-complete-wrap">
+    <button class="treino-complete-btn" onclick="markComplete('fechamento')">Marcar como concluido</button>
+    <a href="/treinamento/pos-venda" class="treino-next-btn">Proximo: Pos-Venda e Indicacao →</a>
+  </div>
+
+</div>
+
+<%- include('_styles') %>
+<%- include('_scripts') %>

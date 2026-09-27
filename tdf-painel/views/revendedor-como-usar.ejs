@@ -1,0 +1,111 @@
+<% var pageTitle = pageTitle || 'Como usar o portal'; var activePage = 'revendedor-ajuda'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<div class="container" style="max-width:820px;">
+
+  <div class="page-header" style="margin-top:26px;">
+    <h1>Como usar o portal</h1>
+    <p class="subtitle">
+      Leitura de dois minutos. Depois disso você já sabe onde fica cada coisa.
+    </p>
+  </div>
+
+  <!-- 1 -->
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:22px;margin-top:20px;">
+    <div style="font-size:.72rem;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent);">Primeiro acesso</div>
+    <h2 style="margin:8px 0 12px;font-size:1.1rem;">Entrar</h2>
+    <p style="font-size:.9rem;line-height:1.65;color:var(--text-muted);margin:0;">
+      Abra <strong style="color:var(--text);">portal.tudodefiltro.com.br</strong> no celular ou no computador
+      e entre com o e-mail e a senha que você recebeu. O portal funciona no navegador — não precisa
+      instalar nada. Se quiser, salve nos favoritos, ou no celular use
+      &ldquo;Adicionar à tela de início&rdquo;: ele passa a abrir como um aplicativo.
+    </p>
+    <p style="font-size:.9rem;line-height:1.65;color:var(--text-muted);margin:12px 0 0;">
+      Se pedir login de novo depois de um tempo parado, é normal — a sessão expira por segurança.
+      Basta entrar outra vez.
+    </p>
+  </div>
+
+  <!-- 2 -->
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:22px;margin-top:16px;">
+    <div style="font-size:.72rem;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent);">O que tem aqui dentro</div>
+    <h2 style="margin:8px 0 14px;font-size:1.1rem;">Seus conteúdos</h2>
+
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <% academias.forEach(function(a){ %>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="font-size:1.3rem;line-height:1.2;flex:0 0 auto"><%= a.ico %></span>
+          <div>
+            <div style="font-weight:700;font-size:.92rem;"><%= a.titulo %></div>
+            <div style="font-size:.85rem;line-height:1.5;color:var(--text-muted);"><%= a.desc %></div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <p style="font-size:.85rem;line-height:1.6;color:var(--text-muted);margin:16px 0 0;padding-top:14px;border-top:1px solid var(--border);">
+      Tudo isso fica no menu à esquerda. No celular, o menu abre no botão do canto.
+    </p>
+  </div>
+
+  <!-- 3 -->
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:22px;margin-top:16px;">
+    <div style="font-size:.72rem;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent);">Como estudar</div>
+    <h2 style="margin:8px 0 12px;font-size:1.1rem;">Módulo, prova e certificado</h2>
+    <p style="font-size:.9rem;line-height:1.65;color:var(--text-muted);margin:0 0 12px;">
+      Cada academia de produto é dividida em módulos curtos. Abra um, leia até o fim e marque como
+      concluído — a barra de progresso na tela inicial anda sozinha. Você pode parar no meio e voltar
+      dias depois: o portal guarda onde você estava.
+    </p>
+    <p style="font-size:.9rem;line-height:1.65;color:var(--text-muted);margin:0 0 12px;">
+      Quando terminar os módulos, libera a <strong style="color:var(--text);">prova</strong>. Passou na
+      prova, sai o <strong style="color:var(--text);">certificado</strong> daquele produto, com seu nome,
+      pronto para baixar.
+    </p>
+    <p style="font-size:.9rem;line-height:1.65;color:var(--text-muted);margin:0;">
+      Sugestão de ordem: comece por <strong style="color:var(--text);">Filtro de Entrada</strong>, que é o
+      produto que mais sai. Depois <strong style="color:var(--text);">Água de Poço</strong>, que é onde
+      aparecem os casos mais difíceis.
+    </p>
+  </div>
+
+  <!-- 4 -->
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:22px;margin-top:16px;">
+    <div style="font-size:.72rem;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent);">Na hora de vender</div>
+    <h2 style="margin:8px 0 12px;font-size:1.1rem;">Scripts e técnicas</h2>
+    <p style="font-size:.9rem;line-height:1.65;color:var(--text-muted);margin:0 0 12px;">
+      <strong style="color:var(--text);">Scripts de Atendimento</strong> é consulta rápida, não é curso:
+      abra durante a conversa. Tem a primeira mensagem, as perguntas de qualificação, como apresentar a
+      proposta e a resposta para as objeções que mais aparecem — &ldquo;está caro&rdquo;, &ldquo;vou
+      pensar&rdquo;, &ldquo;preciso falar com meu marido&rdquo;.
+    </p>
+    <p style="font-size:.9rem;line-height:1.65;color:var(--text-muted);margin:0;">
+      <strong style="color:var(--text);">Técnicas de Vendas</strong> é o método por trás disso: como
+      perguntar antes de oferecer, como fazer o cliente enxergar o problema e como fechar sem empurrar.
+    </p>
+  </div>
+
+  <!-- 5 -->
+  <div style="background:rgba(0,170,255,.07);border:1px solid var(--accent);border-radius:14px;padding:22px;margin-top:16px;">
+    <h2 style="margin:0 0 12px;font-size:1.1rem;">Uma regra que vale a pena guardar</h2>
+    <p style="font-size:.9rem;line-height:1.65;color:var(--text-muted);margin:0;">
+      Filtro de água não se vende por especificação. O cliente não compra vaso de fibra nem mídia
+      filtrante — ele compra parar de ver mancha no box, roupa branca saindo amarelada e pele coçando
+      depois do banho. Pergunte primeiro o que incomoda. A parte técnica entra depois, para provar que
+      você resolve.
+    </p>
+  </div>
+
+  <!-- 6 -->
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:22px;margin:16px 0 40px;">
+    <h2 style="margin:0 0 12px;font-size:1.1rem;">Dúvidas</h2>
+    <p style="font-size:.9rem;line-height:1.65;color:var(--text-muted);margin:0;">
+      Preço de revenda, disponibilidade, prazo de entrega, dimensionamento de um caso específico ou
+      instalação: fale direto com seu contato comercial na Tudo de Filtro. Este portal é o treinamento —
+      ele não tem pedido, estoque nem tabela de preço.
+    </p>
+  </div>
+
+</div>
+
+<%- include('footer') %>

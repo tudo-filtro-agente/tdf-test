@@ -1,0 +1,1235 @@
+<% const activePage = 'pdv'; const pageTitle = 'PDV'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+  .pdv-root { padding: 16px 22px 60px; color:var(--text); font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+  .pdv-root h1, .pdv-root h2, .pdv-root h3 { color:var(--text); margin:0; }
+  .pdv-grid { display:grid; grid-template-columns: 1.3fr .9fr; gap:16px; min-height: 70vh; }
+  @media (max-width: 1100px) { .pdv-grid { grid-template-columns: 1fr; } }
+  .pdv-card { background:#0F1420; border:1px solid var(--border); border-radius:14px; padding:16px; }
+  .pdv-card h3 { font-size:1rem; margin-bottom:10px; }
+
+  .pdv-search-box { position:relative; }
+  .pdv-search-box input { width:100%; padding:12px 14px; font-size:14px; background:var(--bg-card); color:var(--text); border:1px solid var(--border); border-radius:8px; box-sizing:border-box; }
+  .pdv-search-results { position:absolute; top:100%; left:0; right:0; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; max-height:280px; overflow-y:auto; z-index:10; margin-top:4px; display:none; }
+  .pdv-search-results.show { display:block; }
+  .pdv-search-results .item { padding:10px 12px; border-bottom:1px solid #1a1f35; cursor:pointer; }
+  .pdv-search-results .item:hover { background:#171c2e; }
+  .pdv-search-results .item.empty { color:#8899AA; cursor:default; }
+
+  .pdv-cliente-box { padding:10px 12px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; margin-top:10px; display:flex; justify-content:space-between; align-items:center; }
+  .pdv-cliente-box .nome { font-weight:700; }
+
+  .pdv-itens-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .pdv-itens-table th { background:#171c2e; color:#8899AA; text-align:left; padding:8px 10px; text-transform:uppercase; font-size:10.5px; font-weight:700; letter-spacing:.4px; }
+  .pdv-itens-table td { padding:8px 10px; border-bottom:1px solid #1a1f35; vertical-align:middle; }
+  .pdv-itens-table input { width:60px; background:var(--bg-card); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:5px 8px; font-size:13px; text-align:center; }
+  .pdv-itens-table .col-num { text-align:right; }
+
+  .pdv-totalizador { background:linear-gradient(135deg,#0F1420,#1a1f35); border:2px solid #22C55E; border-radius:14px; padding:18px; margin-bottom:14px; }
+  .pdv-totalizador .lbl { font-size:11px; color:#8899AA; text-transform:uppercase; font-weight:700; letter-spacing:.5px; }
+  .pdv-totalizador .val { font-size:2.2rem; font-weight:800; color:#22C55E; line-height:1.1; }
+  .pdv-totalizador .row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; font-size:14px; color:var(--text-muted); }
+  .pdv-totalizador .row.total { font-size:20px; color:var(--text); font-weight:800; padding-top:8px; border-top:1px solid var(--border); margin-top:6px; }
+
+  .pdv-form-row { display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:10px; }
+  .pdv-form-row label { font-size:11px; color:#8899AA; text-transform:uppercase; font-weight:700; display:block; margin-bottom:4px; }
+  .pdv-form-row input, .pdv-form-row select { width:100%; padding:8px 10px; background:var(--bg-card); color:var(--text); border:1px solid var(--border); border-radius:6px; font-size:13px; box-sizing:border-box; }
+
+  .pdv-pay-btns { display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin:12px 0; }
+  .pdv-pay-btns button { padding:14px 10px; font-size:13px; font-weight:700; background:#171c2e; color:#fff; border:2px solid var(--border); border-radius:10px; cursor:pointer; transition:all .15s; }
+  .pdv-pay-btns button:hover { border-color:#4F8CFF; }
+  .pdv-pay-btns button.active { background:linear-gradient(135deg,#4F8CFF,#3B6FE0); border-color:#4F8CFF; color:#fff; }
+
+  .pdv-finalize-btn { width:100%; padding:18px; font-size:18px; font-weight:800; background:linear-gradient(135deg,#22C55E,#16A34A); color:#fff; border:none; border-radius:12px; cursor:pointer; margin-top:8px; transition:all .15s; }
+  .pdv-finalize-btn:hover { transform: translateY(-1px); box-shadow:0 4px 16px rgba(34,197,94,.4); }
+  .pdv-finalize-btn:disabled { background:var(--border); cursor:not-allowed; transform:none; box-shadow:none; }
+
+  .pdv-btn-secondary { background:#1a1f35; color:#fff; border:1px solid var(--border); border-radius:8px; padding:8px 14px; font-size:12px; font-weight:700; cursor:pointer; }
+  .pdv-btn-secondary:hover { background:#22293f; }
+  .pdv-btn-danger { background:#3a1a1a; border:1px solid #EF4444; color:#EF4444; }
+
+  .pdv-empty { padding:40px 20px; text-align:center; color:#8899AA; font-size:13px; }
+  .pdv-empty .ico { font-size:36px; margin-bottom:10px; }
+
+  .pdv-banner { padding:12px 14px; border-radius:10px; margin-bottom:12px; font-weight:700; font-size:13px; line-height:1.4; }
+  .pdv-banner.warn { background:#3a2a0a; border:2px solid #F59E0B; color:#F59E0B; }
+  .pdv-banner.danger { background:#3a1a1a; border:2px solid #EF4444; color:#EF4444; }
+  .pdv-banner.info { background:#0a2a3a; border:2px solid #4F8CFF; color:#8fb8ff; font-weight:600; }
+
+  /* Cupom modal */
+  .pdv-modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:9998; display:none; align-items:center; justify-content:center; padding:20px; }
+  .pdv-modal-bg.show { display:flex; }
+  .pdv-modal { background:#0F1420; border:1px solid var(--border); border-radius:14px; max-width:440px; width:100%; padding:24px; }
+  .pdv-cupom { background:#fff; color:#000; padding:18px; border-radius:6px; font-family: 'Courier New', monospace; font-size:12px; line-height:1.4; max-height:60vh; overflow-y:auto; }
+  .pdv-cupom h3 { color:#000; margin-bottom:8px; text-align:center; }
+  .pdv-cupom hr { border: 0; border-top: 1px dashed #888; margin: 8px 0; }
+  .pdv-cupom .row { display:flex; justify-content:space-between; }
+  .pdv-cupom .total { font-weight:bold; font-size:14px; }
+</style>
+
+<main class="pdv-root">
+
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <h1>🛒 PDV — Ponto de Venda</h1>
+    <span class="muted" id="pdvUserInfo" style="font-size:12px;color:#8899AA"></span>
+    <div style="flex:1"></div>
+    <a href="/bi-financeiro" class="pdv-btn-secondary" style="text-decoration:none">📊 BI Financeiro</a>
+  </div>
+
+  <div class="pdv-grid">
+    <!-- LADO ESQUERDO: cliente + itens -->
+    <div>
+      <div class="pdv-card" style="margin-bottom:14px">
+        <h3>👤 Cliente</h3>
+        <div class="pdv-search-box">
+          <input id="pdvBuscaCliente" type="text" placeholder="Digite nome, telefone ou CPF (ENTER pra buscar)" oninput="PDV.buscaClienteDebounce()">
+          <div class="pdv-search-results" id="pdvSugestaoCliente"></div>
+        </div>
+        <div id="pdvClienteSelecionado" style="display:none" class="pdv-cliente-box">
+          <div>
+            <div class="nome" id="pdvClienteNome">—</div>
+            <div class="muted" style="font-size:11px" id="pdvClienteSub"></div>
+          </div>
+          <button class="pdv-btn-secondary" onclick="PDV.limparCliente()">✕ trocar</button>
+        </div>
+
+        <!-- Situação cadastral do CNPJ consultado — SÓ avisa, nunca bloqueia
+             (regra do dono): a decisão de fechar a venda com CNPJ irregular
+             é do operador. Fica visível até trocar de CNPJ ou de cliente
+             (PDV.limparCliente/consultarCnpj escondem de novo). -->
+        <div id="pdvCnpjAlerta" class="pdv-banner warn" style="display:none;margin-top:10px"></div>
+
+        <!-- Endereço — pedido do dono depois de usar o PDV em produção (print de
+             tela): ao selecionar um cliente já cadastrado, o bloco de endereço
+             sumia por completo — sem chance nenhuma de conferir ou completar.
+             Agora o bloco fica SEMPRE visível: pra cliente NOVO continua
+             obrigatório (regra de 18/ago/2026, não regride); pra cliente já
+             encontrado na busca, PDV.buscarEnderecoOmie() carrega a ficha do
+             Omie assim que ele é escolhido (nunca durante a digitação — o
+             Omie tem trava de 60s contra consulta redundante) e deixa tudo
+             editável — o obrigatório aqui é só TER endereço, nunca TER vindo
+             pronto. A validação que VALE é sempre no servidor
+             (lib/bi-pdv.js#finalizarVenda); isto aqui é conveniência. -->
+        <div id="pdvEnderecoBox" style="display:none;margin-top:12px;border-top:1px dashed var(--border);padding-top:10px">
+          <small id="pdvEnderecoLabel" style="color:#8899AA;font-weight:700;text-transform:uppercase;font-size:10.5px">📍 Endereço (cliente novo) *</small>
+          <small id="pdvEnderecoMsg" style="display:block;color:#8899AA;font-size:10.5px;margin-top:2px"></small>
+          <div class="pdv-form-row" style="margin-top:6px">
+            <div>
+              <label>CEP</label>
+              <input id="pdvCep" type="text" inputmode="numeric" placeholder="só números" oninput="PDV.cepDebounce()">
+            </div>
+            <div>
+              <label>Número *</label>
+              <input id="pdvNumero" type="text">
+            </div>
+            <div>
+              <label>Complemento</label>
+              <input id="pdvComplemento" type="text" placeholder="opcional">
+            </div>
+          </div>
+          <div class="pdv-form-row">
+            <div style="grid-column: 1 / -1">
+              <label>Endereço (logradouro) *</label>
+              <input id="pdvEndereco" type="text">
+            </div>
+          </div>
+          <div class="pdv-form-row">
+            <div>
+              <label>Bairro *</label>
+              <input id="pdvBairro" type="text">
+            </div>
+            <div>
+              <label>Cidade *</label>
+              <input id="pdvCidade" type="text">
+            </div>
+            <div>
+              <label>UF *</label>
+              <input id="pdvUf" type="text" maxlength="2" style="text-transform:uppercase">
+            </div>
+          </div>
+          <small id="pdvCepMsg" style="display:block;color:#8899AA;font-size:10.5px;margin-top:2px"></small>
+        </div>
+
+        <!-- ENTREGA EM OUTRO ENDEREÇO — pedido do dono (24/ago/2026). O balcão
+             também vende pra entregar em obra, condomínio ou outro imóvel.
+             Desmarcado por padrão: o caso comum é levar na hora, e ninguém
+             pode ser obrigado a preencher endereço de entrega numa venda de
+             balcão. Marcado, o endereço vira obrigatório — e a validação que
+             VALE é a do servidor (lib/bi-pdv.js), esta aqui é conveniência.
+             O endereço de entrega NUNCA altera o cadastro do cliente. -->
+        <div style="margin-top:12px;border-top:1px dashed var(--border);padding-top:10px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+            <input id="pdvEntregaUsar" type="checkbox" onchange="PDV.toggleEntrega()" style="width:16px;height:16px;cursor:pointer">
+            🚚 Entregar em outro endereço
+          </label>
+          <div id="pdvEntregaBox" style="display:none;margin-top:10px">
+            <small style="display:block;color:#8899AA;font-size:10.5px;margin-bottom:6px">
+              Vai no pedido do Omie como “Outro Destinatário” e na observação da venda no CRM. Não altera o cadastro do cliente.
+            </small>
+            <div class="pdv-form-row">
+              <div>
+                <label>CEP da entrega</label>
+                <input id="pdvEntregaCep" type="text" inputmode="numeric" placeholder="só números" oninput="PDV.cepEntregaDebounce()">
+              </div>
+              <div>
+                <label>Número *</label>
+                <input id="pdvEntregaNumero" type="text">
+              </div>
+              <div>
+                <label>Complemento</label>
+                <input id="pdvEntregaComplemento" type="text" placeholder="apto, bloco, sala">
+              </div>
+            </div>
+            <div class="pdv-form-row">
+              <div style="grid-column: 1 / -1">
+                <label>Endereço de entrega (logradouro) *</label>
+                <input id="pdvEntregaEndereco" type="text">
+              </div>
+            </div>
+            <div class="pdv-form-row">
+              <div>
+                <label>Bairro *</label>
+                <input id="pdvEntregaBairro" type="text">
+              </div>
+              <div>
+                <label>Cidade *</label>
+                <input id="pdvEntregaCidade" type="text">
+              </div>
+              <div>
+                <label>UF *</label>
+                <input id="pdvEntregaUf" type="text" maxlength="2" style="text-transform:uppercase">
+              </div>
+            </div>
+            <div class="pdv-form-row">
+              <div>
+                <label>Receber com (opcional)</label>
+                <input id="pdvEntregaNome" type="text" placeholder="quem recebe no local">
+              </div>
+              <div style="grid-column: 2 / -1">
+                <label>Ponto de referência (opcional)</label>
+                <input id="pdvEntregaReferencia" type="text" placeholder="portão azul, ao lado do mercado">
+              </div>
+            </div>
+            <small id="pdvEntregaCepMsg" style="display:block;color:#8899AA;font-size:10.5px;margin-top:2px"></small>
+          </div>
+
+        <!-- DESTINO DA VENDA — instalar ou enviar.
+             Sem isto a venda de balcão não vira nada depois: não aparece na
+             fila de quem instala (Pós Venda) nem na de quem despacha (Envio).
+             É o mesmo `Tipo de Venda` que o time comercial já usa no CRM.
+             ⚠️ Retirada (o caso comum do balcão) fica marcada por padrão —
+             ninguém pode ser obrigado a escolher instalação numa venda em que
+             o cliente leva na mão. A validação que VALE é a do servidor. -->
+        <div style="margin-top:12px;border-top:1px dashed var(--border);padding-top:10px">
+          <label style="display:block;font-weight:600;margin-bottom:6px">📦 O que acontece depois da venda? *</label>
+          <div style="display:flex;gap:14px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="radio" name="pdvDestino" value="retirada" checked onchange="PDV.toggleDestino()"> Cliente leva agora
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="radio" name="pdvDestino" value="instalacao" onchange="PDV.toggleDestino()"> 🔧 Vamos instalar
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="radio" name="pdvDestino" value="envio" onchange="PDV.toggleDestino()"> 🚚 Vamos enviar
+            </label>
+          </div>
+
+          <div id="pdvInstalacaoBox" style="display:none;margin-top:10px">
+            <small style="display:block;color:#8899AA;font-size:10.5px;margin-bottom:6px">
+              Vai pro <strong>Pós Venda</strong>, que agenda a instalação. Escreva o que o técnico precisa saber.
+            </small>
+            <label>Observação para o Pós-Venda *</label>
+            <textarea id="pdvObsInstalacao" rows="3" placeholder="tipo de água, onde vai instalar, precisa de eletricista, horário do cliente..."></textarea>
+          </div>
+
+          <div id="pdvEnvioBox" style="display:none;margin-top:10px">
+            <small style="display:block;color:#8899AA;font-size:10.5px;margin-bottom:6px">
+              Vai pro <strong>Envio</strong>, que despacha. Sem transportadora ninguém sabe quem coleta.
+            </small>
+            <div class="pdv-form-row">
+              <div style="grid-column: 1 / 3">
+                <label>Transportadora *</label>
+                <input id="pdvTransportadora" type="text" placeholder="quem vai levar">
+              </div>
+              <div>
+                <label>Frete cobrado do cliente</label>
+                <input id="pdvValorFrete" type="text" inputmode="decimal" placeholder="0,00">
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <div class="pdv-card">
+        <h3>📦 Itens da venda</h3>
+        <div class="pdv-search-box">
+          <input id="pdvBuscaProduto" type="text" placeholder="Buscar produto por nome ou código (ENTER pra buscar)" oninput="PDV.buscaProdutoDebounce()">
+          <div class="pdv-search-results" id="pdvSugestaoProduto"></div>
+        </div>
+        <table class="pdv-itens-table" style="margin-top:14px">
+          <thead><tr><th>#</th><th>Produto</th><th class="col-num">Qtd</th><th class="col-num">Preço un.</th><th class="col-num">Subtotal</th><th></th></tr></thead>
+          <tbody id="pdvItensBody"><tr><td colspan="6" class="pdv-empty"><div class="ico">📦</div>Nenhum item. Busque o produto acima.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LADO DIREITO: totalizador + finalizar -->
+    <div>
+      <div class="pdv-totalizador">
+        <div class="row"><span>Subtotal</span><span id="pdvSubtotal">R$ 0,00</span></div>
+        <div class="row"><span>Desconto</span>
+          <input type="number" id="pdvDesconto" min="0" step="0.01" value="0" oninput="PDV.recalc()" style="width:100px;background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:13px;text-align:right">
+        </div>
+        <!-- Teto do operador: lib/pdv-web.js DESCONTO_MAX_PCT_OPERADOR — fonte
+             única, chega aqui via /pdv/api/setup (state.descontoMaxPctOperador),
+             nunca hardcodado neste arquivo. Acima do teto pede usuário/senha de
+             um supervisor — a checagem que VALE é sempre no servidor; isto
+             aqui é só pra não obrigar o operador a tentar finalizar pra
+             descobrir que precisa. -->
+        <div id="pdvAutorizacaoBox" style="display:none;flex-direction:column;gap:6px;border-top:1px dashed var(--border);padding-top:8px;margin-top:2px;margin-bottom:8px">
+          <small id="pdvAutorizacaoAviso" style="color:#F59E0B;font-weight:700"></small>
+          <input id="pdvAutorUsuario" type="text" placeholder="usuário do supervisor" autocomplete="off" style="background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px">
+          <input id="pdvAutorSenha" type="password" placeholder="senha do supervisor" autocomplete="off" style="background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px">
+        </div>
+        <div class="row total"><span>TOTAL</span><span class="val" id="pdvTotal">R$ 0,00</span></div>
+      </div>
+
+      <div class="pdv-card">
+        <h3>💳 Forma de pagamento</h3>
+        <div class="pdv-pay-btns" id="pdvPayBtns"></div>
+
+        <div class="pdv-form-row">
+          <div>
+            <label>Empresa da venda *</label>
+            <select id="pdvEmpresaOmie" required>
+              <option value="">Escolha…</option>
+            </select>
+          </div>
+          <div>
+            <label>Celular do cliente *</label>
+            <input id="pdvTelefone" required inputmode="numeric" placeholder="12 99999-8888" aria-describedby="pdvTelErro">
+            <small id="pdvTelErro" hidden style="display:block;color:#EF4444;font-size:10.5px;margin-top:3px;font-weight:600">Celular obrigatório — sem ele a venda não fecha.</small>
+          </div>
+          <div>
+            <!-- Pedido do dono: "coloque 2 campos de telefone de contato, às
+                 vezes ele tem um fixo" — SEMPRE opcional, ao contrário do
+                 celular acima. Preenchido pela ficha do Omie quando o
+                 cliente já tem (PDV.buscarEnderecoOmie), mas continua
+                 editável e nunca bloqueia a venda se ficar vazio. -->
+            <label>Telefone fixo (opcional)</label>
+            <input id="pdvTelefoneFixo" type="text" inputmode="numeric" placeholder="12 3333-4444">
+          </div>
+          <div>
+            <label>Nome do cliente *</label>
+            <input id="pdvNomeAvulso" type="text" placeholder="como está no documento"
+                   oninput="PDV.toggleSemIdentificar()">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:6px;font-weight:normal">
+              <input id="pdvSemIdentificar" type="checkbox" onchange="PDV.toggleSemIdentificar()"
+                     style="width:15px;height:15px;cursor:pointer">
+              <span style="font-size:12px">Venda sem identificar o cliente</span>
+            </label>
+            <small style="display:block;color:#8899AA;font-size:10.5px;margin:2px 0 10px">
+              Sem nome, a <b>nota fiscal sai como “Consumidor Final”</b> e o cliente some da base —
+              não entra na fila de troca de refil.
+            </small>
+          </div>
+          <div>
+            <label>CPF/CNPJ (opcional)</label>
+            <input id="pdvCpf" type="text" placeholder="só números" oninput="PDV.cnpjDebounce()">
+            <!-- CNPJ (14 dígitos) consulta o Cadastro Nacional e preenche
+                 razão social/endereço/telefone/email abaixo — mesma ideia
+                 do CEP. CPF (11 dígitos) não dispara nada. -->
+            <small id="pdvCnpjMsg" style="display:block;color:#8899AA;font-size:10.5px;margin-top:3px"></small>
+          </div>
+          <div>
+            <label>Email</label>
+            <input id="pdvEmail" type="email" placeholder="cliente@exemplo.com">
+            <!-- A nota não sai mais no ato do balcão (a Eloize emite depois,
+                 manualmente, no Omie) — por isso o email NÃO trava a venda.
+                 Mas é ele que destrava a emissão dela: sem email o Omie
+                 recusa a nota (medido contra a API real — ValidarPedidoVenda).
+                 Aviso sempre visível, não condicional. -->
+            <small style="display:block;color:#8899AA;font-size:10.5px;margin-top:3px">Sem e-mail, a nota fiscal não poderá ser emitida depois — peça pro cliente.</small>
+          </div>
+        </div>
+
+        <div class="pdv-form-row">
+          <div style="grid-column: 1 / -1">
+            <label>Como conheceu a gente? *</label>
+            <select id="pdvOrigem" required>
+              <option value="">Escolha…</option>
+              <option>Já é cliente / veio trocar refil</option>
+              <option>Indicação de amigo ou parente</option>
+              <option>Passou em frente / viu a loja</option>
+              <option>Pesquisou no Google</option>
+              <option>Viu no Instagram ou Facebook</option>
+              <option>Recebeu mensagem nossa no WhatsApp</option>
+              <option>Viu placa, carro ou adesivo</option>
+              <option>Outro</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="pdvErrBanner" class="pdv-banner danger" style="display:none"></div>
+
+        <button class="pdv-finalize-btn" id="pdvBtnFinalizar" onclick="PDV.finalizar()">✅ FINALIZAR VENDA</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Modal cupom -->
+<div class="pdv-modal-bg" id="pdvCupomModal">
+  <div class="pdv-modal">
+    <h2 id="pdvCupomTitulo" style="margin-bottom:10px">✓ Venda finalizada</h2>
+    <div id="pdvCupomAvisos"></div>
+    <div id="pdvCupomConteudo" class="pdv-cupom"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="pdv-btn-secondary" onclick="window.print()" style="flex:1">🖨️ Imprimir</button>
+      <button class="pdv-btn-secondary" onclick="PDV.fecharCupom()" style="flex:1">✕ Nova venda</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const fmtBRL = (v) => 'R$ ' + (Number(v||0)).toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  const escapeHtml = (s) => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  const FORMAS = ['PIX','Cartão crédito','Cartão débito','Dinheiro','Boleto','Transferência'];
+
+  const state = {
+    cliente: null,
+    itens: [],
+    formaPagamento: 'PIX',
+    empresasOmie: [],
+    travado: false, // true quando pedidoOmie veio numa falha — não deixa reenviar o carrinho
+    // Teto de desconto do operador — valor local de UI só até /pdv/api/setup
+    // responder (init(), abaixo, sobrescreve com o valor real do servidor:
+    // lib/pdv-web.js DESCONTO_MAX_PCT_OPERADOR, fonte única). A checagem que
+    // VALE é sempre a do servidor; este número aqui é só pra não obrigar o
+    // operador a tentar finalizar pra descobrir que precisa de autorização.
+    descontoMaxPctOperador: 5,
+  };
+
+  function atualizarAvisoAutorizacao() {
+    document.getElementById('pdvAutorizacaoAviso').textContent =
+      '⚠️ Desconto acima de ' + state.descontoMaxPctOperador + '% — autorização de supervisor';
+  }
+  atualizarAvisoAutorizacao();
+
+  // Cliente é "novo" quando não veio de um resultado da busca (state.cliente
+  // ainda null — caso do primeiro cliente do dia — ou sem id, caso de
+  // "vender sem cadastrar"/CNPJ digitado à mão). QUALQUER módulo achado na
+  // busca (Contato, Empresa, Lead, Negócio) conta como "não é novo".
+  function clienteEhNovo() {
+    return !(state.cliente && state.cliente.id);
+  }
+
+  // Endereço — pedido do dono depois de usar o PDV em produção (print de
+  // tela): o bloco sumia por completo pro cliente já cadastrado, sem chance
+  // de conferir nem completar. Agora fica SEMPRE visível; só o RÓTULO e a
+  // obrigatoriedade (ver finalizar(), mais abaixo) mudam com clienteEhNovo().
+  function atualizarVisibilidadeEndereco() {
+    document.getElementById('pdvEnderecoBox').style.display = 'block';
+    document.getElementById('pdvEnderecoLabel').textContent = clienteEhNovo()
+      ? '📍 Endereço (cliente novo) *'
+      : '📍 Endereço do cliente';
+  }
+  atualizarVisibilidadeEndereco();
+
+  function esconderAlertaCnpj() {
+    const el = document.getElementById('pdvCnpjAlerta');
+    el.style.display = 'none';
+    el.innerHTML = '';
+  }
+
+  // Chave de idempotência: gerada UMA VEZ por venda, nunca por clique. Se
+  // gerasse por clique, duplo clique viraria duas chaves diferentes e o
+  // livro-razão (lib/pdv-ledger.js) não teria como enxergar que é a MESMA
+  // venda — duas vendas, duas notas fiscais no Omie.
+  let idemAtual = null;
+  function novaVenda() { idemAtual = 'pdv-' + Date.now() + '-' + Math.random().toString(36).slice(2,8); }
+  novaVenda();
+
+  async function init() {
+    try {
+      const r = await fetch('/pdv/api/setup').then(r=>r.json());
+      state.empresasOmie = r.empresas || [];
+      document.getElementById('pdvUserInfo').textContent = '· '+r.user.name+' ('+r.user.role+')';
+      // Teto de desconto: vem do servidor (lib/pdv-web.js, fonte única) —
+      // nunca fica com o default local se o servidor respondeu um número.
+      if (Number.isFinite(Number(r.descontoMaxPctOperador))) {
+        state.descontoMaxPctOperador = Number(r.descontoMaxPctOperador);
+        atualizarAvisoAutorizacao();
+      }
+    } catch(e){ console.warn(e); }
+    // Empresa da venda (Omie — Tudo de Filtro / Mococa), vinda do servidor
+    // pra nunca divergir de lib/omie.js EMPRESAS.
+    const selEmp = document.getElementById('pdvEmpresaOmie');
+    selEmp.innerHTML = '<option value="">Escolha…</option>' + state.empresasOmie.map(e => `<option>${escapeHtml(e)}</option>`).join('');
+    // Forma pagamento
+    const fb = document.getElementById('pdvPayBtns');
+    fb.innerHTML = FORMAS.map(f => `<button data-forma="${f}" onclick="PDV.setForma('${f}')">${escapeHtml(f)}</button>`).join('');
+    PDV.setForma('PIX');
+    // Telefone: some a mensagem de erro assim que o campo fica válido de novo
+    const telEl = document.getElementById('pdvTelefone');
+    telEl.addEventListener('invalid', () => { document.getElementById('pdvTelErro').hidden = false; });
+    telEl.addEventListener('input', () => { if (telEl.value.trim()) document.getElementById('pdvTelErro').hidden = true; });
+    // Endereço do cliente existente às vezes só dá pra buscar DEPOIS que a
+    // empresa é escolhida (a rota precisa saber qual conta do Omie
+    // consultar) — se o operador já tinha escolhido o cliente antes da
+    // empresa, tenta de novo aqui.
+    selEmp.addEventListener('change', () => PDV.buscarEnderecoOmie());
+  }
+
+  let _debC = null, _debP = null, _debCep = null, _debCnpj = null, _debCepEnt = null;
+
+  window.PDV = {
+    setForma(f) {
+      state.formaPagamento = f;
+      document.querySelectorAll('#pdvPayBtns button').forEach(b => b.classList.toggle('active', b.dataset.forma === f));
+    },
+
+    buscaClienteDebounce() { clearTimeout(_debC); _debC = setTimeout(this.buscaCliente, 300); },
+    async buscaCliente() {
+      const q = document.getElementById('pdvBuscaCliente').value.trim();
+      const box = document.getElementById('pdvSugestaoCliente');
+      if (q.length < 2) { box.classList.remove('show'); return; }
+      box.innerHTML = '<div class="item empty">⏳ buscando...</div>';
+      box.classList.add('show');
+      try {
+        const r = await fetch('/pdv/api/buscar-contato?q='+encodeURIComponent(q)).then(r=>r.json());
+        const lista = r.results || [];
+        if (lista.length === 0) {
+          box.innerHTML = '<div class="item empty">Nenhum cliente encontrado. <a href="javascript:void(0)" style="color:#4F8CFF" onclick="PDV.usarSemCadastro()">→ Vender sem cadastrar</a></div>';
+          return;
+        }
+        const moduloBadge = (m) => {
+          const cores = { 'Contacts':'#22C55E', 'Accounts':'#4F8CFF', 'Leads':'#F59E0B', 'Deals':'#a371f7' };
+          const labels = { 'Contacts':'Contato', 'Accounts':'Empresa', 'Leads':'Lead', 'Deals':'Negócio' };
+          return `<span style="background:${cores[m]||'#888'}22;color:${cores[m]||'#888'};padding:1px 6px;border-radius:4px;font-size:9.5px;font-weight:700;text-transform:uppercase;margin-left:6px">${labels[m]||m}</span>`;
+        };
+        box.innerHTML = lista.map((c, i) => `<div class="item" onclick='PDV.selecionarCliente(${JSON.stringify(c).replace(/'/g, "&apos;")})'>
+          <b>${escapeHtml(c.nome)}</b>${moduloBadge(c.modulo)}
+          <div class="muted" style="font-size:11px">${[c.telefone, c.email, c.empresa].filter(Boolean).map(escapeHtml).join(' · ')}</div>
+        </div>`).join('');
+      } catch(e) { box.innerHTML = '<div class="item empty">Erro: '+escapeHtml(e.message)+'</div>'; }
+    },
+    selecionarCliente(c) {
+      state.cliente = c;
+      state._enderecoBuscadoPara = null; // cliente novo selecionado — invalida cache da busca anterior
+      document.getElementById('pdvClienteNome').textContent = c.nome;
+      document.getElementById('pdvClienteSub').textContent = (c.telefone||'') + (c.empresa?' · '+c.empresa:'');
+      document.getElementById('pdvClienteSelecionado').style.display = 'flex';
+      document.getElementById('pdvBuscaCliente').value = '';
+      document.getElementById('pdvSugestaoCliente').classList.remove('show');
+      // Pré-preenche o telefone obrigatório com o do contato — o operador
+      // ainda pode corrigir se estiver desatualizado.
+      if (c.telefone) document.getElementById('pdvTelefone').value = c.telefone;
+      atualizarVisibilidadeEndereco(); // achado na busca: cliente existente — rótulo muda, bloco continua visível
+      esconderAlertaCnpj(); // cliente já cadastrado: aviso de CNPJ (se algum) não se aplica mais
+      // Endereço do Omie — pedido do dono depois de usar o PDV em produção:
+      // busca a ficha assim que o operador ESCOLHE o cliente (nunca durante
+      // a digitação). Limpa o que sobrou de uma busca anterior antes de
+      // buscar de novo, pra não misturar endereço de clientes diferentes.
+      for (const id of ['pdvEndereco','pdvNumero','pdvComplemento','pdvBairro','pdvCidade','pdvUf','pdvCep']) {
+        document.getElementById(id).value = '';
+      }
+      document.getElementById('pdvTelefoneFixo').value = '';
+      this.buscarEnderecoOmie();
+    },
+    usarSemCadastro() {
+      const nome = prompt('Nome do cliente (ou deixa vazio = "Consumidor Final"):', '');
+      state.cliente = { id: null, nome: nome || 'Consumidor Final', telefone: '' };
+      document.getElementById('pdvClienteNome').textContent = state.cliente.nome;
+      document.getElementById('pdvClienteSub').textContent = 'sem cadastro — telefone abaixo';
+      document.getElementById('pdvClienteSelecionado').style.display = 'flex';
+      document.getElementById('pdvBuscaCliente').value = '';
+      document.getElementById('pdvSugestaoCliente').classList.remove('show');
+      document.getElementById('pdvTelefone').focus();
+      atualizarVisibilidadeEndereco(); // cliente novo: pede endereço
+    },
+    limparCliente() {
+      state.cliente = null;
+      state._enderecoBuscadoPara = null;
+      document.getElementById('pdvClienteSelecionado').style.display = 'none';
+      atualizarVisibilidadeEndereco(); // voltou a ser "sem cliente" = novo
+      esconderAlertaCnpj();
+      document.getElementById('pdvEnderecoMsg').textContent = '';
+    },
+
+    // Endereço do cliente já cadastrado — pedido do dono depois de usar o
+    // PDV em produção (print de tela mostrando o bloco sumido). Chamada só
+    // DEPOIS que o operador ESCOLHE o cliente (selecionarCliente) ou muda a
+    // empresa da venda com um cliente já escolhido — NUNCA durante a
+    // digitação: o Omie tem trava de 60s contra consulta redundante.
+    //
+    // Precisa da EMPRESA (Omie routeia credencial por empresa) — se ainda
+    // não foi escolhida, só avisa e sai; o listener de 'change' da empresa
+    // (ver init()) tenta de novo assim que o operador escolhe. `_enderecoBuscadoPara`
+    // evita reconsultar o MESMO cliente+empresa (ex.: iria disparar nos dois
+    // gatilhos ao mesmo tempo) — reinicia a cada seleção de cliente nova
+    // (selecionarCliente/limparCliente).
+    async buscarEnderecoOmie() {
+      if (clienteEhNovo()) return; // cliente novo: nada pra buscar, o bloco já pede pra preencher
+      const empresa = document.getElementById('pdvEmpresaOmie').value;
+      const msgEl = document.getElementById('pdvEnderecoMsg');
+      if (!empresa) {
+        msgEl.textContent = 'Escolha a empresa da venda pra carregar o endereço deste cliente.';
+        return;
+      }
+      const doc = document.getElementById('pdvCpf').value.trim();
+      const telefone = document.getElementById('pdvTelefone').value.trim();
+      const chave = empresa + '|' + doc + '|' + telefone;
+      if (state._enderecoBuscadoPara === chave) return; // já buscou pra esta combinação — não repete
+      state._enderecoBuscadoPara = chave;
+      msgEl.textContent = '⏳ carregando endereço do cliente...';
+      try {
+        const qs = new URLSearchParams({ empresa, doc, telefone });
+        const r = await fetch('/pdv/api/cliente-omie?' + qs.toString()).then(r => r.json());
+        if (!r.ok) {
+          msgEl.textContent = '⚠️ ' + (r.error || 'não foi possível consultar o Omie') + ' — confira/preencha à mão.';
+          return;
+        }
+        if (!r.encontrado) {
+          msgEl.textContent = 'Cliente ainda sem endereço no Omie — preencha abaixo.';
+          return;
+        }
+        if (r.endereco) document.getElementById('pdvEndereco').value = r.endereco;
+        if (r.numero) document.getElementById('pdvNumero').value = r.numero;
+        if (r.complemento) document.getElementById('pdvComplemento').value = r.complemento;
+        if (r.bairro) document.getElementById('pdvBairro').value = r.bairro;
+        if (r.cidade) document.getElementById('pdvCidade').value = r.cidade;
+        if (r.uf) document.getElementById('pdvUf').value = r.uf;
+        if (r.cep) document.getElementById('pdvCep').value = r.cep;
+        // Celular: só sobrescreve se o operador ainda não digitou nada (raro
+        // — normalmente já veio preenchido pelo resultado da busca).
+        const telEl = document.getElementById('pdvTelefone');
+        if (!telEl.value.trim() && (r.telefoneCelularDdd || r.telefoneCelularNumero)) {
+          telEl.value = (r.telefoneCelularDdd || '') + (r.telefoneCelularNumero || '');
+        }
+        if (r.telefoneFixoDdd || r.telefoneFixoNumero) {
+          document.getElementById('pdvTelefoneFixo').value = (r.telefoneFixoDdd || '') + (r.telefoneFixoNumero || '');
+        }
+        if (r.email && !document.getElementById('pdvEmail').value.trim()) document.getElementById('pdvEmail').value = r.email;
+        const faltando = ['pdvEndereco','pdvNumero','pdvBairro','pdvCidade','pdvUf']
+          .filter(id => !document.getElementById(id).value.trim());
+        msgEl.textContent = faltando.length
+          ? '⚠️ endereço incompleto no cadastro — complete abaixo (não bloqueia a venda).'
+          : '✅ endereço carregado do cadastro — confira e corrija se precisar.';
+      } catch (e) {
+        msgEl.textContent = '⚠️ falha ao carregar endereço (' + escapeHtml(e.message) + ') — confira/preencha à mão.';
+      }
+    },
+
+    // Entrega em outro endereço — mostra/esconde o bloco. Ao desmarcar, LIMPA
+    // os campos: endereço de entrega esquecido de uma venda anterior não pode
+    // vazar pra próxima (o operador atende um cliente atrás do outro na mesma
+    // tela). Ao marcar, foca o CEP — caminho mais rápido pra preencher.
+    toggleEntrega() {
+      const usar = document.getElementById('pdvEntregaUsar').checked;
+      document.getElementById('pdvEntregaBox').style.display = usar ? 'block' : 'none';
+      if (!usar) {
+        for (const id of ['pdvEntregaCep','pdvEntregaNumero','pdvEntregaComplemento','pdvEntregaEndereco',
+                          'pdvEntregaBairro','pdvEntregaCidade','pdvEntregaUf','pdvEntregaNome','pdvEntregaReferencia']) {
+          document.getElementById(id).value = '';
+        }
+        document.getElementById('pdvEntregaCepMsg').textContent = '';
+        return;
+      }
+      document.getElementById('pdvEntregaCep').focus();
+    },
+    // Destino da venda — mostra o bloco de instalação OU o de envio, nunca os
+    // dois. Ao trocar, LIMPA o bloco que sumiu: observação de instalação de uma
+    // venda anterior não pode viajar junto de uma venda de envio (o operador
+    // atende um cliente atrás do outro na mesma tela).
+    // Nome e "sem identificar" são excludentes: marcar a caixa limpa o nome,
+    // digitar o nome desmarca a caixa. Sem isso dá pra mandar os dois e o
+    // servidor teria que escolher — melhor a tela não deixar a dúvida existir.
+    toggleSemIdentificar() {
+      const nome = document.getElementById('pdvNomeAvulso');
+      const sem = document.getElementById('pdvSemIdentificar');
+      if (document.activeElement === sem && sem.checked) nome.value = '';
+      if (document.activeElement === nome && nome.value.trim()) sem.checked = false;
+      nome.disabled = sem.checked;
+    },
+    toggleDestino() {
+      const el = document.querySelector('input[name="pdvDestino"]:checked');
+      const destino = el ? el.value : 'retirada';
+      const inst = destino === 'instalacao';
+      const env = destino === 'envio';
+      document.getElementById('pdvInstalacaoBox').style.display = inst ? 'block' : 'none';
+      document.getElementById('pdvEnvioBox').style.display = env ? 'block' : 'none';
+      if (!inst) document.getElementById('pdvObsInstalacao').value = '';
+      if (!env) {
+        document.getElementById('pdvTransportadora').value = '';
+        document.getElementById('pdvValorFrete').value = '';
+      }
+      if (inst) document.getElementById('pdvObsInstalacao').focus();
+      if (env) document.getElementById('pdvTransportadora').focus();
+    },
+    cepEntregaDebounce() { clearTimeout(_debCepEnt); _debCepEnt = setTimeout(() => this.buscarCepEntrega(), 400); },
+    // Mesmo proxy de CEP do endereço do cliente, mesma regra: o que o ViaCEP
+    // não achar, o operador digita à mão e a venda segue.
+    async buscarCepEntrega() {
+      const msgEl = document.getElementById('pdvEntregaCepMsg');
+      const cep = document.getElementById('pdvEntregaCep').value.replace(/\D/g, '');
+      if (cep.length !== 8) return;
+      msgEl.textContent = '⏳ consultando CEP...';
+      try {
+        const r = await fetch('/cep/' + cep);
+        const d = await r.json();
+        if (d.error) {
+          msgEl.textContent = '⚠️ ' + d.error + ' — preencha o endereço de entrega à mão.';
+          return;
+        }
+        if (d.logradouro) document.getElementById('pdvEntregaEndereco').value = d.logradouro;
+        if (d.bairro) document.getElementById('pdvEntregaBairro').value = d.bairro;
+        if (d.cidade) document.getElementById('pdvEntregaCidade').value = d.cidade;
+        if (d.estado) document.getElementById('pdvEntregaUf').value = d.estado;
+        msgEl.textContent = '✅ endereço de entrega preenchido — confira e complete o número.';
+        document.getElementById('pdvEntregaNumero').focus();
+      } catch (e) {
+        msgEl.textContent = '⚠️ Falha ao consultar CEP (' + escapeHtml(e.message) + ') — preencha à mão.';
+      }
+    },
+    cepDebounce() { clearTimeout(_debCep); _debCep = setTimeout(() => this.buscarCep(), 400); },
+    // ViaCEP via o proxy que o portal já tem (server.js:/cep/:cep — mesmo
+    // usado em meu-perfil.ejs/manutencao.ejs). Todo campo preenchido aqui
+    // continua editável: CEP que o ViaCEP não acha, cliente que não sabe o
+    // CEP, internet lenta — o operador digita à mão e a venda segue.
+    async buscarCep() {
+      const cepEl = document.getElementById('pdvCep');
+      const msgEl = document.getElementById('pdvCepMsg');
+      const cep = cepEl.value.replace(/\D/g, '');
+      if (cep.length !== 8) return;
+      msgEl.textContent = '⏳ consultando CEP...';
+      try {
+        const r = await fetch('/cep/' + cep);
+        const d = await r.json();
+        if (d.error) {
+          msgEl.textContent = '⚠️ ' + d.error + ' — preencha o endereço à mão abaixo.';
+          return;
+        }
+        if (d.logradouro) document.getElementById('pdvEndereco').value = d.logradouro;
+        if (d.bairro) document.getElementById('pdvBairro').value = d.bairro;
+        if (d.cidade) document.getElementById('pdvCidade').value = d.cidade;
+        if (d.estado) document.getElementById('pdvUf').value = d.estado;
+        msgEl.textContent = '✅ endereço preenchido — confira e complete o número.';
+        document.getElementById('pdvNumero').focus();
+      } catch (e) {
+        msgEl.textContent = '⚠️ Falha ao consultar CEP (' + escapeHtml(e.message) + ') — preencha o endereço à mão abaixo.';
+      }
+    },
+
+    cnpjDebounce() { clearTimeout(_debCnpj); _debCnpj = setTimeout(() => this.consultarCnpj(), 500); },
+    // Autopreenchimento de cliente NOVO a partir do Cadastro Nacional (pedido
+    // do dono depois de usar o PDV) — mesma ideia do CEP acima: só dá o ponto
+    // de partida (razão social, endereço, telefone, email), tudo continua
+    // editável, e qualquer falha (serviço fora do ar, CNPJ não encontrado,
+    // timeout) NUNCA trava a venda — o operador preenche à mão e segue.
+    // CPF (11 dígitos) não dispara nada aqui. Cliente já achado no Zoho (tem
+    // id) não é sobrescrito — os dados de lá já são a fonte certa.
+    async consultarCnpj() {
+      const cpfEl = document.getElementById('pdvCpf');
+      const msgEl = document.getElementById('pdvCnpjMsg');
+      esconderAlertaCnpj();
+      const digits = cpfEl.value.replace(/\D/g, '');
+      if (digits.length !== 14) { msgEl.textContent = ''; return; }
+      if (state.cliente && state.cliente.id) { msgEl.textContent = ''; return; }
+      msgEl.textContent = '⏳ consultando CNPJ na Receita...';
+      try {
+        const r = await fetch('/pdv/api/cnpj/' + digits).then(r => r.json());
+        if (!r.ok) {
+          msgEl.textContent = '⚠️ ' + (r.error || 'CNPJ não encontrado') + ' — preencha os dados à mão.';
+          return;
+        }
+        // Nome do cliente: razão social (nome fantasia some no subtítulo).
+        // Substitui o que estava em state.cliente — cliente sem id (novo) só
+        // pode ter vindo de "sem cadastro" ou de uma consulta de CNPJ
+        // anterior, então sobrescrever aqui é sempre o dado mais recente
+        // digitado pelo operador.
+        state.cliente = { id: null, nome: r.razaoSocial || r.nomeFantasia || ('CNPJ ' + digits), telefone: (state.cliente && state.cliente.telefone) || '' };
+        document.getElementById('pdvClienteNome').textContent = state.cliente.nome;
+        document.getElementById('pdvClienteSub').textContent = 'Receita: ' + (r.nomeFantasia && r.nomeFantasia !== r.razaoSocial ? r.nomeFantasia + ' · ' : '') + 'CNPJ ' + digits;
+        document.getElementById('pdvClienteSelecionado').style.display = 'flex';
+        atualizarVisibilidadeEndereco();
+        // Endereço — só preenche o que a Receita devolveu; número,
+        // complemento e o resto continuam editáveis (mesma regra do CEP: o
+        // obrigatório é TER endereço, nunca TER vindo da consulta).
+        const end = r.endereco || {};
+        if (end.cep) document.getElementById('pdvCep').value = String(end.cep).replace(/\D/g, '');
+        if (end.logradouro) document.getElementById('pdvEndereco').value = end.logradouro;
+        if (end.numero) document.getElementById('pdvNumero').value = end.numero;
+        if (end.complemento) document.getElementById('pdvComplemento').value = end.complemento;
+        if (end.bairro) document.getElementById('pdvBairro').value = end.bairro;
+        if (end.cidade) document.getElementById('pdvCidade').value = end.cidade;
+        if (end.uf) document.getElementById('pdvUf').value = end.uf;
+        // Telefone e email: só preenche se o operador ainda não digitou nada
+        // — não sobrescreve o que já foi informado na tela.
+        const telEl = document.getElementById('pdvTelefone');
+        if (r.telefone && !telEl.value.trim()) telEl.value = r.telefone;
+        const emailEl = document.getElementById('pdvEmail');
+        if (r.email && !emailEl.value.trim()) emailEl.value = r.email;
+        msgEl.textContent = '✅ dados preenchidos pela Receita — confira e complete.';
+        // Situação cadastral: SÓ avisa, nunca bloqueia — emitir nota fiscal
+        // pra CNPJ irregular é problema fiscal, mas a decisão de seguir é do
+        // operador (regra do dono).
+        if (r.alertaSituacao) {
+          const alertaEl = document.getElementById('pdvCnpjAlerta');
+          alertaEl.textContent = '⚠️ ' + r.alertaSituacao;
+          alertaEl.style.display = 'block';
+        }
+      } catch (e) {
+        msgEl.textContent = '⚠️ Falha ao consultar CNPJ (' + escapeHtml(e.message) + ') — preencha os dados à mão.';
+      }
+    },
+
+    buscaProdutoDebounce() { clearTimeout(_debP); _debP = setTimeout(this.buscaProduto, 300); },
+    async buscaProduto() {
+      const q = document.getElementById('pdvBuscaProduto').value.trim();
+      const box = document.getElementById('pdvSugestaoProduto');
+      if (q.length < 2) { box.classList.remove('show'); return; }
+      box.innerHTML = '<div class="item empty">⏳ buscando...</div>';
+      box.classList.add('show');
+      try {
+        const emp = (document.getElementById('pdvEmpresaOmie')||{}).value || '';
+        const r = await fetch('/pdv/api/buscar-produto?q='+encodeURIComponent(q)
+          + '&empresa='+encodeURIComponent(emp)).then(r=>r.json());
+        const lista = r.results || [];
+        const vendaveis = lista.filter(p => p.vendavel !== false);
+        if (lista.length === 0) {
+          // SEM atalho de "adicionar manual": item digitado à mão ia pro Omie
+          // sem código e SEM NCM — foi assim que saiu nota com NCM de móvel de
+          // madeira numa venda de filtro. Produto novo se cadastra primeiro.
+          box.innerHTML = '<div class="item empty">Nenhum produto com esse nome. Cadastre o produto (com código e NCM) antes de vender — item sem cadastro não vira nota fiscal.</div>';
+          return;
+        }
+        // Achou produto, mas NENHUM pode ser vendido: a tela precisa dizer o
+        // que realmente está errado (falta código no cadastro), senão o
+        // operador reformula a busca achando que digitou o nome errado.
+        if (vendaveis.length === 0) {
+          box.innerHTML = '<div class="item empty">Achei ' + lista.length + ' produto(s) com esse nome, mas <b>nenhum tem código no cadastro</b> — sem código a nota sai sem NCM. Peça pra cadastrar o código antes de vender.</div>'
+            + lista.map(p => `<div class="item" style="opacity:.55;cursor:not-allowed">
+                <b style="text-decoration:line-through">${escapeHtml(p.nome)}</b>
+                <div class="muted" style="font-size:11px">sem código no cadastro</div>
+              </div>`).join('');
+          return;
+        }
+        // Vendáveis primeiro, clicáveis. Os sem código vão depois, riscados:
+        // o operador vê que o produto EXISTE e sabe o que pedir pra arrumar.
+        box.innerHTML = vendaveis.map((p) => `<div class="item" onclick='PDV.adicionarItem(${JSON.stringify(p).replace(/'/g, "&apos;")})'>
+          <b>${escapeHtml(p.nome)}</b> <span class="muted" style="font-size:11px">${p.codigo?'· '+escapeHtml(p.codigo):''}</span>
+          <div class="muted" style="font-size:11px">preço ${fmtBRL(p.preco)} · estoque ${p.estoque}</div>
+        </div>`).join('') + lista.filter(p => p.vendavel === false).map(p => `<div class="item" style="opacity:.55;cursor:not-allowed">
+          <b style="text-decoration:line-through">${escapeHtml(p.nome)}</b>
+          <div class="muted" style="font-size:11px">sem código no cadastro — não pode ser vendido</div>
+        </div>`).join('');
+      } catch(e) { box.innerHTML = '<div class="item empty">Erro: '+escapeHtml(e.message)+'</div>'; }
+    },
+    adicionarItem(p) {
+      // Produto sem código não entra no carrinho: sem código o Omie recebe o
+      // item sem NCM e a nota sai com a classificação fiscal errada. O servidor
+      // recusa de novo (é lá que a recusa vale); aqui é só conveniência, pra o
+      // operador descobrir na hora e não depois da venda inteira digitada.
+      if (!String(p.codigo || '').trim()) {
+        alert('Produto "'+(p.nome||'')+'" está sem código no cadastro. Corrija o cadastro antes de vender — sem código a nota sai sem NCM.');
+        return;
+      }
+      // Se já existe item com mesmo id, incrementa qtd
+      const existente = state.itens.find(it => it.id === p.id);
+      if (existente) { existente.qtd++; }
+      else state.itens.push({ ...p, qtd: 1, valor: p.preco });
+      document.getElementById('pdvBuscaProduto').value = '';
+      document.getElementById('pdvSugestaoProduto').classList.remove('show');
+      this.renderItens();
+    },
+    removerItem(idx) {
+      state.itens.splice(idx, 1);
+      this.renderItens();
+    },
+    alterarQtd(idx, qtd) {
+      const q = parseInt(qtd, 10);
+      if (isNaN(q) || q <= 0) { state.itens.splice(idx, 1); }
+      else { state.itens[idx].qtd = q; }
+      this.renderItens();
+    },
+    alterarValor(idx, valor) {
+      const v = parseFloat(String(valor).replace(',','.')) || 0;
+      state.itens[idx].valor = v;
+      this.renderItens();
+    },
+    renderItens() {
+      const tb = document.getElementById('pdvItensBody');
+      if (state.itens.length === 0) {
+        tb.innerHTML = '<tr><td colspan="6" class="pdv-empty"><div class="ico">📦</div>Nenhum item. Busque o produto acima.</td></tr>';
+        this.recalc(); return;
+      }
+      tb.innerHTML = state.itens.map((it, i) => `<tr>
+        <td>${i+1}</td>
+        <td><b>${escapeHtml(it.nome)}</b><div class="muted" style="font-size:10.5px">${escapeHtml(it.codigo||'')}</div></td>
+        <td class="col-num"><input type="number" min="1" value="${it.qtd}" oninput="PDV.alterarQtd(${i}, this.value)"></td>
+        <td class="col-num"><input type="number" step="0.01" value="${it.valor}" oninput="PDV.alterarValor(${i}, this.value)" style="width:80px"></td>
+        <td class="col-num"><b>${fmtBRL(Number(it.valor)*Number(it.qtd))}</b></td>
+        <td><button class="pdv-btn-secondary pdv-btn-danger" onclick="PDV.removerItem(${i})">✕</button></td>
+      </tr>`).join('');
+      this.recalc();
+    },
+    recalc() {
+      const subtotal = state.itens.reduce((s, it) => s + Number(it.valor)*Number(it.qtd), 0);
+      const desconto = +document.getElementById('pdvDesconto').value || 0;
+      const total = Math.max(0, subtotal - desconto);
+      document.getElementById('pdvSubtotal').textContent = fmtBRL(subtotal);
+      document.getElementById('pdvTotal').textContent = fmtBRL(total);
+      // Teto do operador: state.descontoMaxPctOperador (vindo do servidor,
+      // fonte única — ver init()). Acima disso (ou desconto sobre subtotal
+      // zerado) mostra o campo de autorização — conveniência de tela, a
+      // checagem que vale é sempre a do servidor.
+      const pct = subtotal > 0 ? (desconto / subtotal) * 100 : 0;
+      const precisaAutorizacao = desconto > 0 && (subtotal <= 0 || pct > state.descontoMaxPctOperador);
+      document.getElementById('pdvAutorizacaoBox').style.display = precisaAutorizacao ? 'flex' : 'none';
+      // state.travado (pedido já existe no Omie) manda mais que a checagem de
+      // carrinho — sem isso, editar um item destravaria o botão por baixo do
+      // aviso de "não refaça a venda".
+      document.getElementById('pdvBtnFinalizar').disabled = state.travado || state.itens.length === 0 || total <= 0;
+    },
+
+    mostrarAviso(tipo, html) {
+      const b = document.getElementById('pdvErrBanner');
+      b.className = 'pdv-banner ' + tipo;
+      b.innerHTML = html;
+      b.style.display = '';
+    },
+    limparAviso() {
+      const b = document.getElementById('pdvErrBanner');
+      b.style.display = 'none';
+      b.innerHTML = '';
+    },
+
+    async finalizar() {
+      if (state.itens.length === 0) return alert('Adicione itens antes.');
+      const semCodigo = state.itens.filter(it => !String(it.codigo || '').trim());
+      if (semCodigo.length) {
+        return alert('Item sem código de cadastro: ' + semCodigo.map(it => it.nome).join(', ')
+          + '. Remova ou cadastre o produto — sem código a nota sai sem NCM.');
+      }
+      // Campos obrigatórios: empresa da venda, telefone, origem. reportValidity()
+      // dispara o balão nativo do navegador E o listener 'invalid' do telefone
+      // (que mostra a mensagem específica em #pdvTelErro). Curto-circuita no
+      // primeiro campo inválido — é o esperado, só um balão por vez.
+      const empEl = document.getElementById('pdvEmpresaOmie');
+      const telEl = document.getElementById('pdvTelefone');
+      const oriEl = document.getElementById('pdvOrigem');
+      if (!empEl.reportValidity() || !telEl.reportValidity() || !oriEl.reportValidity()) return;
+
+      // Endereço — SÓ obrigatório pra cliente NOVO (regra 1; cliente já
+      // encontrado na busca pode ter endereço incompleto no Omie e a venda
+      // segue mesmo assim — regra do dono depois de usar o PDV em
+      // produção). O bloco agora fica sempre visível (não é mais indicador
+      // de "é novo"), então a checagem usa clienteEhNovo() diretamente.
+      // Conveniência de tela: a validação que VALE é sempre a do servidor
+      // (lib/bi-pdv.js). CEP fica de fora (regra 2: o obrigatório é TER
+      // endereço, nunca TER vindo do CEP).
+      if (clienteEhNovo()) {
+        const faltando = [];
+        if (!document.getElementById('pdvEndereco').value.trim()) faltando.push('endereço');
+        if (!document.getElementById('pdvNumero').value.trim()) faltando.push('número');
+        if (!document.getElementById('pdvBairro').value.trim()) faltando.push('bairro');
+        if (!document.getElementById('pdvCidade').value.trim()) faltando.push('cidade');
+        if (!document.getElementById('pdvUf').value.trim()) faltando.push('UF');
+        if (faltando.length) {
+          return alert('Endereço obrigatório para cliente novo — falta: ' + faltando.join(', ')
+            + '. O CEP pode ficar em branco se o cliente não souber; o resto do endereço pode ser digitado à mão.');
+        }
+      }
+
+      // Entrega em outro endereço: marcada, exige o endereço inteiro (menos
+      // CEP, mesma regra do endereço do cliente). Conveniência de tela — a
+      // recusa que vale é a do servidor.
+      if (document.getElementById('pdvEntregaUsar').checked) {
+        const faltaEnt = [];
+        if (!document.getElementById('pdvEntregaEndereco').value.trim()) faltaEnt.push('endereço');
+        if (!document.getElementById('pdvEntregaNumero').value.trim()) faltaEnt.push('número');
+        if (!document.getElementById('pdvEntregaBairro').value.trim()) faltaEnt.push('bairro');
+        if (!document.getElementById('pdvEntregaCidade').value.trim()) faltaEnt.push('cidade');
+        if (!document.getElementById('pdvEntregaUf').value.trim()) faltaEnt.push('UF');
+        if (faltaEnt.length) {
+          return alert('Endereço de ENTREGA incompleto — falta: ' + faltaEnt.join(', ')
+            + '. Desmarque "entregar em outro endereço" se a entrega é no endereço do cadastro.');
+        }
+      }
+
+      this.limparAviso();
+      const desconto = +document.getElementById('pdvDesconto').value || 0;
+      const payload = {
+        idem: idemAtual,
+        empresa: empEl.value,
+        telefone: telEl.value,
+        // Telefone fixo — "às vezes ele tem um fixo" (pedido do dono):
+        // SEMPRE opcional, ao contrário do celular acima.
+        telefoneFixo: document.getElementById('pdvTelefoneFixo').value || null,
+        origem: oriEl.value,
+        clienteZohoId: state.cliente?.id || null,
+        // O MÓDULO viaja junto com o id: a busca devolve Contato, Empresa,
+        // Lead e Negócio, e o servidor precisa saber de qual módulo é esse id
+        // pra usar o lookup certo (Contact_Name só aceita id de Contato).
+        clienteZohoModulo: state.cliente?.modulo || null,
+        // NUNCA preenche "Consumidor Final" sozinho: era assim que o rótulo
+        // vazava pro Omie e a nota saía nesse nome. Sem nome o servidor recusa,
+        // a não ser que o operador marque "venda sem identificar".
+        clienteNome: state.cliente?.nome || document.getElementById('pdvNomeAvulso').value.trim() || '',
+        semIdentificar: document.getElementById('pdvSemIdentificar').checked,
+        cpf: document.getElementById('pdvCpf').value || null,
+        email: document.getElementById('pdvEmail').value || null,
+        // Endereço — só é de fato exigido no servidor pra cliente NOVO (sem
+        // clienteZohoId), mas vai sempre que preenchido: nada impede o
+        // operador de complementar/corrigir o endereço de um cliente já
+        // encontrado, e o servidor decide se precisa ou não.
+        cep: document.getElementById('pdvCep').value || null,
+        numero: document.getElementById('pdvNumero').value || null,
+        complemento: document.getElementById('pdvComplemento').value || null,
+        endereco: document.getElementById('pdvEndereco').value || null,
+        bairro: document.getElementById('pdvBairro').value || null,
+        cidade: document.getElementById('pdvCidade').value || null,
+        uf: document.getElementById('pdvUf').value || null,
+        // Entrega em outro endereço — só viaja quando marcado. Desmarcado,
+        // `usar:false` e o servidor nem olha o resto (nenhum pedido que já
+        // funcionava muda de forma).
+        entrega: {
+          usar: document.getElementById('pdvEntregaUsar').checked,
+          cep: document.getElementById('pdvEntregaCep').value || null,
+          endereco: document.getElementById('pdvEntregaEndereco').value || null,
+          numero: document.getElementById('pdvEntregaNumero').value || null,
+          complemento: document.getElementById('pdvEntregaComplemento').value || null,
+          bairro: document.getElementById('pdvEntregaBairro').value || null,
+          cidade: document.getElementById('pdvEntregaCidade').value || null,
+          uf: document.getElementById('pdvEntregaUf').value || null,
+          nome: document.getElementById('pdvEntregaNome').value || null,
+          referencia: document.getElementById('pdvEntregaReferencia').value || null,
+        },
+        // Destino da venda: o que faz o registro cair na fila certa depois.
+        // `retirada` é o padrão e não pede mais nada.
+        destino: (document.querySelector('input[name="pdvDestino"]:checked') || {}).value || 'retirada',
+        obsInstalacao: document.getElementById('pdvObsInstalacao').value || null,
+        transportadora: document.getElementById('pdvTransportadora').value || null,
+        valorFrete: document.getElementById('pdvValorFrete').value || null,
+        itens: state.itens,
+        formaPagamento: state.formaPagamento,
+        desconto,
+      };
+      // Desconto acima do teto: manda usuário/senha do supervisor pro servidor
+      // conferir — a checagem de verdade é sempre lá (lib/pdv-web.js), nunca
+      // confia no que esta tela decidiu mostrar.
+      if (document.getElementById('pdvAutorizacaoBox').style.display !== 'none') {
+        const senhaEl = document.getElementById('pdvAutorSenha');
+        payload.autorizacao = {
+          usuario: document.getElementById('pdvAutorUsuario').value.trim(),
+          senha: senhaEl.value,
+        };
+        // A senha nunca deve sobreviver no campo da tela além do instante em
+        // que é lida pro payload — nem esperando a resposta da venda, nem
+        // atrás do modal do cupom numa venda bem-sucedida. Já está copiada
+        // em `payload`; o campo não precisa mais dela, autorizada ou não.
+        senhaEl.value = '';
+      }
+      const btn = document.getElementById('pdvBtnFinalizar');
+      btn.disabled = true; btn.textContent = '⏳ Finalizando...';       // trava contra clique duplo
+      let manterTravado = false;
+      try {
+        const r = await fetch('/pdv/api/finalizar-venda', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) }).then(r=>r.json());
+        manterTravado = this.tratarResultado(r);
+      } catch(e) {
+        this.mostrarAviso('danger', 'Erro de conexão: '+escapeHtml(e.message)+'. Confira se a venda foi registrada antes de tentar de novo.');
+      } finally {
+        btn.textContent = '✅ FINALIZAR VENDA';
+        state.travado = manterTravado;
+        if (!manterTravado) btn.disabled = false;
+      }
+    },
+
+    // Lê o contrato de retorno de finalizarVenda: { ok, vendaId, estado,
+    // pedidoOmie, avisoNotaFiscal, dealId, quoteId, erro, cupom }. Devolve
+    // true se o botão deve continuar travado (pedido já existe no Omie —
+    // reclicar reenviaria o mesmo carrinho e viraria pedido duplicado).
+    tratarResultado(r) {
+      if (!r.ok) {
+        const msg = r.erro || 'erro desconhecido';
+        if (r.pedidoOmie) {
+          this.mostrarAviso('danger',
+            `⚠️ PEDIDO Nº ${escapeHtml(String(r.pedidoOmie))} JÁ FOI CRIADO NO OMIE. `
+            + `NÃO refaça esta venda — chame o suporte técnico. (${escapeHtml(msg)})`
+            + `<div style="margin-top:8px"><button class="pdv-btn-secondary" onclick="PDV.fecharCupom()">`
+            + `✕ Já chamei o suporte — iniciar nova venda</button></div>`);
+          return true; // trava o botão: só o reset acima (via fecharCupom) destrava
+        }
+        this.mostrarAviso('danger', escapeHtml(msg));
+        return false;
+      }
+      // Reenvio do MESMO idem depois que a venda já chegou a 'completa' (rede
+      // caiu/deu timeout depois que o servidor já tinha fechado tudo — Omie e
+      // Zoho — mas antes da resposta chegar). NÃO renova o idem aqui: se
+      // renovasse, um segundo reclique acidental do operador (achando que
+      // ainda não fechou) criaria uma venda NOVA de verdade. Só a ação
+      // explícita "ir pra próxima venda" (fecharCupom) renova a chave.
+      if (r.repetida) {
+        this.mostrarRepetida(r);
+        return true; // trava o botão: só o reset acima (via fecharCupom) destrava
+      }
+      if (r.estado === 'sombra') {
+        this.mostrarSombra(r);
+        novaVenda();
+        return false;
+      }
+      this.mostrarCupom(r);
+      novaVenda();
+      return false;
+    },
+
+    // VENDA REPETIDA: a mesma chave idem voltou depois que a venda já tinha
+    // fechado de verdade (nota emitida, Negócio confirmado). O operador
+    // precisa de UMA coisa: saber que já fechou e o número do pedido — não
+    // pode ficar em dúvida e refazer a venda, duplicando pedido e nota no
+    // Omie. Por isso o texto é redundante de propósito (título + banner) e o
+    // caminho pra seguir é um clique explícito, não um redirecionamento
+    // automático.
+    mostrarRepetida(r) {
+      document.getElementById('pdvCupomTitulo').textContent = '✓ Esta venda JÁ FOI FECHADA — não repita';
+      document.getElementById('pdvCupomConteudo').style.display = 'none';
+      const pedido = r.pedidoOmie ? `<div style="font-size:20px;margin:6px 0"><b>Pedido nº ${escapeHtml(String(r.pedidoOmie))}</b></div>` : '';
+      document.getElementById('pdvCupomAvisos').innerHTML =
+        `<div class="pdv-banner warn">Esta venda já foi finalizada anteriormente (provavelmente a conexão caiu ou deu `
+        + `timeout depois que o pedido já tinha saído). ${pedido}`
+        + `${r.dealId ? '<div style="font-size:11px;color:#8fb8ff">Negócio Zoho: '+escapeHtml(String(r.dealId))+'</div>' : ''}`
+        + `<b>NÃO refaça esta venda.</b> Se o cliente precisa de outra compra, use o botão abaixo.</div>`
+        + `<div style="margin-top:8px"><button class="pdv-btn-secondary" onclick="PDV.fecharCupom()">`
+        + `→ Ir para a próxima venda</button></div>`;
+      document.getElementById('pdvCupomModal').classList.add('show');
+    },
+
+    // MODO TESTE (TDF_PDV_MODO_SOMBRA=1): nada foi enviado — nem Omie, nem
+    // nota, nem Zoho. Isso precisa ficar óbvio pro operador, senão ele acha
+    // que a venda saiu de verdade durante o dia de teste em paralelo.
+    mostrarSombra(r) {
+      document.getElementById('pdvCupomTitulo').textContent = '🧪 MODO TESTE — nada foi enviado';
+      document.getElementById('pdvCupomAvisos').innerHTML =
+        `<div class="pdv-banner warn">Nenhum pedido foi criado no Omie. Nenhuma nota fiscal foi emitida. `
+        + `Nada foi enviado ao Zoho. Esta venda (id ${escapeHtml(r.vendaId||'')}) é só de TESTE, `
+        + `pra comparar com o Omie no dia de operação em paralelo.</div>`;
+      document.getElementById('pdvCupomConteudo').style.display = 'none';
+      document.getElementById('pdvCupomModal').classList.add('show');
+    },
+
+    mostrarCupom(r) {
+      const c = r.cupom;
+      // Rede de segurança: NENHUM retorno com ok:true pode derrubar a tela
+      // com uma exceção de JS (que o catch de finalizar() disfarça de "erro
+      // de conexão" numa venda que na verdade fechou). Se por qualquer
+      // motivo o cupom não veio, mostra aviso — não estoura.
+      if (!c) {
+        document.getElementById('pdvCupomTitulo').textContent = '✓ Venda registrada';
+        document.getElementById('pdvCupomConteudo').style.display = 'none';
+        document.getElementById('pdvCupomAvisos').innerHTML =
+          `<div class="pdv-banner warn">A venda foi registrada (estado: ${escapeHtml(r.estado||'?')})`
+          + `${r.pedidoOmie ? ', pedido nº '+escapeHtml(String(r.pedidoOmie)) : ''}, `
+          + `mas os dados do cupom não vieram do servidor. Confira o pedido antes de repetir qualquer coisa.</div>`
+          + `<div style="margin-top:8px"><button class="pdv-btn-secondary" onclick="PDV.fecharCupom()">`
+          + `→ Ir para a próxima venda</button></div>`;
+        document.getElementById('pdvCupomModal').classList.add('show');
+        return;
+      }
+      document.getElementById('pdvCupomTitulo').textContent = '✓ Venda finalizada';
+      document.getElementById('pdvCupomConteudo').style.display = '';
+
+      let avisos = '';
+      // O PDV não fatura mais (decisão do dono, 19/ago/2026): o pedido nasce
+      // no Omie e a nota é emitida DEPOIS, manualmente, pela Eloize — nunca
+      // no ato do balcão. Por isso não existe mais botão "Abrir nota" nem
+      // PDF pra abrir aqui; só o aviso de que o pedido existe.
+      avisos += `<div class="pdv-banner info">Pedido criado no Omie`
+        + `${r.pedidoOmie ? ' (nº '+escapeHtml(String(r.pedidoOmie))+')' : ''}. `
+        + `A nota fiscal é emitida depois, manualmente — não é preciso esperar aqui.</div>`;
+      // Aviso da validação do Omie (ValidarPedidoVenda) — a mensagem exata
+      // que o Omie mandou, verbatim, sem reescrever nem resumir. É a
+      // instrução do que falta pra Eloize conseguir emitir a nota, e o
+      // operador ainda está com o cliente na frente pra corrigir.
+      // ⚠️ NÃO usar o estilo de alerta aqui. Este aviso é RECADO PRA ELOIZE,
+      // não erro do operador — a venda já subiu e o pedido já existe. Em
+      // 31/08 ele apareceu com cara de erro (fundo laranja, ⚠️), o operador
+      // achou que a venda falhou, refez, e nasceram DOIS pedidos no Omie e
+      // dois negócios no CRM pro mesmo cliente. O texto agora começa dizendo
+      // que a venda está feita.
+      if (r.avisoNotaFiscal) {
+        avisos += `<div class="pdv-banner info">✅ Venda registrada. `
+          + `<b>Não precisa refazer.</b> Quando o financeiro for emitir a nota, o Omie vai pedir: `
+          + `<i>${escapeHtml(r.avisoNotaFiscal)}</i> — isso é resolvido lá, não aqui.</div>`;
+      }
+      if (r.estado && r.estado !== 'completa') {
+        avisos += `<div class="pdv-banner info">Venda ainda não confirmada no CRM (estado: ${escapeHtml(r.estado)}). `
+          + `O cliente já pode ir embora — o sistema confirma sozinho depois.`
+          + `${r.erro ? ' Detalhe: '+escapeHtml(r.erro) : ''}</div>`;
+      }
+      document.getElementById('pdvCupomAvisos').innerHTML = avisos;
+
+      const html = `
+        <h3>TUDO DE FILTRO · PDV</h3>
+        <div style="text-align:center;font-size:11px">${new Date(c.data).toLocaleString('pt-BR')}</div>
+        <hr>
+        <div><b>Cliente:</b> ${escapeHtml(c.cliente)}</div>
+        <hr>
+        ${c.itens.map(it => `<div class="row"><span>${it.qtd}x ${escapeHtml(it.nome).slice(0,28)}</span><span>${fmtBRL(Number(it.valor)*Number(it.qtd))}</span></div>`).join('')}
+        <hr>
+        <div class="row"><span>Subtotal</span><span>${fmtBRL(c.bruto)}</span></div>
+        ${c.desconto > 0 ? `<div class="row"><span>Desconto</span><span>-${fmtBRL(c.desconto)}</span></div>` : ''}
+        <div class="row total"><span>TOTAL</span><span>${fmtBRL(c.total)}</span></div>
+        <hr>
+        <div><b>Pagamento:</b> ${escapeHtml(c.formaPagamento)}</div>
+        ${r.dealId ? `<div style="font-size:10px;color:#666">Negócio Zoho: ${escapeHtml(r.dealId)}</div>` : ''}
+        <div style="text-align:center;margin-top:10px;font-size:10px;color:#666">cupom não-fiscal · obrigado!</div>
+      `;
+      document.getElementById('pdvCupomConteudo').innerHTML = html;
+      document.getElementById('pdvCupomModal').classList.add('show');
+    },
+    fecharCupom() {
+      document.getElementById('pdvCupomModal').classList.remove('show');
+      // reset venda
+      state.itens = [];
+      state.travado = false;
+      this.limparCliente();
+      this.limparAviso();
+      document.getElementById('pdvDesconto').value = 0;
+      document.getElementById('pdvTelefone').value = '';
+      document.getElementById('pdvTelefoneFixo').value = '';
+      document.getElementById('pdvTelErro').hidden = true;
+      document.getElementById('pdvOrigem').value = '';
+      document.getElementById('pdvCpf').value = '';
+      document.getElementById('pdvEmail').value = '';
+      document.getElementById('pdvCep').value = '';
+      document.getElementById('pdvNumero').value = '';
+      document.getElementById('pdvComplemento').value = '';
+      document.getElementById('pdvEndereco').value = '';
+      document.getElementById('pdvBairro').value = '';
+      document.getElementById('pdvCidade').value = '';
+      document.getElementById('pdvUf').value = '';
+      document.getElementById('pdvCepMsg').textContent = '';
+      document.getElementById('pdvEnderecoMsg').textContent = '';
+      // Senha do supervisor nunca deve sobreviver no DOM depois da venda.
+      document.getElementById('pdvAutorUsuario').value = '';
+      document.getElementById('pdvAutorSenha').value = '';
+      document.getElementById('pdvAutorizacaoBox').style.display = 'none';
+      novaVenda(); // garante chave nova mesmo se o fechamento veio do caminho travado (pedidoOmie)
+      this.renderItens(); // recalc() já destrava o botão (state.travado=false, carrinho vazio)
+    },
+  };
+
+  document.addEventListener('DOMContentLoaded', init);
+  // Click fora da sugestão fecha
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.pdv-search-box')) {
+      document.querySelectorAll('.pdv-search-results').forEach(b => b.classList.remove('show'));
+    }
+  });
+})();
+</script>

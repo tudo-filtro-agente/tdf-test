@@ -1,0 +1,2019 @@
+<% const activePage = 'inbox'; const pageTitle = 'Inbox WATI'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+/* ============================================================
+   INBOX WATI — DESIGN SYSTEM
+   Tokens locais (não tocam em :root global)
+   ============================================================ */
+.ix-wrap{
+  --ix-bg:#0a0a0a;
+  --ix-surface:#0e0e0e;
+  --ix-surface-2:#141414;
+  --ix-surface-3:#1a1a1a;
+  --ix-border:#1f2329;
+  --ix-border-strong:#2a2f37;
+  --ix-text:#e8eaed;
+  --ix-text-muted:#8a9099;
+  --ix-text-faint:#5b6068;
+  --ix-accent:#5ba3f5;
+  --ix-wa-green:#00a884;
+  --ix-wa-bubble:#005c4b;
+  --ix-wa-bubble-end:#017561;
+  --ix-purple:#a371f7;
+  --ix-gold:#f0c040;
+  --ix-danger:#ef4444;
+  max-width:1500px;margin:0 auto;padding:0;display:flex;
+  height:calc(100vh - 64px);max-height:calc(100vh - 64px);
+  background:var(--ix-bg);overflow:hidden;width:100%;
+  font-feature-settings:"cv11","ss01";
+}
+html[data-theme="light"] .ix-wrap{
+  --ix-bg:#F2F4F8;
+  --ix-surface:#FFFFFF;
+  --ix-surface-2:#F6F8FA;
+  --ix-surface-3:#EDF1F5;
+  --ix-border:#D8DEE6;
+  --ix-border-strong:#C4CCD6;
+  --ix-text:#1F2328;
+  --ix-text-muted:#59636E;
+  --ix-text-faint:#77808B;
+  --ix-accent:#2563EB;
+  --ix-wa-bubble:#D9FDD3;
+  --ix-wa-bubble-end:#C8F5C0;
+  --ix-purple:#8250DF;
+  --ix-gold:#9A6700;
+  --ix-danger:#DC2626;
+}
+
+.tdf-app-main:has(.ix-wrap){padding:0 !important}
+
+/* ============================================================
+   COLUNA 1 — LISTA DE CONVERSAS
+   ============================================================ */
+.ix-side{width:332px;border-right:1px solid var(--ix-border);display:flex;flex-direction:column;background:var(--ix-surface);overflow:hidden;flex-shrink:0}
+.ix-side-h{padding:12px 16px;border-bottom:1px solid var(--ix-border);display:flex;align-items:center;gap:6px;background:var(--ix-surface)}
+.ix-side-h h2{margin:0;font-size:14px;color:var(--ix-text);flex:1;font-weight:700;letter-spacing:-.2px}
+.ix-side-h .badge{background:var(--ix-danger);color:var(--text);font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;line-height:1.4}
+.ix-search{padding:8px 14px;border-bottom:1px solid var(--ix-border)}
+.ix-search input{width:100%;padding:8px 12px 8px 32px;background:var(--ix-surface-2);border:1px solid var(--ix-border-strong);border-radius:8px;color:var(--ix-text);font-size:12px;outline:none;transition:border-color .15s,background .15s;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a9099' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");
+  background-repeat:no-repeat;background-position:10px center;
+}
+.ix-search input::placeholder{color:var(--ix-text-faint)}
+.ix-search input:focus{border-color:var(--ix-accent);background:var(--ix-surface-3)}
+.ix-list{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#2a2a2a transparent}
+.ix-list::-webkit-scrollbar{width:6px}
+.ix-list::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:3px}
+
+/* Item de conversa — denso, hierárquico, sem ruído */
+.ix-conv{padding:9px 14px 9px 16px;cursor:pointer;transition:background .12s ease;position:relative;border-bottom:1px solid rgba(255,255,255,.025);display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:start}
+.ix-conv:hover{background:rgba(255,255,255,.025)}
+.ix-conv.active{background:rgba(91,163,245,.08)}
+.ix-conv.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;background:var(--ix-accent);border-radius:0 2px 2px 0}
+/* Indicador "novo" — ponto verde lateral discreto */
+.ix-conv.novo::after{content:'';position:absolute;right:14px;top:50%;transform:translateY(-50%);width:8px;height:8px;background:var(--ix-wa-green);border-radius:50%;box-shadow:0 0 0 3px rgba(0,168,132,.18);animation:ixPulse 1.6s infinite}
+.ix-conv.novo .preview{color:#cbd5db;font-weight:600}
+/* Avatar/iniciais */
+.ix-conv .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1f2937,#374151);display:flex;align-items:center;justify-content:center;color:#cbd5db;font-size:13px;font-weight:700;flex-shrink:0;letter-spacing:-.2px;border:1px solid rgba(255,255,255,.05)}
+.ix-conv .avatar.tier-d{background:linear-gradient(135deg,#3a1d63,#7c3aed);color:#fff;border-color:#a371f7}
+.ix-conv .avatar.tier-o{background:linear-gradient(135deg,#5a4310,#d4a017);color:#1a1a00;border-color:#f0c040}
+.ix-conv .avatar.tier-p{background:linear-gradient(135deg,#374151,#6b7280);color:#f3f4f6}
+.ix-conv .avatar.tier-b{background:linear-gradient(135deg,#3a2a18,#87592a);color:#fff8e7}
+.ix-conv .avatar.ia{background:linear-gradient(135deg,#4c1d95,#a371f7);color:#fff;border-color:#a371f7;box-shadow:0 0 0 2px rgba(167,113,247,.18)}
+.ix-conv .body{min-width:0;display:flex;flex-direction:column;gap:1px;padding-right:18px}
+.ix-conv .nome{font-size:13px;font-weight:600;color:var(--ix-text);display:flex;align-items:center;gap:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:-.1px}
+.ix-conv .nome .name-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.ix-conv .nome .tier-icon{font-size:11px;flex-shrink:0;line-height:1}
+.ix-conv .preview{font-size:11.5px;color:var(--ix-text-muted);line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ix-conv .meta{font-size:10px;color:var(--ix-text-faint);display:flex;align-items:center;gap:4px;flex-wrap:wrap;line-height:1.4}
+.ix-conv .meta .dot{opacity:.5}
+.ix-conv .right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.ix-conv .ts{font-size:10px;color:var(--ix-text-faint);font-variant-numeric:tabular-nums;font-weight:500;white-space:nowrap}
+.ix-conv.novo .ts{color:var(--ix-wa-green);font-weight:700}
+.ix-conv .badge-count{background:var(--ix-wa-green);color:var(--text);font-size:10px;font-weight:700;padding:1px 6px;border-radius:9px;min-width:18px;text-align:center;line-height:1.4}
+/* Mini-badges (PRÉ-LEAD, IA, fonte) */
+.ix-mini{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700;line-height:1.4;letter-spacing:.2px;flex-shrink:0;text-transform:uppercase}
+.ix-mini.ia{background:rgba(167,113,247,.16);color:#c4a4ff;border:1px solid rgba(167,113,247,.3)}
+.ix-mini.prelead{background:rgba(156,163,175,.1);color:#9ca3af;border:1px dashed #4a5260}
+.ix-mini.semdeal{background:rgba(239,68,68,.14);color:#fca5a5;border:1px solid rgba(239,68,68,.45);animation:semDealPulse 2s infinite}
+@keyframes semDealPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 4px rgba(239,68,68,0)}}
+.ix-mini.fonte{padding:1px 6px}
+/* Tier text colors (re-export) */
+.tier-d{color:#A371F7}.tier-o{color:#F0C040}.tier-p{color:#9ca3af}.tier-b{color:#a87c5e}
+@keyframes ixPulse{0%,100%{opacity:1;transform:translateY(-50%) scale(1)}50%{opacity:.5;transform:translateY(-50%) scale(.85)}}
+
+/* ============================================================
+   COLUNA 2 — CONVERSA (centro)
+   ============================================================ */
+.ix-main{flex:1;display:flex;flex-direction:column;background:var(--ix-bg);overflow:hidden;min-width:0;position:relative}
+
+/* Header da conversa: avatar + nome + presença + menu de ações */
+.ix-main-h{padding:10px 18px;border-bottom:1px solid var(--ix-border);background:var(--ix-surface);display:flex;align-items:center;gap:12px;flex-shrink:0;min-height:60px}
+.ix-main-h .avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#1f2937,#374151);display:flex;align-items:center;justify-content:center;color:#cbd5db;font-size:14px;font-weight:700;flex-shrink:0;border:1px solid rgba(255,255,255,.06);letter-spacing:-.3px}
+.ix-main-h .info{flex:1;min-width:0}
+.ix-main-h .info .nome{font-size:15px;font-weight:700;color:var(--ix-text);letter-spacing:-.2px;display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ix-main-h .info .meta{font-size:11px;color:var(--ix-text-muted);margin-top:1px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.4}
+.ix-main-h .info .meta .sep{opacity:.4}
+.ix-main-h .info .meta .online{color:var(--ix-wa-green);display:inline-flex;align-items:center;gap:4px;font-weight:600}
+.ix-main-h .info .meta .online::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ix-wa-green)}
+.ix-main-h .actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.ix-actbtn{background:transparent;color:var(--ix-text-muted);border:1px solid transparent;border-radius:8px;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;transition:all .12s;text-decoration:none;line-height:1}
+.ix-actbtn:hover{background:var(--ix-surface-3);color:var(--ix-text);border-color:var(--ix-border-strong);text-decoration:none}
+.ix-actbtn.copied{background:rgba(0,168,132,.15);color:var(--ix-wa-green);border-color:var(--ix-wa-green)}
+/* Menu drop pra ações secundárias */
+.ix-actmenu{position:relative}
+.ix-actmenu-pop{display:none;position:absolute;right:0;top:calc(100% + 6px);background:var(--bg-card);border:1px solid var(--ix-border-strong);border-radius:8px;min-width:180px;padding:4px;z-index:50;box-shadow:0 12px 28px rgba(0,0,0,.55)}
+.ix-actmenu.open .ix-actmenu-pop{display:block}
+.ix-actmenu-pop a,.ix-actmenu-pop button{display:flex;align-items:center;gap:8px;padding:8px 10px;color:var(--ix-text);text-decoration:none;font-size:12px;border-radius:6px;background:transparent;border:none;width:100%;text-align:left;cursor:pointer;font-family:inherit}
+.ix-actmenu-pop a:hover,.ix-actmenu-pop button:hover{background:var(--ix-surface-3);text-decoration:none}
+
+/* FIX SCROLL */
+#ix-conversa[style*="flex"]{min-height:0;height:100%;flex:1 1 0;overflow:hidden}
+.ix-input{flex-shrink:0}
+
+/* ============================================================
+   MENSAGENS — bolhas estilo WhatsApp Business + tipografia clean
+   ============================================================ */
+.ix-msgs{
+  flex:1 1 0 !important;min-height:0 !important;
+  overflow-y:auto !important;overflow-x:hidden !important;
+  padding:18px 24px 22px;display:flex;flex-direction:column;gap:4px;
+  height:0 !important;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(167,113,247,.025), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(0,168,132,.025), transparent 40%),
+    var(--ix-bg);
+}
+.ix-msgs::-webkit-scrollbar{width:8px}
+.ix-msgs::-webkit-scrollbar-track{background:transparent}
+.ix-msgs::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:4px}
+.ix-msgs::-webkit-scrollbar-thumb:hover{background:#3a3a3a}
+
+/* Bolha base */
+.ix-msg{
+  max-width:65%;padding:7px 11px 18px;border-radius:8px;
+  font-size:13.5px;line-height:1.42;word-break:break-word;
+  position:relative;letter-spacing:-.05px;
+  box-shadow:0 1px 1px rgba(0,0,0,.35);
+  animation:ixMsgIn .18s ease-out;
+}
+@keyframes ixMsgIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+/* Bolha cliente — esquerda, escuro neutro */
+.ix-msg.lead{background:#1f2937;color:#fff;align-self:flex-start;border-bottom-left-radius:2px;margin-top:4px}
+.ix-msg.lead.same-author{margin-top:1px;border-top-left-radius:8px}
+/* Bolha nossa — direita, verde WhatsApp Business */
+.ix-msg.nos{background:var(--ix-wa-bubble);color:var(--text);align-self:flex-end;border-bottom-right-radius:2px;margin-top:4px}
+.ix-msg.nos.same-author{margin-top:1px;border-top-right-radius:8px}
+/* Tail (rabinho) só na primeira bolha do bloco */
+.ix-msg.lead:not(.same-author)::before{
+  content:'';position:absolute;left:-6px;bottom:0;
+  width:0;height:0;
+  border:6px solid transparent;
+  border-right-color:#1f2937;border-bottom-color:#1f2937;
+  border-bottom-left-radius:2px;
+}
+.ix-msg.nos:not(.same-author)::before{
+  content:'';position:absolute;right:-6px;bottom:0;
+  width:0;height:0;
+  border:6px solid transparent;
+  border-left-color:var(--ix-wa-bubble);border-bottom-color:var(--ix-wa-bubble);
+  border-bottom-right-radius:2px;
+}
+/* Mensagem de sistema — discreta, centralizada */
+.ix-msg.sistema{
+  align-self:center;max-width:85%;
+  background:rgba(255,255,255,.04);
+  color:var(--ix-text-faint);font-size:11px;font-style:italic;
+  text-align:center;padding:5px 14px;border-radius:12px;
+  box-shadow:none;letter-spacing:.1px;
+  margin:8px 0;
+}
+.ix-msg.sistema::before{display:none}
+/* Timestamp inline no canto da bolha */
+.ix-msg .ts{
+  position:absolute;right:9px;bottom:3px;
+  font-size:10px;color:rgba(255,255,255,.55);
+  font-weight:500;font-variant-numeric:tabular-nums;
+  display:inline-flex;align-items:center;gap:3px;
+  white-space:nowrap;letter-spacing:.1px;
+}
+.ix-msg.lead .ts{color:rgba(232,234,237,.45)}
+.ix-msg.nos .ts{color:rgba(220,255,240,.7)}
+.ix-msg .ts .checks{font-size:11px;line-height:1}
+.ix-msg.nos .ts .checks.read{color:#53bdeb}
+/* Nome do operador acima da bolha */
+.ix-msg .op{
+  font-size:11px;color:#86efac;margin-bottom:3px;
+  font-weight:700;letter-spacing:.1px;
+  display:flex;align-items:center;gap:5px;
+}
+.ix-msg.lead .op{color:var(--ix-purple)}
+.ix-msg .op .op-avatar{
+  width:16px;height:16px;border-radius:50%;
+  background:linear-gradient(135deg,#16a34a,#22c55e);
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:8px;color:#fff;font-weight:800;
+}
+.ix-msg.lead .op .op-avatar{background:linear-gradient(135deg,#6d28d9,#a371f7)}
+/* Espaço pra timestamp não sobrepor o texto */
+.ix-msg:not(.sistema){padding-right:60px}
+
+/* Date separator (opcional, futuro) */
+.ix-date-sep{align-self:center;background:rgba(255,255,255,.05);color:var(--ix-text-muted);font-size:10px;font-weight:600;padding:4px 12px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px;margin:10px 0}
+
+/* ============================================================
+   INPUT — área de digitação
+   ============================================================ */
+.ix-input{padding:10px 18px;border-top:1px solid var(--ix-border);background:var(--ix-surface);display:flex;gap:8px;align-items:flex-end}
+.ix-input textarea{flex:1;padding:10px 14px;background:var(--ix-surface-2);border:1px solid var(--ix-border-strong);border-radius:10px;color:var(--ix-text);font-size:13.5px;font-family:inherit;resize:none;min-height:44px;max-height:120px;line-height:1.4;outline:none;transition:border-color .15s,background .15s}
+.ix-input textarea:focus{border-color:var(--ix-accent);background:var(--ix-surface-3)}
+.ix-input textarea::placeholder{color:var(--ix-text-faint)}
+.ix-input button{padding:10px 18px;background:var(--ix-wa-green);color:var(--text);border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s,transform .1s;letter-spacing:.1px}
+.ix-input button:hover{background:#019174}
+.ix-input button:active{transform:scale(.97)}
+.ix-input button:disabled{opacity:.5;cursor:not-allowed}
+.ix-input .hint{font-size:10px;color:var(--ix-text-faint);align-self:center;text-align:right;line-height:1.3}
+.ix-btn-tool{padding:8px !important;background:transparent !important;color:var(--ix-text-muted) !important;border:1px solid transparent !important;border-radius:8px !important;font-size:16px !important;font-weight:400 !important;cursor:pointer;width:38px;height:38px;display:flex !important;align-items:center;justify-content:center;transition:all .12s}
+.ix-btn-tool:hover{background:var(--ix-surface-3) !important;color:var(--ix-text) !important;border-color:var(--ix-border-strong) !important}
+.ix-tpl-item{padding:10px 12px;border:1px solid var(--ix-border-strong);border-radius:8px;margin-bottom:6px;cursor:pointer;background:var(--ix-surface-2);transition:all .15s}
+.ix-tpl-item:hover{border-color:var(--ix-accent);background:var(--ix-surface-3)}
+.ix-tpl-item .nome{color:var(--ix-text);font-weight:700;font-size:12px}
+.ix-tpl-item .body{color:var(--ix-text-muted);font-size:11px;margin-top:3px;line-height:1.4}
+
+.ix-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--ix-text-faint);font-size:14px;text-align:center;padding:40px;line-height:1.6}
+
+/* ============================================================
+   COLUNA 3 — PAINEL DO LEAD (lateral direita)
+   ============================================================ */
+.ix-lead{width:320px;border-left:1px solid var(--ix-border);background:var(--ix-surface);display:flex;flex-direction:column;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#2a2a2a transparent}
+.ix-lead::-webkit-scrollbar{width:6px}
+.ix-lead::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:3px}
+.ix-lead.empty{display:none}
+/* Header com avatar grande + nome + tier */
+.ix-lead-h{padding:18px 16px 14px;border-bottom:1px solid var(--ix-border);background:linear-gradient(180deg,rgba(91,163,245,.04),transparent);text-align:center}
+.ix-lead-h .avatar{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#1f2937,#374151);display:flex;align-items:center;justify-content:center;color:#cbd5db;font-size:22px;font-weight:700;margin:0 auto 10px;border:2px solid rgba(255,255,255,.08);letter-spacing:-.3px}
+.ix-lead-h .nome{color:var(--ix-text);font-weight:700;font-size:15px;margin-bottom:4px;letter-spacing:-.2px}
+.ix-lead-h .meta{color:var(--ix-text-muted);font-size:11px;line-height:1.5;display:flex;flex-direction:column;gap:3px;align-items:center}
+.ix-lead-h .meta br{display:none}
+.ix-lead-h .tier{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:800;text-transform:uppercase;margin-right:5px;letter-spacing:.4px}
+.ix-lead-h .tier.diamante{background:rgba(167,113,247,.18);color:#c4a4ff;border:1px solid rgba(167,113,247,.35)}
+.ix-lead-h .tier.ouro{background:rgba(240,192,64,.18);color:#fbd968;border:1px solid rgba(240,192,64,.35)}
+.ix-lead-h .tier.prata{background:rgba(156,163,175,.15);color:#cbd5db;border:1px solid rgba(156,163,175,.3)}
+.ix-lead-h .tier.bronze{background:rgba(168,124,94,.18);color:#d4a878;border:1px solid rgba(168,124,94,.35)}
+/* Section header (separa grupos) */
+.ix-lead-section{padding:10px 16px 4px;font-size:9.5px;font-weight:700;color:var(--ix-text-faint);text-transform:uppercase;letter-spacing:1.2px;display:flex;align-items:center;gap:6px;background:transparent;margin-top:6px}
+.ix-lead-section::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--ix-border),transparent)}
+.ix-lead-section:first-of-type{margin-top:0}
+.ix-lead-block{padding:8px 16px 12px}
+.ix-lead-block + .ix-lead-block{padding-top:0}
+.ix-lead-block h4{color:var(--ix-text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:0 0 5px;font-weight:700}
+.ix-lead-block select,.ix-lead-block textarea,.ix-lead-block input{width:100%;background:var(--ix-surface-2);border:1px solid var(--ix-border-strong);color:var(--ix-text);border-radius:7px;padding:7px 10px;font-size:12px;font-family:inherit;outline:none;transition:border-color .15s}
+.ix-lead-block select:focus,.ix-lead-block textarea:focus,.ix-lead-block input:focus{border-color:var(--ix-accent)}
+.ix-lead-block textarea{resize:vertical;min-height:60px;line-height:1.45}
+.ix-lead-block .row{display:flex;gap:6px;font-size:11.5px;color:var(--ix-text);margin:3px 0;align-items:baseline;line-height:1.5}
+.ix-lead-block .row .k{color:var(--ix-text-faint);min-width:80px;font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.ix-lead-block .row .v{color:var(--ix-text);font-weight:600;flex:1;word-break:break-word}
+/* Ações */
+.ix-lead-acts{padding:14px 16px 18px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--ix-border);margin-top:6px;background:rgba(0,0,0,.15)}
+.ix-lead-acts button,.ix-lead-acts a{width:100%;padding:9px 12px;border-radius:8px;border:1px solid;font-size:12px;font-weight:600;cursor:pointer;background:transparent;text-align:left;display:flex;align-items:center;gap:8px;transition:all .12s;font-family:inherit;text-decoration:none;line-height:1.3}
+.ix-lead-acts button:hover,.ix-lead-acts a:hover{transform:translateY(-1px);text-decoration:none}
+.ix-lead-acts .nubia{color:var(--ix-purple);border-color:rgba(167,113,247,.4);background:rgba(167,113,247,.05)}
+.ix-lead-acts .nubia:hover{background:rgba(167,113,247,.15);border-color:var(--ix-purple)}
+.ix-lead-acts .salvar{color:var(--text);background:var(--ix-wa-green);border-color:var(--ix-wa-green);font-weight:700;justify-content:center}
+.ix-lead-acts .salvar:hover{background:#019174;border-color:#019174}
+.ix-lead-acts .crm{color:var(--ix-accent);border-color:rgba(91,163,245,.4);justify-content:center}
+.ix-lead-acts .crm:hover{background:rgba(91,163,245,.1);border-color:var(--ix-accent)}
+.ix-lead-acts .proposta{color:var(--ix-gold);border-color:rgba(240,192,64,.4)}
+.ix-lead-acts .proposta:hover{background:rgba(240,192,64,.1);border-color:var(--ix-gold)}
+/* Timeline mini */
+.ix-tl-mini{max-height:160px;overflow-y:auto;background:var(--ix-bg);border:1px solid var(--ix-border);border-radius:7px;padding:4px;scrollbar-width:thin}
+.ix-tl-mini::-webkit-scrollbar{width:5px}
+.ix-tl-mini::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:3px}
+.ix-tl-mini .ev{padding:6px 8px;border-bottom:1px solid var(--ix-border);font-size:11px;color:var(--ix-text-muted);line-height:1.4}
+.ix-tl-mini .ev:last-child{border-bottom:none}
+.ix-tl-mini .ev .lbl{color:var(--ix-text);font-weight:600;display:block}
+.ix-tl-mini .ev .at{color:var(--ix-text-faint);font-size:10px;display:block;margin-top:2px;font-variant-numeric:tabular-nums}
+
+@media(max-width:1100px){.ix-lead{display:none}}
+@media(max-width:900px){
+  .ix-side{width:100%;max-width:100%}
+  .ix-main{display:none}
+}
+</style>
+
+<div class="ix-wrap">
+  <!-- SIDEBAR: lista de conversas -->
+  <div class="ix-side">
+    <div class="ix-side-h">
+      <h2>💬 Inbox WATI</h2>
+      <span class="badge" id="ix-not-vistos" style="display:none">0</span>
+      <button id="ix-view-list" onclick="ixSetView('list')" title="Visualização Lista — conversas em ordem cronológica" style="background:#1f6feb;color:#fff;border:none;border-radius:5px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:700">≡ Lista</button>
+      <button id="ix-view-kanban" onclick="ixSetView('kanban')" title="Visualização Kanban — conversas agrupadas por etapa do funil + coluna 🤖 IA" style="background:var(--bg-hover);color:var(--text-muted);border:1px solid var(--border);border-radius:5px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:700">▦ Kanban</button>
+      <button onclick="ixCarregar()" title="Atualizar" style="background:var(--bg-hover);color:var(--text-muted);border:1px solid var(--border);border-radius:5px;padding:5px 9px;font-size:11px;cursor:pointer">🔄</button>
+    </div>
+    <div class="ix-search">
+      <input type="text" id="ix-search" placeholder="🔍 Buscar (nome ou telefone — busca em TODO o WATI)..." oninput="ixFiltrar()">
+    </div>
+    <div style="padding:8px 14px;border-bottom:1px solid var(--border);display:flex;gap:6px">
+      <input type="tel" id="ix-novo-num" placeholder="📞 Abrir nº (ex: 11999999999)" style="flex:1;padding:7px 9px;background:var(--bg-card);border:1px solid #25D366;border-radius:6px;color:var(--text);font-size:11px">
+      <button onclick="ixAbrirNovoNumero()" title="Abrir conversa (cria deal se não existir)" style="background:#25D366;border:none;color:#000;border-radius:6px;padding:7px 11px;font-size:11px;font-weight:800;cursor:pointer">→</button>
+    </div>
+    <div style="padding:6px 14px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap">
+      <button onclick="ixCadastrarLead()" title="Cadastrar lead novo (formulário completo)" style="flex:1;background:#1f6feb;border:none;color:#fff;border-radius:5px;padding:6px 8px;font-size:10px;cursor:pointer;font-weight:700">+ Cadastrar lead</button>
+      <button onclick="ixAdd2Numero()" title="Adicionar 2º número ao lead atual" style="flex:1;background:#a371f7;border:none;color:#fff;border-radius:5px;padding:6px 8px;font-size:10px;cursor:pointer;font-weight:700">+ 2º nº</button>
+      <% if (user.role === 'admin') { %><button onclick="ixVerOrfaos()" title="Ver clientes WATI sem deal Zoho (reconstruir necessário)" style="flex:1;background:#f97316;border:none;color:#fff;border-radius:5px;padding:6px 8px;font-size:10px;cursor:pointer;font-weight:700">⚠️ Órfãos</button><% } %>
+    </div>
+    <!-- Filtros de atribuição -->
+    <div style="padding:6px 14px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+      <span style="color:var(--text-muted);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px">FILTRO:</span>
+      <button id="ix-f-todas" onclick="ixSetFiltroOwner('todas')" style="background:#1f6feb;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700">Todas</button>
+      <button id="ix-f-minhas" onclick="ixSetFiltroOwner('minhas')" style="background:var(--bg-hover);color:var(--text-muted);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700" title="Conversas atribuídas a mim (Closy local OU Zoho Owner)">👤 Minhas</button>
+      <button id="ix-f-orfaos" onclick="ixSetFiltroOwner('orfaos')" style="background:var(--bg-hover);color:#fbbf24;border:1px solid #fbbf24;border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700" title="Conversas SEM closer atribuído — distribua antes de responder">🆓 Sem closer <span id="ix-f-orfaos-count"></span></button>
+      <% if (user.role === 'admin' || (typeof isGestor !== 'undefined' && isGestor)) { %>
+        <button onclick="ixAtribuirOrfaosBatch()" title="Atribui auto todos os órfãos (CRM owner ativo OR round-robin)" style="background:#22c55e;color:#000;border:none;border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700">⚡ Atribuir todos órfãos</button>
+      <% } %>
+    </div>
+    <!-- Filtro por canal (WATI / Z-API / Todos) -->
+    <div style="padding:6px 14px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+      <span style="color:var(--text-muted);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px">CANAL:</span>
+      <button id="ix-c-todos" onclick="ixSetFiltroCanal('todos')" style="background:#a371f7;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700" title="Todos os canais">🌐 Todos <span id="ix-c-todos-count" style="opacity:.7"></span></button>
+      <button id="ix-c-wati" onclick="ixSetFiltroCanal('wati')" style="background:var(--bg-hover);color:#22c55e;border:1px solid #22c55e;border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700" title="WATI (oficial Meta — janela 24h)">📱 WATI <span id="ix-c-wati-count" style="opacity:.7"></span></button>
+      <button id="ix-c-zapi" onclick="ixSetFiltroCanal('zapi')" style="background:var(--bg-hover);color:#7cb9f5;border:1px solid #1f6feb;border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700" title="Z-API (WhatsApp pessoal/Business sincronizado — sem janela 24h)">⚡ Z-API <span id="ix-c-zapi-count" style="opacity:.7"></span></button>
+    </div>
+    <div class="ix-list" id="ix-list">
+      <div style="color:var(--text-muted);text-align:center;padding:30px;font-size:12px">Carregando...</div>
+    </div>
+  </div>
+
+  <!-- MAIN: conversa -->
+  <div class="ix-main">
+    <div id="ix-empty" class="ix-empty">
+      <div>
+        <div style="font-size:42px;margin-bottom:14px;opacity:.4">💬</div>
+        <div style="font-weight:600;color:#cbd5db;margin-bottom:4px">Selecione uma conversa</div>
+        <div style="font-size:12px">Escolha um lead à esquerda pra ver o histórico e responder.</div>
+        <% if (user.role === 'admin') { %><div style="font-size:11px;color:var(--text-muted);margin-top:14px;max-width:300px">Admin: você vê todas as conversas. Closers só veem os clientes da carteira deles.</div><% } %>
+      </div>
+    </div>
+    <div id="ix-conversa" style="display:none;flex:1;flex-direction:column">
+      <div class="ix-main-h">
+        <div class="avatar" id="ix-h-avatar" aria-hidden="true">—</div>
+        <div class="info">
+          <div class="nome" id="ix-h-nome">—</div>
+          <div class="meta" id="ix-h-meta">—</div>
+        </div>
+        <div class="actions">
+          <span id="ix-live-indicator" title="Atualiza a cada 3 segundos" style="display:none;align-items:center;gap:5px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#22c55e;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.4px;margin-right:6px">
+            <span style="width:6px;height:6px;background:#22c55e;border-radius:50%;animation:ixLivePulse 1.4s infinite"></span>AO VIVO
+          </span>
+          <button class="ix-actbtn" onclick="ixCopiarTel()" id="ix-h-copy" title="Copiar telefone" aria-label="Copiar telefone">📋</button>
+          <div class="ix-actmenu" id="ix-h-actmenu">
+            <button class="ix-actbtn" onclick="ixToggleActMenu(event)" title="Mais ações" aria-label="Mais ações">⋯</button>
+            <div class="ix-actmenu-pop">
+              <a id="ix-h-crm" href="#" target="_blank">📂 Abrir no Zoho CRM</a>
+              <a id="ix-h-wati" href="#" target="_blank">↗️ Abrir no WATI</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ix-msgs" id="ix-msgs"></div>
+      <div class="ix-input">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="ix-btn-tool" onclick="ixAnexar()" title="Anexar arquivo / imagem">📎</button>
+          <button class="ix-btn-tool" onclick="ixAbrirTemplates()" title="Enviar template (fora janela 24h)">📋</button>
+          <button class="ix-btn-tool" onclick="ixAbrirRapidas()" title="Respostas rápidas (snippets pré-cadastrados)" style="color:#fbbf24 !important">⚡</button>
+          <input type="file" id="ix-file" style="display:none" onchange="ixUploadFile(this)">
+        </div>
+        <textarea id="ix-text" placeholder="Digite sua resposta... (Enter envia, Shift+Enter quebra linha)" onkeydown="ixKey(event)"></textarea>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <button id="ix-send" onclick="ixEnviar()">Enviar</button>
+          <span class="hint">⏰ Janela 24h</span>
+        </div>
+      </div>
+
+      <!-- Modal de Templates -->
+      <div id="ix-tpl-modal" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.85);z-index:100;align-items:center;justify-content:center;padding:20px">
+        <div style="background:var(--bg-card);border:1px solid #25D366;border-radius:10px;padding:18px;max-width:560px;width:100%;max-height:80vh;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <h3 style="margin:0;color:var(--text);font-size:14px;flex:1">📋 Enviar Template (fora da janela 24h)</h3>
+            <span id="ix-tpl-count" style="color:var(--text-muted);font-size:10px;font-weight:700"></span>
+            <button onclick="document.getElementById('ix-tpl-modal').style.display='none'" style="background:#222;border:1px solid var(--border);color:#ddd;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:11px">✕</button>
+          </div>
+          <div style="position:relative;margin-bottom:10px">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;pointer-events:none">🔍</span>
+            <input type="text" id="ix-tpl-search" placeholder="Buscar template (nome ou texto)..." oninput="ixFiltrarTpls()" autocomplete="off"
+              style="width:100%;padding:9px 32px 9px 32px;background:var(--bg-card);border:2px solid #25D36644;border-radius:8px;color:var(--text);font-size:13px;outline:none;font-family:inherit;transition:border-color .15s">
+            <button id="ix-tpl-clear" onclick="document.getElementById('ix-tpl-search').value='';ixFiltrarTpls();this.style.display='none';document.getElementById('ix-tpl-search').focus()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:2px 6px;display:none" title="Limpar busca">×</button>
+          </div>
+          <div id="ix-tpl-list" style="flex:1;overflow-y:auto;min-height:0"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW KANBAN (alterna com lista) -->
+  <div id="ix-kanban" style="display:none;flex:1;overflow:hidden;padding:10px;background:var(--bg-card);flex-direction:column">
+    <% if (user.role === 'admin') { %>
+    <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px">
+      <span style="color:var(--text-muted);font-size:11px">▦ Kanban WATI</span>
+      <button onclick="ixEditarEtapas()" title="Cadastrar/editar colunas do kanban" style="background:var(--bg-hover);border:1px solid #a371f7;color:#a371f7;border-radius:5px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:700">⚙️ Etapas</button>
+    </div>
+    <% } %>
+    <div id="ix-kanban-board" style="display:flex;gap:8px;flex:1;min-height:0;overflow-x:auto"></div>
+  </div>
+
+  <!-- 3ª COLUNA: PAINEL LATERAL DO LEAD -->
+  <div class="ix-lead empty" id="ix-lead">
+    <div class="ix-lead-h">
+      <div class="avatar" id="ix-lead-avatar" aria-hidden="true">—</div>
+      <div class="nome" id="ix-lead-nome">—</div>
+      <div class="meta" id="ix-lead-meta">—</div>
+    </div>
+
+    <div class="ix-lead-section">Stage &amp; Pipeline</div>
+    <div class="ix-lead-block">
+      <h4>Etapa CRM Closy</h4>
+      <select id="ix-lead-etapa" onchange="ixLeadSalvarEtapa()"></select>
+    </div>
+    <div class="ix-lead-block">
+      <h4>Stage Zoho CRM</h4>
+      <select id="ix-lead-zoho-stage" onchange="ixLeadSalvarZohoStage()"></select>
+    </div>
+    <div class="ix-lead-block">
+      <h4>Layout Zoho</h4>
+      <select id="ix-lead-zoho-layout" onchange="ixLeadSalvarZohoLayout()"></select>
+    </div>
+
+    <div class="ix-lead-section">Atribuição</div>
+    <div class="ix-lead-block">
+      <h4>Operadora responsável</h4>
+      <select id="ix-lead-op"></select>
+      <button onclick="ixLeadAtribuirAuto()" title="Atribui automaticamente: 1) Owner Zoho se ativo · 2) Round-robin no team baseado no Pipeline" style="margin-top:6px;width:100%;background:linear-gradient(135deg,#22c55e,#16a34a);color:#000;border:none;border-radius:6px;padding:7px 10px;font-size:11px;font-weight:800;cursor:pointer">⚡ Atribuir auto (CRM owner / round-robin)</button>
+      <div id="ix-lead-atribuir-msg" style="font-size:10px;color:var(--text-muted);margin-top:4px;display:none"></div>
+    </div>
+
+    <div class="ix-lead-section">Observações</div>
+    <div class="ix-lead-block">
+      <h4>Notas internas</h4>
+      <textarea id="ix-lead-obs" placeholder="Anotações sobre o cliente, próximo passo..."></textarea>
+    </div>
+
+    <div class="ix-lead-section">Comercial</div>
+    <div class="ix-lead-block">
+      <div class="row"><span class="k">Pipeline</span><span class="v" id="ix-lead-pipeline">—</span></div>
+      <div class="row"><span class="k">Layout</span><span class="v" id="ix-lead-layout">—</span></div>
+      <div class="row"><span class="k">Tier</span><span class="v" id="ix-lead-tier">—</span></div>
+      <div class="row"><span class="k">Score</span><span class="v" id="ix-lead-score">—</span></div>
+      <div class="row"><span class="k">Tipo de água</span><span class="v" id="ix-lead-tipoagua">—</span></div>
+      <div class="row"><span class="k">Produto</span><span class="v" id="ix-lead-produto">—</span></div>
+      <div class="row"><span class="k">Valor</span><span class="v" id="ix-lead-valor">—</span></div>
+      <div class="row" id="ix-lead-prop-row" style="display:none"><span class="k">Proposta</span><span class="v" id="ix-lead-prop">—</span></div>
+      <div class="row"><span class="k">Criado em</span><span class="v" id="ix-lead-criado">—</span></div>
+    </div>
+
+    <div class="ix-lead-section">📍 Origem do Lead</div>
+    <div class="ix-lead-block">
+      <div id="ix-lead-origem-card" style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:10px;margin-bottom:6px">
+        <div id="ix-lead-origem-plat" style="font-size:13px;font-weight:800;color:#22c55e;margin-bottom:4px">—</div>
+        <div id="ix-lead-origem-detalhe" style="font-size:11px;color:var(--ix-text-muted);line-height:1.5">—</div>
+      </div>
+      <div class="row"><span class="k">Lead Source bruto</span><span class="v" id="ix-lead-source" style="font-size:10px">—</span></div>
+    </div>
+
+    <div class="ix-lead-section">🏷️ Tags <span id="ix-lead-tags-count" style="color:var(--ix-text-muted);font-weight:400;font-size:10px"></span></div>
+    <div class="ix-lead-block">
+      <div id="ix-lead-tags" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;min-height:24px"></div>
+      <div style="display:flex;gap:4px">
+        <input id="ix-lead-tag-novo" type="text" placeholder="Nova tag (ex: cliente_vip, refazer_proposta)" maxlength="30" style="flex:1;padding:5px 8px;font-size:11px;background:var(--ix-bg-2);border:1px solid var(--ix-border);border-radius:4px;color:var(--ix-text)" onkeydown="if(event.key==='Enter'){event.preventDefault();ixLeadAdicionarTag()}">
+        <button onclick="ixLeadAdicionarTag()" style="padding:5px 10px;background:#22c55e;color:#000;border:none;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">+ Tag</button>
+      </div>
+      <div id="ix-lead-tags-sugestoes" style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px"></div>
+    </div>
+
+    <div class="ix-lead-section">Histórico</div>
+    <div class="ix-lead-block">
+      <h4>Timeline recente</h4>
+      <div class="ix-tl-mini" id="ix-lead-tl"></div>
+    </div>
+    <div class="ix-lead-block">
+      <h4>Última atividade</h4>
+      <div id="ix-lead-ultima" style="font-size:11.5px;color:var(--ix-text-muted);line-height:1.5">—</div>
+    </div>
+
+    <div class="ix-lead-acts">
+      <button class="salvar" onclick="ixLeadSalvar()">💾 Salvar mudanças</button>
+      <button class="nubia" onclick="ixLeadAnalisarFunil()" style="color:#c084fc;border-color:rgba(167,113,247,.5);background:rgba(167,113,247,.1);font-weight:800">🔍 Analisar Funil (IA)</button>
+      <button class="nubia" onclick="ixLeadNubia()">🤖 Acionar Núbia agora</button>
+      <button class="nubia" onclick="ixLeadNubiaAgendar()" style="background:rgba(167,113,247,.04);border-style:dashed">🤖⏰ Agendar Núbia (data/hora)</button>
+      <button class="proposta" onclick="ixLeadProposta()">📨 Criar/Ver proposta</button>
+      <button class="nubia" onclick="ixLeadAlertaCliq()" style="color:#22d3ee;border-color:rgba(34,211,238,.4);background:rgba(34,211,238,.06)">🔔 Notificar Cliq</button>
+      <button class="nubia" onclick="ixLeadAlertaZapi()" style="color:#4ade80;border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.06)">📱 Notificar Z-API</button>
+      <a id="ix-lead-crm" href="#" target="_blank" class="crm">📂 Abrir no Zoho CRM</a>
+    </div>
+    <div id="ix-lead-funil-result" style="display:none;margin-top:8px"></div>
+  </div>
+</div>
+
+<script>
+let _IX_CONVS = [];
+let _IX_ATUAL = null;
+let _IX_LEAD = null; // info do lead atual no painel
+let _IX_PHONE_ATUAL = null;
+
+// Helper: detecta fonte do lead (Facebook/Instagram/Google/etc.) por source_url e Lead_Source
+function ixDetectarFonte(sourceUrl, leadSource) {
+  const all = ((sourceUrl||'') + ' ' + (leadSource||'')).toLowerCase();
+  if (/fb\.me|facebook|fbclid|fbads/.test(all)) return { ico:'📘', label:'Facebook', cor:'#1877F2', bg:'rgba(24,119,242,.15)' };
+  if (/ig\.me|instagram|igsh|instagramads/.test(all)) return { ico:'📷', label:'Instagram', cor:'#E4405F', bg:'rgba(228,64,95,.15)' };
+  if (/google|gclid|gads|googleads/.test(all)) return { ico:'🔍', label:'Google', cor:'#4285F4', bg:'rgba(66,133,244,.15)' };
+  if (/tiktok|tt\.me/.test(all)) return { ico:'🎵', label:'TikTok', cor:'#000', bg:'rgba(255,255,255,.1)' };
+  if (/youtube|yt\.be/.test(all)) return { ico:'▶️', label:'YouTube', cor:'#FF0000', bg:'rgba(255,0,0,.15)' };
+  if (/whatsapp orgânico|whatsapp organic|wa\.me/.test(all)) return { ico:'💬', label:'WhatsApp', cor:'#25D366', bg:'rgba(37,211,102,.15)' };
+  if (/indica/.test(all)) return { ico:'👥', label:'Indicação', cor:'#a371f7', bg:'rgba(167,113,247,.15)' };
+  if (/site|website|tudodefiltro/.test(all)) return { ico:'🌐', label:'Site', cor:'#5ba3f5', bg:'rgba(91,163,245,.15)' };
+  if (/loja|física|fisica/.test(all)) return { ico:'🏪', label:'Loja', cor:'#f97316', bg:'rgba(249,115,22,.15)' };
+  if (/wati/.test(all)) return { ico:'💚', label:'WATI', cor:'#22c55e', bg:'rgba(34,197,94,.1)' };
+  return null;
+}
+function ixBadgeFonte(sourceUrl, leadSource){
+  const f = ixDetectarFonte(sourceUrl, leadSource);
+  if (!f) return '';
+  return `<span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:9px;font-weight:700;background:${f.bg};color:${f.cor};white-space:nowrap;border:1px solid ${f.cor}33">${f.ico} ${f.label}</span>`;
+}
+
+// Helper protegido contra HTML response (sessão expirada / 500 error)
+async function ixSafeJson(url, opts) {
+  try {
+    const r = await fetch(url, opts);
+    const ct = r.headers.get('content-type') || '';
+    if (!ct.includes('json')) {
+      if (r.status === 401) return { error: 'Sessão expirada — recarregue (F5) e faça login.' };
+      const txt = await r.text().catch(() => '');
+      return { error: `Servidor retornou HTML (${r.status}): ${txt.slice(0,80)}` };
+    }
+    return await r.json();
+  } catch(e) { return { error: e.message }; }
+}
+
+function ixFmtTs(ts){
+  if (!ts) return '';
+  const d = new Date(ts);
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const ontem = new Date(hoje); ontem.setDate(ontem.getDate()-1);
+  if (d >= hoje) return d.toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});
+  if (d >= ontem) return 'ontem';
+  return d.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit'});
+}
+// Versão completa pra bolhas do chat: sempre dd/mm HH:MM
+function ixFmtTsFull(ts){
+  if (!ts) return '';
+  const d = new Date(ts);
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  if (d >= hoje) return d.toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
+// === Helpers visuais (iniciais, tier, etc.) ===
+function ixIniciais(nome){
+  if (!nome) return '?';
+  const limpo = String(nome).replace(/[^a-zA-ZÀ-ÿ0-9 ]/g,'').trim();
+  if (!limpo) return '?';
+  const partes = limpo.split(/\s+/).filter(p => p.length > 1);
+  if (partes.length >= 2) return (partes[0][0] + partes[partes.length-1][0]).toUpperCase();
+  return (partes[0] || limpo).slice(0,2).toUpperCase();
+}
+function ixTierClass(tier){
+  if (!tier) return '';
+  const t = String(tier).toLowerCase();
+  if (t.includes('diam')) return 'tier-d';
+  if (t.includes('our')) return 'tier-o';
+  if (t.includes('prat')) return 'tier-p';
+  if (t.includes('bron')) return 'tier-b';
+  return '';
+}
+function ixTierIcon(tier){
+  if (!tier) return '';
+  const t = String(tier);
+  if (t === 'Diamante') return '💎';
+  if (t === 'Ouro') return '🥇';
+  if (t === 'Prata') return '🥈';
+  if (t === 'Bronze') return '🥉';
+  return '';
+}
+// Toggle do menu de ações no header
+function ixToggleActMenu(ev){
+  ev.stopPropagation();
+  const m = document.getElementById('ix-h-actmenu');
+  if (m) m.classList.toggle('open');
+}
+// Click fora fecha o menu
+document.addEventListener('click', (e) => {
+  const m = document.getElementById('ix-h-actmenu');
+  if (m && !m.contains(e.target)) m.classList.remove('open');
+});
+
+// Renderiza mensagens com agrupamento por autor (same-author = sem rabinho/sem avatar repetido)
+// e checks de leitura WhatsApp-like (✓ enviado, ✓✓ entregue, ✓✓ azul = lido)
+function ixRenderMsgsHTML(msgs){
+  if (!Array.isArray(msgs) || !msgs.length) return '';
+  let prevAuthor = null;
+  return msgs.map((m, i) => {
+    if (m.isSystem) {
+      prevAuthor = null;
+      return `<div class="ix-msg sistema">${(m.texto||'').replace(/</g,'&lt;')}</div>`;
+    }
+    const cls = m.owner ? 'nos' : 'lead';
+    // Identidade: pra "nos" é o operatorName; pra lead é o phone (consistente)
+    const author = m.owner ? (m.operatorName || m.templateName || 'nos') : 'lead';
+    const sameAuthor = author === prevAuthor;
+    prevAuthor = author;
+    let checks = '';
+    if (m.owner) {
+      if (m.status === 'READ') checks = ' <span class="checks read" title="Lido">✓✓</span>';
+      else if (m.status === 'DELIVERED') checks = ' <span class="checks" title="Entregue">✓✓</span>';
+      else checks = ' <span class="checks" title="Enviado">✓</span>';
+    }
+    let op = '';
+    if (!sameAuthor && m.owner && (m.operatorName || m.templateName)) {
+      const nome = m.operatorName || ('📨 '+m.templateName);
+      const ini = ixIniciais(nome.replace(/^📨\s*/,''));
+      op = `<div class="op"><span class="op-avatar">${ini}</span>${nome}</div>`;
+    }
+    const txt = (m.texto||'').replace(/</g,'&lt;').replace(/\n/g,'<br>');
+    const ts = ixFmtTsFull(m.timestamp*1000 || m.timestamp);
+    return `<div class="ix-msg ${cls}${sameAuthor?' same-author':''}">${op}${txt}<div class="ts">${ts}${checks}</div></div>`;
+  }).join('');
+}
+
+// Snapshot prévio das conversas pra detectar mensagens novas e tocar som filtrado
+let _IX_PREV_SNAPSHOT = {};
+
+async function ixCarregar(){
+  try{
+    const r = await fetch('/inbox/conversas');
+    const d = await r.json();
+    if (d.error) { document.getElementById('ix-list').innerHTML = `<div style="color:#ef4444;padding:20px;text-align:center;font-size:12px">${d.error}</div>`; return; }
+    const novas = d.conversas || [];
+    // Detecta novas mensagens (count subiu OU ts mudou)
+    if (Object.keys(_IX_PREV_SNAPSHOT).length > 0) {
+      let tocouSom = false;
+      for (const c of novas) {
+        const prev = _IX_PREV_SNAPSHOT[c.dealId];
+        if (!prev) continue; // primeira load não dispara
+        const tsMudou = (c.ts || 0) > (prev.ts || 0);
+        const countSubiu = (c.count || 0) > (prev.count || 0);
+        if (!tsMudou && !countSubiu) continue;
+        // Filtro: só toca se a conversa for minha OU órfã
+        const minha = ixConvIsMinha(c);
+        const orfa = ixConvIsOrfao(c);
+        const isAdmin = '<%= user.role %>' === 'admin';
+        if (!tocouSom && (minha || orfa || isAdmin)) {
+          try { window.tdfSons?.tocar(); } catch(_){}
+          tocouSom = true; // só toca uma vez por ciclo
+        }
+      }
+    }
+    // Atualiza snapshot
+    _IX_PREV_SNAPSHOT = {};
+    for (const c of novas) _IX_PREV_SNAPSHOT[c.dealId] = { ts: c.ts, count: c.count };
+    _IX_CONVS = novas;
+    const naoVistos = d.naoVistos || 0;
+    const badge = document.getElementById('ix-not-vistos');
+    if (naoVistos > 0) { badge.style.display='inline-block'; badge.textContent = naoVistos; }
+    else badge.style.display = 'none';
+    ixRenderLista();
+    if (_IX_VIEW === 'kanban') ixRenderKanban();
+  }catch(e){ console.error(e); }
+}
+
+// Filtro de owner: 'todas' | 'minhas' | 'orfaos'
+let _IX_FILTRO_OWNER = localStorage.getItem('ix_filtro_owner') || 'todas';
+// Filtro de canal: 'todos' | 'wati' | 'zapi'
+let _IX_FILTRO_CANAL = localStorage.getItem('ix_filtro_canal') || 'todos';
+const _IX_USER = '<%= user.username %>';
+const _IX_USER_NAME = '<%= user.name %>';
+const _IX_USER_CRM = '<%- (typeof user !== "undefined" && user.crmOwner) ? user.crmOwner.replace(/'/g,"\\'") : "" %>';
+
+function ixSetFiltroCanal(modo){
+  _IX_FILTRO_CANAL = modo;
+  localStorage.setItem('ix_filtro_canal', modo);
+  ['todos','wati','zapi'].forEach(m => {
+    const el = document.getElementById('ix-c-'+m);
+    if (!el) return;
+    if (m === modo) {
+      el.style.background = m === 'wati' ? '#22c55e' : m === 'zapi' ? '#1f6feb' : '#a371f7';
+      el.style.color = m === 'wati' ? '#000' : '#fff';
+      el.style.border = 'none';
+    } else {
+      el.style.background = '#1a1a1a';
+      el.style.color = m === 'wati' ? '#22c55e' : m === 'zapi' ? '#7cb9f5' : '#fff';
+      el.style.border = m === 'wati' ? '1px solid #22c55e' : m === 'zapi' ? '1px solid #1f6feb' : '1px solid #a371f7';
+    }
+  });
+  ixRenderLista();
+}
+
+function ixConvIsMinha(c){
+  if (!c) return false;
+  if (c.operadora && c.operadora === _IX_USER) return true;
+  if (c.ownerZoho && _IX_USER_CRM && (c.ownerZoho.toLowerCase() === _IX_USER_CRM.toLowerCase() || c.ownerZoho.toLowerCase().split(' ')[0] === _IX_USER_CRM.toLowerCase().split(' ')[0])) return true;
+  return false;
+}
+function ixConvIsOrfao(c){
+  return !c.operadora && !c.ownerZoho;
+}
+function ixSetFiltroOwner(modo){
+  _IX_FILTRO_OWNER = modo;
+  localStorage.setItem('ix_filtro_owner', modo);
+  ['todas','minhas','orfaos'].forEach(m => {
+    const el = document.getElementById('ix-f-'+m);
+    if (!el) return;
+    if (m === modo) {
+      el.style.background = m === 'orfaos' ? '#fbbf24' : '#1f6feb';
+      el.style.color = m === 'orfaos' ? '#000' : '#fff';
+      el.style.border = 'none';
+    } else {
+      el.style.background = '#1a1a1a';
+      el.style.color = m === 'orfaos' ? '#fbbf24' : '#888';
+      el.style.border = m === 'orfaos' ? '1px solid #fbbf24' : '1px solid #333';
+    }
+  });
+  ixRenderLista();
+}
+async function ixAtribuirOrfaosBatch(){
+  if (!confirm('Atribuir auto TODOS os órfãos? (CRM owner ativo ou round-robin por team)')) return;
+  try {
+    const r = await fetch('/inbox/atribuir-orfaos', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ limite: 50 }) });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    alert(`✅ ${d.sucesso} atribuídos · ${d.erros} erros (de ${d.total_orfaos} órfãos no total)`);
+    ixCarregar();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+function ixRenderLista(){
+  const filtro = (document.getElementById('ix-search').value || '').toLowerCase();
+  // Atualiza contador de órfãos
+  const orfaosCnt = _IX_CONVS.filter(ixConvIsOrfao).length;
+  const cntEl = document.getElementById('ix-f-orfaos-count');
+  if (cntEl) cntEl.textContent = orfaosCnt > 0 ? '('+orfaosCnt+')' : '';
+  // Contador por canal
+  const watiCnt = _IX_CONVS.filter(c => (c.canal||'wati') === 'wati').length;
+  const zapiCnt = _IX_CONVS.filter(c => c.canal === 'zapi').length;
+  const cw = document.getElementById('ix-c-wati-count'); if (cw) cw.textContent = watiCnt > 0 ? '('+watiCnt+')' : '';
+  const cz = document.getElementById('ix-c-zapi-count'); if (cz) cz.textContent = zapiCnt > 0 ? '('+zapiCnt+')' : '';
+  const ct = document.getElementById('ix-c-todos-count'); if (ct) ct.textContent = '('+_IX_CONVS.length+')';
+  const list = _IX_CONVS.filter(c => {
+    if (filtro) {
+      if (!((c.nome||'').toLowerCase().includes(filtro) || (c.phone||'').includes(filtro) || (c.ultimaMsg||'').toLowerCase().includes(filtro))) return false;
+    }
+    if (_IX_FILTRO_OWNER === 'minhas' && !ixConvIsMinha(c)) return false;
+    if (_IX_FILTRO_OWNER === 'orfaos' && !ixConvIsOrfao(c)) return false;
+    // Canal: 'wati' default se não tiver. Z-API só aparece se canal='zapi'.
+    const canalDaConv = c.canal || 'wati';
+    if (_IX_FILTRO_CANAL === 'wati' && canalDaConv !== 'wati') return false;
+    if (_IX_FILTRO_CANAL === 'zapi' && canalDaConv !== 'zapi') return false;
+    return true;
+  });
+  if (!list.length) {
+    document.getElementById('ix-list').innerHTML = '<div style="color:#888;text-align:center;padding:30px;font-size:12px">Nenhuma conversa</div>';
+    return;
+  }
+  document.getElementById('ix-list').innerHTML = list.map(c => {
+    const tierCls = ixTierClass(c.tier);
+    const tierIco = ixTierIcon(c.tier);
+    const iniciais = ixIniciais(c.nome || c.phone);
+    const avatarCls = c.iaAtendendo ? 'ia' : (tierCls || '');
+    const fonteBadge = ixBadgeFonte(c.sourceWati, c.leadSource);
+    const iaBadge = c.iaAtendendo ? '<span class="ix-mini ia">🤖 IA</span>' : '';
+    const preLeadBadge = c.preLead ? '<span class="ix-mini prelead" title="Pré-lead — só vira lead após Qualificado">Pré-lead</span>' : '';
+    const semDealBadge = c.semDealZoho ? '<span class="ix-mini semdeal" title="⚠️ Lead não tem deal Zoho — clique em Cadastrar para criar">⚠️ SEM DEAL</span>' : '';
+    // Badge de canal (WATI ou Z-API) — sempre visível pra identificar fonte da msg
+    const canalAtual = c.canal || 'wati';
+    const canalBadge = canalAtual === 'zapi'
+      ? '<span class="ix-mini" style="background:rgba(31,111,235,.15);color:#7cb9f5;border:1px solid #1f6feb;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:800" title="Mensagem chegou via Z-API (WhatsApp pessoal/Business)">⚡ Z-API</span>'
+      : '<span class="ix-mini" style="background:rgba(34,197,94,.15);color:#22c55e;border:1px solid #22c55e;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:800" title="Mensagem chegou via WATI (oficial Meta)">📱 WATI</span>';
+    const opShort = c.operadora ? c.operadora.split('.')[0] : '';
+    const ownerShort = c.ownerZoho ? c.ownerZoho.split(' ')[0] : '';
+    const metaParts = [];
+    if (opShort) metaParts.push('👤 '+opShort);
+    if (ownerShort) metaParts.push('📂 '+ownerShort);
+    const metaLine = metaParts.length ? `<div class="meta">${metaParts.join('<span class="dot">·</span>')}</div>` : '';
+    return `
+    <div class="ix-conv ${c.visto?'':'novo'} ${_IX_ATUAL===c.dealId?'active':''}" onclick="ixAbrir('${c.dealId}','${c.phone}')">
+      <div class="avatar ${avatarCls}" title="${(c.tier||'').replace(/"/g,'&quot;')}">${tierIco || iniciais}</div>
+      <div class="body">
+        <div class="nome"><span class="name-text">${c.nome || c.nomeWati || c.phone}</span>${canalBadge}${iaBadge}${preLeadBadge}${semDealBadge}</div>
+        <div class="preview">${(c.ultimaMsg||'').replace(/</g,'&lt;').slice(0,80) || '<em style="color:#5b6068">sem mensagens</em>'}</div>
+        ${metaLine}
+        ${fonteBadge ? '<div style="margin-top:3px">'+fonteBadge+'</div>' : ''}
+      </div>
+      <div class="right">
+        <span class="ts">${ixFmtTs(c.ts)}</span>
+        ${!c.visto && c.count ? `<span class="badge-count">${c.count}</span>` : ''}
+      </div>
+    </div>
+  `;}).join('');
+}
+
+// === VIEW MODE: lista | kanban ===
+let _IX_VIEW = 'list';
+let _IX_ETAPAS_KAN = []; // carregado via /inbox/kanban-etapas
+async function ixCarregarEtapasKan(){
+  try {
+    const d = await ixSafeJson('/inbox/kanban-etapas');
+    if (Array.isArray(d.etapas) && d.etapas.length) _IX_ETAPAS_KAN = d.etapas;
+  } catch(_){}
+  if (!_IX_ETAPAS_KAN.length) {
+    _IX_ETAPAS_KAN = [
+      { id:'_ia', label:'IA atendendo', icon:'🤖', cor:'#a371f7', isIa:true, fixa:true },
+      { id:'base_sem_contato', label:'Base', icon:'📋', cor:'#6b7280' },
+      { id:'em_conversa', label:'Em conversa', icon:'💬', cor:'#a371f7' },
+      { id:'proposta_enviada', label:'Proposta', icon:'📨', cor:'#f97316' },
+      { id:'finalizado_ganho', label:'Ganho', icon:'🏆', cor:'#22c55e' },
+      { id:'finalizado_perdido', label:'Perdido', icon:'❌', cor:'#ef4444' },
+    ];
+  }
+}
+async function ixSetView(v){
+  _IX_VIEW = v;
+  if (v === 'kanban' && !_IX_ETAPAS_KAN.length) await ixCarregarEtapasKan();
+  const list = document.getElementById('ix-list');
+  const kan = document.getElementById('ix-kanban');
+  const btnL = document.getElementById('ix-view-list');
+  const btnK = document.getElementById('ix-view-kanban');
+  const sideMain = document.querySelector('.ix-main');
+  if (v === 'kanban') {
+    list.style.display = 'none';
+    kan.style.display = 'flex';
+    if (sideMain) sideMain.style.display = 'none';
+    document.querySelector('.ix-side').style.width = '100%';
+    btnL.style.background='#1a1a1a';btnL.style.color='#aaa';btnL.style.border='1px solid #333';
+    btnK.style.background='#1f6feb';btnK.style.color='#fff';btnK.style.border='none';
+    ixRenderKanban();
+  } else {
+    list.style.display = '';
+    kan.style.display = 'none';
+    if (sideMain) sideMain.style.display = 'flex';
+    document.querySelector('.ix-side').style.width = '340px';
+    btnL.style.background='#1f6feb';btnL.style.color='#fff';btnL.style.border='none';
+    btnK.style.background='#1a1a1a';btnK.style.color='#aaa';btnK.style.border='1px solid #333';
+  }
+}
+function ixRenderKanban(){
+  const board = document.getElementById('ix-kanban-board');
+  const tierCls = {Diamante:'tier-d',Ouro:'tier-o',Prata:'tier-p',Bronze:'tier-b'};
+  const porEtapa = {};
+  for (const e of _IX_ETAPAS_KAN) porEtapa[e.id] = [];
+  for (const c of _IX_CONVS) {
+    if (c.iaAtendendo) {
+      porEtapa['_ia'].push(c);
+      continue; // lead em IA aparece SÓ na coluna IA (evita duplicar)
+    }
+    const et = c.etapa || 'base_sem_contato';
+    if (porEtapa[et]) porEtapa[et].push(c);
+  }
+  for (const k of Object.keys(porEtapa)) {
+    porEtapa[k].sort((a,b) => (a.visto?1:0) - (b.visto?1:0) || b.ts - a.ts);
+  }
+  // Descrições de cada coluna pro tooltip
+  const colDesc = {
+    '_ia': 'Leads que a Núbia (IA) está atendendo — tem tag Nubia no Zoho ou interação recente da IA',
+    'base_sem_contato': 'Lead chegou mas ainda não foi tocado por ninguém',
+    'tentativa_contato': 'Closer já tentou contato (ligou, mandou WhatsApp, sem resposta ainda)',
+    'em_conversa': 'Cliente está respondendo ativamente — em diálogo',
+    'diagnostico': 'Levantando necessidades, vazão, fonte da água, problema atual',
+    'proposta_enviada': 'Proposta comercial já foi mandada pro cliente',
+    'agendado': 'Visita técnica ou entrega agendada',
+    'finalizado_ganho': 'Vendeu! 🏆',
+    'finalizado_perdido': 'Lead perdido (sem interesse, achou caro, etc.)',
+  };
+  board.innerHTML = _IX_ETAPAS_KAN.map(e => {
+    const cards = porEtapa[e.id] || [];
+    const iaCol = e.isIa;
+    const headerExtra = iaCol ? 'background:linear-gradient(135deg,#1a0f2e,#2d1525);border-bottom:2px solid #a371f7' : `background:#161616;border-bottom:2px solid ${e.cor}`;
+    const desc = colDesc[e.id] || '';
+    return `
+      <div title="${desc}" style="flex:1;min-width:230px;max-width:280px;background:${iaCol?'rgba(167,113,247,.04)':'#0d0d0d'};border:1px solid ${iaCol?'#7c3aed':'#222'};border-radius:8px;display:flex;flex-direction:column;height:100%">
+        <div title="${desc}" style="padding:9px 12px;${headerExtra};border-radius:8px 8px 0 0;display:flex;align-items:center;gap:6px;cursor:help">
+          <span>${e.icon}</span>
+          <span style="flex:1;color:${e.cor};font-weight:800;font-size:11px;text-transform:uppercase">${e.label}${iaCol?' atendendo':''}</span>
+          <span style="background:${iaCol?'#7c3aed':'#222'};color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700" title="${cards.length} lead(s) nesta etapa">${cards.length}</span>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:6px">
+          ${cards.length === 0 ? '<div style="color:#444;text-align:center;padding:20px;font-size:10px">vazio</div>' : cards.slice(0, 50).map(c => {
+            const fonte = ixBadgeFonte(c.sourceWati, c.leadSource);
+            const tier = c.tier ? `<span class="${tierCls[c.tier]||''}" title="Tier ${c.tier}">${c.tier==='Diamante'?'💎':c.tier==='Ouro'?'🥇':c.tier==='Prata'?'🥈':'🥉'}</span>` : '';
+            const iaB = c.iaAtendendo ? '<span title="Núbia (IA) está atendendo este lead" style="background:#a371f7;color:#fff;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;margin-left:3px;animation:iaPulse 1.6s infinite">🤖 IA</span>' : '';
+            const preB = c.preLead ? '<span title="Pré-lead (vira lead após qualificação)" style="background:#374151;color:#9ca3af;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;margin-left:3px;border:1px dashed #6b7280">PRÉ</span>' : '';
+            const fonteRaw = c.leadSource ? `Origem: ${c.leadSource}` : c.sourceWati ? `Origem: ${c.sourceWati}` : 'Sem origem identificada';
+            const tooltip = [
+              c.nome || c.phone,
+              c.phone,
+              c.tier ? 'Tier: ' + c.tier : '',
+              c.operadora ? 'Operadora: ' + c.operadora : 'Sem operadora',
+              c.ownerZoho ? 'Owner Zoho: ' + c.ownerZoho : '',
+              fonteRaw,
+              c.iaAtendendo ? '🤖 Núbia atendendo' : '',
+              c.ultimaMsg ? 'Última msg: ' + c.ultimaMsg.slice(0,80) : '',
+              'Click pra abrir conversa',
+            ].filter(Boolean).join('\n');
+            return `<div title="${tooltip.replace(/"/g,'&quot;')}" onclick="window.abrirChat?window.abrirChat('${c.dealId}','${c.phone}','${(c.nome||'').replace(/'/g,"\\'")}','${c.canal||'wati'}'):(ixSetView('list'),setTimeout(()=>ixAbrir('${c.dealId}','${c.phone}'),100))" style="background:#161616;border:1px solid ${c.iaAtendendo?'#a371f7':(c.visto?'#2a2a2a':'#22c55e')};border-radius:5px;padding:7px 9px;margin-bottom:4px;cursor:pointer;font-size:11px;${!c.visto&&!c.iaAtendendo?'box-shadow:0 0 8px rgba(34,197,94,.3);':''}${c.iaAtendendo?'box-shadow:0 0 10px rgba(167,113,247,.4);':''}">
+              <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
+                ${tier}
+                <span style="flex:1;color:#fff;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nome||c.phone}</span>
+                ${iaB}${preB}
+                ${!c.visto && !iaCol ? '<span title="Cliente respondeu — não foi visualizado ainda" style="background:#22c55e;color:#000;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px">NOVO</span>' : ''}
+              </div>
+              <div style="color:#888;font-size:9px">${c.phone}${c.operadora?' · 👤 '+c.operadora.split('.')[0]:''}</div>
+              ${fonte ? '<div style="margin-top:3px">'+fonte+'</div>' : ''}
+              <div style="color:#aaa;font-size:10px;margin-top:3px;line-height:1.3;max-height:30px;overflow:hidden">${(c.ultimaMsg||'').slice(0,50)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+// === EDITAR ETAPAS DO KANBAN (admin) ===
+async function ixEditarEtapas(){
+  if (!_IX_ETAPAS_KAN.length) await ixCarregarEtapasKan();
+  // Filtra coluna IA (sempre fixa, não editável)
+  let etapas = _IX_ETAPAS_KAN.filter(e => !e.isIa).map(e => ({...e}));
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px';
+  const render = () => `
+    <div style="background:#0d0d0d;border:1px solid #a371f7;border-radius:10px;padding:18px;max-width:680px;width:100%;max-height:90vh;overflow-y:auto;color:#fff">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <h3 style="margin:0;color:#a371f7;font-size:14px;flex:1">⚙️ Etapas do Kanban WATI</h3>
+        <button onclick="ixAddEtapaKan()" style="background:#22c55e;color:#000;border:none;border-radius:5px;padding:6px 12px;cursor:pointer;font-size:11px;font-weight:800">+ Nova etapa</button>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="background:#222;border:1px solid #444;color:#aaa;border-radius:5px;padding:6px 10px;cursor:pointer;font-size:11px">✕ Fechar</button>
+      </div>
+      <p style="color:#888;font-size:11px;margin:0 0 12px">A coluna 🤖 IA é fixa (gerada automaticamente). Use IDs sem espaços (ex: <code>diagnostico</code>, <code>proposta_enviada</code>). Ordem aqui = ordem no kanban.</p>
+      <div id="ix-etap-list">${etapas.map((e,i) => `
+        <div style="background:#161616;border:1px solid #333;border-radius:6px;padding:8px;margin-bottom:6px;display:grid;grid-template-columns:35px 60px 90px 1fr 1fr 30px;gap:6px;align-items:center;font-size:11px">
+          <input type="text" value="${(e.icon||'📌').replace(/"/g,'&quot;')}" onchange="window._ixEtapAlterar(${i},'icon',this.value)" placeholder="ico" maxlength="3" style="background:#0d0d0d;border:1px solid #333;color:#fff;border-radius:4px;padding:5px;font-size:14px;text-align:center">
+          <input type="color" value="${e.cor||'#5ba3f5'}" onchange="window._ixEtapAlterar(${i},'cor',this.value)" style="background:#0d0d0d;border:1px solid #333;border-radius:4px;height:30px;padding:2px">
+          <input type="text" value="${(e.id||'').replace(/"/g,'&quot;')}" onchange="window._ixEtapAlterar(${i},'id',this.value)" placeholder="id_interno" style="background:#0d0d0d;border:1px solid #333;color:#fff;border-radius:4px;padding:5px 8px;font-family:monospace;font-size:11px">
+          <input type="text" value="${(e.label||'').replace(/"/g,'&quot;')}" onchange="window._ixEtapAlterar(${i},'label',this.value)" placeholder="Label" style="background:#0d0d0d;border:1px solid #333;color:#fff;border-radius:4px;padding:5px 8px">
+          <div style="display:flex;gap:2px;justify-content:center">
+            ${i>0?`<button onclick="window._ixEtapMover(${i},-1)" title="subir" style="background:transparent;border:1px solid #444;color:#aaa;border-radius:3px;padding:2px 5px;font-size:10px;cursor:pointer">↑</button>`:'<span style="width:23px"></span>'}
+            ${i<etapas.length-1?`<button onclick="window._ixEtapMover(${i},1)" title="descer" style="background:transparent;border:1px solid #444;color:#aaa;border-radius:3px;padding:2px 5px;font-size:10px;cursor:pointer">↓</button>`:'<span style="width:23px"></span>'}
+          </div>
+          <button onclick="window._ixEtapRemover(${i})" title="remover" style="background:transparent;color:#f87171;border:1px solid #ef4444;border-radius:4px;padding:4px 6px;font-size:10px;cursor:pointer">×</button>
+        </div>`).join('')}</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;padding-top:14px;border-top:1px solid #333">
+        <button onclick="ixResetarEtapas()" style="background:#222;color:#aaa;border:1px solid #444;border-radius:6px;padding:8px 14px;font-size:11px;cursor:pointer">↺ Restaurar padrão</button>
+        <button onclick="ixSalvarEtapasKan(this)" style="background:#22c55e;color:#000;border:none;border-radius:6px;padding:9px 18px;font-weight:800;font-size:12px;cursor:pointer">💾 Salvar</button>
+      </div>
+    </div>
+  `;
+  modal.innerHTML = render();
+  document.body.appendChild(modal);
+  window._ixEtapAlterar = (i, k, v) => { etapas[i][k] = v; };
+  window._ixEtapAdicionar = () => { etapas.push({ id:'etapa_'+Date.now(), label:'Nova etapa', icon:'📌', cor:'#5ba3f5' }); modal.innerHTML = render(); };
+  window.ixAddEtapaKan = window._ixEtapAdicionar;
+  window._ixEtapRemover = (i) => { etapas.splice(i,1); modal.innerHTML = render(); };
+  window._ixEtapMover = (i, dir) => {
+    const j = i + dir; if (j < 0 || j >= etapas.length) return;
+    [etapas[i], etapas[j]] = [etapas[j], etapas[i]];
+    modal.innerHTML = render();
+  };
+  window.ixResetarEtapas = async () => {
+    if (!confirm('Restaurar etapas padrão? Suas customizações serão perdidas.')) return;
+    etapas = [
+      { id:'base_sem_contato', label:'Base', icon:'📋', cor:'#6b7280' },
+      { id:'tentativa_contato', label:'Tentativa', icon:'📞', cor:'#5ba3f5' },
+      { id:'em_conversa', label:'Em conversa', icon:'💬', cor:'#a371f7' },
+      { id:'diagnostico', label:'Diagnóstico', icon:'🔍', cor:'#eab308' },
+      { id:'proposta_enviada', label:'Proposta', icon:'📨', cor:'#f97316' },
+      { id:'agendado', label:'Agendado', icon:'📅', cor:'#06b6d4' },
+      { id:'finalizado_ganho', label:'Ganho', icon:'🏆', cor:'#22c55e' },
+      { id:'finalizado_perdido', label:'Perdido', icon:'❌', cor:'#ef4444' },
+    ];
+    modal.innerHTML = render();
+  };
+  window.ixSalvarEtapasKan = async (btn) => {
+    btn.disabled = true; btn.textContent = '⏳ Salvando...';
+    const d = await ixSafeJson('/inbox/kanban-etapas', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ etapas })
+    });
+    btn.disabled = false; btn.textContent = '💾 Salvar';
+    if (d.error) { alert('❌ '+d.error); return; }
+    _IX_ETAPAS_KAN = d.etapas;
+    modal.remove();
+    if (_IX_VIEW === 'kanban') ixRenderKanban();
+    alert('✅ Etapas salvas! '+(d.etapas.length-1)+' etapas configuradas (+ coluna IA fixa).');
+  };
+}
+
+// CSS pulse pra badge IA
+if (!document.getElementById('ix-ia-style')) {
+  const st = document.createElement('style'); st.id='ix-ia-style';
+  st.textContent='@keyframes iaPulse{0%,100%{opacity:1}50%{opacity:.6}} @keyframes ixLivePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}';
+  document.head.appendChild(st);
+}
+
+let _IX_BUSCA_TIMER = null;
+function ixFiltrar(){
+  ixRenderLista();
+  // Busca live no WATI se digitar 3+ chars (debounced 500ms)
+  clearTimeout(_IX_BUSCA_TIMER);
+  const q = (document.getElementById('ix-search').value || '').trim();
+  if (q.length < 3) return;
+  _IX_BUSCA_TIMER = setTimeout(async () => {
+    const d = await ixSafeJson('/inbox/buscar?q='+encodeURIComponent(q));
+    if (d.error || !d.contatos?.length) return;
+    // Mescla com lista local (evita duplicar)
+    const phones = new Set(_IX_CONVS.map(c => (c.phone||'').replace(/\D/g,'')));
+    let adicionados = 0;
+    for (const ct of d.contatos) {
+      const ph = (ct.phone||'').replace(/\D/g,'');
+      if (!ph || phones.has(ph)) continue;
+      _IX_CONVS.push({
+        dealId: ct.dealId || ('wati-busca:'+ph),
+        phone: ph,
+        nome: ct.nome,
+        ultimaMsg: ct.statusConversa || '(busca WATI)',
+        count: 0,
+        ts: Date.now() - 1000000, // mais antigo que conversas locais
+        visto: true,
+        operadora: null,
+        etapa: 'base_sem_contato',
+        _busca: true,
+      });
+      adicionados++;
+    }
+    if (adicionados) ixRenderLista();
+  }, 500);
+}
+
+// Auto-refresh agressivo: 3s na conversa ativa (era 8s)
+// — webhook WATI tem latência variável, polling rápido garante real-time
+let _IX_AUTO_REFRESH = null;
+function ixIniciarAutoRefresh(dealId, phone){
+  if (_IX_AUTO_REFRESH) clearInterval(_IX_AUTO_REFRESH);
+  _IX_AUTO_REFRESH = setInterval(() => {
+    if (_IX_ATUAL === dealId) ixAtualizarConversa(phone);
+  }, 3000); // 3s — agressivo pra real-time
+}
+async function ixAtualizarConversa(phone){
+  // Busca mensagens novas sem mostrar loading (silencioso)
+  try {
+    const d = await ixSafeJson('/inbox/mensagens?phone=' + encodeURIComponent(phone));
+    if (d.error || !d.mensagens) return;
+    const msgsEl = document.getElementById('ix-msgs');
+    const wasAtBottom = msgsEl.scrollTop + msgsEl.clientHeight >= msgsEl.scrollHeight - 30;
+    // Conta msgs atual vs nova
+    const msgsAtuais = msgsEl.querySelectorAll('.ix-msg').length;
+    if (d.mensagens.length === msgsAtuais) return; // sem mudança
+    // Re-render
+    msgsEl.innerHTML = ixRenderMsgsHTML(d.mensagens);
+    if (wasAtBottom) msgsEl.scrollTop = msgsEl.scrollHeight;
+    // Toca som se chegou mensagem nova do cliente (não nossa)
+    const ultima = d.mensagens[d.mensagens.length - 1];
+    if (ultima && !ultima.owner && !ultima.isSystem && d.mensagens.length > msgsAtuais) {
+      try { window.tdfSons?.tocar(); } catch(_){}
+    }
+  } catch(_){}
+}
+
+async function ixCopiarTelLead(tel, btn){
+  if (!tel) return;
+  try {
+    await navigator.clipboard.writeText(tel);
+    const t = btn.textContent;
+    btn.textContent = '✓';
+    btn.style.color = '#22c55e';
+    setTimeout(() => { btn.textContent = t; btn.style.color = '#888'; }, 1500);
+  } catch(_) { prompt('Copie:', tel); }
+}
+
+async function ixCopiarTel(){
+  if (!_IX_ATUAL) return;
+  const conv = _IX_CONVS.find(c => c.dealId === _IX_ATUAL);
+  if (!conv?.phone) return;
+  const tel = String(conv.phone).replace(/\D/g, '');
+  // Formata bonito: 5511999999999 → +55 (11) 99999-9999
+  let formatado = tel;
+  if (tel.length >= 12) {
+    const ddi = tel.slice(0, 2), ddd = tel.slice(2, 4), num = tel.slice(4);
+    formatado = `+${ddi} (${ddd}) ${num.slice(0, num.length-4)}-${num.slice(-4)}`;
+  } else if (tel.length === 11) {
+    formatado = `(${tel.slice(0,2)}) ${tel.slice(2,7)}-${tel.slice(7)}`;
+  }
+  try {
+    await navigator.clipboard.writeText(tel);
+    const btn = document.getElementById('ix-h-copy');
+    if (btn) {
+      const t = btn.textContent;
+      btn.textContent = '✓ ' + formatado.slice(0, 18);
+      btn.style.color = '#22c55e';
+      setTimeout(() => { btn.textContent = t; btn.style.color = '#aaa'; }, 2000);
+    }
+  } catch(e) {
+    prompt('Copie o número:', tel);
+  }
+}
+
+async function ixAbrir(dealId, phone){
+  _IX_ATUAL = dealId;
+  const conv = _IX_CONVS.find(c => c.dealId === dealId);
+  ixIniciarAutoRefresh(dealId, phone);
+  // Mostra indicador "AO VIVO" enquanto conversa está aberta
+  const ind = document.getElementById('ix-live-indicator');
+  if (ind) ind.style.display = 'inline-flex';
+  document.getElementById('ix-empty').style.display = 'none';
+  const _conv = document.getElementById('ix-conversa');
+  _conv.style.display = 'flex';
+  _conv.style.minHeight = '0';
+  _conv.style.height = '100%';
+  _conv.style.flex = '1 1 0';
+  _conv.style.overflow = 'hidden';
+  // Carrega painel lateral do lead em paralelo
+  ixLeadCarregar(dealId);
+  // Header: nome em destaque + avatar/iniciais + meta enriquecido
+  const nomeEl = document.getElementById('ix-h-nome');
+  const avEl = document.getElementById('ix-h-avatar');
+  const metaEl = document.getElementById('ix-h-meta');
+  const tierIco = ixTierIcon(conv?.tier);
+  nomeEl.innerHTML = `${tierIco?`<span title="Tier ${conv.tier}">${tierIco}</span> `:''}${(conv?.nome || phone).replace(/</g,'&lt;')}`;
+  if (avEl) {
+    avEl.textContent = ixIniciais(conv?.nome || phone);
+    avEl.className = 'avatar ' + (conv?.iaAtendendo ? 'ia' : ixTierClass(conv?.tier));
+  }
+  // Format phone: 5511999999999 → +55 (11) 99999-9999
+  const tel = String(phone||'').replace(/\D/g,'');
+  let telFmt = tel;
+  if (tel.length >= 12) telFmt = `+${tel.slice(0,2)} (${tel.slice(2,4)}) ${tel.slice(4,-4)}-${tel.slice(-4)}`;
+  else if (tel.length === 11) telFmt = `(${tel.slice(0,2)}) ${tel.slice(2,7)}-${tel.slice(7)}`;
+  // Última atividade legível
+  const lastSeen = conv?.ts ? ixFmtTs(conv.ts) : '';
+  const metaParts = [`📞 ${telFmt}`];
+  if (conv?.operadora) metaParts.push(`<span class="sep">·</span> 👤 ${conv.operadora.split('.')[0]}`);
+  if (conv?.etapa) metaParts.push(`<span class="sep">·</span> ${conv.etapa.replace(/_/g,' ')}`);
+  if (lastSeen) metaParts.push(`<span class="sep">·</span> <span title="Última atividade">⏱️ ${lastSeen}</span>`);
+  if (conv?.iaAtendendo) metaParts.push(`<span class="sep">·</span> <span style="color:#a371f7;font-weight:600">🤖 Núbia atendendo</span>`);
+  // Aviso SEM DEAL: lead não está no Zoho — botão pra cadastrar manualmente
+  if (conv?.semDealZoho || String(dealId||'').startsWith('wati:')) {
+    metaParts.push(`<span class="sep">·</span> <span style="background:rgba(239,68,68,.18);color:#fca5a5;padding:2px 8px;border-radius:6px;font-weight:700;border:1px solid rgba(239,68,68,.4)">⚠️ SEM DEAL ZOHO</span> <button onclick="ixCadastrarOrfaoNoHeader('${phone}','${(conv?.nomeWati||'').replace(/'/g,"\\'")}')" style="background:#22c55e;color:#000;border:none;border-radius:5px;padding:3px 10px;font-size:10px;font-weight:800;cursor:pointer;margin-left:6px">+ Cadastrar agora</button>`);
+  }
+  metaEl.innerHTML = metaParts.join(' ');
+  document.getElementById('ix-h-crm').href = `https://crmplus.zoho.com/tudodefiltro3711/index.do/cxapp/crm/org856385701/tab/Potentials/${dealId}`;
+  document.getElementById('ix-h-wati').href = `https://live-2708.wati.io/2708/teamInbox/${phone.replace(/\D/g,'')}`;
+  document.getElementById('ix-msgs').innerHTML = '<div style="color:#888;text-align:center;padding:20px">Carregando histórico...</div>';
+  ixRenderLista();
+
+  try{
+    const r = await fetch('/inbox/mensagens?phone=' + encodeURIComponent(phone));
+    const d = await r.json();
+    if (d.error) { document.getElementById('ix-msgs').innerHTML = `<div style="color:#ef4444;padding:20px;text-align:center">${d.error}</div>`; return; }
+    const msgs = d.mensagens || [];
+    if (!msgs.length) { document.getElementById('ix-msgs').innerHTML = '<div style="color:#666;text-align:center;padding:30px;font-size:12px">Sem mensagens ainda</div>'; return; }
+    document.getElementById('ix-msgs').innerHTML = ixRenderMsgsHTML(msgs);
+    // Scroll bottom
+    const m = document.getElementById('ix-msgs');
+    m.scrollTop = m.scrollHeight;
+  }catch(e){ document.getElementById('ix-msgs').innerHTML = `<div style="color:#ef4444;padding:20px;text-align:center">${e.message}</div>`; }
+}
+
+function ixKey(e){
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    ixEnviar();
+  }
+}
+
+async function ixEnviar(){
+  if (!_IX_ATUAL) return;
+  const txt = document.getElementById('ix-text').value.trim();
+  if (!txt) return;
+  const conv = _IX_CONVS.find(c => c.dealId === _IX_ATUAL);
+  if (!conv) return;
+  const btn = document.getElementById('ix-send');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try{
+    const r = await fetch('/inbox/responder', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ phone: conv.phone, text: txt })
+    });
+    const d = await r.json();
+    if (d.error) { alert('Erro: ' + d.error); return; }
+    document.getElementById('ix-text').value = '';
+    // Re-fetch mensagens
+    await ixAbrir(_IX_ATUAL, conv.phone);
+    ixCarregar(); // atualiza lista (mensagem agora visto)
+  }catch(e){ alert('Erro: ' + e.message); }
+  btn.disabled = false; btn.textContent = 'Enviar';
+}
+
+// === ANEXAR ARQUIVO ===
+function ixAnexar(){
+  if (!_IX_ATUAL) { alert('Selecione uma conversa primeiro.'); return; }
+  document.getElementById('ix-file').click();
+}
+async function ixUploadFile(input){
+  const f = input.files?.[0];
+  if (!f) return;
+  if (f.size > 8 * 1024 * 1024) { alert('Arquivo muito grande (máx 8MB)'); return; }
+  const conv = _IX_CONVS.find(c => c.dealId === _IX_ATUAL);
+  if (!conv) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const btn = document.getElementById('ix-send');
+    btn.disabled = true; btn.textContent = '⏳ Enviando...';
+    try {
+      const r = await fetch('/inbox/anexar', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ phone: conv.phone, dataUrl: reader.result, filename: f.name }) });
+      const d = await r.json();
+      if (d.error) { alert('❌ ' + d.error + '\n\nDica: se passou da janela 24h, use 📋 template.'); return; }
+      input.value = ''; // reset
+      await ixAbrir(_IX_ATUAL, conv.phone);
+    } catch(e) { alert(e.message); }
+    btn.disabled = false; btn.textContent = 'Enviar';
+  };
+  reader.readAsDataURL(f);
+}
+
+// === TEMPLATES (envia FORA da janela 24h) ===
+let _IX_TEMPLATES = [];
+async function ixAbrirTemplates(){
+  if (!_IX_ATUAL) { alert('Selecione uma conversa primeiro.'); return; }
+  const modal = document.getElementById('ix-tpl-modal');
+  modal.style.display = 'flex';
+  if (!_IX_TEMPLATES.length) {
+    document.getElementById('ix-tpl-list').innerHTML = '<div style="color:#888;padding:20px;text-align:center">Carregando...</div>';
+    try {
+      const r = await fetch('/inbox/templates');
+      const d = await r.json();
+      _IX_TEMPLATES = d.messageTemplates || d.templates || d.data || [];
+    } catch(e) { _IX_TEMPLATES = []; }
+  }
+  ixRenderTpls();
+  // Autofocus no campo de busca + limpa busca anterior
+  setTimeout(() => {
+    const inp = document.getElementById('ix-tpl-search');
+    if (inp) { inp.value = ''; inp.focus(); }
+    const clr = document.getElementById('ix-tpl-clear'); if (clr) clr.style.display = 'none';
+  }, 50);
+}
+function ixFiltrarTpls(){
+  ixRenderTpls();
+  // Mostra/esconde botão de limpar
+  const inp = document.getElementById('ix-tpl-search');
+  const clr = document.getElementById('ix-tpl-clear');
+  if (clr) clr.style.display = inp && inp.value ? 'block' : 'none';
+}
+function ixRenderTpls(){
+  const q = (document.getElementById('ix-tpl-search')?.value || '').toLowerCase().trim();
+  const list = _IX_TEMPLATES.filter(t => {
+    const txt = (t.elementName||t.name||'') + ' ' + (t.bodyOriginal||t.body||'');
+    return !q || txt.toLowerCase().includes(q);
+  });
+  // Atualiza contador no header
+  const cnt = document.getElementById('ix-tpl-count');
+  if (cnt) cnt.textContent = q ? `${list.length}/${_IX_TEMPLATES.length}` : `${_IX_TEMPLATES.length} templates`;
+  if (!list.length) {
+    document.getElementById('ix-tpl-list').innerHTML = `<div style="color:#888;padding:30px;text-align:center;font-size:12px">Nenhum template combina com "<strong style=\"color:#fbbf24\">${q.replace(/</g,'&lt;')}</strong>"</div>`;
+    return;
+  }
+  document.getElementById('ix-tpl-list').innerHTML = list.map(t => {
+    const nome = t.elementName || t.name || '?';
+    const body = t.bodyOriginal || t.body || '';
+    const params = (body.match(/\{\{\d+\}\}/g) || []).length;
+    return `<div class="ix-tpl-item" onclick="ixUsarTemplate('${nome}',${params})">
+      <div class="nome">${nome}${params?` <span style="color:#fbbf24;font-size:10px">${params} parâmetro(s)</span>`:''}</div>
+      <div class="body">${body.slice(0, 200)}${body.length>200?'...':''}</div>
+    </div>`;
+  }).join('');
+}
+async function ixUsarTemplate(nome, qtdParams){
+  const conv = _IX_CONVS.find(c => c.dealId === _IX_ATUAL);
+  if (!conv) return;
+  let params = [];
+  if (qtdParams > 0) {
+    for (let i = 1; i <= qtdParams; i++) {
+      const v = prompt(`Parâmetro {{${i}}}:`, i === 1 ? (conv.nome?.split(' ')[0]||'') : '');
+      if (v === null) return;
+      params.push(v);
+    }
+  }
+  document.getElementById('ix-tpl-modal').style.display = 'none';
+  const btn = document.getElementById('ix-send');
+  btn.disabled = true; btn.textContent = '⏳ Enviando template...';
+  try {
+    const r = await fetch('/inbox/template', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ phone: conv.phone, templateName: nome, params }) });
+    const d = await r.json();
+    if (d.error) { alert('❌ ' + d.error); }
+    else { alert('✅ Template enviado!'); await ixAbrir(_IX_ATUAL, conv.phone); }
+  } catch(e) { alert(e.message); }
+  btn.disabled = false; btn.textContent = 'Enviar';
+}
+
+// === PAINEL LATERAL DO LEAD ===
+async function ixLeadCarregar(dealId){
+  const lead = document.getElementById('ix-lead');
+  lead.classList.remove('empty');
+  // Limpa estado anterior
+  document.getElementById('ix-lead-nome').textContent = 'Carregando...';
+  try {
+    const d = await ixSafeJson('/manutencao/cliente-info/'+encodeURIComponent(dealId));
+    if (d.error) { document.getElementById('ix-lead-nome').textContent = '⚠️ '+d.error; return; }
+    _IX_LEAD = d;
+    const c = d.cliente || {};
+    const cl = d.closy || {};
+    document.getElementById('ix-lead-nome').textContent = c.nome || c.telefone || '?';
+    // Avatar grande
+    const avLeadEl = document.getElementById('ix-lead-avatar');
+    if (avLeadEl) {
+      avLeadEl.textContent = ixIniciais(c.nome || c.telefone);
+      avLeadEl.className = 'avatar';
+    }
+    const tierBadge = c.tier ? `<span class="tier ${(c.tier||'').toLowerCase()}">${c.tier}</span>` : '';
+    const cidadeLine = (c.cidade || c.empresa) ? `<span style="color:var(--ix-text-muted);font-size:11px">${c.cidade||'sem cidade'}${c.empresa?' · '+c.empresa:''}</span>` : '';
+    document.getElementById('ix-lead-meta').innerHTML =
+      `<span style="display:inline-flex;align-items:center;gap:4px">${tierBadge}<span style="font-variant-numeric:tabular-nums">📞 ${c.telefone||'—'}</span> <button onclick="event.stopPropagation();ixCopiarTelLead('${(c.telefone||'').replace(/\D/g,'')}',this)" title="Copiar telefone" style="background:transparent;border:1px solid var(--ix-border-strong);color:var(--ix-text-muted);border-radius:4px;padding:1px 5px;font-size:10px;cursor:pointer;line-height:1">📋</button></span>${cidadeLine}`;
+    // Etapas Closy dropdown
+    const sel = document.getElementById('ix-lead-etapa');
+    sel.innerHTML = (d.etapas||[]).map(e =>
+      `<option value="${e.id}" ${e.id===cl.etapa?'selected':''}>${e.icon} ${e.label}</option>`
+    ).join('');
+    // Stage Zoho dropdown — usa stages do pipeline atual (zohoStagesAtuais)
+    const stageSel = document.getElementById('ix-lead-zoho-stage');
+    const stagesValid = d.zohoStagesAtuais || d.zohoStages || [];
+    const labelPipe = c.pipeline ? ` (Pipeline: ${c.pipeline})` : '';
+    stageSel.innerHTML = '<option value="">— Stage Zoho'+labelPipe+' —</option>' +
+      stagesValid.map(s => `<option value="${s}" ${s===c.stage?'selected':''}>${s}</option>`).join('');
+    // Layout Zoho dropdown
+    const layoutSel = document.getElementById('ix-lead-zoho-layout');
+    const currentLayoutName = c.layout || '';
+    layoutSel.innerHTML = '<option value="">— Layout —</option>' +
+      (d.zohoLayouts||[]).map(l => `<option value="${l.id}" ${l.nome===currentLayoutName?'selected':''}>${l.nome}</option>`).join('');
+    // Operadoras dropdown
+    const opSel = document.getElementById('ix-lead-op');
+    opSel.innerHTML = '<option value="">— Sem operadora —</option>' +
+      (d.operadoras||[]).map(o => `<option value="${o.username}" ${o.username===cl.operadora?'selected':''}>${o.name} (${o.team})</option>`).join('');
+    // Observação
+    document.getElementById('ix-lead-obs').value = cl.observacao || '';
+    // Dados
+    document.getElementById('ix-lead-pipeline').textContent = c.pipeline || '—';
+    document.getElementById('ix-lead-layout').textContent = c.layout || '—';
+    document.getElementById('ix-lead-tier').textContent = c.tier || '—';
+    const sc = c.scoreLead;
+    document.getElementById('ix-lead-score').textContent = sc != null ? sc + '/100' : '—';
+    document.getElementById('ix-lead-tipoagua').textContent = c.tipoAgua || '—';
+    document.getElementById('ix-lead-source').textContent = c.leadSource || '—';
+    document.getElementById('ix-lead-produto').textContent = (c.produto||'—').slice(0,60);
+    document.getElementById('ix-lead-valor').textContent = c.valor ? 'R$ '+Math.round(c.valor).toLocaleString('pt-BR') : '—';
+    if (c.criadoEm) {
+      const dtCr = new Date(c.criadoEm);
+      const diasAtras = Math.floor((Date.now() - dtCr.getTime())/86400000);
+      document.getElementById('ix-lead-criado').textContent = dtCr.toLocaleDateString('pt-BR') + ` · ${diasAtras}d atrás`;
+    } else document.getElementById('ix-lead-criado').textContent = '—';
+    // Origem rica
+    ixLeadRenderOrigem(c.attribParsed, c.leadSource);
+    // Tags
+    ixLeadRenderTags(c.tags || []);
+    if (cl.proposta) {
+      document.getElementById('ix-lead-prop-row').style.display = 'flex';
+      document.getElementById('ix-lead-prop').innerHTML = `<strong style="color:#f0c040">R$ ${Math.round(cl.proposta.total||0).toLocaleString('pt-BR')}</strong> · ${cl.proposta.items?.length||0} item(s)`;
+    } else {
+      document.getElementById('ix-lead-prop-row').style.display = 'none';
+    }
+    // Timeline mini
+    const tl = document.getElementById('ix-lead-tl');
+    if (cl.timeline?.length) {
+      tl.innerHTML = [...cl.timeline].reverse().map(ev => {
+        const dt = new Date(ev.at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+        return `<div class="ev"><span class="lbl">${(ev.label||'').replace(/</g,'&lt;')}</span><span class="at">${dt} · ${ev.by||'?'}</span></div>`;
+      }).join('');
+    } else {
+      tl.innerHTML = '<div style="color:#666;font-size:10px;padding:8px;text-align:center">Sem eventos ainda</div>';
+    }
+    // CRM link
+    const crmA = document.getElementById('ix-lead-crm');
+    if (d.crmLink) { crmA.href = d.crmLink; crmA.style.display = 'block'; }
+    else crmA.style.display = 'none';
+    // Última atividade (cruza GoTo + WATI + timeline + tarefas)
+    ixLeadCarregarUltimaAtividade(dealId);
+  } catch(e) {
+    document.getElementById('ix-lead-nome').textContent = 'Erro: '+e.message;
+  }
+}
+
+// === ORIGEM (atribuição) ===
+function ixLeadRenderOrigem(attrib, raw){
+  const card = document.getElementById('ix-lead-origem-card');
+  const plat = document.getElementById('ix-lead-origem-plat');
+  const det = document.getElementById('ix-lead-origem-detalhe');
+  if (!attrib && !raw) {
+    card.style.background = 'rgba(136,136,136,.05)';
+    card.style.borderColor = 'rgba(136,136,136,.3)';
+    plat.textContent = '❓ Sem origem definida';
+    plat.style.color = '#888';
+    det.innerHTML = 'Lead sem Lead_Source preenchido — pode ser orgânico, indicação ou base antiga. <em>Considere preencher manualmente.</em>';
+    return;
+  }
+  const platCores = { Meta:'#1877f2', Google:'#fbbc04', WhatsApp:'#25d366', 'RD Station':'#22c55e', 'E-mail':'#a371f7', 'Lista interna':'#fbbf24', 'Orgânico':'#22c55e', 'Outros':'#888' };
+  const platIcons = { Meta:'📘', Google:'🔍', WhatsApp:'💬', 'RD Station':'🚀', 'E-mail':'📧', 'Lista interna':'📋', 'Orgânico':'🌱', 'Outros':'❓' };
+  const p = attrib?.plataforma || 'Outros';
+  const cor = platCores[p] || '#888';
+  const ico = platIcons[p] || '❓';
+  card.style.background = `${cor}11`;
+  card.style.borderColor = `${cor}44`;
+  plat.style.color = cor;
+  plat.textContent = `${ico} ${p}`;
+  let html = '';
+  if (attrib?.tipo) html += `<div><strong style="color:#fff">Tipo:</strong> ${attrib.tipo}</div>`;
+  if (attrib?.campanha) html += `<div><strong style="color:#fff">Campanha:</strong> ${attrib.campanha}</div>`;
+  if (attrib?.tokens?.length) html += `<div style="margin-top:4px"><strong style="color:#888;font-size:10px">Detalhes:</strong> ${attrib.tokens.slice(0,5).map(t=>'<span style="background:'+cor+'22;color:'+cor+';padding:1px 5px;border-radius:3px;font-size:10px;margin-right:2px">'+t+'</span>').join('')}</div>`;
+  if (!html) html = `<em>${raw||'sem detalhes'}</em>`;
+  det.innerHTML = html;
+}
+
+// === TAGS ===
+const TAGS_SUGERIDAS = [
+  'cliente_vip','recorrente','urgente','sem_orçamento','espera_aprovacao',
+  'refazer_proposta','condominio','restaurante','industria','obra_nova',
+  'tem_concorrente','negociando_preco','quer_visita','quer_amostra','aguardando_pagamento'
+];
+function ixLeadRenderTags(tags){
+  const cont = document.getElementById('ix-lead-tags');
+  const cnt = document.getElementById('ix-lead-tags-count');
+  cnt.textContent = tags.length ? `(${tags.length})` : '';
+  if (!tags.length) {
+    cont.innerHTML = '<span style="color:var(--ix-text-muted);font-size:11px;font-style:italic">Sem tags ainda</span>';
+  } else {
+    cont.innerHTML = tags.map(t => `
+      <span style="display:inline-flex;align-items:center;gap:3px;background:rgba(167,113,247,.15);color:#c084fc;padding:3px 6px 3px 8px;border-radius:12px;font-size:11px;font-weight:600;border:1px solid rgba(167,113,247,.4)">
+        ${ixEscape(t)}
+        <button onclick="ixLeadRemoverTag('${ixEscape(t).replace(/'/g,'&#39;')}')" title="Remover tag" style="background:transparent;border:none;color:#c084fc;cursor:pointer;padding:0;width:14px;height:14px;border-radius:50%;font-size:11px;line-height:1;display:inline-flex;align-items:center;justify-content:center">×</button>
+      </span>
+    `).join('');
+  }
+  // Sugestões: tags que ainda não estão aplicadas
+  const naoAplicadas = TAGS_SUGERIDAS.filter(t => !tags.some(x => x.toLowerCase() === t.toLowerCase()));
+  document.getElementById('ix-lead-tags-sugestoes').innerHTML = naoAplicadas.slice(0, 8).map(t => `
+    <button onclick="ixLeadAdicionarTagDireta('${t}')" title="Aplicar tag rápida" style="background:rgba(255,255,255,.05);color:var(--ix-text-muted);border:1px dashed var(--ix-border);border-radius:10px;padding:1px 7px;font-size:9px;cursor:pointer;font-weight:500">+ ${t}</button>
+  `).join('');
+}
+function ixEscape(s){
+  return String(s).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
+}
+async function ixLeadAdicionarTag(){
+  if (!_IX_ATUAL) return;
+  const inp = document.getElementById('ix-lead-tag-novo');
+  const tag = inp.value.trim();
+  if (!tag) return;
+  await ixLeadAdicionarTagDireta(tag);
+  inp.value = '';
+}
+async function ixLeadAdicionarTagDireta(tag){
+  if (!_IX_ATUAL || !tag) return;
+  try {
+    const r = await fetch('/manutencao/cliente/'+encodeURIComponent(_IX_ATUAL)+'/tags', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ tags: [tag] }),
+    });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    // Atualiza local
+    const cur = (_IX_LEAD?.cliente?.tags) || [];
+    const novo = [...new Set([...cur, ...d.added])];
+    if (_IX_LEAD?.cliente) _IX_LEAD.cliente.tags = novo;
+    ixLeadRenderTags(novo);
+  } catch(e) { alert('Erro: '+e.message); }
+}
+async function ixLeadRemoverTag(tag){
+  if (!_IX_ATUAL || !tag) return;
+  if (!confirm(`Remover tag "${tag}"?`)) return;
+  try {
+    const r = await fetch('/manutencao/cliente/'+encodeURIComponent(_IX_ATUAL)+'/tags/'+encodeURIComponent(tag), { method: 'DELETE' });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    const cur = (_IX_LEAD?.cliente?.tags) || [];
+    const novo = cur.filter(t => t !== tag);
+    if (_IX_LEAD?.cliente) _IX_LEAD.cliente.tags = novo;
+    ixLeadRenderTags(novo);
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+// === ANALISAR FUNIL DA CONVERSA (IA) ===
+const IX_SINT_LABELS = {
+  preco_cedo_demais: { label: 'Preço cedo demais', icon: '💸', cor: '#ef4444' },
+  sem_descoberta: { label: 'Sem descoberta SPIN', icon: '🔍', cor: '#ef4444' },
+  sem_urgencia: { label: 'Sem urgência criada', icon: '⏰', cor: '#fbbf24' },
+  objecao_nao_tratada: { label: 'Objeção ignorada', icon: '🚫', cor: '#ef4444' },
+  sem_consciencia_dor: { label: 'Sem educar dor', icon: '🧠', cor: '#fbbf24' },
+  desqualificado_lead: { label: 'Lead não qualificado', icon: '❓', cor: '#fbbf24' },
+  sem_proxima_acao: { label: 'Sem próxima ação', icon: '🎯', cor: '#f97316' },
+  abandono_closer: { label: 'Closer abandonou', icon: '😴', cor: '#ef4444' },
+  abandono_cliente: { label: 'Cliente sumiu', icon: '👻', cor: '#888' },
+  script_robotico: { label: 'Script robótico', icon: '🤖', cor: '#fbbf24' },
+  gatilho_morto: { label: 'CTA morta', icon: '💀', cor: '#f97316' },
+};
+const IX_STAGE_LABELS = {
+  consciencia: '🌱 Consciência', descoberta: '🔍 Descoberta',
+  qualificacao: '✅ Qualificação', proposta: '📨 Proposta', fechamento: '🏆 Fechamento',
+};
+async function ixLeadAnalisarFunil(){
+  if (!_IX_ATUAL || !_IX_LEAD) { alert('Selecione um lead'); return; }
+  const phone = _IX_LEAD?.cliente?.telefone;
+  if (!phone) { alert('Lead sem telefone'); return; }
+  const out = document.getElementById('ix-lead-funil-result');
+  out.style.display = 'block';
+  out.innerHTML = `<div style="background:rgba(167,113,247,.08);border:1px solid rgba(167,113,247,.4);border-radius:8px;padding:10px;color:#c084fc;font-size:11px">⏳ Analisando conversa WATI + contexto Zoho... (~15s)</div>`;
+  try {
+    const r = await fetch('/manutencao/cliente/'+encodeURIComponent(_IX_ATUAL)+'/analise-funil', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ phone }),
+    });
+    const d = await r.json();
+    if (d.error) { out.innerHTML = `<div style="background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:6px;padding:10px;color:#fca5a5;font-size:11px">❌ ${d.error}</div>`; return; }
+    if (!d.sintomas) { out.innerHTML = `<div style="background:rgba(136,136,136,.1);border:1px solid #555;border-radius:6px;padding:10px;color:#aaa;font-size:11px">${d.diagnostico_curto || 'Sem dados suficientes'}</div>`; return; }
+    const score = d.score_qualidade_conversa;
+    const corS = score >= 70 ? '#22c55e' : score >= 50 ? '#fbbf24' : score >= 25 ? '#f97316' : '#ef4444';
+    const corP = d.perda_provavel === 'alta' ? '#ef4444' : d.perda_provavel === 'media' ? '#fbbf24' : '#22c55e';
+    let html = `<div style="background:linear-gradient(135deg,rgba(13,17,23,.95),rgba(26,14,42,.95));border:2px solid #a371f7;border-radius:10px;padding:11px">`;
+    html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+      <strong style="color:#c084fc;font-size:12px">🔍 Análise de Funil</strong>
+      <span style="background:${corS}22;color:${corS};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:800;margin-left:auto">Score ${score}/100</span>
+      <span style="background:${corP}22;color:${corP};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:800">Perda ${d.perda_provavel}</span>
+    </div>`;
+    html += `<div style="font-size:11px;margin-bottom:8px;color:#aaa">
+      Travou em: <span style="background:rgba(239,68,68,.15);color:#fca5a5;padding:1px 6px;border-radius:3px;font-weight:700">${IX_STAGE_LABELS[d.stage_travou_em]||d.stage_travou_em}</span>
+    </div>`;
+    html += `<div style="background:rgba(255,255,255,.04);border-left:3px solid #a371f7;padding:8px;margin-bottom:8px;border-radius:3px;font-size:11.5px;color:#fff;line-height:1.4">${d.diagnostico_curto}</div>`;
+    if (d.sintomas?.length) {
+      d.sintomas.forEach(s => {
+        const m = IX_SINT_LABELS[s.tipo] || { label: s.tipo, icon: '⚠️', cor: '#888' };
+        html += `<div style="background:rgba(255,255,255,.03);border-left:2px solid ${m.cor};padding:6px 8px;margin-bottom:4px;border-radius:3px;font-size:10.5px">
+          <strong style="color:${m.cor}">${m.icon} ${m.label}</strong>
+          <div style="color:#aaa;font-style:italic;margin-top:2px">"${(s.evidencia||'').slice(0,160)}"</div>
+        </div>`;
+      });
+    }
+    html += `<div style="background:rgba(34,197,94,.08);border:1px solid #22c55e;border-radius:5px;padding:8px;margin-top:6px;font-size:11px">
+      <strong style="color:#22c55e">⚡ Próxima ação:</strong> <span style="color:#fff">${d.proxima_acao}</span>
+    </div>`;
+    if (d.padrao_recorrente_suspeita) {
+      html += `<div style="background:rgba(251,191,36,.08);border:1px dashed #fbbf24;border-radius:5px;padding:6px 8px;margin-top:6px;font-size:10px;color:#fbbf24">
+        🚨 Padrão suspeito desse closer: ${d.padrao_recorrente_suspeita}
+      </div>`;
+    }
+    html += `</div>`;
+    out.innerHTML = html;
+  } catch(e) {
+    out.innerHTML = `<div style="background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:6px;padding:10px;color:#fca5a5;font-size:11px">❌ ${e.message}</div>`;
+  }
+}
+
+async function ixLeadAtribuirAuto(){
+  if (!_IX_ATUAL) { alert('Selecione um lead'); return; }
+  const msgEl = document.getElementById('ix-lead-atribuir-msg');
+  msgEl.style.display = 'block';
+  msgEl.style.color = '#888';
+  msgEl.textContent = '⏳ Atribuindo...';
+  try {
+    const r = await fetch('/manutencao/cliente/'+encodeURIComponent(_IX_ATUAL)+'/atribuir-auto', { method:'POST' });
+    const d = await r.json();
+    if (d.error) { msgEl.style.color = '#ef4444'; msgEl.textContent = '❌ '+d.error; return; }
+    const motivoTxt = {
+      crm_owner_ativo: 'CRM owner ativo',
+      round_robin_filtro: 'round-robin (filtro)',
+      round_robin_poco: 'round-robin (poço)',
+      round_robin_bebedouro: 'round-robin (bebedouro)',
+      round_robin_geral: 'round-robin (geral)',
+    }[d.motivo] || d.motivo;
+    msgEl.style.color = '#22c55e';
+    msgEl.innerHTML = `✅ Atribuído pra <strong>${d.closer_name}</strong> (${motivoTxt})`;
+    // Reload painel
+    setTimeout(() => ixLeadCarregar(_IX_ATUAL), 600);
+    ixCarregar();
+  } catch(e) { msgEl.style.color = '#ef4444'; msgEl.textContent = '❌ '+e.message; }
+}
+
+async function ixLeadSalvarEtapa(){
+  if (!_IX_ATUAL || !_IX_LEAD) return;
+  const novaEtapa = document.getElementById('ix-lead-etapa').value;
+  const payload = { etapa: novaEtapa };
+  if (novaEtapa === 'finalizado_perdido') {
+    const motivo = prompt('Motivo da perda:');
+    if (!motivo) { ixLeadCarregar(_IX_ATUAL); return; }
+    payload.motivoPerda = motivo;
+  }
+  try {
+    const r = await fetch('/manutencao/etapa/'+encodeURIComponent(_IX_ATUAL), {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    ixLeadCarregar(_IX_ATUAL); // refresh painel
+  } catch(e) { alert(e.message); }
+}
+
+async function ixLeadSalvarZohoStage(){
+  if (!_IX_ATUAL) return;
+  const stage = document.getElementById('ix-lead-zoho-stage').value;
+  if (!stage) return;
+  if (!confirm('Mudar Stage do Zoho CRM pra "'+stage+'"?')) { ixLeadCarregar(_IX_ATUAL); return; }
+  const d = await ixSafeJson('/manutencao/cliente/'+encodeURIComponent(_IX_ATUAL)+'/stage', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ stage })
+  });
+  if (d.error) { alert('❌ '+d.error); ixLeadCarregar(_IX_ATUAL); return; }
+  ixLeadCarregar(_IX_ATUAL);
+}
+
+async function ixLeadSalvarZohoLayout(){
+  if (!_IX_ATUAL) return;
+  const layoutId = document.getElementById('ix-lead-zoho-layout').value;
+  if (!layoutId) return;
+  if (!confirm('Mudar Layout do Zoho? Isso pode mudar campos disponíveis no card.')) { ixLeadCarregar(_IX_ATUAL); return; }
+  const d = await ixSafeJson('/manutencao/cliente/'+encodeURIComponent(_IX_ATUAL)+'/layout', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ layoutId })
+  });
+  if (d.error) { alert('❌ '+d.error); ixLeadCarregar(_IX_ATUAL); return; }
+  alert('✅ Layout alterado: '+d.layout);
+  ixLeadCarregar(_IX_ATUAL);
+}
+
+async function ixLeadSalvar(){
+  if (!_IX_ATUAL) return;
+  const operadora = document.getElementById('ix-lead-op').value;
+  const observacao = document.getElementById('ix-lead-obs').value;
+  try {
+    const r = await fetch('/manutencao/cliente/'+encodeURIComponent(_IX_ATUAL), {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ operadora, observacao }),
+    });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    alert('✅ Salvo');
+    ixLeadCarregar(_IX_ATUAL);
+  } catch(e) { alert(e.message); }
+}
+
+async function ixLeadNubia(){
+  if (!_IX_ATUAL) return;
+  if (!confirm('Acionar Núbia pra entrar em contato com este lead?')) return;
+  try {
+    const r = await fetch('/cockpit/nubia-meu-lead', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ dealId: _IX_ATUAL })
+    });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    alert('🤖 Núbia disparada!');
+    ixLeadCarregar(_IX_ATUAL);
+  } catch(e) { alert(e.message); }
+}
+
+function ixLeadProposta(){
+  if (!_IX_ATUAL) return;
+  window.open('/manutencao#proposta='+encodeURIComponent(_IX_ATUAL), '_blank');
+}
+
+// === NÚBIA AGENDADA ===
+async function ixLeadNubiaAgendar(){
+  if (!_IX_ATUAL) return;
+  const proxHora = new Date(); proxHora.setHours(proxHora.getHours()+2, 0, 0, 0);
+  const dt = prompt('🤖⏰ Agendar Núbia\n\nData e hora (formato: 2026-04-30 14:00):', proxHora.toISOString().slice(0,16).replace('T',' '));
+  if (!dt) return;
+  const ctx = prompt('Contexto/instrução pra Núbia (opcional):', '');
+  const d = await ixSafeJson('/nubia/agendar', { method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ dealId: _IX_ATUAL, dataHora: new Date(dt.replace(' ','T')).toISOString(), contexto: ctx || '' })
+  });
+  if (d.error) { alert('❌ '+d.error); return; }
+  alert('✅ Núbia agendada pra '+new Date(d.agendamento.dataHora).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}));
+}
+
+// === ALERTAS CLIQ / Z-API ===
+async function ixLeadAlertaCliq(){
+  if (!_IX_ATUAL || !_IX_LEAD) return;
+  const c = _IX_LEAD.cliente || {};
+  const msg = prompt('🔔 Alerta no Zoho Cliq\n\nMensagem:', `Lead ${c.nome||c.telefone||'?'} precisa atenção. Tel: ${c.telefone||'-'}.`);
+  if (!msg) return;
+  const d = await ixSafeJson('/alerta/cliq', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mensagem: msg }) });
+  if (d.error) { alert('❌ '+d.error); return; }
+  alert('✅ Alerta postado no Cliq (canal alertassdr)');
+}
+async function ixLeadAlertaZapi(){
+  if (!_IX_ATUAL || !_IX_LEAD) return;
+  const c = _IX_LEAD.cliente || {};
+  const tel = prompt('📱 Z-API alerta interno\n\nTelefone destino (DDD+número, deixa vazio pra Paulo):', '');
+  const msg = prompt('Mensagem:', `🚨 Lead ${c.nome||c.telefone||'?'} precisa atenção.\nTel: ${c.telefone||'-'}.`);
+  if (!msg) return;
+  const d = await ixSafeJson('/alerta/zapi', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ telefone: tel || undefined, mensagem: msg }) });
+  if (d.error) { alert('❌ '+d.error); return; }
+  alert('✅ Alerta enviado via Z-API');
+}
+
+// === ÚLTIMA ATIVIDADE (cruza GoTo + WATI + timeline + tarefas) ===
+async function ixLeadCarregarUltimaAtividade(dealId){
+  const el = document.getElementById('ix-lead-ultima');
+  if (!el) return;
+  el.innerHTML = '<span style="color:#888">carregando...</span>';
+  const d = await ixSafeJson('/lead/ultima-atividade/'+encodeURIComponent(dealId));
+  if (d.error || !d.ultima) {
+    el.innerHTML = '<span style="color:#666">Sem atividades registradas</span>';
+    return;
+  }
+  const u = d.ultima;
+  const dias = d.diasSemAtividade;
+  const corDias = dias < 1 ? '#22c55e' : dias < 3 ? '#fbbf24' : '#ef4444';
+  el.innerHTML = `
+    <div style="color:#fff;font-weight:700;font-size:11px">${u.label || u.tipo}</div>
+    <div style="color:#888;font-size:10px;margin-top:2px">📅 ${u.atFmt} · ${u.horasAtras}h atrás · ${u.fonte}${u.by?' · '+u.by:''}</div>
+    <div style="color:${corDias};font-size:10px;font-weight:700;margin-top:3px">⏱️ ${dias} dia(s) sem atividade nova</div>
+  `;
+}
+
+// === ABRIR CONVERSA POR NÚMERO ===
+async function ixAbrirNovoNumero(){
+  const inp = document.getElementById('ix-novo-num');
+  const num = (inp.value || '').replace(/\D/g, '');
+  if (num.length < 10) { alert('Digite o número com DDD (mínimo 10 dígitos)'); return; }
+  const nome = prompt('Nome do contato (opcional):', '');
+  const d = await ixSafeJson('/inbox/abrir-numero', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ phone: num, nome: nome || '' })
+  });
+  if (d.error) { alert('❌ ' + d.error); return; }
+  inp.value = '';
+  if (d.criado) alert('✅ Deal criado no Zoho! Abrindo conversa...');
+  // Adiciona conversa fake na lista pra abrir
+  const novaConv = {
+    dealId: d.dealId, phone: d.phone, nome: nome || ('Lead ' + d.phone),
+    ultimaMsg: '(conversa nova)', count: 0, ts: Date.now(), visto: true,
+    operadora: null, etapa: 'base_sem_contato',
+  };
+  if (!_IX_CONVS.find(c => c.dealId === d.dealId)) _IX_CONVS.unshift(novaConv);
+  ixRenderLista();
+  ixAbrir(d.dealId, d.phone);
+}
+
+// === CADASTRAR LEAD MANUAL ===
+async function ixCadastrarLead(){
+  const nome = prompt('Nome completo do lead:');
+  if (!nome) return;
+  const telefone = prompt('Telefone (com DDD):');
+  if (!telefone) return;
+  const cidade = prompt('Cidade (opcional):', '') || '';
+  const produto = prompt('Produto de interesse (Bebedouro/Filtro Entrada/Iron Free/etc.) opcional:', '') || '';
+  const observacao = prompt('Observação (opcional):', '') || '';
+  const d = await ixSafeJson('/inbox/cadastrar-lead', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ nome, telefone, cidade, produto, observacao })
+  });
+  if (d.error) { alert('❌ '+d.error); return; }
+  if (d.jaExiste) { alert('Esse número já existe como deal: '+d.message); ixAbrir(d.dealId, telefone.replace(/\D/g,'')); return; }
+  alert('✅ Lead cadastrado! Abrindo conversa...');
+  // Adiciona conversa na lista
+  _IX_CONVS.unshift({
+    dealId: d.dealId, phone: d.phone, nome,
+    ultimaMsg: '(novo lead cadastrado)', count: 0, ts: Date.now(), visto: true,
+    operadora: null, etapa: 'base_sem_contato',
+  });
+  ixRenderLista();
+  ixAbrir(d.dealId, d.phone);
+}
+
+// Cadastra lead órfão direto do header da conversa atual (placeholder wati:phone)
+async function ixCadastrarOrfaoNoHeader(phone, nomeWati){
+  const nome = prompt('Nome completo do lead:', nomeWati || '');
+  if (!nome) return;
+  const cidade = prompt('Cidade (opcional):', '') || '';
+  const produto = prompt('Produto de interesse (Bebedouro/Filtro Entrada/Iron Free/etc.) opcional:', '') || '';
+  const observacao = prompt('Observação (opcional):', 'Lead órfão WATI — cadastrado via header da conversa') || '';
+  const d = await ixSafeJson('/inbox/cadastrar-lead', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ nome, telefone: phone, cidade, produto, observacao })
+  });
+  if (d.error) { alert('❌ '+d.error); return; }
+  if (d.jaExiste) {
+    alert('Já existe deal: '+d.message);
+    ixAbrir(d.dealId, phone.replace(/\D/g,''));
+    return;
+  }
+  // Migra a conversa do placeholder 'wati:phone' pro novo dealId real
+  const phoneClean = String(phone).replace(/\D/g,'');
+  const oldKey = 'wati:' + phoneClean;
+  await ixSafeJson('/inbox/migrar-orfao', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ oldKey, newDealId: d.dealId }),
+  }).catch(()=>{});
+  alert('✅ Lead cadastrado no Zoho! Atualizando conversa...');
+  await ixCarregar();
+  ixAbrir(d.dealId, d.phone);
+}
+
+// === ADICIONAR 2º NÚMERO ao lead atual ===
+async function ixAdd2Numero(){
+  if (!_IX_ATUAL) { alert('Selecione uma conversa/lead primeiro'); return; }
+  const tel = prompt('2º telefone deste lead (com DDD):');
+  if (!tel) return;
+  const d = await ixSafeJson('/inbox/adicionar-telefone/'+encodeURIComponent(_IX_ATUAL), {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ telefone: tel })
+  });
+  if (d.error) { alert('❌ '+d.error); return; }
+  alert('✅ Telefone secundário associado: '+d.telefonesSecundarios.join(', ')+'\n\nQuando esse número responder no WATI, vai cair na conversa deste lead.');
+}
+
+// === VER ÓRFÃOS (admin) ===
+async function ixVerOrfaos(){
+  const d = await ixSafeJson('/inbox/orfaos');
+  if (d.error) { alert('❌ '+d.error); return; }
+  if (d.aviso) { alert('⚠️ '+d.aviso+'\n\nClique em "🔄 Atualizar" no header pra rodar a reconstrução primeiro.'); return; }
+  if (!d.orfaos?.length) { alert('Nenhum órfão atual ✅'); return; }
+  // Modal listando órfãos com botão criar deal
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:#0d0d0d;border:1px solid #f97316;border-radius:10px;padding:18px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <h3 style="margin:0;color:#f97316;font-size:14px;flex:1">⚠️ ${d.orfaos.length} clientes responderam no WATI mas NÃO estão no Zoho</h3>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="background:#222;border:1px solid #444;color:#aaa;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:11px">✕</button>
+      </div>
+      <p style="color:#888;font-size:11px;margin-bottom:10px">Clica em + Criar pra cadastrar como Deal no Zoho. Se for um lead que já existe com OUTRO número, abre o lead e clica "+ 2º nº".</p>
+      <div style="max-height:60vh;overflow-y:auto">
+        ${d.orfaos.map((o, i) => `
+          <div style="padding:10px;border:1px solid #333;border-radius:6px;margin-bottom:6px;display:flex;align-items:center;gap:8px;font-size:11px">
+            <div style="flex:1">
+              <div style="color:#fff;font-weight:700">${o.nome||'(sem nome)'}</div>
+              <div style="color:#aaa">📞 ${o.phone}${o.source?' · '+o.source.slice(0,40):''}${o.produto?' · '+o.produto:''}</div>
+            </div>
+            <button onclick="ixCriarOrfao(${i},this)" style="background:#22c55e;color:#000;border:none;border-radius:4px;padding:5px 10px;font-weight:800;font-size:10px;cursor:pointer">+ Criar</button>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  window._IX_ORFAOS = d.orfaos;
+}
+async function ixCriarOrfao(idx, btn){
+  const o = window._IX_ORFAOS?.[idx];
+  if (!o) return;
+  btn.disabled = true; btn.textContent = '⏳';
+  const d = await ixSafeJson('/inbox/cadastrar-lead', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ nome: o.nome||('Lead '+o.phone), telefone: o.phone, produto: o.produto, leadSource: 'WATI · '+(o.source?o.source.includes('fb.me')?'Facebook':o.source.includes('ig.me')?'Instagram':'WhatsApp':'Inbound') })
+  });
+  if (d.error) { alert('❌ '+d.error); btn.disabled=false; btn.textContent='+ Criar'; return; }
+  btn.style.background = '#666'; btn.textContent = '✅ criado'; btn.disabled = true;
+}
+
+// === RESPOSTAS RÁPIDAS ===
+let _IX_RAPIDAS = [];
+async function ixAbrirRapidas(){
+  if (!_IX_ATUAL) { alert('Selecione uma conversa primeiro'); return; }
+  // Sempre recarrega pra pegar últimas (se admin tiver editado)
+  const d = await ixSafeJson('/inbox/respostas-rapidas');
+  _IX_RAPIDAS = d.respostas || [];
+  const isAdmin = '<%= user.role %>' === 'admin';
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:#0d0d0d;border:1px solid #fbbf24;border-radius:10px;padding:18px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <h3 style="margin:0;color:#fbbf24;font-size:14px;flex:1">⚡ Respostas Rápidas</h3>
+        ${isAdmin?'<button onclick="ixEditarRapidas()" style="background:#1f6feb;border:none;color:#fff;border-radius:5px;padding:5px 10px;cursor:pointer;font-size:11px;font-weight:700">✏️ Editar</button>':''}
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="background:#222;border:1px solid #444;color:#aaa;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:11px">✕</button>
+      </div>
+      <p style="color:#888;font-size:10px;margin:0 0 10px">WATI não expõe respostas rápidas via API — gerenciadas no portal. Templates aprovados estão no botão 📋.</p>
+      <input type="text" id="ix-rap-busca" placeholder="🔍 buscar..." oninput="ixFiltrarRapidas()" style="width:100%;padding:7px 10px;background:#161616;border:1px solid #333;border-radius:6px;color:#fff;font-size:12px;margin-bottom:10px">
+      <div id="ix-rap-list" style="max-height:50vh;overflow-y:auto"></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  ixRenderRapidas();
+}
+
+// Editor inline (admin) — cadastra/edita/remove respostas rápidas
+async function ixEditarRapidas(){
+  document.querySelector('div[style*="z-index:200"]')?.remove();
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:250;display:flex;align-items:center;justify-content:center;padding:20px';
+  const renderEditor = () => `
+    <div style="background:#0d0d0d;border:1px solid #1f6feb;border-radius:10px;padding:18px;max-width:680px;width:100%;max-height:90vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <h3 style="margin:0;color:#1f6feb;font-size:14px;flex:1">✏️ Editar Respostas Rápidas</h3>
+        <button onclick="ixAddRapida()" style="background:#22c55e;color:#000;border:none;border-radius:5px;padding:6px 12px;cursor:pointer;font-size:11px;font-weight:800">+ Nova</button>
+        <button onclick="this.closest('div[style*=fixed]').remove();ixAbrirRapidas()" style="background:#222;border:1px solid #444;color:#aaa;border-radius:5px;padding:6px 10px;cursor:pointer;font-size:11px">← Voltar</button>
+      </div>
+      <div id="ix-rap-edit-list">${_IX_RAPIDAS.map((r,i) => `
+        <div style="background:#161616;border:1px solid #333;border-radius:6px;padding:10px;margin-bottom:6px">
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <input type="text" value="${(r.label||'').replace(/"/g,'&quot;')}" onchange="_IX_RAPIDAS[${i}].label=this.value" placeholder="Label (Ex: Saudação)" style="flex:1;background:#0d0d0d;border:1px solid #333;color:#fff;border-radius:4px;padding:5px 8px;font-size:11px">
+            <button onclick="_IX_RAPIDAS.splice(${i},1);ixRecargarEditor()" style="background:transparent;color:#f87171;border:1px solid #ef4444;border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer">×</button>
+          </div>
+          <textarea onchange="_IX_RAPIDAS[${i}].texto=this.value" placeholder="Texto da resposta" rows="2" style="width:100%;background:#0d0d0d;border:1px solid #333;color:#fff;border-radius:4px;padding:5px 8px;font-size:11px;resize:vertical">${r.texto||''}</textarea>
+        </div>`).join('')}</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;padding-top:14px;border-top:1px solid #333">
+        <button onclick="ixSalvarRapidas(this)" style="background:#22c55e;color:#000;border:none;border-radius:6px;padding:9px 18px;font-weight:800;font-size:12px;cursor:pointer">💾 Salvar tudo</button>
+      </div>
+    </div>
+  `;
+  modal.innerHTML = renderEditor();
+  document.body.appendChild(modal);
+  window.ixRecargarEditor = () => { modal.innerHTML = renderEditor(); };
+  window.ixAddRapida = () => {
+    _IX_RAPIDAS.push({ id:'r'+Date.now(), label:'Nova resposta', texto:'' });
+    window.ixRecargarEditor();
+  };
+}
+async function ixSalvarRapidas(btn){
+  btn.disabled = true; btn.textContent = '⏳ Salvando...';
+  const d = await ixSafeJson('/inbox/respostas-rapidas', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ respostas: _IX_RAPIDAS })
+  });
+  btn.disabled = false; btn.textContent = '💾 Salvar tudo';
+  if (d.error) { alert('❌ '+d.error); return; }
+  _IX_RAPIDAS = d.respostas;
+  alert('✅ Respostas salvas: '+d.respostas.length);
+  document.querySelector('div[style*="z-index:250"]')?.remove();
+  ixAbrirRapidas();
+}
+function ixRenderRapidas(){
+  const q = (document.getElementById('ix-rap-busca')?.value || '').toLowerCase();
+  const list = _IX_RAPIDAS.filter(r => !q || (r.label+' '+r.texto).toLowerCase().includes(q));
+  document.getElementById('ix-rap-list').innerHTML = list.map(r => `
+    <div onclick="ixUsarRapida(${JSON.stringify(r.id).replace(/"/g,'&quot;')})" style="padding:10px 12px;border:1px solid #333;border-radius:6px;margin-bottom:6px;cursor:pointer;background:#161616">
+      <div style="color:#fbbf24;font-weight:700;font-size:12px;margin-bottom:3px">${r.label}</div>
+      <div style="color:#ddd;font-size:11px;line-height:1.4">${(r.texto||'').slice(0,140)}${(r.texto||'').length>140?'...':''}</div>
+    </div>
+  `).join('') || '<div style="color:#888;padding:20px;text-align:center">nenhuma</div>';
+}
+function ixFiltrarRapidas(){ ixRenderRapidas(); }
+function ixUsarRapida(id){
+  const r = _IX_RAPIDAS.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('ix-text').value = r.texto;
+  document.querySelector('div[style*="z-index:200"]')?.remove();
+  document.getElementById('ix-text').focus();
+}
+
+ixCarregar();
+// Aplica filtros persistidos
+ixSetFiltroOwner(_IX_FILTRO_OWNER);
+ixSetFiltroCanal(_IX_FILTRO_CANAL);
+// Fallback agressivo: 5s (era 30s) — garante que lista atualiza mesmo se SSE cair
+setInterval(ixCarregar, 5000);
+
+// === SSE: tempo real (push do server quando webhook WATI/Z-API chega) ===
+function ixIniciarStream(){
+  let _evt;
+  try {
+    _evt = new EventSource('/inbox/stream');
+  } catch(e) { console.warn('SSE indisponível:', e); return; }
+  _evt.addEventListener('hello', () => console.log('[inbox] SSE conectado'));
+  _evt.addEventListener('nova_mensagem', e => {
+    try {
+      const d = JSON.parse(e.data);
+      console.log('[inbox] nova msg:', d.dealId, d.text);
+      // Recarrega lista imediatamente (atualiza badge "novo" e ordenação)
+      ixCarregar();
+      // Se a conversa atual é a que recebeu mensagem: insere bolha no DOM AGORA
+      // (sem refetch — WATI getMessages tem 1-3min de latência depois do webhook)
+      if (_IX_ATUAL === d.dealId) {
+        const msgsEl = document.getElementById('ix-msgs');
+        if (msgsEl && d.text) {
+          const wasAtBottom = msgsEl.scrollTop + msgsEl.clientHeight >= msgsEl.scrollHeight - 30;
+          const ts = d.ts || Date.now();
+          const tsLabel = ixFmtTsFull(ts);
+          const safeText = String(d.text).replace(/</g,'&lt;').replace(/\n/g,'<br>');
+          const div = document.createElement('div');
+          div.className = 'ix-msg lead';
+          div.dataset.sseTs = String(ts);
+          div.innerHTML = safeText + '<div class="ts">' + tsLabel + '</div>';
+          msgsEl.appendChild(div);
+          if (wasAtBottom) msgsEl.scrollTop = msgsEl.scrollHeight;
+        }
+        // Reconciliação eventual com o histórico WATI em 30s (quando o getMessages já tem a msg)
+        clearTimeout(window._ixReconcileTimer);
+        window._ixReconcileTimer = setTimeout(() => {
+          const conv = _IX_CONVS.find(c => c.dealId === d.dealId);
+          if (conv && _IX_ATUAL === d.dealId) ixAtualizarConversa(conv.phone);
+        }, 30000);
+      }
+      // Som ICQ/MSN clássico (configurável via header — botão 🔔)
+      try { window.tdfSons?.tocar(); } catch(_){}
+    } catch(err) { console.warn('SSE parse:', err); }
+  });
+  _evt.onerror = () => {
+    console.warn('[inbox] SSE caiu, reconectando em 5s...');
+    try { _evt.close(); } catch(_){}
+    setTimeout(ixIniciarStream, 5000);
+  };
+}
+ixIniciarStream();
+</script>
+
+</div></body></html>

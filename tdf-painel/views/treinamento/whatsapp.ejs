@@ -1,0 +1,254 @@
+<% const activePage = 'treinamento'; const pageTitle = 'WhatsApp — Vendas por Texto'; %>
+<%- include('../layout', { user, activePage, pageTitle }) %>
+
+<div class="treino-module">
+  <a href="/treinamento" class="treino-back">← Voltar ao Treinamento</a>
+
+  <div class="treino-header">
+    <span class="treino-badge">Modulo 7 de 7</span>
+    <h1>📱 WhatsApp — Vendas por Texto</h1>
+    <p class="treino-subtitle">80% dos seus leads chegam pelo WhatsApp. Se voce nao domina vendas por texto, voce perde dinheiro todo dia.</p>
+  </div>
+
+  <!-- ===================== DIFERENÇAS ===================== -->
+  <section class="treino-section">
+    <h2>Telefone vs WhatsApp — diferencas fundamentais</h2>
+
+    <div class="treino-table-wrap">
+      <table class="treino-table">
+        <thead>
+          <tr>
+            <th>Aspecto</th>
+            <th>Telefone</th>
+            <th>WhatsApp</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Atencao</strong></td><td>Total — voce tem a pessoa</td><td>Parcial — ela ta fazendo outras coisas</td></tr>
+          <tr><td><strong>Velocidade</strong></td><td>Resposta imediata</td><td>Respostas com delay</td></tr>
+          <tr><td><strong>Tom</strong></td><td>Voce controla com a voz</td><td>O cliente interpreta como quiser</td></tr>
+          <tr><td><strong>Persuasao</strong></td><td>Mais facil — voz + emocao</td><td>Mais dificil — so texto</td></tr>
+          <tr><td><strong>Registro</strong></td><td>Precisa gravar</td><td>Tudo fica registrado</td></tr>
+          <tr><td><strong>Conveniencia</strong></td><td>Cliente precisa parar</td><td>Cliente responde quando quer</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="treino-tip">
+      <strong>Regra geral:</strong> Use WhatsApp pra abrir o contato e manter o relacionamento. Use telefone pra sondagem profunda e fechamento. O objetivo no WhatsApp e sempre CONDUZIR PRA LIGACAO.
+    </div>
+  </section>
+
+  <!-- ===================== TEMPO DE RESPOSTA ===================== -->
+  <section class="treino-section">
+    <h2>Regra dos 5 minutos</h2>
+    <p>Tempo de resposta e o fator numero 1 de conversao no WhatsApp. Lead que recebe resposta em ate 5 minutos converte 3x mais do que lead que espera 1 hora.</p>
+
+    <div class="treino-spin-overview">
+      <div class="spin-item spin-n"><strong>0-5 min:</strong> Lead quente. Conversao maxima. PRIORIDADE ABSOLUTA.</div>
+      <div class="spin-item spin-s"><strong>5-30 min:</strong> Ainda quente. Conversao boa. Aceitavel se voce estava em call.</div>
+      <div class="spin-item spin-p"><strong>30-60 min:</strong> Esfriando. O lead ja pode ter falado com concorrente.</div>
+      <div class="spin-item spin-i"><strong>+1 hora:</strong> Frio. Voce precisa resgatar. A chance caiu pela metade.</div>
+    </div>
+
+    <div class="treino-dont" style="margin-top: 16px;">
+      <h4>NUNCA faca isso</h4>
+      <ul>
+        <li>Deixar lead esperando mais de 30 minutos sem nenhuma resposta</li>
+        <li>Responder "boa tarde, como posso te ajudar?" 3 horas depois — o cliente ja esqueceu</li>
+        <li>Copiar e colar mensagem generica sem personalizar</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== MENSAGENS CURTAS ===================== -->
+  <section class="treino-section">
+    <h2>Mensagens curtas vs longas</h2>
+    <p>No WhatsApp, menos e mais. O cliente nao vai ler um paragrafo de 10 linhas. Quebre em mensagens curtas.</p>
+
+    <div class="treino-grid-2">
+      <div class="treino-dont">
+        <h4>ERRADO — Textao</h4>
+        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+          "Boa tarde Marcos! Aqui e o Guilherme da Tudo de Filtro, especialista em tratamento de agua. Vi que voce se interessou pelo nosso filtro de entrada. Nos temos o American Filter Inox, que e fabricado em aco inox 304, com garantia de 10 anos, elemento filtrante exclusivo de quartzo com zeolita, e retrolavagem automatica. A instalacao e feita por nosso tecnico certificado. O valor e sob consulta. Posso te enviar uma proposta?"
+        </p>
+      </div>
+      <div class="treino-do">
+        <h4>CERTO — Mensagens curtas</h4>
+        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+          "Oi Marcos! Aqui e o Guilherme da Tudo de Filtro 👋"<br><br>
+          "Vi que voce ta buscando solucao pra agua ai"<br><br>
+          "Me conta: qual o problema que ta te incomodando?"
+        </p>
+      </div>
+    </div>
+
+    <div class="treino-tip">
+      <strong>Regra:</strong> Maximo 2-3 linhas por mensagem. Se ficou grande, quebre em 2 mensagens. Mensagem curta e lida. Mensagem longa e ignorada.
+    </div>
+  </section>
+
+  <!-- ===================== ÁUDIO ===================== -->
+  <section class="treino-section">
+    <h2>Uso de audio — quando sim, quando nao</h2>
+
+    <div class="treino-grid-2">
+      <div class="treino-do">
+        <h4>Audio SIM</h4>
+        <ul>
+          <li>Depois que o cliente ja respondeu por texto (rapport estabelecido)</li>
+          <li>Para explicar algo tecnico que ficaria confuso por texto</li>
+          <li>Para dar um tom pessoal e caloroso ao follow-up</li>
+          <li>Audio de no maximo 60 segundos</li>
+          <li>Comece com o nome do cliente: "Marcos, olha..."</li>
+        </ul>
+      </div>
+      <div class="treino-dont">
+        <h4>Audio NAO</h4>
+        <ul>
+          <li>Na primeira mensagem — o cliente nao te conhece</li>
+          <li>Audio de 3+ minutos — ninguem ouve</li>
+          <li>Audio pra mandar preco — preco por texto, sempre</li>
+          <li>Audio quando o cliente so manda texto — espelhe o formato</li>
+          <li>Audio em horario comercial de empresa — ninguem pode ouvir audio no trabalho</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== EMOJIS ===================== -->
+  <section class="treino-section">
+    <h2>Emojis — quando usar, quando nao</h2>
+
+    <div class="treino-example">
+      <strong>Bom uso de emoji:</strong><br>
+      "Oi Maria! Aqui e o Tiago da Tudo de Filtro 👋"<br>
+      "Vou te enviar a proposta agora 📄"<br>
+      "Pronto, instalacao agendada pra quinta! ✅"
+    </div>
+
+    <div class="treino-grid-2">
+      <div class="treino-do">
+        <h4>Emojis que funcionam</h4>
+        <ul>
+          <li>👋 na saudacao</li>
+          <li>✅ pra confirmar algo</li>
+          <li>📄 pra enviar documento</li>
+          <li>📱 pra sugerir ligacao</li>
+          <li>1-2 emojis por mensagem, no maximo</li>
+        </ul>
+      </div>
+      <div class="treino-dont">
+        <h4>Emojis que nao funcionam</h4>
+        <ul>
+          <li>😍🔥💯🙏 em excesso — parece spam</li>
+          <li>Emoji em mensagem seria (objecao, preco, reclamacao)</li>
+          <li>Emoji com cliente formal — espelhe o estilo dele</li>
+          <li>Sticker/figurinha com cliente novo</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FOLLOW-UP POR WHATSAPP ===================== -->
+  <section class="treino-section">
+    <h2>Follow-up por WhatsApp</h2>
+    <p>O segredo do follow-up e dar VALOR, nao so cobrar resposta.</p>
+
+    <div class="treino-grid-2">
+      <div class="treino-dont">
+        <h4>Follow-up RUIM</h4>
+        <ul>
+          <li>"Oi, viu a proposta?"</li>
+          <li>"Oi Marcos, conseguiu pensar?"</li>
+          <li>"Bom dia! Alguma novidade?"</li>
+          <li>Mandar "?" depois de 24h sem resposta</li>
+        </ul>
+      </div>
+      <div class="treino-do">
+        <h4>Follow-up BOM</h4>
+        <ul>
+          <li>"Marcos, lembrei do seu caso. Instalamos essa semana num condominio parecido com o seu — olha a diferenca da agua" + foto antes/depois</li>
+          <li>"Marcos, surgiu uma vaga de instalacao pra quinta. Quer que eu reserve pra voce?"</li>
+          <li>"Marcos, vi um depoimento de um cliente com o mesmo problema que o seu. Vou te mandar" + video</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="treino-tip">
+      <strong>Cada follow-up precisa ter um MOTIVO.</strong> "Liguei pra saber se decidiu" nao e motivo. "Liguei porque surgiu vaga de instalacao" e motivo. "Liguei porque vi um caso parecido com o seu" e motivo. Sempre traga algo novo.
+    </div>
+  </section>
+
+  <!-- ===================== CONDUZIR PRA LIGAÇÃO ===================== -->
+  <section class="treino-section">
+    <h2>Como conduzir pra ligacao</h2>
+    <p>O WhatsApp e boa porta de entrada, mas a venda acontece na ligacao. Seu objetivo e sempre migrar pra voz.</p>
+
+    <div class="treino-example">
+      <strong>Frases que funcionam:</strong><br><br>
+      <em>"Marcos, seu caso tem alguns detalhes que fica mais facil eu te explicar por voz. Posso te ligar em 5 minutos?"</em><br><br>
+      <em>"Pra eu te dar a melhor recomendacao, preciso te fazer umas perguntas rapidas. Me da 5 minutos no telefone?"</em><br><br>
+      <em>"Cada caso de agua de poco e diferente. Deixa eu te ligar rapidinho pra entender o seu — 5 minutinhos."</em><br><br>
+      <em>"Te ligo agora? E mais rapido que ficar digitando 😄"</em>
+    </div>
+
+    <div class="treino-grid-2">
+      <div class="treino-do">
+        <h4>Tecnicas que funcionam</h4>
+        <ul>
+          <li>Dar um motivo: "fica mais facil por voz"</li>
+          <li>Definir duracao: "5 minutinhos"</li>
+          <li>Perguntar, nao avisar: "posso te ligar?" vs "vou te ligar"</li>
+          <li>Se ele nao pode agora, agendar: "que horario e melhor?"</li>
+        </ul>
+      </div>
+      <div class="treino-dont">
+        <h4>O que nao funciona</h4>
+        <ul>
+          <li>Ligar sem avisar — cliente nao atende numero desconhecido</li>
+          <li>"Preciso te ligar pra passar o preco" — parece pressao</li>
+          <li>Insistir na ligacao se o cliente preferir texto — respeite</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== EXERCÍCIO ===================== -->
+  <section class="treino-section">
+    <h2>Exercicio Pratico</h2>
+    <div class="treino-exercise">
+      <h4>Desafio: Simule uma venda completa por WhatsApp</h4>
+      <p>Cenario: Ana, gerente de um escritorio de advocacia com 35 pessoas em Sao Jose dos Campos, mandou mensagem pelo anuncio do Facebook: "Oi, quero saber sobre bebedouro".</p>
+      <p>Escreva:</p>
+      <ol>
+        <li>Sua primeira resposta (em ate 5 minutos)</li>
+        <li>3 mensagens de sondagem curtas (maximo 2 linhas cada)</li>
+        <li>A mensagem conduzindo pra ligacao</li>
+        <li>O follow-up de 24h caso ela nao responda (com valor, nao cobranca)</li>
+      </ol>
+
+      <div class="treino-sim-btn-wrap">
+        <a href="https://closy-app-production.up.railway.app/dashboard/training" target="_blank" class="treino-sim-btn">Testar no Simulador Closy</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="treino-complete-wrap">
+    <button class="treino-complete-btn" onclick="markComplete('whatsapp')">Marcar como concluido</button>
+    <a href="/treinamento" class="treino-next-btn">← Voltar ao Hub de Treinamento</a>
+  </div>
+
+</div>
+
+<style>
+.spin-item { padding: 14px 20px; border-radius: 8px; font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.spin-item strong { font-size: 15px; }
+.spin-s { background: rgba(0,102,204,0.15); border-left: 4px solid #0066CC; color: #3399FF; }
+.spin-p { background: rgba(210,153,34,0.15); border-left: 4px solid #D29922; color: #D29922; }
+.spin-i { background: rgba(248,81,73,0.15); border-left: 4px solid #F85149; color: #F85149; }
+.spin-n { background: rgba(46,160,67,0.15); border-left: 4px solid #2EA043; color: #3FB950; }
+</style>
+
+<%- include('_styles') %>
+<%- include('_scripts') %>

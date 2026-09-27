@@ -1,0 +1,80 @@
+{
+  "stats": {
+    "erpTotal": 6038,
+    "processados": 30,
+    "semMatchZoho": 21,
+    "matched": 9,
+    "jaTinhamProduto": 0,
+    "atualizados": 9,
+    "falhas": 0,
+    "porCategoria": {
+      "refil": 6,
+      "purificador": 3
+    }
+  },
+  "log": [
+    {
+      "dealId": "6311862000215609161",
+      "nome": "ALISSON RIBEIRO DA SILVA 6311862000215433419",
+      "antes": null,
+      "depois": "REFIL NOBLESSE / DA VINCI - VENDAS",
+      "categoria": "refil"
+    },
+    {
+      "dealId": "6311862000006338682",
+      "nome": "EDSON DIAS",
+      "antes": null,
+      "depois": "REFIL AF NOBLESS - DA VINCI | REFIL NOBLESSE / DA VINCI - VENDAS",
+      "categoria": "refil"
+    },
+    {
+      "dealId": "6311862000006338655",
+      "nome": "MARIA ALDA",
+      "antes": null,
+      "depois": "CAMARA DUPLA II S/REGISTRO DE PRESSAO - VENDAS | CD SMART AMERICAN FILTER",
+      "categoria": "purificador"
+    },
+    {
+      "dealId": "6311862000006338606",
+      "nome": "MARIO MAMMOLI",
+      "antes": null,
+      "depois": "BLISS CINZA | CD SMART AMERICAN FILTER",
+      "categoria": "purificador"
+    },
+    {
+      "dealId": "6311862000006530355",
+      "nome": "MARIA OLINDA",
+      "antes": null,
+      "depois": "REFIL AF BLISS BHB-N AGUA RESIDENCIAL",
+      "categoria": "refil"
+    },
+    {
+      "dealId": "6311862000216903786",
+      "nome": "Medvale Serviços Médicos LTDA",
+      "antes": null,
+      "depois": "REFIL WFS 003 | REFIL WFS 027",
+      "categoria": "refil"
+    },
+    {
+      "dealId": "6311862000005423407",
+      "nome": "Lia Terezinha Z melão",
+      "antes": null,
+      "depois": "REFIL AF NOBLESS - DA VINCI",
+      "categoria": "refil"
+    },
+    {
+      "dealId": "6311862000006530552",
+      "nome": "ADELIA ALVES",
+      "antes": null,
+      "depois": "REFIL EUROPA BY HEBE / BLISS - VENDAS | REFIL HF",
+      "categoria": "refil"
+    },
+    {
+      "dealId": "6311862000006338683",
+      "nome": "CELSO LUIZ PEREIRA",
+      "antes": null,
+      "depois": "CAMARA DUPLA II S/REGISTRO DE PRESSAO - VENDAS",
+      "categoria": "purificador"
+    }
+  ]
+}

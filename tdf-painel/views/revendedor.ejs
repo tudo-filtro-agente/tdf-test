@@ -1,0 +1,73 @@
+<% var pageTitle = pageTitle || 'Treinamentos'; var activePage = 'revendedor'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<div class="container" style="max-width:980px;">
+
+  <% if (typeof preview !== 'undefined' && preview) { %>
+  <div style="margin-top:18px;background:rgba(245,158,11,.12);border:1px solid #b45309;border-radius:10px;padding:10px 14px;font-size:.82rem;color:#fbbf24;font-weight:700;">
+    Visão de administrador — é exatamente esta a tela que o revendedor vê ao entrar.
+  </div>
+  <% } %>
+
+  <div class="page-header" style="margin-top:26px;">
+    <h1>Seus treinamentos</h1>
+    <p class="subtitle">
+      Olá, <%= user.name %><% if (empresa) { %> — <%= empresa %><% } %>. Aqui ficam os treinamentos
+      de produto da Tudo de Filtro, mais as técnicas de venda e os scripts de atendimento.
+      As academias têm módulos, prova e certificado; seu progresso fica salvo, então dá para
+      parar e voltar depois. Primeira vez aqui? Comece por
+      <a href="/revendedor/como-usar" style="color:var(--accent);font-weight:700">como usar o portal</a>.
+    </p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:22px;">
+    <% academias.forEach(function(a){ %>
+      <a href="<%= a.base %>" style="display:block;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;text-decoration:none;color:var(--text);transition:border-color .18s,transform .18s;"
+         onmouseover="this.style.borderColor='var(--accent)';this.style.transform='translateY(-2px)'"
+         onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
+
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.55rem;line-height:1"><%= a.ico %></span>
+          <span style="font-weight:800;font-size:1.02rem;"><%= a.titulo %></span>
+        </div>
+
+        <p style="margin:10px 0 16px;font-size:.85rem;line-height:1.5;color:var(--text-muted);"><%= a.desc %></p>
+
+        <% if (!a.semProgresso) { %>
+        <div style="height:7px;background:var(--bg-hover);border-radius:99px;overflow:hidden;">
+          <div style="height:100%;width:<%= a.pct %>%;background:var(--accent);border-radius:99px;transition:width .3s;"></div>
+        </div>
+        <% } %>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:9px;font-size:.76rem;color:var(--text-muted);font-weight:700;">
+          <span>
+            <% if (a.semProgresso) { %>Consulta livre<% } else if (a.total) { %><%= a.concluidos %> de <%= a.total %> módulos<% } else { %>conteúdo a caminho<% } %>
+          </span>
+          <span>
+            <% if (a.certificado) { %>
+              <span style="color:#22c55e">Certificado</span>
+            <% } else if (a.aprovado) { %>
+              <span style="color:#22c55e">Prova aprovada</span>
+            <% } else if (a.concluidos) { %>
+              <%= a.pct %>%
+            <% } else if (a.semProgresso) { %>
+              <span style="color:var(--accent)">Abrir</span>
+            <% } else { %>
+              <span style="color:var(--accent)">Começar</span>
+            <% } %>
+          </span>
+        </div>
+      </a>
+    <% }); %>
+  </div>
+
+  <div style="margin:30px 0 40px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;font-size:.85rem;line-height:1.6;color:var(--text-muted);">
+    <strong style="color:var(--text);">Como funciona</strong><br>
+    Faça os módulos na ordem, responda a prova ao final e o certificado é liberado.
+    Dúvida sobre produto, dimensionamento ou preço de revenda: fale com seu contato
+    comercial na Tudo de Filtro — este portal é só o treinamento.
+  </div>
+
+</div>
+
+<%- include('footer') %>

@@ -1,0 +1,213 @@
+<% const activePage = 'cockpit'; const pageTitle = 'Histórico de Vendas · ' + user.name; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.ch-wrap{padding:14px 22px 80px;max-width:1300px;margin:0 auto}
+.ch-h{font-size:20px;color:var(--text);margin:0 0 4px;font-weight:800;display:flex;align-items:center;gap:10px}
+.ch-sub{color:var(--text-muted);font-size:12px;margin:0 0 14px}
+.ch-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 14px}
+.ch-preset{background:var(--bg-card);color:var(--text-muted);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.ch-preset:hover{background:var(--bg-hover);color:var(--text);border-color:#1f6feb}
+.ch-preset.active{background:#1f6feb;color:#fff;border-color:#1f6feb}
+.ch-bar input[type="date"]{background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:6px 10px;font-size:11px;font-family:inherit}
+.ch-bar select{background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:6px 10px;font-size:11px;font-family:inherit}
+.ch-bar .label{color:#7cb9f5;font-size:11px;font-weight:700;margin-left:auto}
+
+.ch-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px}
+.ch-card{background:linear-gradient(135deg,var(--bg-card),var(--bg-card));border:1px solid var(--border);border-radius:10px;padding:14px}
+.ch-card .lbl{color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;margin-bottom:5px}
+.ch-card .val{font-size:24px;font-weight:800;color:#22c55e;font-variant-numeric:tabular-nums}
+.ch-card .delta{font-size:11px;font-weight:700;margin-top:4px}
+.ch-card .delta.up{color:#22c55e}
+.ch-card .delta.dn{color:#ef4444}
+.ch-card .delta.zero{color:var(--text-muted)}
+.ch-card .sub{color:var(--text-muted);font-size:10px;margin-top:2px}
+
+.ch-grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:900px){.ch-grid2{grid-template-columns:1fr}}
+.ch-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px}
+.ch-panel h3{margin:0 0 10px;color:var(--text);font-size:13px;text-transform:uppercase;letter-spacing:.4px}
+
+.ch-bar-chart{display:flex;align-items:flex-end;gap:3px;height:160px;padding:5px 0;border-bottom:1px solid var(--border)}
+.ch-bar-chart .col{flex:1;background:linear-gradient(180deg,#22c55e,#16a34a);border-radius:3px 3px 0 0;min-height:2px;position:relative;cursor:pointer;transition:opacity .15s}
+.ch-bar-chart .col:hover{opacity:.7}
+.ch-bar-chart .col.zero{background:var(--bg-hover)}
+.ch-bar-chart .col-label{font-size:9px;color:var(--text-muted);text-align:center;margin-top:5px}
+
+.ch-cat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #1a1a1a;font-size:12px}
+.ch-cat-row .nome{color:var(--text);font-weight:700}
+.ch-cat-row .qtd{color:var(--text-muted);font-size:10px}
+.ch-cat-row .vlr{color:#22c55e;font-weight:700}
+
+.ch-rank{margin-bottom:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px}
+.ch-rank h3{margin:0 0 10px;color:var(--text);font-size:13px}
+.ch-rank-bars{display:flex;align-items:flex-end;gap:4px;height:80px}
+.ch-rank-bars .b{flex:1;background:var(--bg-hover);border-radius:3px 3px 0 0;position:relative;transition:all .15s}
+.ch-rank-bars .b.eu{background:linear-gradient(180deg,#7cb9f5,#1f6feb);box-shadow:0 0 0 1px #1f6feb}
+
+.ch-loading{padding:40px;text-align:center;color:var(--text-muted);font-size:12px}
+</style>
+
+<div class="ch-wrap">
+  <h1 class="ch-h">📊 Histórico de Vendas <span style="color:var(--text-muted);font-weight:400;font-size:14px" id="ch-name"></span></h1>
+  <p class="ch-sub">Veja sua performance em qualquer período. Compare com o período anterior equivalente.</p>
+
+  <div class="ch-bar">
+    <button class="ch-preset" data-p="hoje" onclick="chPreset('hoje')">Hoje</button>
+    <button class="ch-preset" data-p="ontem" onclick="chPreset('ontem')">Ontem</button>
+    <button class="ch-preset" data-p="esta_semana" onclick="chPreset('esta_semana')">Esta semana</button>
+    <button class="ch-preset" data-p="7d" onclick="chPreset('7d')">7 dias</button>
+    <button class="ch-preset active" data-p="30d" onclick="chPreset('30d')">30 dias</button>
+    <button class="ch-preset" data-p="este_mes" onclick="chPreset('este_mes')">Este mês</button>
+    <button class="ch-preset" data-p="mes_passado" onclick="chPreset('mes_passado')">Mês passado</button>
+    <button class="ch-preset" data-p="custom" onclick="chPreset('custom')">📅 Personalizado</button>
+    <span id="ch-custom-range" style="display:none;align-items:center;gap:6px">
+      <input id="ch-start" type="date">
+      <span style="color:var(--text-muted)">→</span>
+      <input id="ch-end" type="date">
+      <button onclick="chCarregar()" style="background:#22c55e;color:#000;border:none;padding:5px 12px;border-radius:5px;font-size:11px;font-weight:800;cursor:pointer">Aplicar</button>
+    </span>
+    <% if (isAdmin) { %>
+    <select id="ch-closer" onchange="chCarregar()">
+      <option value="">— Eu —</option>
+      <% closers.forEach(c => { %>
+      <option value="<%= c.username %>"><%= c.name %> (<%= c.team %>)</option>
+      <% }) %>
+    </select>
+    <% } %>
+    <span class="label" id="ch-period-label">⏳</span>
+  </div>
+
+  <div id="ch-content"><div class="ch-loading">⏳ Carregando histórico...</div></div>
+</div>
+
+<script>
+let _CH_PERIODO = '30d';
+let _CH_CUSTOM = null;
+
+function chPreset(p){
+  document.querySelectorAll('.ch-preset').forEach(b => b.classList.remove('active'));
+  document.querySelector('.ch-preset[data-p="'+p+'"]')?.classList.add('active');
+  const customSpan = document.getElementById('ch-custom-range');
+  if (p === 'custom') {
+    customSpan.style.display = 'inline-flex';
+    const today = new Date().toISOString().slice(0,10);
+    const start30 = new Date(Date.now() - 30*86400000).toISOString().slice(0,10);
+    document.getElementById('ch-start').value = start30;
+    document.getElementById('ch-end').value = today;
+    return;
+  }
+  customSpan.style.display = 'none';
+  _CH_PERIODO = p;
+  _CH_CUSTOM = null;
+  chCarregar();
+}
+
+async function chCarregar(){
+  const params = new URLSearchParams();
+  const customVisible = document.getElementById('ch-custom-range').style.display !== 'none';
+  if (customVisible) {
+    const s = document.getElementById('ch-start').value;
+    const e = document.getElementById('ch-end').value;
+    if (s && e) { params.set('start', s); params.set('end', e); }
+  } else {
+    params.set('periodo', _CH_PERIODO);
+  }
+  const closer = document.getElementById('ch-closer')?.value;
+  if (closer) params.set('closer', closer);
+  params.set('includeRanking', '1');
+
+  const c = document.getElementById('ch-content');
+  c.innerHTML = '<div class="ch-loading">⏳ Carregando histórico...</div>';
+  try {
+    const r = await fetch('/cockpit/historico?' + params.toString());
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    document.getElementById('ch-name').textContent = '· ' + d.ownerName;
+    const labelMap = { hoje:'Hoje', ontem:'Ontem', esta_semana:'Esta semana', '7d':'Últimos 7 dias', '30d':'Últimos 30 dias', '90d':'Últimos 90 dias', este_mes:'Este mês', mes_passado:'Mês passado', custom:'Personalizado' };
+    document.getElementById('ch-period-label').textContent = '📅 ' + (labelMap[d.periodo.label] || d.periodo.label) + ' (' + d.periodo.start.split('-').reverse().join('/') + ' → ' + d.periodo.end.split('-').reverse().join('/') + ')';
+    chRender(d);
+  } catch(e) {
+    c.innerHTML = '<div class="ch-loading" style="color:#ef4444">Erro: ' + e.message + '</div>';
+  }
+}
+
+function chMoney(v, big){
+  v = Number(v||0);
+  if (big && v >= 1000000) return 'R$ '+(v/1000000).toFixed(2).replace('.',',')+'M';
+  if (big && v >= 1000) return 'R$ '+(v/1000).toFixed(1).replace('.',',')+'k';
+  return 'R$ '+Math.round(v).toLocaleString('pt-BR');
+}
+
+function chDeltaCls(n){ return n > 0 ? 'up' : n < 0 ? 'dn' : 'zero'; }
+function chDeltaIco(n){ return n > 0 ? '↑' : n < 0 ? '↓' : '→'; }
+
+function chRender(d){
+  const c = document.getElementById('ch-content');
+  let html = '';
+  // Cards topo
+  html += '<div class="ch-cards">';
+  html += '<div class="ch-card"><div class="lbl">🏆 Vendas no período</div><div class="val">'+d.atual.vendas+'</div><div class="delta '+chDeltaCls(d.delta.vendas)+'">'+chDeltaIco(d.delta.vendas)+' '+Math.abs(d.delta.vendas)+'% vs anterior ('+d.anterior.vendas+' vendas)</div></div>';
+  html += '<div class="ch-card"><div class="lbl">💰 Faturamento</div><div class="val">'+chMoney(d.atual.faturamento,true)+'</div><div class="delta '+chDeltaCls(d.delta.faturamento)+'">'+chDeltaIco(d.delta.faturamento)+' '+Math.abs(d.delta.faturamento)+'% vs '+chMoney(d.anterior.faturamento,true)+'</div></div>';
+  html += '<div class="ch-card"><div class="lbl">🎫 Ticket Médio</div><div class="val" style="color:#7cb9f5">'+chMoney(d.atual.ticket_medio)+'</div><div class="sub">'+(d.atual.vendas>0 ? Math.round(d.atual.faturamento/d.atual.vendas/100)/10 + 'k médio' : '—')+'</div></div>';
+  if (d.ranking) {
+    const pos = d.ranking.posicao;
+    const total = d.ranking.total;
+    const corPos = pos === 1 ? '#fbbf24' : pos <= 3 ? '#22c55e' : pos <= total/2 ? '#7cb9f5' : '#888';
+    html += '<div class="ch-card"><div class="lbl">🏅 Posição no time</div><div class="val" style="color:'+corPos+'">#'+(pos||'—')+'</div><div class="sub">de '+total+' vendedores · top'+pos+'</div></div>';
+  }
+  html += '</div>';
+
+  // Gráfico vendas/dia + categorias
+  html += '<div class="ch-grid2">';
+  // Gráfico
+  const maxFat = Math.max(...d.series.map(s => s.faturamento), 1);
+  html += '<div class="ch-panel"><h3>📈 Vendas por dia</h3>';
+  html += '<div class="ch-bar-chart">';
+  d.series.forEach(s => {
+    const h = (s.faturamento / maxFat) * 100;
+    const cls = s.faturamento === 0 ? 'zero' : '';
+    html += '<div class="col '+cls+'" style="height:'+h+'%" title="'+s.data+': '+s.vendas+' vendas · '+chMoney(s.faturamento)+'"></div>';
+  });
+  html += '</div>';
+  // Eixo X (datas — mostra primeiro, meio, último se passar de 7 dias)
+  const labels = d.series.length <= 14
+    ? d.series.map(s => s.data.slice(8,10) + '/' + s.data.slice(5,7))
+    : d.series.map((s,i) => i === 0 || i === Math.floor(d.series.length/2) || i === d.series.length-1 ? s.data.slice(8,10)+'/'+s.data.slice(5,7) : '');
+  html += '<div style="display:flex;gap:3px"><div class="col-label" style="flex:1;text-align:left;padding-left:5px">'+labels[0]+'</div><div class="col-label" style="flex:1;text-align:center">'+(labels[Math.floor(labels.length/2)]||'')+'</div><div class="col-label" style="flex:1;text-align:right;padding-right:5px">'+labels[labels.length-1]+'</div></div>';
+  html += '</div>';
+  // Categorias
+  html += '<div class="ch-panel"><h3>📦 Por categoria de produto</h3>';
+  const cats = Object.entries(d.por_categoria || {}).sort((a,b) => b[1].faturamento - a[1].faturamento);
+  if (!cats.length) html += '<div style="color:#666;padding:14px;text-align:center;font-size:11px">sem vendas no período</div>';
+  else cats.forEach(([cat, info]) => {
+    html += '<div class="ch-cat-row"><div><div class="nome">'+info.label+'</div><div class="qtd">'+info.count+' venda(s)</div></div><div class="vlr">'+chMoney(info.faturamento,true)+'</div></div>';
+  });
+  html += '</div></div>';
+
+  // Ranking visual (anonimizado)
+  if (d.ranking && d.ranking.distribuicao && d.ranking.distribuicao.length > 1) {
+    const max = Math.max(...d.ranking.distribuicao.map(r => r.faturamento), 1);
+    html += '<div class="ch-rank"><h3>🏅 Você no time (anonimizado)</h3>';
+    html += '<div class="ch-rank-bars">';
+    d.ranking.distribuicao.forEach(r => {
+      const h = (r.faturamento / max) * 100;
+      html += '<div class="b '+(r.eu?'eu':'')+'" style="height:'+h+'%" title="'+(r.eu?'VOCÊ — ':'')+chMoney(r.faturamento)+' · '+r.vendas+' vendas"></div>';
+    });
+    html += '</div>';
+    html += '<div style="display:flex;justify-content:space-between;margin-top:8px;color:#888;font-size:11px"><span>Top 1: '+chMoney(d.ranking.top1_faturamento,true)+'</span><span>Sua posição: <strong style="color:#7cb9f5">#'+d.ranking.posicao+' de '+d.ranking.total+'</strong></span><span>Média time: '+chMoney(d.ranking.media_time,true)+'</span></div>';
+    html += '</div>';
+  }
+
+  // Últimas vendas
+  if (d.ultimas_vendas && d.ultimas_vendas.length > 0) {
+    html += '<div class="ch-panel"><h3>📋 Últimas vendas no período ('+d.ultimas_vendas.length+')</h3>';
+    html += d.ultimas_vendas.map(v => '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #1a1a1a;font-size:12px"><div><div style="color:#fff;font-weight:700">'+(v.nome||'?').replace(/</g,'&lt;')+'</div><div style="color:#888;font-size:10px">'+(v.produto||'').slice(0,50)+' · '+(v.data||'')+'</div></div><div style="color:#22c55e;font-weight:700">'+chMoney(v.amount)+'</div></div>').join('');
+    html += '</div>';
+  }
+
+  c.innerHTML = html;
+}
+
+chCarregar();
+</script>

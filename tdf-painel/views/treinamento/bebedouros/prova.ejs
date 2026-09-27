@@ -1,0 +1,54 @@
+<%- include('../../layout', { user, activePage, pageTitle }) %>
+<%- include('_shared') %>
+<div class="tb-wrap">
+  <a class="tb-back" href="<%= base %>">← Voltar ao treinamento</a>
+  <h1 style="color:#fff;margin:12px 0 2px">📝 Prova do Closer</h1>
+  <p style="color:#8899AA;margin:0 0 8px"><%= questoes.length %> questões sorteadas · aprovação com <b style="color:#00AAFF"><%= META.notaMinimaProva %>%</b> · você pode refazer.</p>
+  <% if (prog.prova.melhorNota) { %><div class="tb-pill">Melhor nota: <%= prog.prova.melhorNota %>%</div><% } %>
+  <% if (prog.prova.aprovado) { %><span class="tb-tag sdr">✅ já aprovado</span><% } %>
+
+  <div id="provaForm" style="margin-top:14px">
+    <% questoes.forEach(function(q,qi){ %>
+      <div class="tb-quiz" data-id="<%= q.id %>">
+        <div class="q"><span class="tb-pill" style="margin-bottom:6px"><%= q.tema %></span><br><%= qi+1 %>. <%= q.enunciado %></div>
+        <% q.opcoes.forEach(function(op,oi){ %>
+          <button type="button" class="tb-opt pr-opt" data-id="<%= q.id %>" data-txt="<%= encodeURIComponent(op.texto) %>"><%= op.texto %></button>
+        <% }) %>
+      </div>
+    <% }) %>
+  </div>
+
+  <div class="tb-navrow">
+    <span style="color:#5b7c99;font-size:.85rem" id="prCount">0 / <%= questoes.length %> respondidas</span>
+    <button class="tb-btn green" id="prSubmit">Entregar prova</button>
+  </div>
+  <div id="prResult" style="margin-top:16px"></div>
+</div>
+
+<script>
+(function(){
+  var resp={}, total=<%= questoes.length %>;
+  document.querySelectorAll('.pr-opt').forEach(function(b){
+    b.onclick=function(){
+      var id=b.dataset.id;
+      document.querySelectorAll('.pr-opt[data-id="'+id+'"]').forEach(x=>x.classList.remove('ok'));
+      b.classList.add('ok'); resp[id]=decodeURIComponent(b.dataset.txt);
+      document.getElementById('prCount').textContent=Object.keys(resp).length+' / '+total+' respondidas';
+    };
+  });
+  document.getElementById('prSubmit').onclick=async function(){
+    if(Object.keys(resp).length<total && !confirm('Você deixou questões em branco. Entregar mesmo assim?')) return;
+    this.disabled=true; this.textContent='corrigindo…';
+    var r=await TB.post('/api/prova',{respostas:resp});
+    this.disabled=false; this.textContent='Entregar prova';
+    var cor=r.aprovado?'#3FB950':'#ef6a6a';
+    var html='<div class="tb-callout '+(r.aprovado?'sucesso':'perigo')+'"><div class="ct" style="color:'+cor+'">'+(r.aprovado?'✅ Aprovado!':'❌ Não atingiu a mínima')+' — '+r.nota+'% (mín '+r.minima+'%)</div>';
+    if(r.areas && r.areas.length){ html+='<div style="font-size:.85rem;margin-top:6px">Revise estes temas: '+r.areas.map(a=>a.tema+' ('+a.pct+'%)').join(', ')+'.</div>'; }
+    html+='</div>';
+    if(r.aprovado) html+='<a class="tb-btn green" href="<%= base %>/certificado">🎓 Ver certificado</a> ';
+    html+='<a class="tb-btn ghost" href="<%= base %>/prova">↻ Refazer com novas questões</a>';
+    document.getElementById('prResult').innerHTML=html;
+    document.getElementById('prResult').scrollIntoView({behavior:'smooth'});
+  };
+})();
+</script>

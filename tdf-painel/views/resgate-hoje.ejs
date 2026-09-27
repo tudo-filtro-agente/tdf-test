@@ -1,0 +1,147 @@
+<% const activePage = 'resgate'; const pageTitle = 'Resgate Hoje · Decay Score'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.rh-wrap{padding:14px 22px 80px;max-width:1300px;margin:0 auto}
+.rh-h{font-size:20px;color:var(--text);margin:0 0 4px;font-weight:800}
+.rh-sub{color:var(--text-muted);font-size:12px;margin:0 0 14px}
+
+.rh-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:18px}
+.rh-stat{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.rh-stat .lbl{color:var(--text-muted);font-size:10px;text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-bottom:4px}
+.rh-stat .val{font-size:22px;font-weight:800}
+.rh-stat.danger .val{color:#ef4444}
+.rh-stat.warn .val{color:#f59e0b}
+.rh-stat.info .val{color:#7cb9f5}
+.rh-stat.ok .val{color:#22c55e}
+
+.rh-list{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.rh-row{display:grid;grid-template-columns:60px 2.2fr 1fr 1.4fr 1fr 100px 90px;gap:10px;padding:10px 14px;align-items:center;border-bottom:1px solid #1a1a1a;font-size:12px}
+.rh-row:hover{background:var(--bg-card)}
+.rh-row.score-90{background:#1a0a0a}
+.rh-row.score-90:hover{background:#240e0e}
+
+.rh-score{display:inline-block;border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;font-variant-numeric:tabular-nums}
+.rh-score.crit{background:rgba(239,68,68,.2);color:#ef4444;border:2px solid #ef4444}
+.rh-score.warn{background:rgba(245,158,11,.2);color:#f59e0b;border:2px solid #f59e0b}
+.rh-score.med{background:rgba(124,185,245,.18);color:#7cb9f5;border:2px solid #7cb9f5}
+
+.rh-nome{color:var(--text);font-weight:700}
+.rh-meta{color:var(--text-muted);font-size:10px;margin-top:2px}
+.rh-stage{color:#7cb9f5;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.rh-tempo{color:var(--text-muted);font-size:11px}
+.rh-tempo .tag{display:inline-block;background:#1f2937;color:#9ca3af;padding:1px 5px;border-radius:5px;font-size:9px;margin-right:3px;margin-top:1px}
+.rh-tempo .vermelho{color:#fca5a5}
+.rh-vlr{color:#22c55e;font-weight:700;text-align:right}
+.rh-acts a,.rh-acts button{display:inline-block;padding:5px 9px;border-radius:5px;font-size:10px;font-weight:700;text-decoration:none;cursor:pointer;border:1px solid;margin-right:3px}
+.rh-acts .crm{color:#7cb9f5;border-color:#1f6feb;background:transparent}
+.rh-acts .nubia{color:#fff;background:#7c3aed;border-color:#7c3aed}
+
+.rh-empty{padding:50px;text-align:center;color:var(--text-muted);font-size:13px}
+.rh-loading{padding:50px;text-align:center;color:var(--text-muted);font-size:13px}
+</style>
+
+<div class="rh-wrap">
+  <h1 class="rh-h">🆘 Resgate Hoje · Deals em risco de stall</h1>
+  <p class="rh-sub">Decay Score combina sinais de risco: dias sem msg, sem tarefa futura, idade do deal. Score ≥ 70 = atenção urgente.</p>
+
+  <div id="rh-content"><div class="rh-loading">⏳ Calculando Decay Score...</div></div>
+</div>
+
+<script>
+async function rhCarregar(){
+  const c = document.getElementById('rh-content');
+  c.innerHTML = '<div class="rh-loading">⏳ Calculando Decay Score em todos os deals abertos...</div>';
+  try {
+    const r = await fetch('/cockpit/resgate-hoje?limit=30');
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    rhRender(d);
+  } catch(e) {
+    c.innerHTML = `<div class="rh-empty" style="color:#ef4444">Erro: ${e.message}</div>`;
+  }
+}
+
+function fmtMoney(v){ return v >= 1000 ? 'R$ '+(v/1000).toFixed(1).replace('.',',')+'k' : 'R$ '+Math.round(v); }
+function diasDesde(ts){
+  if (!ts) return null;
+  return Math.floor((Date.now() - new Date(ts).getTime()) / 86400000);
+}
+
+function rhRender(d){
+  const c = document.getElementById('rh-content');
+  let html = '';
+  // Stats
+  html += `<div class="rh-stats">
+    <div class="rh-stat danger"><div class="lbl">🚨 Score ≥ 70 (urgente)</div><div class="val">${d.decay70mais}</div></div>
+    <div class="rh-stat warn"><div class="lbl">⚠️ Score 50-69</div><div class="val">${d.decay50_69}</div></div>
+    <div class="rh-stat info"><div class="lbl">😐 Score 30-49</div><div class="val">${d.decay30_49}</div></div>
+    <div class="rh-stat ok"><div class="lbl">✅ Saudáveis</div><div class="val">${d.saudaveis}</div></div>
+  </div>`;
+  // Lista
+  if (!d.resgateHoje.length) {
+    html += `<div class="rh-empty">🎉 Nenhum deal em risco crítico (score < 70). Bom trabalho!</div>`;
+  } else {
+    html += `<div class="rh-list">
+      <div class="rh-row" style="background:#161616;color:#888;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #222">
+        <div>Score</div>
+        <div>Deal</div>
+        <div>Stage</div>
+        <div>Inatividade</div>
+        <div>Sinais</div>
+        <div style="text-align:right">Valor</div>
+        <div></div>
+      </div>
+      ${d.resgateHoje.map(rhRow).join('')}
+    </div>`;
+  }
+  c.innerHTML = html;
+}
+
+function rhRow(l){
+  const scoreCls = l.decayScore >= 90 ? 'crit' : (l.decayScore >= 80 ? 'warn' : 'med');
+  const rowCls = l.decayScore >= 90 ? 'score-90' : '';
+  const dCli = diasDesde(l.lastClienteTs);
+  const dNos = diasDesde(l.lastNossaTs);
+  const dZoho = diasDesde(l.lastZohoActivity);
+  const sinais = [];
+  if (dCli == null) sinais.push('<span class="tag vermelho">cliente nunca respondeu</span>');
+  else if (dCli >= 7) sinais.push(`<span class="tag vermelho">cliente ${dCli}d sem responder</span>`);
+  if (dNos == null || dNos >= 4) sinais.push(`<span class="tag">nós ${dNos==null?'-':dNos+'d'} sem msg</span>`);
+  if (!l.hasFutureTask) sinais.push('<span class="tag vermelho">sem tarefa futura</span>');
+  if (l.ageDays >= 30) sinais.push(`<span class="tag">deal ${l.ageDays}d</span>`);
+  return `<div class="rh-row ${rowCls}">
+    <div class="rh-score ${scoreCls}">${l.decayScore}</div>
+    <div>
+      <div class="rh-nome">${(l.nome||'?').replace(/</g,'&lt;')}</div>
+      <div class="rh-meta">${l.phone ? `📞 <span onclick="window.copyTel&&copyTel('${l.phone.replace(/'/g,"\\'")}',this)" title="Click pra copiar" style="cursor:pointer;user-select:all;padding:1px 6px;border-radius:4px;background:rgba(34,197,94,.08);border:1px solid #22c55e44;color:#86efac;font-family:monospace">${l.phone}</span> <button onclick="window.copyTel&&copyTel('${l.phone.replace(/'/g,"\\'")}',this)" style="background:transparent;border:1px solid #30363D;color:#9ca3af;border-radius:4px;padding:1px 5px;font-size:9px;cursor:pointer" title="Copiar">📋</button>` : '📞 —'} · ${l.cidade||'—'} · 👤 ${l.owner.split(' ')[0]||'?'}</div>
+    </div>
+    <div class="rh-stage">${l.stage}</div>
+    <div class="rh-tempo">
+      ${dZoho!=null?`<div>Zoho: ${dZoho}d</div>`:''}
+      ${dCli!=null?`<div>Cliente: ${dCli}d</div>`:'<div style="color:#fca5a5">Cliente: nunca respondeu</div>'}
+    </div>
+    <div class="rh-tempo" style="line-height:1.6">${sinais.join(' ')}</div>
+    <div class="rh-vlr">${l.amount>0?fmtMoney(l.amount):'—'}</div>
+    <div class="rh-acts">
+      <a href="${l.crmLink}" target="_blank" class="crm">CRM</a>
+      ${l.phone?`<button class="nubia" onclick="rhDispararNubia('${l.id}','${(l.nome||'').replace(/'/g,"\\'")}')">🤖</button>`:''}
+    </div>
+  </div>`;
+}
+
+async function rhDispararNubia(dealId, nome){
+  if (!confirm('Disparar Núbia pra '+nome+'?')) return;
+  try {
+    const r = await fetch('/manutencao/forecast-leads/acao-massa', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ dealIds: [dealId], action: 'nubia', payload: { contexto: 'Resgate · Decay Score crítico' } }),
+    });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    alert('✅ Núbia disparada — verá na timeline do deal');
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+rhCarregar();
+</script>

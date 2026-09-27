@@ -1,0 +1,354 @@
+<% const activePage = 'operacional'; const pageTitle = 'Operacional · Prompts IA'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+  .pr-shell { max-width:1400px; margin:0 auto; padding:0 14px }
+  .pr-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px }
+  .pr-head h1 { margin:0; font-size:18px; color:var(--text) }
+  .pr-head .sub { color:var(--text-muted); font-size:12px; margin-top:2px }
+
+  .pr-layout { display:grid; grid-template-columns:280px 1fr; gap:12px; height:calc(100vh - 180px); min-height:600px }
+  @media (max-width:900px) { .pr-layout { grid-template-columns:1fr; height:auto } }
+
+  .pr-sidebar { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:10px; overflow-y:auto }
+  .pr-sidebar h3 { margin:0 0 10px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px }
+  .pr-item { padding:10px 12px; border-radius:6px; cursor:pointer; transition:all .15s; margin-bottom:4px; border:1px solid transparent }
+  .pr-item:hover { background:var(--bg); border-color:var(--border) }
+  .pr-item.active { background:var(--bg); border-color:#1f6feb }
+  .pr-item .label { color:var(--text); font-size:12px; font-weight:700 }
+  .pr-item .agent { color:var(--text-muted); font-size:10px; margin-top:2px }
+  .pr-item .desc { color:var(--text-muted); font-size:10px; margin-top:3px; line-height:1.4 }
+  .pr-item.inactive .label { color:var(--text-muted) }
+  .pr-add { width:100%; padding:10px; background:var(--bg); border:1px dashed var(--border); color:var(--text-muted); border-radius:6px; cursor:pointer; font-size:11px; margin-top:8px }
+  .pr-add:hover { border-color:#1f6feb; color:var(--text) }
+
+  .pr-main { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; display:flex; flex-direction:column; overflow:hidden }
+  .pr-main-empty { display:flex; align-items:center; justify-content:center; flex:1; color:var(--text-muted); padding:30px; text-align:center }
+
+  .pr-toolbar { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; background:var(--bg) }
+  .pr-toolbar .info .label { color:var(--text); font-weight:800; font-size:14px }
+  .pr-toolbar .info .meta { color:var(--text-muted); font-size:11px; margin-top:2px }
+  .pr-version-badge { background:var(--border); color:#22c55e; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700 }
+
+  .pr-body { flex:1; overflow-y:auto; padding:16px }
+  .pr-field { margin-bottom:14px }
+  .pr-field label { display:block; font-size:11px; color:#93c5fd; text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; font-weight:700 }
+  .pr-field input, .pr-field select, .pr-field textarea { width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:5px; font-size:13px; font-family:inherit; box-sizing:border-box }
+  .pr-field textarea { font-family:'SF Mono', Monaco, Consolas, monospace; font-size:12px; line-height:1.5; min-height:140px; resize:vertical }
+  #pr-system { min-height:280px }
+  .pr-row-2 { display:grid; grid-template-columns:1fr 120px 100px; gap:10px }
+  .pr-row-3 { display:grid; grid-template-columns:1fr 1fr; gap:10px }
+
+  .pr-vars { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:10px; max-height:80px; overflow-y:auto }
+  .pr-var-chip { display:inline-block; background:var(--border); color:#22d3ee; padding:3px 8px; border-radius:4px; font-size:11px; cursor:pointer; margin:2px; font-family:monospace }
+  .pr-var-chip:hover { background:#22d3ee; color:#000 }
+  .pr-var-chip .x { color:var(--text-muted); margin-left:6px; cursor:pointer }
+
+  .pr-render { background:var(--bg); border:1px dashed var(--border); border-radius:6px; padding:12px; color:#cbd5e1; font-size:12px; white-space:pre-wrap; font-family:'SF Mono', Monaco, monospace; min-height:60px; max-height:200px; overflow-y:auto }
+
+  .pr-foot { padding:12px 16px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; background:var(--bg) }
+  .btn { padding:7px 14px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; border:1px solid; background:transparent }
+  .btn-sec { color:#93c5fd; border-color:#1f6feb }
+  .btn-warn { color:#fbbf24; border-color:#eab308 }
+  .btn-danger { color:#ef4444; border-color:#ef4444 }
+  .btn-prim { background:#1f6feb; color:#fff; border-color:#1f6feb }
+</style>
+
+<div class="pr-shell">
+  <div class="pr-head">
+    <div>
+      <h1>🤖 Prompts dos Agentes IA <span style="font-size:11px;color:var(--text-muted);font-weight:400">(Núbia, etc)</span></h1>
+      <div class="sub">Edite as instruções que a IA recebe — tom de voz, regras, objetivo. Sem deploy, mudança vai pra produção na hora.</div>
+    </div>
+    <a href="/operacional/config" class="btn btn-sec" style="text-decoration:none">← Config</a>
+  </div>
+
+  <div class="pr-layout">
+    <div class="pr-sidebar">
+      <h3>Agentes</h3>
+      <div id="pr-list"><div style="color:var(--text-muted);padding:14px">Carregando…</div></div>
+      <button class="pr-add" onclick="prCreate()">+ Novo prompt</button>
+    </div>
+
+    <div class="pr-main">
+      <div id="pr-main-empty" class="pr-main-empty">
+        <div>
+          <div style="font-size:38px;margin-bottom:10px">🤖</div>
+          <div style="color:var(--text-muted);font-size:13px;margin-bottom:4px">Selecione um agente à esquerda</div>
+          <div style="color:var(--text-muted);font-size:11px">ou clique em "+ Novo prompt" pra criar</div>
+        </div>
+      </div>
+
+      <div id="pr-editor" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+        <div class="pr-toolbar">
+          <div class="info">
+            <div class="label" id="pr-edit-label">—</div>
+            <div class="meta" id="pr-edit-meta">—</div>
+          </div>
+          <span class="pr-version-badge" id="pr-edit-version">v1</span>
+        </div>
+
+        <div class="pr-body">
+          <div class="pr-row-3">
+            <div class="pr-field">
+              <label>Label</label>
+              <input id="pr-f-label" type="text">
+            </div>
+            <div class="pr-field">
+              <label>Agente</label>
+              <select id="pr-f-agent">
+                <option value="nubia">nubia</option>
+                <option value="morgana">morgana</option>
+                <option value="sales_director">sales_director</option>
+                <option value="other">outro</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="pr-field">
+            <label>Descrição</label>
+            <input id="pr-f-description" type="text" placeholder="Pra que serve esse prompt?">
+          </div>
+
+          <div class="pr-field">
+            <label>System Prompt (instruções principais)</label>
+            <textarea id="pr-f-system" placeholder="Você é a Núbia, atendente da Tudo de Filtro..."></textarea>
+          </div>
+
+          <div class="pr-field">
+            <label>User Prompt Template (opcional — pra prompts com input estruturado)</label>
+            <textarea id="pr-f-user-template" placeholder="Use {{conversation_history}} ou {{customer_data}} aqui..."></textarea>
+          </div>
+
+          <div class="pr-row-2">
+            <div class="pr-field">
+              <label>Model</label>
+              <select id="pr-f-model">
+                <option value="claude-opus-4-7">claude-opus-4-7 (mais caro, melhor)</option>
+                <option value="claude-sonnet-4-6" selected>claude-sonnet-4-6 (balanceado — default)</option>
+                <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 (mais barato/rápido)</option>
+              </select>
+            </div>
+            <div class="pr-field">
+              <label>Temperature</label>
+              <input id="pr-f-temp" type="number" step="0.05" min="0" max="2" value="0.7">
+            </div>
+            <div class="pr-field">
+              <label>Max tokens</label>
+              <input id="pr-f-max-tokens" type="number" min="64" max="8192" value="1024">
+            </div>
+          </div>
+
+          <div class="pr-field">
+            <label>Variáveis (placeholders {{nome}} disponíveis)</label>
+            <div class="pr-vars" id="pr-vars-list"></div>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              <input id="pr-var-new" type="text" placeholder="Ex: customer_first_name" style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:4px;font-size:12px">
+              <button class="btn btn-sec" onclick="prAddVar()">+ Adicionar</button>
+            </div>
+          </div>
+
+          <div class="pr-field">
+            <label>Preview rendered (com dados fictícios)</label>
+            <div class="pr-render" id="pr-render-preview">—</div>
+          </div>
+        </div>
+
+        <div class="pr-foot">
+          <div style="display:flex;gap:8px;align-items:center">
+            <label style="color:var(--text-muted);font-size:12px"><input type="checkbox" id="pr-f-active" checked> Ativo</label>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-sec" onclick="prRenderPreview()">👁 Preview</button>
+            <button class="btn btn-danger" id="pr-btn-delete" onclick="prDelete()">🗑 Excluir</button>
+            <button class="btn btn-prim" onclick="prSave()">💾 Salvar versão nova</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PR = { all: [], current: null, isNew: false };
+
+async function _api(path, opts={}) {
+  const r = await fetch(path, {
+    method: opts.method || 'GET',
+    headers: {'Content-Type':'application/json'},
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+    credentials: 'same-origin',
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`${r.status} — ${t.substring(0,200)}`);
+  }
+  return r.json();
+}
+
+async function prLoad() {
+  try {
+    PR.all = await _api('/operacional/api/agent-prompts');
+    const list = document.getElementById('pr-list');
+    if (!PR.all.length) {
+      list.innerHTML = '<div style="color:#666;padding:14px;font-size:11px">Nenhum prompt. Crie o primeiro.</div>';
+      return;
+    }
+    list.innerHTML = PR.all.map(p => `
+      <div class="pr-item ${p.active ? '' : 'inactive'}" onclick="prOpen('${p.key}')" id="pri-${p.key}">
+        <div class="label">${p.label}</div>
+        <div class="agent">${p.agent} · v${p.version} · ${p.model.replace('claude-','')}</div>
+        <div class="desc">${p.description || ''}</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('pr-list').innerHTML = `<div style="color:#f87171;padding:14px">${e.message}</div>`;
+  }
+}
+
+function prOpen(key) {
+  const p = PR.all.find(x => x.key === key);
+  if (!p) return;
+  PR.current = p; PR.isNew = false;
+
+  document.querySelectorAll('.pr-item').forEach(el => el.classList.toggle('active', el.id === `pri-${key}`));
+  document.getElementById('pr-main-empty').style.display = 'none';
+  document.getElementById('pr-editor').style.display = 'flex';
+
+  document.getElementById('pr-edit-label').textContent = p.label;
+  document.getElementById('pr-edit-meta').innerHTML = `<code>${p.key}</code> · ${p.agent} · ${p.model}`;
+  document.getElementById('pr-edit-version').textContent = `v${p.version}`;
+
+  document.getElementById('pr-f-label').value = p.label || '';
+  document.getElementById('pr-f-agent').value = p.agent || 'nubia';
+  document.getElementById('pr-f-description').value = p.description || '';
+  document.getElementById('pr-f-system').value = p.system_prompt || '';
+  document.getElementById('pr-f-user-template').value = p.user_prompt_template || '';
+  document.getElementById('pr-f-model').value = p.model || 'claude-sonnet-4-6';
+  document.getElementById('pr-f-temp').value = p.temperature || 0.7;
+  document.getElementById('pr-f-max-tokens').value = p.max_tokens || 1024;
+  document.getElementById('pr-f-active').checked = !!p.active;
+  document.getElementById('pr-btn-delete').style.display = 'inline-block';
+
+  prRenderVars(p.variables || []);
+  prRenderPreview();
+}
+
+function prCreate() {
+  const key = prompt('Chave única do prompt (snake_case, sem espaços):');
+  if (!key) return;
+  const cleaned = key.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+  if (PR.all.find(x => x.key === cleaned)) {
+    alert('Já existe um prompt com essa chave');
+    return;
+  }
+  PR.current = { key: cleaned, label: cleaned, agent:'nubia', system_prompt:'', user_prompt_template:'', model:'claude-sonnet-4-6', temperature:0.7, max_tokens:1024, variables:[], active:true, version:0 };
+  PR.isNew = true;
+  document.getElementById('pr-main-empty').style.display = 'none';
+  document.getElementById('pr-editor').style.display = 'flex';
+  document.getElementById('pr-edit-label').textContent = 'Novo prompt';
+  document.getElementById('pr-edit-meta').innerHTML = `<code>${cleaned}</code> · será criado`;
+  document.getElementById('pr-edit-version').textContent = 'novo';
+  document.getElementById('pr-f-label').value = cleaned;
+  document.getElementById('pr-f-agent').value = 'nubia';
+  document.getElementById('pr-f-description').value = '';
+  document.getElementById('pr-f-system').value = '';
+  document.getElementById('pr-f-user-template').value = '';
+  document.getElementById('pr-f-model').value = 'claude-sonnet-4-6';
+  document.getElementById('pr-f-temp').value = 0.7;
+  document.getElementById('pr-f-max-tokens').value = 1024;
+  document.getElementById('pr-f-active').checked = true;
+  document.getElementById('pr-btn-delete').style.display = 'none';
+  prRenderVars([]);
+}
+
+function prRenderVars(vars) {
+  PR.current.variables = vars;
+  document.getElementById('pr-vars-list').innerHTML = vars.length
+    ? vars.map(v => `<span class="pr-var-chip">{{${v}}}<span class="x" onclick="prRemoveVar('${v}')">×</span></span>`).join('')
+    : '<span style="color:#666;font-size:11px">Nenhuma variável definida</span>';
+}
+
+function prAddVar() {
+  const inp = document.getElementById('pr-var-new');
+  const v = inp.value.trim().replace(/[^a-z0-9_]/gi, '_').toLowerCase();
+  if (!v) return;
+  const vars = PR.current.variables || [];
+  if (vars.includes(v)) return;
+  vars.push(v);
+  prRenderVars(vars);
+  inp.value = '';
+}
+
+function prRemoveVar(v) {
+  PR.current.variables = (PR.current.variables || []).filter(x => x !== v);
+  prRenderVars(PR.current.variables);
+}
+
+const DUMMY_VARS = {
+  customer_name: 'Maria Silva', customer_first_name: 'Maria',
+  product: 'Bebedouro Industrial Inox', product_category: 'bebedouro_instalacao',
+  address: 'Av. Brasil, 100 - SJC/SP', conversation_history: '[Cliente]: "Oi! Pode ser quinta de manhã"\n[Núbia]: ...',
+};
+
+async function prRenderPreview() {
+  if (!PR.current) return;
+  const sysText = document.getElementById('pr-f-system').value || '';
+  const userText = document.getElementById('pr-f-user-template').value || '';
+  let rendered = sysText;
+  for (const [k, v] of Object.entries(DUMMY_VARS)) {
+    rendered = rendered.replace(new RegExp(`\\{\\{\\s*${k}\\s*\\}\\}`, 'gi'), v);
+  }
+  if (userText) {
+    let userR = userText;
+    for (const [k, v] of Object.entries(DUMMY_VARS)) {
+      userR = userR.replace(new RegExp(`\\{\\{\\s*${k}\\s*\\}\\}`, 'gi'), v);
+    }
+    rendered += '\n\n---USER---\n' + userR;
+  }
+  document.getElementById('pr-render-preview').textContent = rendered || '—';
+}
+
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'pr-f-system' || e.target.id === 'pr-f-user-template') {
+    prRenderPreview();
+  }
+});
+
+async function prSave() {
+  if (!PR.current) return;
+  const body = {
+    label: document.getElementById('pr-f-label').value,
+    description: document.getElementById('pr-f-description').value || null,
+    agent: document.getElementById('pr-f-agent').value,
+    system_prompt: document.getElementById('pr-f-system').value,
+    user_prompt_template: document.getElementById('pr-f-user-template').value || null,
+    model: document.getElementById('pr-f-model').value,
+    temperature: parseFloat(document.getElementById('pr-f-temp').value),
+    max_tokens: parseInt(document.getElementById('pr-f-max-tokens').value),
+    variables: PR.current.variables || [],
+    active: document.getElementById('pr-f-active').checked,
+  };
+  try {
+    const saved = await _api(`/operacional/api/agent-prompts/${encodeURIComponent(PR.current.key)}`, { method:'POST', body });
+    alert(`✅ Salvo como v${saved.version}`);
+    PR.isNew = false;
+    await prLoad();
+    prOpen(saved.key);
+  } catch (e) { alert(e.message); }
+}
+
+async function prDelete() {
+  if (!PR.current || PR.isNew) return;
+  if (!confirm(`Excluir prompt "${PR.current.label}"?\n\nEssa ação não pode ser desfeita.`)) return;
+  try {
+    await _api(`/operacional/api/agent-prompts/${encodeURIComponent(PR.current.key)}`, { method:'DELETE' });
+    PR.current = null;
+    document.getElementById('pr-editor').style.display = 'none';
+    document.getElementById('pr-main-empty').style.display = 'flex';
+    await prLoad();
+  } catch (e) { alert(e.message); }
+}
+
+prLoad();
+</script>

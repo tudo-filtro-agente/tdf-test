@@ -1,0 +1,110 @@
+<% const activePage = 'loja'; const pageTitle = 'Loja Fisica'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<div class="page-header">
+  <h1 style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:28px;">&#127978;</span> Painel Loja Fisica
+    <button onclick="loadLoja()" style="background:#0066CC;color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">&#128260; Atualizar</button>
+  </h1>
+</div>
+
+<div class="container">
+  <div id="loja-loading" style="text-align:center;padding:40px;color:var(--text-muted);">Carregando dados da loja...</div>
+  <div id="loja-content" style="display:none;">
+    <!-- KPIs -->
+    <div id="loja-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;"></div>
+    <!-- Alertas -->
+    <div id="loja-alertas" style="margin-bottom:16px;"></div>
+    <!-- Comparativo + Ranking -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+      <div id="loja-comparativo" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;"></div>
+      <div id="loja-ranking" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;"></div>
+    </div>
+    <!-- Produtos -->
+    <div id="loja-produtos" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px;"></div>
+    <!-- Vendas hoje -->
+    <div id="loja-vendas-hoje" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;"></div>
+  </div>
+</div>
+
+<script>
+async function loadLoja() {
+  document.getElementById('loja-loading').style.display = 'block';
+  document.getElementById('loja-content').style.display = 'none';
+  try {
+    const res = await fetch('/loja/data');
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    document.getElementById('loja-loading').style.display = 'none';
+    document.getElementById('loja-content').style.display = 'block';
+
+    const diffColor = d.diffOntem >= 0 ? '#22c55e' : '#ef4444';
+    const diffSign = d.diffOntem >= 0 ? '+' : '';
+
+    // KPIs
+    document.getElementById('loja-kpis').innerHTML = `
+      <div class="kpi-card"><div class="kpi-value" style="color:#2EA043;">R$ ${(d.hoje.fat/1000).toFixed(1)}k</div><div class="kpi-label">Hoje</div><div class="kpi-sub">${d.hoje.vendas} vendas</div></div>
+      <div class="kpi-card"><div class="kpi-value">R$ ${(d.ontem.fat/1000).toFixed(1)}k</div><div class="kpi-label">Ontem</div><div class="kpi-sub">${d.ontem.vendas} vendas</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:${diffColor};">${diffSign}${d.diffOntem}%</div><div class="kpi-label">Hoje vs Ontem</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:#58A6FF;">R$ ${(d.mes.fat/1000).toFixed(1)}k</div><div class="kpi-label">Mes</div><div class="kpi-sub">${d.mes.vendas} vendas</div></div>
+      <div class="kpi-card"><div class="kpi-value">R$ ${d.mes.ticketMedio}</div><div class="kpi-label">Ticket Medio</div></div>
+    `;
+
+    // Alertas
+    document.getElementById('loja-alertas').innerHTML = d.alertas.length === 0 ? ''
+      : d.alertas.map(a => '<div style="background:'+(a.tipo==='danger'?'#2d1215':'#2d2513')+';border:1px solid '+(a.tipo==='danger'?'#ef4444':'#eab308')+';border-radius:8px;padding:8px 14px;margin-bottom:6px;font-size:13px;color:'+(a.tipo==='danger'?'#f87171':'#fbbf24')+';">'+a.msg+'</div>').join('');
+
+    // Comparativo Loja vs Inside
+    const c = d.comparativo;
+    document.getElementById('loja-comparativo').innerHTML = `
+      <h3 style="color:#E6EDF3;font-size:1rem;margin:0 0 12px;">&#127978; Loja vs Inside Sales</h3>
+      <div style="display:flex;gap:16px;margin-bottom:10px;">
+        <div style="flex:1;text-align:center;"><div style="font-size:1.5rem;font-weight:800;color:#F0C040;">R$ ${(c.loja/1000).toFixed(0)}k</div><div style="font-size:12px;color:#8B949E;">Loja (${c.pctLoja}%)</div></div>
+        <div style="flex:1;text-align:center;"><div style="font-size:1.5rem;font-weight:800;color:#58A6FF;">R$ ${(c.inside/1000).toFixed(0)}k</div><div style="font-size:12px;color:#8B949E;">Inside (${100-c.pctLoja}%)</div></div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${c.pctLoja}%;background:linear-gradient(90deg,#F0C040,#f97316);"></div></div>
+    `;
+
+    // Ranking vendedores
+    document.getElementById('loja-ranking').innerHTML = `
+      <h3 style="color:#E6EDF3;font-size:1rem;margin:0 0 12px;">&#127942; Ranking Loja</h3>
+      ${d.rankingVendedor.map(([name, s], i) => {
+        const maxFat = d.rankingVendedor[0]?.[1]?.fat || 1;
+        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #21262D;font-size:13px;"><span style="width:20px;color:'+(i<3?'#F0C040':'#8B949E')+';font-weight:700;">'+(i+1)+'</span><span style="flex:1;color:#E6EDF3;font-weight:600;">'+name+'</span><span style="color:#8B949E;">'+s.vendas+' vendas</span><span style="color:#2EA043;font-weight:700;">R$ '+(s.fat/1000).toFixed(1)+'k</span></div>';
+      }).join('')}
+    `;
+
+    // Produtos
+    document.getElementById('loja-produtos').innerHTML = `
+      <h3 style="color:#E6EDF3;font-size:1rem;margin:0 0 12px;">&#128230; Vendas por Produto</h3>
+      ${d.porProduto.map(([prod, s]) =>
+        '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #21262D;font-size:13px;"><span style="color:#E6EDF3;">'+(prod||'Sem produto')+'</span><span style="color:#8B949E;">'+s.vendas+' vendas</span><span style="color:#2EA043;font-weight:700;">R$ '+(s.fat/1000).toFixed(1)+'k</span></div>'
+      ).join('')}
+    `;
+
+    // Vendas hoje
+    document.getElementById('loja-vendas-hoje').innerHTML = `
+      <h3 style="color:#2EA043;font-size:1rem;margin:0 0 12px;">&#128176; Vendas Hoje (${d.hoje.vendas})</h3>
+      ${d.hoje.deals.length === 0 ? '<div style="color:#8B949E;font-size:13px;">Nenhuma venda hoje</div>'
+        : d.hoje.deals.map(deal => {
+            const dname = (deal.Deal_Name||'').slice(0,35);
+            const oname = deal.Owner?.name || '?';
+            const dealId = deal.id || '';
+            const crmLink = dealId ? 'https://crm.zoho.com.br/crm/org919004266/tab/Potentials/'+dealId : '';
+            const adm = (window.admBtnHTML && dealId) ? window.admBtnHTML(dealId, dname, '', oname) : '';
+            return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #21262D;font-size:13px;">'
+              + '<span style="flex:1;color:#E6EDF3;">'+dname+'</span>'
+              + '<span style="color:#8B949E;min-width:90px;text-align:right;">'+oname+'</span>'
+              + '<span style="color:#2EA043;font-weight:700;min-width:80px;text-align:right;">R$ '+(parseFloat(deal.Amount)||0)+'</span>'
+              + (crmLink ? '<a href="'+crmLink+'" target="_blank" style="color:#5ba3f5;border:1px solid #5ba3f5;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:800;text-decoration:none" onclick="event.stopPropagation()">CRM</a>' : '')
+              + adm
+              + '</div>';
+          }).join('')}
+    `;
+  } catch(e) {
+    document.getElementById('loja-loading').textContent = 'Erro: ' + e.message;
+  }
+}
+loadLoja();
+</script>
+</div></body></html>

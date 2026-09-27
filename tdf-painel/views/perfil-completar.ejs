@@ -1,0 +1,349 @@
+<% const activePage = 'perfil'; const pageTitle = 'Cadastro Inicial · Tudo de Filtro'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.pf-wrap{max-width:780px;margin:0 auto;padding:20px}
+.pf-h{font-size:24px;color:var(--text);margin:0 0 4px;font-weight:800}
+.pf-sub{color:var(--text-muted);font-size:13px;margin:0 0 20px}
+.pf-steps{display:flex;gap:6px;margin-bottom:22px}
+.pf-step{flex:1;height:6px;background:#222;border-radius:3px}
+.pf-step.done{background:#22c55e}
+.pf-step.active{background:#f0c040;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+.pf-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:14px}
+.pf-card h2{margin:0 0 6px;color:var(--text);font-size:18px;font-weight:700}
+.pf-card p.descr{color:var(--text-muted);font-size:13px;margin:0 0 16px;line-height:1.5}
+
+label{display:block;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin:12px 0 4px;font-weight:700}
+input[type=text],input[type=email],input[type=tel],input[type=date],select{width:100%;background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none}
+input:focus,select:focus{border-color:#5ba3f5}
+.pf-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pf-grid3{display:grid;grid-template-columns:90px 1fr 1fr;gap:10px}
+@media(max-width:600px){.pf-grid2,.pf-grid3{grid-template-columns:1fr}}
+
+.pf-photo-zone{display:grid;grid-template-columns:160px 1fr;gap:14px;align-items:center;background:var(--bg-card);border:1px dashed var(--border);border-radius:10px;padding:14px;margin-bottom:14px}
+.pf-photo-zone.ok{border-color:#22c55e;border-style:solid;background:rgba(34,197,94,.05)}
+.pf-photo-preview{width:160px;height:160px;background:#222;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#ddd;font-size:11px;text-align:center}
+.pf-photo-preview img{width:100%;height:100%;object-fit:cover}
+.pf-photo-info h3{margin:0 0 4px;color:var(--text);font-size:14px}
+.pf-photo-info p{color:var(--text-muted);font-size:12px;margin:0 0 10px;line-height:1.4}
+.pf-photo-btn{display:inline-block;background:#1f6feb;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-size:12px;border:none;margin-right:6px}
+.pf-photo-btn.ghost{background:#222;color:#ddd;border:1px solid var(--border)}
+.pf-photo-btn:hover{filter:brightness(1.1)}
+
+.pf-acts{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.pf-acts button{background:#22c55e;color:#000;border:none;padding:11px 22px;border-radius:7px;cursor:pointer;font-weight:800;font-size:14px}
+.pf-acts button.back{background:#222;color:#ddd}
+.pf-acts button:disabled{opacity:.5;cursor:not-allowed}
+
+.pf-mensagem{padding:11px 14px;border-radius:8px;font-size:13px;margin-top:10px}
+.pf-mensagem.erro{background:rgba(239,68,68,.1);color:#f87171;border:1px solid #ef4444}
+.pf-mensagem.ok{background:rgba(34,197,94,.1);color:#4ade80;border:1px solid #22c55e}
+
+video.pf-cam{width:100%;border-radius:8px;background:#000}
+.pf-cam-controls{display:flex;gap:8px;margin-top:8px}
+</style>
+
+<div class="pf-wrap">
+  <h1 class="pf-h">📸 Cadastro Inicial — bem-vindo!</h1>
+  <p class="pf-sub">Pra liberar acesso ao portal, complete seu cadastro. Leva ~3 min.</p>
+
+  <div class="pf-steps">
+    <div class="pf-step active" id="st-1"></div>
+    <div class="pf-step" id="st-2"></div>
+    <div class="pf-step" id="st-3"></div>
+  </div>
+
+  <!-- PASSO 1: Foto rosto -->
+  <div class="pf-card" id="card-1">
+    <h2>1. Foto do rosto</h2>
+    <p class="descr">Foto frontal nítida pra você aparecer no painel da equipe e no ranking. Pode tirar agora pela webcam.</p>
+
+    <div class="pf-photo-zone" id="zone-rosto">
+      <div class="pf-photo-preview"><span id="prev-rosto-empty">sem foto</span><img id="prev-rosto" style="display:none"></div>
+      <div class="pf-photo-info">
+        <h3>📷 Foto frontal · obrigatória</h3>
+        <p>Iluminação boa, só você na foto. JPEG/PNG até 15MB (sistema reduz automaticamente).</p>
+        <button class="pf-photo-btn" onclick="abrirCam('rosto')">📷 Tirar pela webcam</button>
+        <button class="pf-photo-btn ghost" onclick="document.getElementById('file-rosto').click()">📁 Enviar arquivo</button>
+        <input type="file" id="file-rosto" accept="image/*" style="display:none" onchange="uploadFile('rosto', this)">
+        <div id="status-rosto" style="font-size:11px;color:#7cb9f5;margin-top:6px"></div>
+      </div>
+    </div>
+
+    <div id="cam-rosto" style="display:none;background:var(--bg-card);padding:12px;border-radius:8px">
+      <video class="pf-cam" id="vid-rosto" autoplay playsinline></video>
+      <div class="pf-cam-controls">
+        <button class="pf-photo-btn" onclick="capturar('rosto')">📸 Capturar</button>
+        <button class="pf-photo-btn ghost" onclick="fecharCam('rosto')">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="pf-acts">
+      <button onclick="proxPasso(2)" id="btn-1">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- PASSO 2: Foto momento -->
+  <div class="pf-card" id="card-2" style="display:none">
+    <h2>2. Foto de um momento que você gosta</h2>
+    <p class="descr">Família, viagem, hobby, conquista — alguma foto que represente um momento bom seu. Vamos usar pra celebrar aniversário e marcos do time. Não precisa ser profissional, só ser sua.</p>
+
+    <div class="pf-photo-zone" id="zone-momento">
+      <div class="pf-photo-preview"><span id="prev-momento-empty">sem foto</span><img id="prev-momento" style="display:none"></div>
+      <div class="pf-photo-info">
+        <h3>❤️ Foto pessoal · obrigatória</h3>
+        <p>Foto sua de algo que faz você feliz. JPEG/PNG até 15MB.</p>
+        <button class="pf-photo-btn ghost" onclick="document.getElementById('file-momento').click()">📁 Enviar arquivo</button>
+        <input type="file" id="file-momento" accept="image/*" style="display:none" onchange="uploadFile('momento', this)">
+        <div id="status-momento" style="font-size:11px;color:#7cb9f5;margin-top:6px"></div>
+      </div>
+    </div>
+
+    <div class="pf-acts">
+      <button class="back" onclick="proxPasso(1)">← Voltar</button>
+      <button onclick="proxPasso(3)" id="btn-2">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- PASSO 3: Dados -->
+  <div class="pf-card" id="card-3" style="display:none">
+    <h2>3. Dados de contato e aniversário</h2>
+    <p class="descr">Pra te localizar quando precisar e pra preparar a comemoração de aniversário 🎂</p>
+
+    <label>Email pessoal</label>
+    <input type="email" id="f-email" placeholder="seu@email.com">
+
+    <label>Telefone (com DDD)</label>
+    <input type="tel" id="f-telefone" placeholder="11 99999-9999">
+
+    <label>Aniversário</label>
+    <input type="date" id="f-aniversario">
+
+    <div class="pf-grid3">
+      <div>
+        <label>CEP</label>
+        <input type="text" id="f-cep" placeholder="00000-000" maxlength="9" oninput="buscarCep(this.value)">
+      </div>
+      <div>
+        <label>Cidade</label>
+        <input type="text" id="f-cidade" placeholder="Cidade">
+      </div>
+      <div>
+        <label>UF</label>
+        <input type="text" id="f-estado" placeholder="SP" maxlength="2" style="text-transform:uppercase">
+      </div>
+    </div>
+
+    <label>Endereço (rua, número, complemento)</label>
+    <input type="text" id="f-endereco" placeholder="Rua X, 123, apto 45">
+
+    <label>Instagram (opcional)</label>
+    <input type="text" id="f-instagram" placeholder="@seu_instagram">
+
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:18px">
+      <label style="display:flex;align-items:flex-start;gap:10px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--text);font-size:12px;line-height:1.5;cursor:pointer">
+        <input type="checkbox" id="f-lgpd" style="width:auto;flex-shrink:0;margin-top:2px;cursor:pointer">
+        <span>
+          <strong style="color:var(--text)">Concordo com o tratamento dos meus dados pessoais (LGPD)</strong><br>
+          <span style="color:var(--text-muted);font-size:11px">Autorizo a Tudo de Filtro a armazenar e usar os dados que informei (foto, contato, endereço, aniversário) para uso interno do portal — ranking, painel TV, comunicação interna e ações da equipe. Dados não serão compartilhados com terceiros. Posso revogar a qualquer momento em <a href="/meu-perfil" style="color:#5ba3f5">Meu Perfil</a>.</span>
+        </span>
+      </label>
+    </div>
+
+    <div id="msg" class="pf-mensagem" style="display:none"></div>
+
+    <div class="pf-acts">
+      <button class="back" onclick="proxPasso(2)">← Voltar</button>
+      <button onclick="finalizar()" id="btn-3">✅ Finalizar cadastro</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _stream = null;
+let _passoAtual = 1;
+
+window.addEventListener('load', async () => {
+  // Carrega perfil existente (caso esteja editando ou voltou pro fluxo)
+  try {
+    const r = await fetch('/perfil');
+    const d = await r.json();
+    if (d.email) document.getElementById('f-email').value = d.email;
+    if (d.telefone) document.getElementById('f-telefone').value = d.telefone;
+    if (d.cep) document.getElementById('f-cep').value = d.cep;
+    if (d.estado) document.getElementById('f-estado').value = d.estado;
+    if (d.cidade) document.getElementById('f-cidade').value = d.cidade;
+    if (d.endereco) document.getElementById('f-endereco').value = d.endereco;
+    if (d.aniversario) document.getElementById('f-aniversario').value = d.aniversario;
+    if (d.instagram) document.getElementById('f-instagram').value = d.instagram;
+    if (d.fotoRosto) showPreview('rosto', d.fotoRosto);
+    if (d.fotoMomento) showPreview('momento', d.fotoMomento);
+  } catch(_){}
+});
+
+function proxPasso(n) {
+  // Validação por passo
+  if (_passoAtual === 1 && n === 2) {
+    if (!document.getElementById('prev-rosto').src) { alert('📷 Você precisa adicionar a foto do rosto.'); return; }
+  }
+  if (_passoAtual === 2 && n === 3) {
+    if (!document.getElementById('prev-momento').src) { alert('❤️ Adicione a foto do momento que você gosta.'); return; }
+  }
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById('card-'+i).style.display = (i === n) ? 'block' : 'none';
+    const st = document.getElementById('st-'+i);
+    st.classList.remove('active','done');
+    if (i < n) st.classList.add('done');
+    else if (i === n) st.classList.add('active');
+  }
+  _passoAtual = n;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function abrirCam(tipo) {
+  try {
+    _stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 720, height: 720 } });
+    const vid = document.getElementById('vid-'+tipo);
+    vid.srcObject = _stream;
+    document.getElementById('cam-'+tipo).style.display = 'block';
+  } catch(e) { alert('Webcam não disponível: '+e.message+'\n\nUse "Enviar arquivo" como alternativa.'); }
+}
+function fecharCam(tipo) {
+  if (_stream) { _stream.getTracks().forEach(t => t.stop()); _stream = null; }
+  document.getElementById('cam-'+tipo).style.display = 'none';
+}
+function capturar(tipo) {
+  const vid = document.getElementById('vid-'+tipo);
+  const c = document.createElement('canvas');
+  c.width = vid.videoWidth; c.height = vid.videoHeight;
+  c.getContext('2d').drawImage(vid, 0, 0);
+  const dataUrl = c.toDataURL('image/jpeg', 0.85);
+  fecharCam(tipo);
+  enviarFoto(tipo, dataUrl);
+}
+
+// Helper de fetch protegido contra HTML response (sessão expirada)
+async function safeJson(url, opts) {
+  try {
+    const r = await fetch(url, opts);
+    const ct = r.headers.get('content-type') || '';
+    if (!ct.includes('json')) {
+      if (r.status === 401) return { error:'Sessão expirada. Recarregue (F5) e faça login.', status:401 };
+      return { error:`Servidor retornou ${r.status}. Tente novamente.`, status:r.status };
+    }
+    return await r.json();
+  } catch(e) { return { error: e.message }; }
+}
+
+// Resize no client antes de enviar — reduz pra max 800px, JPEG 0.8
+async function resizeImage(file, maxSize = 800, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > h && w > maxSize) { h = h * (maxSize / w); w = maxSize; }
+        else if (h > maxSize) { w = w * (maxSize / h); h = maxSize; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => reject(new Error('imagem inválida'));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadFile(tipo, input) {
+  const f = input.files?.[0];
+  if (!f) return;
+  if (f.size > 15 * 1024 * 1024) { alert('Foto muito grande (máx 15MB)'); return; }
+  setStatus(tipo, 'reduzindo...');
+  try {
+    const dataUrl = await resizeImage(f, 800, 0.8);
+    await enviarFoto(tipo, dataUrl);
+  } catch(e) { alert('Erro ao processar imagem: '+e.message); setStatus(tipo, ''); }
+}
+
+function setStatus(tipo, msg) {
+  const e = document.getElementById('status-'+tipo);
+  if (e) e.textContent = msg || '';
+}
+
+async function enviarFoto(tipo, dataUrl) {
+  showPreview(tipo, dataUrl);
+  setStatus(tipo, 'salvando no servidor...');
+  const d = await safeJson('/perfil/foto', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ tipo, dataUrl }) });
+  if (d.error) {
+    setStatus(tipo, '');
+    alert('❌ Não consegui salvar a foto:\n\n' + d.error + '\n\nFoto NÃO foi gravada — tente de novo.');
+    // Reverte preview
+    document.getElementById('prev-'+tipo).style.display = 'none';
+    document.getElementById('prev-'+tipo+'-empty').style.display = 'inline';
+    document.getElementById('zone-'+tipo).classList.remove('ok');
+    return;
+  }
+  setStatus(tipo, '✅ salvo (' + Math.round((d.bytes||0)/1024) + ' KB)');
+  if (d.url) showPreview(tipo, d.url);
+}
+
+function showPreview(tipo, urlOrData) {
+  const img = document.getElementById('prev-'+tipo);
+  img.src = urlOrData;
+  img.style.display = 'block';
+  document.getElementById('prev-'+tipo+'-empty').style.display = 'none';
+  document.getElementById('zone-'+tipo).classList.add('ok');
+}
+
+async function buscarCep(cep) {
+  const c = String(cep || '').replace(/\D/g, '');
+  if (c.length !== 8) return;
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${c}/json/`);
+    const d = await r.json();
+    if (d.erro) return;
+    if (d.uf) document.getElementById('f-estado').value = d.uf;
+    if (d.localidade) document.getElementById('f-cidade').value = d.localidade;
+    if (d.logradouro) {
+      const cur = document.getElementById('f-endereco').value;
+      if (!cur) document.getElementById('f-endereco').value = d.logradouro + (d.bairro ? ', ' + d.bairro : '');
+    }
+  } catch(_){}
+}
+
+async function finalizar() {
+  const msg = document.getElementById('msg');
+  const btn = document.getElementById('btn-3');
+  const dados = {
+    email: document.getElementById('f-email').value.trim(),
+    telefone: document.getElementById('f-telefone').value.trim(),
+    cep: document.getElementById('f-cep').value.trim(),
+    estado: document.getElementById('f-estado').value.trim().toUpperCase(),
+    cidade: document.getElementById('f-cidade').value.trim(),
+    endereco: document.getElementById('f-endereco').value.trim(),
+    aniversario: document.getElementById('f-aniversario').value,
+    instagram: document.getElementById('f-instagram').value.trim(),
+    aceitouLgpd: document.getElementById('f-lgpd').checked,
+  };
+  // Validação obrigatórios
+  const obrig = { email:'Email', telefone:'Telefone', cep:'CEP', estado:'UF', aniversario:'Aniversário' };
+  const falta = Object.entries(obrig).filter(([k]) => !dados[k]).map(([_,v]) => v);
+  if (falta.length) { msg.className = 'pf-mensagem erro'; msg.style.display = 'block'; msg.textContent = 'Faltou: ' + falta.join(', '); return; }
+  if (!/^\S+@\S+\.\S+$/.test(dados.email)) { msg.className = 'pf-mensagem erro'; msg.style.display = 'block'; msg.textContent = 'Email inválido'; return; }
+  if (!dados.aceitouLgpd) { msg.className = 'pf-mensagem erro'; msg.style.display = 'block'; msg.textContent = 'Você precisa aceitar o termo de LGPD pra finalizar.'; return; }
+  btn.disabled = true; btn.textContent = '⏳ Salvando...';
+  const d = await safeJson('/perfil', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(dados) });
+  if (d.error) { msg.className='pf-mensagem erro'; msg.style.display='block'; msg.textContent='❌ '+d.error; btn.disabled=false; btn.textContent='✅ Finalizar cadastro'; return; }
+  if (!d.completo) { msg.className='pf-mensagem erro'; msg.style.display='block'; msg.textContent='⚠️ Ainda faltam campos. As 2 fotos foram salvas? Tenta voltar e enviar de novo.'; btn.disabled=false; btn.textContent='✅ Finalizar cadastro'; return; }
+  msg.className='pf-mensagem ok'; msg.style.display='block'; msg.textContent='✅ Cadastro completo! Redirecionando…';
+  setTimeout(() => window.location.href = '/home', 1200);
+}
+</script>
+
+</div></body></html>

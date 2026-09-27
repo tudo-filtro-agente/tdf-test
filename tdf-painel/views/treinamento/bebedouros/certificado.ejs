@@ -1,0 +1,30 @@
+<%- include('../../layout', { user, activePage, pageTitle }) %>
+<%- include('_shared') %>
+<div class="tb-wrap">
+  <a class="tb-back" href="<%= base %>">← Voltar ao treinamento</a>
+  <% if (prog.certificado) { %>
+    <div style="background:linear-gradient(135deg,#0D1117,#0a1a2e);border:2px solid #00AAFF;border-radius:16px;padding:34px 24px;text-align:center;margin:18px 0">
+      <div style="color:#00AAFF;font-weight:800;letter-spacing:2px;font-size:.9rem">TUDO DE FILTRO</div>
+      <div style="color:#8899AA;margin-top:14px">Certificamos que</div>
+      <div style="color:#fff;font-size:1.8rem;font-weight:800;margin:6px 0"><%= prog.certificado.nome %></div>
+      <div style="color:#8899AA">concluiu com aproveitamento o treinamento</div>
+      <div style="color:#3FB950;font-size:1.25rem;font-weight:700;margin:8px 0"><%= META.certificado %></div>
+      <div style="color:#E6EDF3;margin-top:10px">Nota final <b><%= prog.certificado.nota %>%</b></div>
+      <div style="color:#5b7c99;font-size:.85rem;margin-top:6px">Código <%= prog.certificado.codigo %> · <%= new Date(prog.certificado.at).toLocaleDateString('pt-BR') %></div>
+      <div style="margin-top:20px"><a class="tb-btn" href="<%= base %>/certificado/pdf" target="_blank">⬇️ Baixar / imprimir PDF</a></div>
+    </div>
+  <% } else { %>
+    <h1 style="color:#fff;margin:14px 0 6px">🎓 Certificação</h1>
+    <p style="color:#8899AA">Para liberar o certificado <b><%= META.certificado %></b> você precisa concluir:</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin:14px 0">
+      <div class="tb-callout <%= R.concluidos===R.total?'sucesso':'alerta' %>"><div><%= R.concluidos===R.total?'✅':'⬜' %> Todos os <%= R.total %> módulos — <b><%= R.concluidos %>/<%= R.total %></b></div></div>
+      <div class="tb-callout <%= prog.prova.aprovado?'sucesso':'alerta' %>"><div><%= prog.prova.aprovado?'✅':'⬜' %> Prova teórica ≥ <%= META.notaMinimaProva %>% — <b><%= prog.prova.melhorNota||0 %>%</b></div></div>
+      <% if (R.temPratica) { %><div class="tb-callout <%= R.provaPraticaOk?'sucesso':'alerta' %>"><div><%= R.provaPraticaOk?'✅':'⬜' %> Prova prática ≥ 85% — <b><%= (prog.provaPratica&&prog.provaPratica.melhorNota)||0 %>%</b> · <a href="<%= base %>/prova-pratica" style="color:#00AAFF">fazer</a></div></div><% } %>
+      <div class="tb-callout <%= R.roleplaysOk?'sucesso':'alerta' %>"><div><%= R.roleplaysOk?'✅':'⬜' %> Roleplays obrigatórios — <b><%= R.roleplaysFeitos %><%= R.roleplaysObrig?('/'+R.roleplaysObrig):'' %></b></div></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a class="tb-btn ghost" href="<%= base %>">Continuar módulos</a>
+      <a class="tb-btn" href="<%= base %>/prova">Fazer a prova</a>
+    </div>
+  <% } %>
+</div>

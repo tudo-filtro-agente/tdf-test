@@ -1,0 +1,41 @@
+// Módulo 9 — Fechamento em Filtro de Entrada. Ciclo curto (3 dias): agilidade e próximo passo sempre.
+module.exports = {
+  resumoCurto: 'O ciclo é de 3 dias: fechar é conduzir com agilidade. Use confirmação, alternativa, resumo e próximo passo. Quem não pede a decisão, não fecha.',
+  video: { url: '', thumb: '', duracaoSeg: 0, transcricao: '', legenda: '', assistidoTrackId: 'fe-fechamento-video' },
+  blocos: [
+    { tipo: 'callout', variante: 'info', titulo: 'Fechar é ajudar a decidir',
+      html: 'Com ciclo mediano de <strong>3 dias</strong>, o cliente pesquisa e decide rápido. Seu papel é <strong>conduzir com agilidade</strong> — sem empurrar e sem arrastar. Todo contato termina com um <strong>próximo passo combinado</strong>.' },
+    { tipo: 'titulo', texto: 'As quatro alavancas de fechamento' },
+    { tipo: 'cards', itens: [
+      { icon: '✅', titulo: 'Confirmação', html: 'Amarrar o "sim" à dor: "Faz sentido resolver o cloro na casa toda, certo?" antes de avançar.' },
+      { icon: '🔀', titulo: 'Alternativa', html: 'Oferecer escolha entre opções, não entre sim e não: "Prefere o Light Filter 1000 ou dar um passo no acabamento com o Inox?"' },
+      { icon: '📋', titulo: 'Resumo', html: 'Recapitular dor + solução + o que fica combinado, para dar segurança na decisão.' },
+      { icon: '➡️', titulo: 'Próximo passo', html: 'Definir a ação concreta e a data: envio da proposta, agendamento, confirmação de pedido.' },
+    ]},
+    { tipo: 'titulo', texto: 'Fechamento por confirmação' },
+    { tipo: 'script', contexto: 'Confirmação amarrada à dor',
+      fala: 'Então, resumindo: você quer acabar com esse cheiro de cloro no banho e o barro que aparece de vez em quando, e o filtro de entrada resolve isso na casa toda. É isso mesmo que você quer resolver, certo? Se sim, eu já te passo como a gente segue.' },
+    { tipo: 'titulo', texto: 'Fechamento por alternativa' },
+    { tipo: 'script', contexto: 'Escolha entre opções (não entre sim/não)',
+      fala: 'Pelo que você me contou, o Light Filter 1000 atende bem o seu caso — é o mais escolhido pra situação como a sua. Se você valoriza o acabamento em inox, dá pra dar um passo com o American Filter. Qual dos dois faz mais sentido pra você começar?' },
+    { tipo: 'titulo', texto: 'Fechamento por resumo + próximo passo' },
+    { tipo: 'script', contexto: 'Resumo e ação concreta com data',
+      fala: 'Fechando o combinado: água de concessionária, dor de cloro e sedimento, solução pra casa toda com o Light Filter 1000. Eu te envio a proposta ainda hoje e amanhã de manhã eu te retorno pra tirar qualquer dúvida e a gente acertar a instalação. Pode ser assim?' },
+    { tipo: 'callout', variante: 'sucesso', titulo: 'Agilidade vence',
+      html: 'O lead vem de anúncio (73% pago) querendo resolver <strong>agora</strong>. Responder rápido, mandar a proposta no mesmo dia e retornar no dia seguinte é o que aproveita o ciclo de 3 dias. Cada dia parado é risco de esfriar.' },
+    { tipo: 'especialista', nome: 'fechamento',
+      html: 'O especialista <strong>pede a decisão</strong> — com naturalidade, mas pede. Ele não termina a conversa esperando o cliente voltar sozinho: sempre define o próximo passo e a data. E usa o resumo para transformar tudo que foi dito em <strong>segurança</strong> na hora de decidir.' },
+    { tipo: 'pendente', titulo: 'Condições comerciais',
+      html: 'Prazos de instalação, formas de pagamento, garantia e frete (frete grátis apenas para SP) <strong>seguem a política oficial da TDF</strong>. Confirme as condições vigentes antes de combinar com o cliente; não prometa prazo ou condição que não pode cumprir.' },
+    { tipo: 'dodont',
+      fazer: ['Amarrar o fechamento à dor confirmada.', 'Oferecer alternativa entre opções e sempre definir próximo passo + data.', 'Conduzir com agilidade — proposta no mesmo dia, retorno no dia seguinte.'],
+      evitar: ['Terminar sem próximo passo combinado.', 'Pressionar ou arrastar (nem forçar, nem esfriar).', 'Prometer prazo/condição/frete fora da política oficial.'] },
+  ],
+  perguntasRapidas: [
+    { pergunta: 'O que todo contato de fechamento precisa ter?', opcoes: ['Um desconto.', 'Um próximo passo combinado, com ação e data.', 'A ficha técnica completa.'], correta: 1, explicacao: 'Nenhum contato termina sem próximo passo definido — é o que mantém a venda viva no ciclo curto.' },
+    { pergunta: 'Qual é o fechamento por alternativa?', opcoes: ['"Você quer ou não quer?"', '"Prefere o Light Filter 1000 ou o American Filter Inox?"', '"Pensa e me avisa."'], correta: 1, explicacao: 'Alternativa oferece escolha entre opções, não entre sim e não — avança a decisão.' },
+    { pergunta: 'Por que agilidade importa tanto no fechamento?', opcoes: ['Não importa, pode arrastar.', 'O ciclo é de 3 dias e o lead veio de anúncio querendo resolver agora.', 'Para bater meta de ligações.'], correta: 1, explicacao: 'Ciclo curto + lead de anúncio = responder rápido e conduzir sem arrastar aproveita o timing.' },
+  ],
+  exercicio: { enunciado: 'Você apresentou o valor e o cliente está gostando. Escreva um fechamento que combine resumo + alternativa + próximo passo com data, para um cliente que reclamou de cloro e mora em casa com 4 pessoas.', dica: 'Recapitule a dor e a solução para a casa toda, ofereça a escolha entre Light Filter e Inox, e feche com "envio a proposta hoje e retorno amanhã".' },
+  resumo: 'Fechar filtro de entrada é conduzir com agilidade no ciclo de 3 dias usando quatro alavancas: confirmação (amarrada à dor), alternativa (entre opções), resumo (dor + solução + combinado) e próximo passo (ação + data). Peça a decisão, responda rápido e nunca termine sem próximo passo. Condições comerciais e frete seguem a política oficial da TDF.'
+};

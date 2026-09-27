@@ -1,0 +1,84 @@
+<% var pageTitle = 'Analytics SDR'; var activePage = 'analytics-sdr'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<div class="page-header">
+  <h1>📡 Analytics SDR</h1>
+  <p class="subtitle">Funil da pré-venda por pessoa: do telefone ao estágio. Ligação real = registro do GoTo; conectada = acima de 30s; "sem ligação" = tarefa de ligação concluída sem chamada no lead.</p>
+</div>
+
+<div class="container" style="max-width:1120px;">
+  <div style="display:flex;gap:8px;margin:6px 0 16px;">
+    <% ['hoje','7d','30d'].forEach(function(p){ %>
+      <button class="per-btn" data-p="<%= p %>" style="padding:8px 18px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-weight:800;cursor:pointer;font-size:.88rem;"><%= p === 'hoje' ? 'Hoje' : p %></button>
+    <% }); %>
+    <span id="meta" style="align-self:center;color:var(--text-muted);font-size:.82rem;margin-left:8px;"></span>
+  </div>
+
+  <div id="wrap" style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:6px 6px 2px;overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:.9rem;min-width:900px;">
+      <thead>
+        <tr id="head" style="text-align:left;">
+          <th style="padding:12px 14px;">SDR</th>
+          <th title="Ligações reais (GoTo)">Discagens</th>
+          <th title="Conectadas acima de 30s">Conect. &gt;30s</th>
+          <th>Pessoas</th>
+          <th title="Negociações com ligação real no período">Leads ligados</th>
+          <th>→ Qualificado</th>
+          <th>→ Proposta/Agend.</th>
+          <th>→ Ganho</th>
+          <th title="% dos leads ligados que estão em Qualificado, Proposta/Agendado ou Ganho">Avanço</th>
+          <th title="Tarefas de ligação concluídas sem chamada real no lead">Sem ligação ⚠️</th>
+        </tr>
+      </thead>
+      <tbody id="corpo">
+        <tr><td colspan="10" style="padding:30px;text-align:center;color:var(--text-muted);">Carregando (a primeira consulta do período leva ~30s)…</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="color:var(--text-muted);font-size:.8rem;margin-top:10px;">Estágio é o retrato atual dos leads que receberam ligação no período. Dados em cache por 10 minutos. Fonte: Zoho CRM (Calls, Tasks, Deals).</p>
+</div>
+
+<style>
+  #head th { padding: 12px 10px; color: var(--text-muted); font-size: .74rem; text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid var(--border); white-space: nowrap; }
+  #corpo td { padding: 12px 10px; border-bottom: 1px solid var(--border); color: var(--text); font-variant-numeric: tabular-nums; }
+  #corpo tr:last-child td { border-bottom: none; }
+  .per-btn.on { background: #00AAFF !important; color: #04121f !important; border-color: #00AAFF !important; }
+</style>
+<script>
+  const corpo = document.getElementById('corpo');
+  const meta = document.getElementById('meta');
+  let atual = '7d';
+  async function carrega(p) {
+    atual = p;
+    document.querySelectorAll('.per-btn').forEach(b => b.classList.toggle('on', b.dataset.p === p));
+    corpo.innerHTML = '<tr><td colspan="10" style="padding:30px;text-align:center;color:var(--text-muted);">Carregando (a primeira consulta do período leva ~30s)…</td></tr>';
+    try {
+      const r = await fetch('/analytics-sdr/api?periodo=' + p);
+      const j = await r.json();
+      if (atual !== p) return;
+      meta.textContent = 'desde ' + j.inicio.split('-').reverse().join('/');
+      corpo.innerHTML = j.linhas.map(l => {
+        if (l.erro) return `<tr><td style="font-weight:800;">${l.nome}</td><td colspan="9" style="color:#ef4444;">${l.erro}</td></tr>`;
+        const av = l.taxaAvanco;
+        const avCor = av >= 40 ? '#22c55e' : av >= 20 ? '#eab308' : '#ef4444';
+        const fant = l.conclusoesSemLigacao;
+        return `<tr>
+          <td style="font-weight:800;">${l.nome}</td>
+          <td>${l.discagens}</td>
+          <td>${l.conectadas30}</td>
+          <td>${l.pessoas}</td>
+          <td style="font-weight:700;">${l.leadsLigados}</td>
+          <td>${l.emQualificado}</td>
+          <td>${l.emPropostaAgendado}</td>
+          <td style="color:#22c55e;font-weight:800;">${l.ganho}</td>
+          <td><span style="color:${avCor};font-weight:800;">${av}%</span></td>
+          <td style="color:${fant > 5 ? '#ef4444' : 'var(--text-muted)'};font-weight:${fant > 5 ? 800 : 400};">${fant}</td>
+        </tr>`;
+      }).join('');
+    } catch (e) {
+      corpo.innerHTML = '<tr><td colspan="10" style="padding:30px;text-align:center;color:#ef4444;">Erro ao carregar: ' + e.message + '</td></tr>';
+    }
+  }
+  document.querySelectorAll('.per-btn').forEach(b => b.addEventListener('click', () => carrega(b.dataset.p)));
+  carrega('7d');
+</script>

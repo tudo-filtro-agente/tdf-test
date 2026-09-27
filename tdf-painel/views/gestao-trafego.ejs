@@ -1,0 +1,926 @@
+<% const activePage = 'trafego'; const pageTitle = 'Dashboard de Tráfego Pago'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.tr-wrap{padding:14px 22px 100px;max-width:1500px;margin:0 auto}
+.tr-h{font-size:20px;color:var(--text);margin:0 0 4px;font-weight:800;display:flex;align-items:center;gap:12px}
+.tr-h .live{display:inline-flex;align-items:center;gap:5px;background:rgba(34,197,94,.12);color:#22c55e;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;border:1px solid rgba(34,197,94,.3);text-transform:uppercase;letter-spacing:.4px}
+.tr-h .live span.dot{width:6px;height:6px;border-radius:50%;background:#22c55e;animation:trPulse 1.4s infinite}
+@keyframes trPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.tr-sub{color:var(--text-muted);font-size:12px;margin:0 0 14px}
+
+.tr-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 14px}
+.tr-bar label{color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+.tr-bar select,.tr-bar input{background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px}
+
+/* Health banner */
+.tr-health{display:flex;gap:10px;margin-bottom:14px;padding:10px 14px;background:#0d1f3a;border:1px solid #1f6feb;border-radius:8px;flex-wrap:wrap}
+.tr-health.warn{background:#2a1a05;border-color:#f59e0b}
+.tr-health.danger{background:#1a0a0a;border-color:#ef4444}
+.tr-health span{color:#7cb9f5;font-size:11px;font-weight:600}
+.tr-health.warn span{color:#fbbf24}
+.tr-health.danger span{color:#fca5a5}
+
+/* Cards topo */
+.tr-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px}
+.tr-card{background:linear-gradient(135deg,var(--bg-card),var(--bg-card));border:1px solid var(--border);border-radius:10px;padding:12px 14px;position:relative}
+.tr-card .lbl{color:var(--text-muted);font-size:9px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.tr-card .val{font-size:22px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.tr-card .sub{color:var(--text-muted);font-size:10px;margin-top:3px}
+.tr-card.invest .val{color:#7cb9f5}
+.tr-card.leads .val{color:#a371f7}
+.tr-card.cac .val{color:#f59e0b}
+.tr-card.roas .val{color:#22c55e}
+.tr-card.receita .val{color:#22c55e}
+.tr-card.cpl .val{color:#fbbf24}
+.tr-card.vendas .val{color:#22c55e}
+
+/* Gestor IA Live */
+.tr-gestor{background:linear-gradient(135deg,#1a0f2e,#2d1525);border:2px solid #a371f7;border-radius:12px;padding:14px;margin-bottom:18px;box-shadow:0 4px 16px rgba(167,113,247,.2)}
+.tr-gestor h3{margin:0 0 8px;color:var(--text);font-size:14px;display:flex;align-items:center;gap:10px}
+.tr-gestor .acao{background:#0d0820;border:1px solid #4c1d95;border-radius:8px;padding:10px;margin-bottom:8px}
+.tr-gestor .acao:last-child{margin-bottom:0}
+.tr-gestor .acao .tit{color:var(--text);font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tr-gestor .acao .why{color:var(--text-muted);font-size:11px;margin-top:5px;line-height:1.4}
+.tr-gestor .acao .stats{display:flex;gap:10px;margin-top:8px;font-size:10px}
+.tr-gestor .acao .stat{color:var(--text-muted)}
+.tr-gestor .acao .stat strong{color:#22c55e}
+.tr-gestor .acao .actions{display:flex;gap:6px;margin-top:8px}
+.tr-gestor .acao button{padding:5px 12px;font-size:11px;font-weight:700;border-radius:5px;cursor:pointer;border:none}
+.tr-gestor .acao button.exec{background:#22c55e;color:#000}
+.tr-gestor .acao button.skip{background:#222;color:#ddd;border:1px solid var(--border)}
+.tr-gestor .acao button.exec:hover{background:#16a34a}
+
+.tr-conf{display:inline-block;background:#1f2937;color:#9ca3af;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700}
+.tr-conf.high{background:rgba(34,197,94,.15);color:#22c55e}
+.tr-conf.medium{background:rgba(245,158,11,.15);color:#f59e0b}
+.tr-conf.low{background:rgba(239,68,68,.15);color:#fca5a5}
+
+.tr-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:10px;flex-wrap:wrap}
+.tr-tab{background:transparent;border:none;color:var(--text-muted);padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent}
+.tr-tab.active{color:#7cb9f5;border-bottom-color:#1f6feb}
+.tr-tab:hover{color:var(--text)}
+
+/* Tabela campanhas */
+.tr-tbl{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow-x:auto}
+.tr-tbl table{width:100%;border-collapse:collapse;font-size:11px}
+.tr-tbl th{padding:8px 10px;background:var(--bg-card);color:var(--text-muted);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap}
+.tr-tbl td{padding:8px 10px;border-bottom:1px solid #1a1a1a;color:var(--text-muted)}
+.tr-tbl tr:hover td{background:var(--bg-card)}
+.tr-tbl .num{text-align:right;font-variant-numeric:tabular-nums}
+.tr-tbl .nome{color:var(--text);font-weight:700}
+.tr-tbl .acts button{background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;margin-right:3px}
+.tr-tbl .acts button:hover{border-color:#1f6feb;color:var(--text)}
+.tr-tbl .acts .danger:hover{border-color:#ef4444;color:#ef4444}
+
+.tr-loading{padding:40px;text-align:center;color:var(--text-muted);font-size:12px}
+
+/* Galeria criativos */
+.tr-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.tr-creative{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.tr-creative.champ{border-color:#22c55e}
+.tr-creative.fadiga{border-color:#f59e0b}
+.tr-creative.fraco{border-color:#ef4444;opacity:.85}
+.tr-creative .thumb{width:100%;height:160px;background:#000;display:flex;align-items:center;justify-content:center;color:#444;font-size:11px}
+.tr-creative .thumb img{width:100%;height:100%;object-fit:cover}
+.tr-creative .body{padding:10px}
+.tr-creative .nome{color:var(--text);font-weight:700;font-size:12px;line-height:1.3;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.tr-creative .kpis{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:10px}
+.tr-creative .kpi{color:var(--text-muted)}
+.tr-creative .kpi strong{color:var(--text);display:block;font-size:13px}
+.tr-creative .badge{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.8);color:var(--text);font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;text-transform:uppercase}
+</style>
+
+<div class="tr-wrap">
+  <h1 class="tr-h">📊 Dashboard de Tráfego Pago <span class="live"><span class="dot"></span>AO VIVO</span></h1>
+  <p class="tr-sub">Google Ads + Meta Ads cruzados com vendas Zoho. CAC real, ROAS por canal, ações executáveis com Approval Gate.</p>
+
+  <div class="tr-bar" style="flex-wrap:wrap">
+    <label>Período</label>
+    <button class="tr-preset" data-p="hoje" onclick="trPreset('hoje')">Hoje</button>
+    <button class="tr-preset" data-p="ontem" onclick="trPreset('ontem')">Ontem</button>
+    <button class="tr-preset active" data-p="7" onclick="trPreset('7')">7 dias</button>
+    <button class="tr-preset" data-p="30" onclick="trPreset('30')">30 dias</button>
+    <button class="tr-preset" data-p="90" onclick="trPreset('90')">90 dias</button>
+    <button class="tr-preset" data-p="custom" onclick="trPreset('custom')">📅 Personalizado</button>
+    <span id="tr-custom-range" style="display:none;align-items:center;gap:6px">
+      <input id="tr-start" type="date">
+      <span style="color:var(--text-muted)">→</span>
+      <input id="tr-end" type="date">
+      <button onclick="trCarregar()" style="background:#22c55e;color:#000;border:none;padding:6px 12px;border-radius:5px;font-size:11px;font-weight:800;cursor:pointer">Aplicar</button>
+    </span>
+    <span id="tr-period-label" style="color:#7cb9f5;font-size:11px;font-weight:700;margin-left:auto"></span>
+    <button onclick="trCarregar()" style="background:#1f6feb;border:none;color:#fff;padding:7px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">↻</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;background:linear-gradient(135deg,#1a0f2e,#2d1525);border:1px solid #a371f7;border-radius:10px;padding:10px 14px">
+    <span style="color:#c4a4ff;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-right:4px">🤖 Invocar Especialistas</span>
+    <button onclick="trChamarPersona('estrategista')" class="tr-persona-btn" style="background:#22c55e;color:#000">🚀 Estrategista (Opus 4)</button>
+    <button onclick="trChamarPersona('auditor')" class="tr-persona-btn" style="background:#f59e0b;color:#000">🎯 Auditor (Opus 4)</button>
+    <button onclick="trChamarPersona('critico_criativos')" class="tr-persona-btn" style="background:#a371f7;color:#fff">🎨 Crítico Criativos (Sonnet 4)</button>
+    <button onclick="trChamarAgenteAutonomo()" class="tr-persona-btn" id="tr-agent-btn" style="background:linear-gradient(135deg,#7c3aed,#a371f7);color:#fff;border:1px solid #c4a4ff">🤖 Agente Autônomo (Tool Use)</button>
+    <span id="tr-persona-status" style="color:var(--text-muted);font-size:11px;margin-left:auto"></span>
+  </div>
+  <style>
+  .tr-persona-btn{border:none;padding:7px 14px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;transition:transform .15s}
+  .tr-persona-btn:hover{transform:translateY(-1px)}
+  .tr-persona-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  </style>
+  <style>
+  .tr-preset{background:var(--bg-card);color:var(--text-muted);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit}
+  .tr-preset:hover{background:var(--bg-hover);color:var(--text);border-color:#1f6feb}
+  .tr-preset.active{background:#1f6feb;color:#fff;border-color:#1f6feb}
+  </style>
+
+  <div id="tr-health" style="display:none"></div>
+  <div id="tr-cron-last" style="display:none"></div>
+  <div id="tr-gestor-out"></div>
+  <div id="tr-cards"></div>
+  <div class="tr-tabs">
+    <button class="tr-tab active" onclick="trAba('campanhas')" id="tr-tab-camp">📊 Campanhas</button>
+    <button class="tr-tab" onclick="trAba('canal')" id="tr-tab-canal">📡 Por Canal (FB/IG/Google)</button>
+    <button class="tr-tab" onclick="trAba('funil')" id="tr-tab-funil">🔻 Funil Completo</button>
+    <button class="tr-tab" onclick="trAba('vendas')" id="tr-tab-vd">💰 Vendas × Campanha</button>
+    <button class="tr-tab" onclick="trAba('keywords')" id="tr-tab-kw">🔑 Keywords (Google)</button>
+    <button class="tr-tab" onclick="trAba('criativos')" id="tr-tab-cr">🎨 Criativos (Meta)</button>
+    <button class="tr-tab" onclick="trAba('health')" id="tr-tab-h">🩺 Health Check</button>
+    <button class="tr-tab" onclick="trAba('audit')" id="tr-tab-aud">📜 Audit Log</button>
+  </div>
+  <div id="tr-content"><div class="tr-loading">⏳ Carregando snapshot...</div></div>
+</div>
+
+<script>
+let _TR_DATA = null;
+
+function trMoney(v, big){
+  if (v == null) return '—';
+  v = Number(v);
+  if (big && v >= 1000000) return 'R$ '+(v/1000000).toFixed(1).replace('.',',')+'M';
+  if (big && v >= 1000) return 'R$ '+(v/1000).toFixed(1).replace('.',',')+'k';
+  return 'R$ '+Math.round(v).toLocaleString('pt-BR');
+}
+function trPct(v){ return v != null ? v.toFixed(1).replace('.',',')+'%' : '—'; }
+
+// === SELETOR DE PERÍODO ===
+let _TR_PERIODO = { tipo: 'days', value: 7 };
+
+function _hojeBR(){
+  const d = new Date(); const tz = d.toLocaleDateString('en-CA', {timeZone:'America/Sao_Paulo'});
+  return tz; // YYYY-MM-DD
+}
+function _ontemBR(){
+  const d = new Date(Date.now() - 86400000);
+  return d.toLocaleDateString('en-CA', {timeZone:'America/Sao_Paulo'});
+}
+
+function trPreset(p){
+  document.querySelectorAll('.tr-preset').forEach(b => b.classList.remove('active'));
+  document.querySelector('.tr-preset[data-p="'+p+'"]')?.classList.add('active');
+  const customSpan = document.getElementById('tr-custom-range');
+  if (p === 'custom') {
+    customSpan.style.display = 'inline-flex';
+    // Default: últimos 14 dias
+    const end = _hojeBR();
+    const startDate = new Date(Date.now() - 14*86400000);
+    const start = startDate.toLocaleDateString('en-CA', {timeZone:'America/Sao_Paulo'});
+    document.getElementById('tr-start').value = start;
+    document.getElementById('tr-end').value = end;
+    return; // espera user clicar Aplicar
+  }
+  customSpan.style.display = 'none';
+  if (p === 'hoje') _TR_PERIODO = { tipo: 'range', start: _hojeBR(), end: _hojeBR() };
+  else if (p === 'ontem') _TR_PERIODO = { tipo: 'range', start: _ontemBR(), end: _ontemBR() };
+  else _TR_PERIODO = { tipo: 'days', value: parseInt(p, 10) };
+  trCarregar();
+}
+
+function _trBuildQS(){
+  // Custom range tem prioridade se aba "Personalizado" tá visível com inputs preenchidos
+  const customVisible = document.getElementById('tr-custom-range').style.display !== 'none';
+  if (customVisible) {
+    const s = document.getElementById('tr-start').value;
+    const e = document.getElementById('tr-end').value;
+    if (s && e) return `start=${s}&end=${e}`;
+  }
+  if (_TR_PERIODO.tipo === 'range') return `start=${_TR_PERIODO.start}&end=${_TR_PERIODO.end}`;
+  return `days=${_TR_PERIODO.value || 7}`;
+}
+
+function _trLabelPeriodo(){
+  const customVisible = document.getElementById('tr-custom-range').style.display !== 'none';
+  if (customVisible) {
+    const s = document.getElementById('tr-start').value;
+    const e = document.getElementById('tr-end').value;
+    if (s && e) return s === e ? s.split('-').reverse().join('/') : s.split('-').reverse().join('/') + ' → ' + e.split('-').reverse().join('/');
+  }
+  if (_TR_PERIODO.tipo === 'range') {
+    const s = _TR_PERIODO.start, e = _TR_PERIODO.end;
+    return s === e ? s.split('-').reverse().join('/') : s.split('-').reverse().join('/') + ' → ' + e.split('-').reverse().join('/');
+  }
+  return 'Últimos ' + _TR_PERIODO.value + ' dias';
+}
+
+async function trCarregarCronLast(){
+  try {
+    const r = await fetch('/trafego/gestor-ia/last');
+    const d = await r.json();
+    const wrap = document.getElementById('tr-cron-last');
+    if (!d || !d.generated_at) { wrap.style.display = 'none'; return; }
+    const min = Math.round((Date.now() - d.generated_at) / 60000);
+    const h = Math.floor(min / 60);
+    const ageStr = h > 0 ? h + 'h' + (min % 60) + 'min' : min + 'min';
+    let html = '<div style="background:#0d0820;border:1px solid #4c1d95;border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
+    html += '<span style="background:#a371f7;color:#000;font-weight:800;font-size:9px;padding:2px 7px;border-radius:6px;text-transform:uppercase">⏰ Cron ' + (d.hour||'?') + 'h</span>';
+    html += '<span style="color:#c4a4ff;font-size:11px">Última análise IA: há ' + ageStr + '</span>';
+    if (d.parsed?.actions) html += '<span style="color:#fff;font-size:11px;font-weight:700">' + d.parsed.actions.length + ' ações sugeridas</span>';
+    html += '<button onclick="trVerCronUltimo()" style="margin-left:auto;background:#7c3aed;color:#fff;border:none;padding:5px 10px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer">Ver detalhes</button>';
+    html += '</div>';
+    wrap.innerHTML = html;
+    wrap.style.display = 'block';
+    window._TR_CRON_LAST = d;
+  } catch(_){}
+}
+function trVerCronUltimo(){
+  const d = window._TR_CRON_LAST;
+  if (!d?.parsed) return;
+  const out = document.getElementById('tr-gestor-out');
+  let html = '<div class="tr-gestor"><h3>⏰ Última análise automática (cron ' + (d.hour||'?') + 'h)</h3>';
+  if (d.parsed.summary) html += '<div style="color:#c4a4ff;font-size:12px;margin-bottom:10px;font-style:italic">' + d.parsed.summary.replace(/</g,'&lt;') + '</div>';
+  if (Array.isArray(d.parsed.actions)) html += d.parsed.actions.map(a => trRenderAcao(a, 0)).join('');
+  html += '</div>';
+  out.innerHTML = html;
+}
+trCarregarCronLast();
+
+async function trCarregar(){
+  const qs = _trBuildQS();
+  document.getElementById('tr-period-label').textContent = '📅 ' + _trLabelPeriodo();
+  document.getElementById('tr-cards').innerHTML = '<div class="tr-loading">⏳ Carregando snapshot...</div>';
+  try {
+    const r = await fetch('/trafego/snapshot?' + qs);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    _TR_DATA = d;
+    trRenderHealth(d.health);
+    trRenderCards(d.cards);
+    trAba('campanhas');
+  } catch(e) {
+    document.getElementById('tr-cards').innerHTML = `<div class="tr-loading" style="color:#ef4444">Erro: ${e.message}</div>`;
+  }
+}
+
+function trRenderHealth(h){
+  const el = document.getElementById('tr-health');
+  const issues = [];
+  if (!h.google_creds) issues.push('⚠️ Google Ads sem credenciais (configure GOOGLE_ADS_* no Railway)');
+  if (!h.meta_creds) issues.push('⚠️ Meta Ads sem credenciais (configure META_ACCESS_TOKEN + META_AD_ACCOUNT_ID)');
+  if (!issues.length) {
+    el.style.display = 'flex';
+    el.className = 'tr-health';
+    el.innerHTML = '<span>✅ Tracking OK · Google + Meta conectados</span>';
+  } else {
+    el.style.display = 'flex';
+    el.className = 'tr-health danger';
+    el.innerHTML = issues.map(i => '<span>'+i+'</span>').join('');
+  }
+}
+
+function trRenderCards(c){
+  const el = document.getElementById('tr-cards');
+  el.className = 'tr-cards';
+  el.innerHTML = `
+    <div class="tr-card invest">
+      <div class="lbl">💰 Investimento (Google + Meta)</div>
+      <div class="val">${trMoney(c.invest_total, true)}</div>
+      <div class="sub">G ${trMoney(c.invest_google,true)} · M ${trMoney(c.invest_meta,true)}</div>
+    </div>
+    <div class="tr-card leads">
+      <div class="lbl">🎯 Leads gerados</div>
+      <div class="val">${c.leads || 0}</div>
+      <div class="sub">G ${c.leads_google} · M ${c.leads_meta}</div>
+    </div>
+    <div class="tr-card cpl">
+      <div class="lbl">💸 CPL (Custo por Lead)</div>
+      <div class="val">${c.cpl != null ? trMoney(c.cpl) : '—'}</div>
+      <div class="sub">por lead bruto</div>
+    </div>
+    <div class="tr-card vendas">
+      <div class="lbl">🏆 Vendas no período</div>
+      <div class="val">${c.vendas || 0}</div>
+      <div class="sub">${trMoney(c.receita,true)} receita</div>
+    </div>
+    <div class="tr-card cac">
+      <div class="lbl">📉 CAC real</div>
+      <div class="val">${c.cac != null ? trMoney(c.cac) : '—'}</div>
+      <div class="sub">invest / venda Zoho</div>
+    </div>
+    <div class="tr-card roas">
+      <div class="lbl">📈 ROAS</div>
+      <div class="val">${c.roas != null ? c.roas.toFixed(1).replace('.',',')+'x' : '—'}</div>
+      <div class="sub">receita / invest</div>
+    </div>
+    <div class="tr-card receita">
+      <div class="lbl">🎫 Ticket Médio</div>
+      <div class="val">${c.ticket_medio != null ? trMoney(c.ticket_medio) : '—'}</div>
+      <div class="sub">receita / venda</div>
+    </div>
+    <div class="tr-card">
+      <div class="lbl">🔁 Taxa Lead → Venda</div>
+      <div class="val">${trPct(c.taxa_lead_venda_pct)}</div>
+      <div class="sub">conversão funnel total</div>
+    </div>
+  `;
+}
+
+function trAba(aba){
+  ['camp','kw','cr','h','aud','canal','funil','vd'].forEach(k => {
+    const t = document.getElementById('tr-tab-'+k);
+    if (t) t.classList.remove('active');
+  });
+  const map = { campanhas: 'camp', keywords: 'kw', criativos: 'cr', health: 'h', audit: 'aud', canal: 'canal', funil: 'funil', vendas: 'vd' };
+  document.getElementById('tr-tab-' + map[aba]).classList.add('active');
+  if (aba === 'campanhas') trRenderCampanhas();
+  else if (aba === 'keywords') trCarregarKeywords();
+  else if (aba === 'criativos') trCarregarCriativos();
+  else if (aba === 'health') trCarregarHealth();
+  else if (aba === 'audit') trCarregarAudit();
+  else if (aba === 'canal') trCarregarCanal();
+  else if (aba === 'funil') trCarregarFunil();
+  else if (aba === 'vendas') trCarregarVendas();
+}
+
+async function trCarregarVendas(){
+  const c = document.getElementById('tr-content');
+  c.innerHTML = '<div class="tr-loading">⏳ Cruzando spend × Fechado Ganho do Zoho...</div>';
+  try {
+    const r = await fetch('/trafego/vendas-por-campanha?' + _trBuildQS());
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    const T = d.total;
+    const atribPct = (T.revenue_atribuido_pct * 100).toFixed(0);
+    let html = '<div style="background:#0d0d0d;border:1px solid #222;border-radius:10px;padding:18px">';
+    html += '<h3 style="margin:0 0 4px;color:#fff;font-size:14px">💰 Vendas reais por campanha · ' + d.periodo.start + ' → ' + d.periodo.end + '</h3>';
+    html += '<div style="color:#888;font-size:11px;margin-bottom:14px">Match fuzzy: tokens do <em>Lead_Source</em> (Zoho) cruzados com nome de campanha. Threshold: 2+ tokens em comum.</div>';
+    // Cards totais
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px">';
+    html += '<div style="background:#161616;border:1px solid #222;border-radius:8px;padding:10px"><div style="color:#aaa;font-size:11px">Spend total</div><div style="color:#fff;font-size:18px;font-weight:800">' + trMoney(T.spend, true) + '</div></div>';
+    html += '<div style="background:#161616;border:1px solid #22c55e44;border-radius:8px;padding:10px"><div style="color:#22c55e;font-size:11px">Receita atribuída</div><div style="color:#22c55e;font-size:18px;font-weight:800">' + trMoney(T.revenue, true) + '</div><div style="color:#666;font-size:10px">' + T.deals_won + ' deals</div></div>';
+    html += '<div style="background:#161616;border:1px solid #fbbf2444;border-radius:8px;padding:10px"><div style="color:#fbbf24;font-size:11px">ROAS real</div><div style="color:#fbbf24;font-size:18px;font-weight:800">' + (T.roas != null ? T.roas.toFixed(2).replace('.',',') + 'x' : '—') + '</div></div>';
+    html += '<div style="background:#161616;border:1px solid #444;border-radius:8px;padding:10px"><div style="color:#aaa;font-size:11px">Cobertura atrib.</div><div style="color:' + (atribPct >= 70 ? '#22c55e' : atribPct >= 40 ? '#fbbf24' : '#ef4444') + ';font-size:18px;font-weight:800">' + atribPct + '%</div><div style="color:#666;font-size:10px">' + trMoney(T.revenue_total_zoho, true) + ' total Zoho</div></div>';
+    html += '</div>';
+    // Tabela campanhas
+    const comReceita = d.campanhas.filter(c => c.revenue > 0);
+    const semReceita = d.campanhas.filter(c => c.revenue === 0 && c.spend > 50);
+    if (comReceita.length) {
+      html += '<h4 style="color:#22c55e;margin:0 0 6px;font-size:12px">🏆 Campanhas que venderam (' + comReceita.length + ')</h4>';
+      html += '<table style="width:100%;font-size:11px;color:#ccc;border-collapse:collapse;margin-bottom:18px"><thead><tr style="background:#161616;text-align:left"><th style="padding:6px">Plat</th><th style="padding:6px">Campanha</th><th style="padding:6px;text-align:right">Spend</th><th style="padding:6px;text-align:right">Vendas</th><th style="padding:6px;text-align:right">Receita</th><th style="padding:6px;text-align:right">ROAS</th><th style="padding:6px;text-align:right">CPA</th></tr></thead><tbody>';
+      comReceita.forEach((c, i) => {
+        const platCor = c.platform === 'Meta' ? '#1877f2' : '#fbbc04';
+        const roasCor = c.roas_real >= 3 ? '#22c55e' : c.roas_real >= 1 ? '#fbbf24' : '#ef4444';
+        html += '<tr style="border-bottom:1px solid #1a1a1a;cursor:pointer" onclick="trToggleVendasDeals(' + i + ')">';
+        html += '<td style="padding:6px"><span style="background:' + platCor + '22;color:' + platCor + ';padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700">' + c.platform + '</span></td>';
+        html += '<td style="padding:6px;color:#fff">' + (c.name || '(sem nome)') + '</td>';
+        html += '<td style="padding:6px;text-align:right;color:#aaa;font-variant-numeric:tabular-nums">' + trMoney(c.spend) + '</td>';
+        html += '<td style="padding:6px;text-align:right;color:#22c55e;font-weight:700;font-variant-numeric:tabular-nums">' + c.deals_won + '</td>';
+        html += '<td style="padding:6px;text-align:right;color:#22c55e;font-weight:700;font-variant-numeric:tabular-nums">' + trMoney(c.revenue) + '</td>';
+        html += '<td style="padding:6px;text-align:right;color:' + roasCor + ';font-weight:700;font-variant-numeric:tabular-nums">' + (c.roas_real != null ? c.roas_real.toFixed(2).replace('.',',') + 'x' : '—') + '</td>';
+        html += '<td style="padding:6px;text-align:right;color:#aaa;font-variant-numeric:tabular-nums">' + (c.cpa_real != null ? trMoney(c.cpa_real) : '—') + '</td>';
+        html += '</tr>';
+        html += '<tr id="tr-vd-deals-' + i + '" style="display:none;background:#0a0a0a"><td colspan="7" style="padding:8px 14px"><div style="color:#888;font-size:10px;margin-bottom:6px">🎯 Top deals (matched)</div>';
+        html += c.deals_top.map(deal => '<div style="display:flex;gap:8px;padding:3px 0;border-bottom:1px solid #161616;font-size:10px"><span style="flex:1;color:#fff">' + deal.nome + '</span><span style="color:#aaa;width:120px">' + deal.owner + '</span><span style="color:#22c55e;font-weight:700;width:80px;text-align:right">' + trMoney(deal.amount) + '</span><span style="color:#666;width:40px;text-align:right">' + deal.tier + '</span></div>').join('');
+        html += '</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+    if (semReceita.length) {
+      html += '<details style="background:#0a0a0a;border:1px solid #222;border-radius:8px;padding:10px;margin-bottom:14px"><summary style="cursor:pointer;color:#ef4444;font-weight:700;font-size:12px">⚠️ Campanhas com spend mas SEM venda atribuída (' + semReceita.length + ')</summary>';
+      html += '<table style="width:100%;font-size:11px;color:#ccc;border-collapse:collapse;margin-top:10px"><thead><tr style="background:#161616;text-align:left"><th style="padding:6px">Plat</th><th style="padding:6px">Campanha</th><th style="padding:6px;text-align:right">Spend</th><th style="padding:6px;text-align:right">Leads (plat)</th><th style="padding:6px;text-align:right">Cliques</th></tr></thead><tbody>';
+      semReceita.forEach(c => {
+        html += '<tr style="border-bottom:1px solid #1a1a1a"><td style="padding:6px">' + c.platform + '</td><td style="padding:6px;color:#fff">' + c.name + '</td><td style="padding:6px;text-align:right;color:#ef4444;font-weight:700">' + trMoney(c.spend) + '</td><td style="padding:6px;text-align:right;color:#aaa">' + c.leads_plataforma + '</td><td style="padding:6px;text-align:right;color:#aaa">' + c.clicks + '</td></tr>';
+      });
+      html += '</tbody></table></details>';
+    }
+    if (d.sem_match.count > 0) {
+      html += '<details style="background:#0a0a0a;border:1px solid #fbbf2444;border-radius:8px;padding:10px"><summary style="cursor:pointer;color:#fbbf24;font-weight:700;font-size:12px">🌫️ Vendas SEM atribuição (' + d.sem_match.count + ' deals · ' + trMoney(d.sem_match.revenue, true) + ')</summary>';
+      html += '<div style="color:#888;font-size:10px;margin:8px 0">Lead_Source não match com nenhuma campanha. Pode ser orgânico, indicação, base antiga ou Lead_Source vazio/genérico.</div>';
+      html += '<table style="width:100%;font-size:10px;color:#ccc;border-collapse:collapse"><thead><tr style="background:#161616;text-align:left"><th style="padding:5px">Deal</th><th style="padding:5px">Owner</th><th style="padding:5px">Lead Source</th><th style="padding:5px;text-align:right">R$</th></tr></thead><tbody>';
+      d.sem_match.deals.slice(0,30).forEach(deal => {
+        html += '<tr style="border-bottom:1px solid #161616"><td style="padding:5px;color:#fff">' + deal.nome + '</td><td style="padding:5px;color:#aaa">' + deal.owner + '</td><td style="padding:5px;color:#888;font-style:italic">' + (deal.lead_source || '(vazio)') + '</td><td style="padding:5px;text-align:right;color:#aaa">' + trMoney(deal.amount) + '</td></tr>';
+      });
+      html += '</tbody></table></details>';
+    }
+    html += '</div>';
+    c.innerHTML = html;
+  } catch(e) { c.innerHTML = '<div class="tr-loading" style="color:#ef4444">Erro: '+e.message+'</div>'; }
+}
+function trToggleVendasDeals(i){
+  const el = document.getElementById('tr-vd-deals-'+i);
+  if (el) el.style.display = el.style.display === 'none' ? 'table-row' : 'none';
+}
+
+async function trCarregarFunil(){
+  const c = document.getElementById('tr-content');
+  c.innerHTML = '<div class="tr-loading">⏳ Calculando funil completo...</div>';
+  try {
+    const r = await fetch('/trafego/funnel?' + _trBuildQS());
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    let html = '<div style="background:#0d0d0d;border:1px solid #222;border-radius:10px;padding:18px">';
+    html += '<h3 style="margin:0 0 6px;color:#fff;font-size:14px">🔻 Funil completo · ' + d.periodo.start + ' → ' + d.periodo.end + '</h3>';
+    html += '<div style="color:#22c55e;font-size:13px;font-weight:700;margin-bottom:14px">💰 Receita ganha no período: ' + trMoney(d.receita_ganha, true) + '</div>';
+    // Funil visual
+    const max = Math.max(...d.etapas.map(e => e.valor || 0), 1);
+    html += d.etapas.map((e,i) => {
+      const pct = (e.valor / max) * 100;
+      const dropStr = e.ratio !== null ? ((e.ratio*100).toFixed(1).replace('.',',') + '%') : '—';
+      const corBar = i === 0 ? '#7cb9f5' : i === 1 ? '#22c55e' : i === 2 ? '#a371f7' : i === 3 ? '#f59e0b' : i === 4 ? '#fbbf24' : i === 5 ? '#f97316' : '#ef4444';
+      return '<div style="margin-bottom:6px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:3px"><span style="font-size:18px">' + e.icon + '</span><span style="color:#fff;font-weight:700;font-size:13px">' + e.nome + '</span><span style="color:#aaa;margin-left:auto;font-size:13px;font-variant-numeric:tabular-nums">' + (e.valor||0).toLocaleString('pt-BR') + '</span>' + (e.ratio !== null ? '<span style="background:'+corBar+'22;color:'+corBar+';padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;min-width:60px;text-align:center">' + dropStr + '</span>' : '<span style="min-width:60px"></span>') + '</div><div style="height:24px;background:#161616;border-radius:4px;overflow:hidden;position:relative"><div style="height:100%;background:linear-gradient(90deg,'+corBar+'aa,'+corBar+');width:'+pct+'%"></div></div></div>';
+    }).join('');
+    html += '</div>';
+    // Breakdown por stage
+    html += '<div style="margin-top:14px;background:#0d0d0d;border:1px solid #222;border-radius:10px;padding:14px"><h3 style="margin:0 0 10px;color:#fff;font-size:13px">Breakdown por Stage Zoho (' + d.total_deals + ' deals criados)</h3>';
+    html += Object.entries(d.por_stage||{}).sort((a,b) => b[1]-a[1]).map(([stage, n]) => '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1a1a1a;font-size:11px"><span style="color:#aaa">' + stage + '</span><span style="color:#fff;font-weight:700">' + n + '</span></div>').join('');
+    html += '</div>';
+    c.innerHTML = html;
+  } catch(e) { c.innerHTML = '<div class="tr-loading" style="color:#ef4444">Erro: '+e.message+'</div>'; }
+}
+
+// === AGENTE AUTÔNOMO COM TOOL USE ===
+async function trChamarAgenteAutonomo(){
+  const out = document.getElementById('tr-gestor-out');
+  const btn = document.getElementById('tr-agent-btn');
+  document.querySelectorAll('.tr-persona-btn').forEach(b => b.disabled = true);
+  out.innerHTML = `
+    <div class="tr-gestor" style="border-color:#a371f7">
+      <h3 style="color:#fff">🤖 Agente Autônomo · investigando ao vivo</h3>
+      <div style="color:#c4a4ff;font-size:11px;margin-bottom:10px;font-style:italic">Tool Use ativo — Claude está chamando tools (Google Ads, Meta, Zoho) sozinho. Isso pode levar 30-90s.</div>
+      <div id="tr-agent-trace" style="background:#0a0a0a;border-radius:6px;padding:10px;max-height:400px;overflow-y:auto;font-family:monospace;font-size:11px;color:#aaa">
+        <div style="color:#888">⏳ Aguardando primeira resposta do agente...</div>
+      </div>
+    </div>
+  `;
+  try {
+    const r = await fetch('/trafego/agente-ia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mensagem: 'Diagnóstico completo dos últimos 7 dias. Identifique 3-5 ações priorizadas por impacto financeiro. Use as tools pra investigar (não invente números).' }),
+    });
+    const d = await r.json();
+    if (d.error) {
+      out.innerHTML = '<div class="tr-gestor"><h3 style="color:#ef4444">🤖 Agente IA</h3><div style="color:#ef4444">Erro: ' + d.error + '</div></div>';
+      return;
+    }
+    let html = '<div class="tr-gestor" style="border-color:#a371f7"><h3 style="color:#fff">🤖 Agente Autônomo · ' + d.iterations + ' iterações</h3>';
+    // Trace dos passos
+    html += '<details style="background:#0a0a0a;border-radius:6px;padding:10px;margin-bottom:10px"><summary style="cursor:pointer;color:#c4a4ff;font-weight:700;font-size:12px">▸ Passos do Agente (' + d.trace.length + ')</summary><div style="margin-top:10px;font-family:monospace;font-size:11px;line-height:1.6">';
+    d.trace.forEach((t, i) => {
+      const ico = t.tipo === 'tool_call' ? '🔧' : t.tipo === 'tool_result' ? '✅' : t.tipo === 'tool_error' ? '❌' : '💭';
+      const cor = t.tipo === 'tool_call' ? '#fbbf24' : t.tipo === 'tool_result' ? '#22c55e' : t.tipo === 'tool_error' ? '#ef4444' : '#aaa';
+      html += '<div style="padding:4px 0;border-bottom:1px solid #161616"><span style="color:' + cor + '">' + ico + ' ' + t.tipo + '</span>';
+      if (t.tool) html += ' <strong style="color:#7cb9f5">' + t.tool + '</strong>';
+      if (t.input) html += ' <span style="color:#666">' + JSON.stringify(t.input).slice(0,100) + '</span>';
+      if (t.resultado) html += ' <span style="color:#22c55e">' + t.resultado + '</span>';
+      if (t.conteudo) html += '<div style="color:#aaa;margin-top:3px;padding-left:18px;font-style:italic">' + t.conteudo.slice(0, 250).replace(/</g,'&lt;') + (t.conteudo.length > 250 ? '...' : '') + '</div>';
+      html += '</div>';
+    });
+    html += '</div></details>';
+    // Resposta final
+    if (d.parsed) {
+      if (d.parsed.summary) html += '<div style="color:#c4a4ff;font-size:13px;margin-bottom:10px;font-weight:700;font-style:italic">' + d.parsed.summary.replace(/</g,'&lt;') + '</div>';
+      if (Array.isArray(d.parsed.actions_taken) && d.parsed.actions_taken.length > 0) {
+        html += '<div style="color:#22c55e;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">✅ Ações executadas (' + d.parsed.actions_taken.length + ')</div>';
+        html += d.parsed.actions_taken.map(a => '<div style="background:#0d1f0d;border:1px solid #22c55e;border-radius:6px;padding:8px;margin-bottom:5px;font-size:12px;color:#aaa">' + JSON.stringify(a).replace(/</g,'&lt;') + '</div>').join('');
+      }
+      if (Array.isArray(d.parsed.actions_recommended)) {
+        html += '<div style="color:#f59e0b;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin:10px 0 6px">📌 Ações recomendadas (precisam aprovação)</div>';
+        html += d.parsed.actions_recommended.map(a => trRenderAcao(a, 0)).join('');
+      }
+    } else {
+      html += '<div style="color:#fff;line-height:1.5;white-space:pre-wrap">' + (d.final_text || '').replace(/</g,'&lt;') + '</div>';
+    }
+    html += '</div>';
+    out.innerHTML = html;
+  } catch(e) {
+    out.innerHTML = '<div class="tr-gestor"><h3 style="color:#ef4444">🤖 Agente IA</h3><div style="color:#ef4444">Erro: ' + e.message + '</div></div>';
+  } finally {
+    document.querySelectorAll('.tr-persona-btn').forEach(b => b.disabled = false);
+  }
+}
+
+async function trCarregarCanal(){
+  const c = document.getElementById('tr-content');
+  c.innerHTML = '<div class="tr-loading">⏳ Cruzando Google + Facebook + Instagram + CRM...</div>';
+  try {
+    const r = await fetch('/trafego/leads-por-canal?' + _trBuildQS());
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    const tierIco = { Diamante: '💎', Ouro: '🥇', Prata: '🥈', Bronze: '🥉' };
+    const canalIco = { google: '🔵 Google', facebook: '📘 Facebook', instagram: '📸 Instagram', whatsapp: '💬 WhatsApp', indicacao: '👥 Indicação', outros: '📦 Outros' };
+    let html = '';
+    // Investimento por canal (3 cards)
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px">';
+    html += '<div class="tr-card invest"><div class="lbl">🔵 Google</div><div class="val">'+trMoney(d.investimento.google,true)+'</div><div class="sub">'+d.leads.google+' leads · CPL '+(d.cpl.google?trMoney(d.cpl.google):'—')+'</div></div>';
+    html += '<div class="tr-card" style="border-left:3px solid #1877f2"><div class="lbl">📘 Facebook</div><div class="val" style="color:#1877f2">'+trMoney(d.investimento.facebook,true)+'</div><div class="sub">'+d.leads.facebook+' leads · CPL '+(d.cpl.facebook?trMoney(d.cpl.facebook):'—')+'</div></div>';
+    html += '<div class="tr-card" style="border-left:3px solid #E4405F"><div class="lbl">📸 Instagram</div><div class="val" style="color:#E4405F">'+trMoney(d.investimento.instagram,true)+'</div><div class="sub">'+d.leads.instagram+' leads · CPL '+(d.cpl.instagram?trMoney(d.cpl.instagram):'—')+'</div></div>';
+    html += '<div class="tr-card receita"><div class="lbl">📊 Total (3 canais)</div><div class="val">'+d.leads.total+' leads</div><div class="sub">Invest '+trMoney(d.investimento.total,true)+'</div></div>';
+    html += '</div>';
+    // Tier overview
+    html += '<div style="background:#0d0d0d;border:1px solid #222;border-radius:10px;padding:14px;margin-bottom:14px">';
+    html += '<h3 style="margin:0 0 10px;color:#fff;font-size:14px">🏆 Leads no CRM no período · por Tier</h3>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">';
+    ['Diamante','Ouro','Prata','Bronze'].forEach(t => {
+      const cor = t==='Diamante'?'#a371f7':t==='Ouro'?'#f59e0b':t==='Prata'?'#94a3b8':'#cd7f32';
+      html += '<div style="background:#161616;border:1px solid '+cor+';border-radius:8px;padding:10px;text-align:center"><div style="font-size:24px">'+tierIco[t]+'</div><div style="color:'+cor+';font-weight:800;font-size:18px">'+(d.crm.por_tier[t]||0)+'</div><div style="color:#888;font-size:10px;text-transform:uppercase">'+t+'</div></div>';
+    });
+    html += '</div></div>';
+    // Lista Diamante/Ouro qualificados (CTA "Avisar Closer")
+    if (d.crm.leads_diamante_ouro && d.crm.leads_diamante_ouro.length > 0) {
+      html += '<div style="background:#1a0f2e;border:1px solid #a371f7;border-radius:10px;padding:14px;margin-bottom:14px">';
+      html += '<h3 style="margin:0 0 10px;color:#c4a4ff;font-size:14px">💎🥇 Leads Qualificados (Diamante + Ouro)</h3>';
+      html += d.crm.leads_diamante_ouro.map(l => '<div style="display:grid;grid-template-columns:30px 2fr 1fr 1fr 110px;gap:10px;padding:8px 6px;border-bottom:1px solid #2a1a3a;align-items:center;font-size:12px"><div style="font-size:18px">'+(tierIco[l.tier]||'·')+'</div><div><div style="color:#fff;font-weight:700">'+(l.nome||'?').replace(/</g,'&lt;')+'</div><div style="color:#888;font-size:10px">'+(l.phone||'—')+' · '+(l.leadSource||'sem origem')+'</div></div><div style="color:'+(l.canal==='facebook'?'#1877f2':l.canal==='instagram'?'#E4405F':l.canal==='google'?'#7cb9f5':'#aaa')+';font-size:11px">'+(canalIco[l.canal]||l.canal)+'</div><div style="color:#aaa;font-size:11px">'+l.stage+'</div><div><a href="https://crmplus.zoho.com/tudodefiltro3711/index.do/cxapp/crm/org856385701/tab/Potentials/'+l.id+'" target="_blank" style="background:#22c55e;color:#000;padding:4px 10px;border-radius:5px;font-size:10px;font-weight:800;text-decoration:none">📞 Avisar Closer</a></div></div>').join('');
+      html += '</div>';
+    }
+    // Detalhe por canal CRM
+    html += '<div style="background:#0d0d0d;border:1px solid #222;border-radius:10px;padding:14px"><h3 style="margin:0 0 10px;color:#fff;font-size:14px">📡 Leads Criados no CRM · por Canal</h3>';
+    Object.entries(d.crm.por_canal||{}).sort((a,b) => b[1].count - a[1].count).forEach(([canal, info]) => {
+      html += '<details style="background:#161616;border:1px solid #222;border-radius:6px;padding:8px 12px;margin-bottom:6px"><summary style="color:#fff;font-weight:700;cursor:pointer">'+(canalIco[canal]||canal)+' · '+info.count+' leads <span style="color:#888;font-size:10px;margin-left:6px">(💎'+(info.byTier.Diamante||0)+' · 🥇'+(info.byTier.Ouro||0)+' · 🥈'+(info.byTier.Prata||0)+' · 🥉'+(info.byTier.Bronze||0)+')</span></summary><div style="margin-top:8px">'+info.deals.slice(0,20).map(dd => '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;color:#aaa;border-bottom:1px solid #1a1a1a"><span>'+(tierIco[dd.tier]||'·')+' '+(dd.nome||'?').replace(/</g,'&lt;')+'</span><a href="'+dd.crmLink+'" target="_blank" style="color:#7cb9f5;text-decoration:none">'+dd.stage+' →</a></div>').join('')+'</div></details>';
+    });
+    html += '</div>';
+    c.innerHTML = html;
+  } catch(e) { c.innerHTML = '<div class="tr-loading" style="color:#ef4444">Erro: '+e.message+'</div>'; }
+}
+
+async function trCarregarHealth(){
+  const c = document.getElementById('tr-content');
+  c.innerHTML = '<div class="tr-loading">⏳ Rodando 9 health checks...</div>';
+  try {
+    const r = await fetch('/trafego/health-check');
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    const colorMap = { green: '#22c55e', yellow: '#f59e0b', red: '#ef4444' };
+    const iconMap = { green: '✅', yellow: '⚠️', red: '🚨' };
+    c.innerHTML = `
+      <div style="background:#0d0d0d;border:1px solid #222;border-radius:10px;padding:14px 18px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+          <div style="font-size:42px;font-weight:800;color:${d.score>=80?'#22c55e':d.score>=50?'#f59e0b':'#ef4444'}">${d.score}%</div>
+          <div>
+            <div style="color:#fff;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.4px">Health Score</div>
+            <div style="color:#888;font-size:11px">${d.greens} verdes · ${d.yellows} amarelos · ${d.reds} vermelhos</div>
+          </div>
+          <button onclick="trCarregarHealth()" style="margin-left:auto;background:#1f6feb;color:#fff;border:none;padding:7px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">↻ Re-executar</button>
+        </div>
+        ${d.checks.map(ch => `
+          <div style="display:grid;grid-template-columns:30px 1fr 2fr;gap:12px;padding:8px 0;border-bottom:1px solid #1a1a1a;align-items:center">
+            <div style="font-size:18px">${iconMap[ch.status]||'·'}</div>
+            <div>
+              <div style="color:#fff;font-weight:700;font-size:12px">${ch.label}</div>
+              <div style="color:#666;font-size:9px">${ch.id}</div>
+            </div>
+            <div style="color:${colorMap[ch.status]||'#888'};font-size:11px">${ch.detail||''}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="background:#0d1f3a;border:1px solid #1f6feb;border-radius:10px;padding:14px;display:flex;gap:14px;align-items:center">
+        <div style="flex:1">
+          <div style="color:#fff;font-weight:800;font-size:13px">🔄 Reconciliação noturna</div>
+          <div style="color:#888;font-size:11px;margin-top:4px">Pega leads dos últimos 7d sem Lead_Source claro e enriquece com cache de atribuição (camadas 1-5). Dry-run pra ver impacto antes.</div>
+        </div>
+        <button onclick="trReconciliarDry()" style="background:#374151;color:#aaa;border:1px solid #4a5260;padding:8px 14px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">🔍 Dry-run</button>
+        <button onclick="trReconciliarReal()" style="background:#22c55e;color:#000;border:none;padding:8px 14px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer">⚡ Executar</button>
+      </div>
+    `;
+  } catch(e) { c.innerHTML = `<div class="tr-loading" style="color:#ef4444">Erro: ${e.message}</div>`; }
+}
+
+async function trReconciliarDry(){
+  const r = await fetch('/trafego/reconciliar?dry_run=true', { method:'POST' });
+  const d = await r.json();
+  if (d.error) { alert('❌ '+d.error); return; }
+  alert(`🔍 Dry-run:\n\n${d.processados} deals avaliados\n${d.atualizados} seriam enriquecidos\n${d.pulados} pulados (já têm source / muito recente / manual)\n\nClique em "Executar" pra aplicar de verdade.`);
+}
+async function trReconciliarReal(){
+  if (!confirm('⚡ Executar reconciliação? Vai atualizar Lead_Source no Zoho dos deals que tiverem cache de atribuição.')) return;
+  const r = await fetch('/trafego/reconciliar', { method:'POST' });
+  const d = await r.json();
+  if (d.error) { alert('❌ '+d.error); return; }
+  alert(`✅ Reconciliação concluída:\n\n${d.atualizados}/${d.processados} deals atualizados\n${d.pulados} pulados`);
+}
+
+function trRenderCampanhas(){
+  const c = document.getElementById('tr-content');
+  if (!_TR_DATA) return;
+  const g = _TR_DATA.campanhas_google || [];
+  const m = _TR_DATA.campanhas_meta || [];
+  c.innerHTML = `
+    <div class="tr-tbl" style="margin-bottom:14px">
+      <table>
+        <thead><tr>
+          <th>📊 Google Ads (${g.length})</th>
+          <th>Status</th>
+          <th class="num">Custo</th>
+          <th class="num">Cliques</th>
+          <th class="num">Conv</th>
+          <th class="num">CTR</th>
+          <th class="num">CPC</th>
+          <th>Ações</th>
+        </tr></thead>
+        <tbody>${g.map(c => `
+          <tr>
+            <td class="nome">${(c.name||'?').replace(/</g,'&lt;')}</td>
+            <td><span style="color:${c.status==='ENABLED'?'#22c55e':'#888'}">${c.status||'?'}</span></td>
+            <td class="num">${trMoney(c.cost_brl)}</td>
+            <td class="num">${c.clicks}</td>
+            <td class="num">${(c.conversions||0).toFixed(1)}</td>
+            <td class="num">${trPct(c.ctr*100)}</td>
+            <td class="num">${trMoney(c.cpc_brl)}</td>
+            <td class="acts">
+              ${c.status==='ENABLED'?`<button class="danger" onclick="trPauseGoogle('${c.id}','${(c.name||'').replace(/'/g,"\\'")}')">⏸️ Pausar</button>`:''}
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="tr-tbl">
+      <table>
+        <thead><tr>
+          <th>📘 Meta Ads (${m.length})</th>
+          <th>Status</th>
+          <th class="num">Spend</th>
+          <th class="num">Cliques</th>
+          <th class="num">Leads</th>
+          <th class="num">CTR</th>
+          <th class="num">CPM</th>
+          <th>Ações</th>
+        </tr></thead>
+        <tbody>${m.map(c => `
+          <tr>
+            <td class="nome">${(c.name||'?').replace(/</g,'&lt;')}</td>
+            <td><span style="color:${c.effective_status==='ACTIVE'?'#22c55e':'#888'}">${c.effective_status||'?'}</span></td>
+            <td class="num">${trMoney(c.spend_brl)}</td>
+            <td class="num">${c.clicks}</td>
+            <td class="num">${c.leads}</td>
+            <td class="num">${trPct(c.ctr)}</td>
+            <td class="num">${trMoney(c.cpm)}</td>
+            <td class="acts">
+              ${c.effective_status==='ACTIVE'?`<button class="danger" onclick="trPauseMeta('${c.id}','${(c.name||'').replace(/'/g,"\\'")}')">⏸️ Pausar</button>`:''}
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+async function trPauseGoogle(id, name){
+  if (!confirm(`⏸️ Pausar campanha Google "${name}"?\n\nO sistema vai cruzar com o pipeline ativo no Zoho antes (Approval Gate).`)) return;
+  try {
+    const r = await fetch(`/trafego/google/campaign/${id}/pause`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ campaignName: name }),
+    });
+    const d = await r.json();
+    if (d.error === 'approval_gate_blocked') {
+      const motivo = d.gate?.motivo || 'pipeline ativo bloqueando';
+      const force = confirm(`🚨 Approval Gate BLOQUEOU:\n\n${motivo}\n\nForçar mesmo assim? (será logado como FORCED no audit)`);
+      if (!force) return;
+      const r2 = await fetch(`/trafego/google/campaign/${id}/pause`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ campaignName: name, force: true }),
+      });
+      const d2 = await r2.json();
+      if (d2.error) { alert('❌ '+d2.error); return; }
+      alert('✅ Pausada (FORCED)');
+    } else if (d.error) { alert('❌ '+d.error); return; }
+    else alert('✅ Campanha pausada');
+    trCarregar();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+async function trPauseMeta(id, name){
+  if (!confirm(`⏸️ Pausar campanha Meta "${name}"?\n\nO sistema vai cruzar com pipeline antes.`)) return;
+  try {
+    const r = await fetch(`/trafego/meta/campaign/${id}/pause`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ campaignName: name }),
+    });
+    const d = await r.json();
+    if (d.error === 'approval_gate_blocked') {
+      const force = confirm(`🚨 Approval Gate BLOQUEOU:\n\n${d.gate?.motivo}\n\nForçar?`);
+      if (!force) return;
+      await fetch(`/trafego/meta/campaign/${id}/pause`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ campaignName: name, force: true }),
+      });
+      alert('✅ Pausada (FORCED)');
+    } else if (d.error) { alert('❌ '+d.error); return; }
+    else alert('✅ Campanha pausada');
+    trCarregar();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+async function trCarregarKeywords(){
+  const c = document.getElementById('tr-content');
+  c.innerHTML = '<div class="tr-loading">⏳ Carregando keywords Google...</div>';
+  try {
+    const r = await fetch('/trafego/google/keywords?' + _trBuildQS() + '&limit=200');
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    c.innerHTML = `<div class="tr-tbl"><table>
+      <thead><tr>
+        <th>Keyword</th><th>Match</th><th>Campanha</th>
+        <th class="num">Custo</th><th class="num">Cliques</th><th class="num">Conv</th>
+        <th class="num">CTR</th><th>Ações</th>
+      </tr></thead>
+      <tbody>${(d.keywords||[]).map(k => `
+        <tr>
+          <td class="nome">${(k.keyword||'?').replace(/</g,'&lt;')}</td>
+          <td><span style="color:#888;font-size:10px">${k.match_type||'-'}</span></td>
+          <td style="color:#888;font-size:10px">${(k.campaign_name||'').slice(0,28)}</td>
+          <td class="num">${trMoney(k.cost_brl)}</td>
+          <td class="num">${k.clicks}</td>
+          <td class="num">${(k.conversions||0).toFixed(1)}</td>
+          <td class="num">${trPct(k.ctr*100)}</td>
+          <td class="acts"><button>⏸️</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`;
+  } catch(e) { c.innerHTML = `<div class="tr-loading" style="color:#ef4444">Erro: ${e.message}</div>`; }
+}
+
+async function trCarregarCriativos(){
+  const c = document.getElementById('tr-content');
+  c.innerHTML = '<div class="tr-loading">⏳ Carregando criativos Meta...</div>';
+  try {
+    const r = await fetch('/trafego/meta/creatives?' + _trBuildQS());
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    const cr = d.creatives || [];
+    c.innerHTML = '<div class="tr-gallery">' + cr.map(x => {
+      const score = trCalcScore(x);
+      const cls = score >= 80 ? 'champ' : (x.frequency >= 3.5 ? 'fadiga' : (score < 30 && x.impressions >= 5000 ? 'fraco' : ''));
+      return `
+        <div class="tr-creative ${cls}" style="position:relative">
+          <div class="badge">${cls==='champ'?'🏆':cls==='fadiga'?'⚠️':cls==='fraco'?'❌':'·'} ${score}</div>
+          <div class="thumb">${x.thumbnail_url ? `<img src="${x.thumbnail_url}" alt="${x.name}">` : '🎨 Sem preview'}</div>
+          <div class="body">
+            <div class="nome">${(x.name||'?').replace(/</g,'&lt;')}</div>
+            <div class="kpis">
+              <div class="kpi"><strong>${trPct(x.ctr)}</strong>CTR</div>
+              <div class="kpi"><strong>${(x.frequency||0).toFixed(1)}</strong>Freq</div>
+              <div class="kpi"><strong>${x.leads||0}</strong>Leads</div>
+              <div class="kpi"><strong>${trMoney(x.spend_brl)}</strong>Spend</div>
+            </div>
+          </div>
+        </div>`;
+    }).join('') + '</div>';
+  } catch(e) { c.innerHTML = `<div class="tr-loading" style="color:#ef4444">Erro: ${e.message}</div>`; }
+}
+
+function trCalcScore(c){
+  // Score composto simples — agente recomendou pondera 30/25/25/10/10
+  const ctrNorm = Math.min(1, (c.ctr||0) / 2) * 30;
+  const hookNorm = Math.min(1, (c.hook_rate||0) / 0.3) * 25;
+  const cplNorm = c.leads > 0 ? Math.max(0, 1 - (c.spend_brl/c.leads) / 100) * 25 : 0;
+  const holdNorm = Math.min(1, (c.hold_rate||0)) * 10;
+  const freqNorm = Math.max(0, 1 - (c.frequency||0)/5) * 10;
+  return Math.round(ctrNorm + hookNorm + cplNorm + holdNorm + freqNorm);
+}
+
+async function trCarregarAudit(){
+  const c = document.getElementById('tr-content');
+  c.innerHTML = '<div class="tr-loading">⏳ Carregando audit log...</div>';
+  try {
+    const r = await fetch('/trafego/audit');
+    const d = await r.json();
+    const log = d.log || [];
+    if (!log.length) { c.innerHTML = '<div class="tr-loading">Nenhuma ação registrada ainda.</div>'; return; }
+    c.innerHTML = `<div class="tr-tbl"><table>
+      <thead><tr><th>Quando</th><th>Quem</th><th>Ação</th><th>Plataforma</th><th>Target</th><th>Detalhe</th></tr></thead>
+      <tbody>${log.map(e => `
+        <tr>
+          <td style="color:#888">${new Date(e.ts).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})}</td>
+          <td class="nome">${e.actor||'?'}</td>
+          <td><span class="tr-conf ${e.action==='pause'?'low':e.action==='budget_change'?'medium':''}">${e.action}</span></td>
+          <td>${e.plataforma}</td>
+          <td>${(e.target_name||e.target_id||'').slice(0,40)}</td>
+          <td style="color:#888">${e.forced?'⚠️ FORCED':''} ${e.prev_value!=null?'R$ '+e.prev_value+' → R$ '+e.new_value:''}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`;
+  } catch(e) { c.innerHTML = `<div class="tr-loading" style="color:#ef4444">Erro: ${e.message}</div>`; }
+}
+
+// === PERSONAS LIVE ===
+async function trChamarPersona(personaKey){
+  const out = document.getElementById('tr-gestor-out');
+  const status = document.getElementById('tr-persona-status');
+  const personaLabel = { estrategista: '🚀 Estrategista', auditor: '🎯 Auditor', critico_criativos: '🎨 Crítico Criativos' }[personaKey] || personaKey;
+  document.querySelectorAll('.tr-persona-btn').forEach(b => b.disabled = true);
+  status.textContent = '⏳ ' + personaLabel + ' analisando snapshot (Opus pode levar 30-60s)...';
+  out.innerHTML = '<div class="tr-gestor"><h3>' + personaLabel + ' · analisando...</h3><div class="tr-loading">Cruzando Google + Meta + Zoho. Modelo grande, dá um tempo.</div></div>';
+  try {
+    const r = await fetch('/trafego/gestor-ia?persona=' + personaKey, { method:'POST' });
+    const d = await r.json();
+    if (d.error) {
+      out.innerHTML = '<div class="tr-gestor" style="border-color:#ef4444"><h3>' + personaLabel + '</h3><div style="color:#ef4444">Erro: ' + d.error + '</div></div>';
+      return;
+    }
+    if (!d.parsed) {
+      out.innerHTML = '<div class="tr-gestor"><h3>' + personaLabel + '</h3><pre style="color:#aaa;font-size:11px;white-space:pre-wrap;max-height:400px;overflow:auto">' + (d.raw||'').replace(/</g,'&lt;') + '</pre></div>';
+      return;
+    }
+    const corHeader = d.persona?.cor || '#a371f7';
+    let html = '<div class="tr-gestor" style="border-color:' + corHeader + '"><h3 style="color:#fff">' + (d.persona?.icon||'🤖') + ' ' + (d.persona?.nome||personaLabel) + ' <span style="font-size:10px;color:#888;font-weight:400;margin-left:auto">' + (d.persona?.modelo||'') + '</span></h3>';
+    if (d.parsed.summary) html += '<div style="color:#c4a4ff;font-size:12px;margin-bottom:10px;font-style:italic">' + d.parsed.summary.replace(/</g,'&lt;') + '</div>';
+
+    if (personaKey === 'estrategista' && Array.isArray(d.parsed.actions)) {
+      html += '<div style="color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">' + d.parsed.actions.length + ' ações priorizadas</div>';
+      html += d.parsed.actions.map((a,i) => trRenderAcao(a, i)).join('');
+    } else if (personaKey === 'auditor' && Array.isArray(d.parsed.alertas_criticos)) {
+      const sev = d.parsed.saude_geral_pct;
+      html += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px"><div style="font-size:36px;font-weight:800;color:' + (sev>=80?'#22c55e':sev>=50?'#f59e0b':'#ef4444') + '">' + sev + '%</div><div style="color:#888;font-size:11px">Saúde Geral</div></div>';
+      html += d.parsed.alertas_criticos.map(a => trRenderAlerta(a)).join('');
+    } else if (personaKey === 'critico_criativos') {
+      const c = d.parsed;
+      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">';
+      html += '<div style="background:#0d1f0d;border:1px solid #22c55e;border-radius:6px;padding:8px"><div style="color:#22c55e;font-size:10px;font-weight:800;text-transform:uppercase">🏆 Campeões</div><div style="color:#fff;font-size:18px;font-weight:800">' + (c.campeoes||[]).length + '</div></div>';
+      html += '<div style="background:#2a1a05;border:1px solid #f59e0b;border-radius:6px;padding:8px"><div style="color:#f59e0b;font-size:10px;font-weight:800;text-transform:uppercase">⚠️ Fadiga</div><div style="color:#fff;font-size:18px;font-weight:800">' + (c.fadiga||[]).length + '</div></div>';
+      html += '<div style="background:#1a0a0a;border:1px solid #ef4444;border-radius:6px;padding:8px"><div style="color:#ef4444;font-size:10px;font-weight:800;text-transform:uppercase">❌ Fracos</div><div style="color:#fff;font-size:18px;font-weight:800">' + (c.fracos||[]).length + '</div></div>';
+      html += '</div>';
+      ['campeoes','fadiga','fracos'].forEach(k => {
+        (c[k]||[]).forEach(item => {
+          const cor = k==='campeoes'?'#22c55e':k==='fadiga'?'#f59e0b':'#ef4444';
+          const ico = k==='campeoes'?'🏆':k==='fadiga'?'⚠️':'❌';
+          html += '<div style="background:#0d0820;border-left:3px solid '+cor+';padding:8px 12px;margin-bottom:4px;border-radius:0 6px 6px 0"><div style="color:#fff;font-weight:700;font-size:12px">'+ico+' '+(item.name||item.id).replace(/</g,'&lt;')+'</div><div style="color:#aaa;font-size:11px;margin-top:3px">'+(item.porque||'').replace(/</g,'&lt;')+'</div></div>';
+        });
+      });
+    } else {
+      html += '<pre style="color:#aaa;font-size:11px;white-space:pre-wrap;max-height:400px;overflow:auto">' + JSON.stringify(d.parsed, null, 2) + '</pre>';
+    }
+
+    html += '</div>';
+    out.innerHTML = html;
+  } catch(e) {
+    out.innerHTML = '<div class="tr-gestor"><h3>' + personaLabel + '</h3><div style="color:#ef4444">Erro: ' + e.message + '</div></div>';
+  } finally {
+    document.querySelectorAll('.tr-persona-btn').forEach(b => b.disabled = false);
+    status.textContent = '';
+  }
+}
+
+function trRenderAlerta(a){
+  const corMap = { CRITICA:'#ef4444', ALTA:'#f97316', MEDIA:'#f59e0b', BAIXA:'#7cb9f5', INFO:'#888' };
+  const cor = corMap[a.severidade] || '#888';
+  return '<div style="background:#0d0820;border-left:3px solid '+cor+';padding:10px 12px;margin-bottom:6px;border-radius:0 6px 6px 0">' +
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' +
+      '<span style="background:'+cor+';color:#000;font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px">'+a.severidade+'</span>' +
+      '<span style="color:#fff;font-weight:700;font-size:13px">'+(a.titulo||'').replace(/</g,'&lt;')+'</span>' +
+    '</div>' +
+    '<div style="color:#aaa;font-size:11px">'+(a.explicacao||'').replace(/</g,'&lt;')+'</div>' +
+    (a.acao_sugerida ? '<div style="color:#7cb9f5;font-size:11px;margin-top:6px">→ '+a.acao_sugerida.replace(/</g,'&lt;')+'</div>' : '') +
+    '</div>';
+}
+
+function trRenderAcao(a, idx){
+  const confCls = a.confidence >= 0.75 ? 'high' : a.confidence >= 0.5 ? 'medium' : 'low';
+  const tipoIco = { pause_campaign: '⏸️', reduce_budget: '📉', increase_budget: '📈', pause_keyword: '🔇', add_negative_keyword: '🚫', pause_ad: '🎨' }[a.tipo] || '⚙️';
+  return `
+    <div class="acao">
+      <div class="tit">
+        ${tipoIco} <span>${a.tipo.replace(/_/g,' ')}</span>
+        <span style="color:#888;font-size:11px">·</span>
+        <span style="color:#fff">${(a.target_name||a.target_id||'?').slice(0,50)}</span>
+        <span class="tr-conf ${confCls}">${(a.confidence*100).toFixed(0)}% conf</span>
+        ${a.requires_human ? '<span class="tr-conf low">⚠️ requer humano</span>' : ''}
+      </div>
+      <div class="why">${(a.reasoning||'').replace(/</g,'&lt;')}</div>
+      <div class="stats">
+        <div class="stat">Plataforma: <strong style="color:#7cb9f5">${a.plataforma}</strong></div>
+        ${a.expected_impact_brl_monthly ? `<div class="stat">Impacto: <strong>${trMoney(a.expected_impact_brl_monthly,true)}/mês</strong></div>` : ''}
+      </div>
+      <div class="actions">
+        ${a.execute_endpoint ? `<button class="exec" onclick='trExecutarAcao(${JSON.stringify(a).replace(/'/g,"&#39;")})'>✅ Aplicar</button>` : ''}
+        <button class="skip" onclick="this.parentElement.parentElement.style.opacity='.4';this.parentElement.parentElement.querySelector('.exec')?.remove()">⏭️ Pular</button>
+      </div>
+    </div>
+  `;
+}
+
+async function trExecutarAcao(a){
+  if (!confirm('Aplicar ação:\n\n' + a.tipo + '\n' + a.target_name + '\n\n' + (a.reasoning||''))) return;
+  try {
+    const [method, ...pathParts] = (a.execute_endpoint || '').split(' ');
+    const path = pathParts.join(' ');
+    const r = await fetch(path, {
+      method: method || 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(a.execute_body || {}),
+    });
+    const d = await r.json();
+    if (d.error) { alert('❌ '+d.error); return; }
+    alert('✅ Aplicado');
+    trCarregar();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+trCarregar();
+</script>

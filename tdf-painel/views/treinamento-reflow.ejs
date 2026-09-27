@@ -1,0 +1,306 @@
+<% const activePage = 'treinamento-reflow'; const pageTitle = 'Treinamento Reflow'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.tr-wrap{max-width:1200px;margin:0 auto;padding:24px 24px 80px;display:grid;grid-template-columns:240px 1fr;gap:24px}
+@media (max-width:900px){.tr-wrap{grid-template-columns:1fr}}
+.tr-nav{position:sticky;top:80px;align-self:start;background:#0d0d12;border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;max-height:calc(100vh - 100px);overflow-y:auto}
+.tr-nav h4{margin:0 0 10px;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;font-weight:800}
+.tr-nav ul{list-style:none;padding:0;margin:0}
+.tr-nav li a{display:block;padding:7px 10px;color:var(--text-muted);text-decoration:none;border-radius:6px;font-size:12px;border-left:2px solid transparent}
+.tr-nav li a:hover{background:var(--bg-card);color:var(--text)}
+.tr-nav li a.active{background:rgba(251,146,60,.08);color:#fb923c;border-left-color:#fb923c}
+.tr-content{min-width:0}
+.tr-hero{background:linear-gradient(135deg,#1a0f2e 0%,#2a1a4e 100%);border:2px solid #fb923c;border-radius:14px;padding:22px 26px;margin-bottom:24px}
+.tr-hero h1{margin:0 0 6px;font-size:22px;color:var(--text);display:flex;align-items:center;gap:10px}
+.tr-hero p{margin:0;color:#fbbf24;font-size:13px}
+.tr-section{background:#0d0d12;border:1px solid var(--border);border-radius:12px;padding:22px 26px;margin-bottom:20px;scroll-margin-top:80px}
+.tr-section h2{margin:0 0 6px;font-size:18px;color:var(--text);display:flex;align-items:center;gap:10px;border-bottom:2px solid #fb923c;padding-bottom:10px}
+.tr-section h2 .num{background:#fb923c;color:#000;padding:2px 9px;border-radius:14px;font-size:13px;font-weight:800}
+.tr-section h3{margin:18px 0 8px;font-size:15px;color:#fb923c;font-weight:700}
+.tr-section p, .tr-section li{color:var(--text);line-height:1.6;font-size:13.5px}
+.tr-section code{background:var(--bg-hover);color:#7cb9f5;padding:1px 6px;border-radius:4px;font-size:12px;font-family:Menlo,monospace}
+.tr-section ul{padding-left:22px}
+.tr-step{background:var(--bg-card);border-left:3px solid #fb923c;border-radius:6px;padding:12px 16px;margin:10px 0}
+.tr-step b{color:var(--text)}
+.tr-callout{background:#0d1f3a;border:1px solid #1e3a5f;border-radius:8px;padding:12px 16px;margin:14px 0;font-size:13px;color:#7cb9f5}
+.tr-callout.warn{background:#2d1215;border-color:#7f1d1d;color:#fca5a5}
+.tr-callout.tip{background:#0d2818;border-color:#16a34a;color:#86efac}
+.tr-table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0;background:var(--bg-card);border-radius:6px;overflow:hidden}
+.tr-table th{background:var(--bg-hover);color:var(--text-muted);text-align:left;padding:8px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.tr-table td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+.tr-table tr:last-child td{border-bottom:none}
+.tr-kbd{background:var(--bg-hover);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:11px;font-family:Menlo,monospace;color:var(--warning)}
+.tr-progress{position:sticky;top:0;background:#fb923c;height:3px;width:0;z-index:30;transition:width .2s}
+</style>
+
+<div class="tr-progress" id="tr-progress"></div>
+
+<div class="tr-wrap">
+
+  <!-- ÍNDICE LATERAL -->
+  <aside class="tr-nav">
+    <h4>📚 Capítulos</h4>
+    <ul id="tr-menu">
+      <li><a href="#cap1" class="active">1. Boas-vindas ao Reflow</a></li>
+      <li><a href="#cap2">2. Como entrar no portal</a></li>
+      <li><a href="#cap3">3. Tela /manutencao — visão geral</a></li>
+      <li><a href="#cap4">4. 🔥 Top Hoje (fila do dia)</a></li>
+      <li><a href="#cap5">5. Filtros: categoria, status, refil/elemento</a></li>
+      <li><a href="#cap6">6. Drawer do cliente</a></li>
+      <li><a href="#cap7">7. Ações de contato (WATI, Z-API, CRM)</a></li>
+      <li><a href="#cap8">8. Status manual da conversa</a></li>
+      <% if (typeof isGestor !== 'undefined' && isGestor) { %>
+      <li><a href="#cap9">9. (Gestor) Atribuir e distribuir</a></li>
+      <% } %>
+      <li><a href="#cap10">10. Boas práticas</a></li>
+      <li><a href="#cap11">11. Quando algo der errado</a></li>
+    </ul>
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted)">
+      <p style="margin:0;font-style:italic">Treinamento funcional · time Reflow (refil + elemento filtrante)</p>
+    </div>
+  </aside>
+
+  <!-- CONTEÚDO -->
+  <div class="tr-content">
+
+    <div class="tr-hero">
+      <h1>🔄 Bem-vinda ao Reflow</h1>
+      <p>Como operar o CRM da TDF — passo-a-passo prático pra <%= user.name %></p>
+    </div>
+
+    <!-- 1. Boas-vindas -->
+    <section class="tr-section" id="cap1">
+      <h2><span class="num">1</span> Boas-vindas ao Reflow</h2>
+      <p><strong>Reflow</strong> é o time de <strong>manutenção e troca de refil/elemento filtrante</strong> da Tudo de Filtro. Vocês cuidam dos clientes que já compraram filtro/purificador e precisam trocar o elemento periodicamente.</p>
+      <h3>Quem faz o quê</h3>
+      <table class="tr-table">
+        <tr><th>Pessoa</th><th>Papel</th><th>Acesso</th></tr>
+        <tr><td><strong>Daniela</strong></td><td>Supervisora / Gestora</td><td>Vê todo o time, atribui clientes, distribui em massa</td></tr>
+        <tr><td><strong>Barbara</strong></td><td>Operadora</td><td>Carteira própria, contata clientes pra trocar refil</td></tr>
+      </table>
+      <div class="tr-callout tip">💡 <strong>Objetivo do time:</strong> reduzir o número de clientes "vencidos sem contato" e converter trocas em vendas recorrentes.</div>
+    </section>
+
+    <!-- 2. Como entrar -->
+    <section class="tr-section" id="cap2">
+      <h2><span class="num">2</span> Como entrar no portal</h2>
+      <div class="tr-step">
+        <b>1.</b> Abra o navegador (Chrome de preferência) e vá em <code>https://tdf-portal-production.up.railway.app</code>
+      </div>
+      <div class="tr-step">
+        <b>2.</b> Digite seu <strong>login</strong> e <strong>senha</strong> (enviados por e-mail no primeiro dia)
+      </div>
+      <div class="tr-step">
+        <b>3.</b> Clique em <strong>Entrar</strong>. Você cai na <code>/home</code> com cards de propostas e atalhos.
+      </div>
+      <div class="tr-callout warn">⚠ <strong>Senha:</strong> não compartilhe. Se desconfiar que vazou, fale com o Paulo na hora pra trocar.</div>
+    </section>
+
+    <!-- 3. /manutencao -->
+    <section class="tr-section" id="cap3">
+      <h2><span class="num">3</span> Tela /manutencao — visão geral</h2>
+      <p>Essa é a <strong>tela principal</strong> de vocês. Acesse pelo menu lateral em <code>CRM Closy</code> ou direto em <code>/manutencao</code>.</p>
+      <h3>O que tem na tela</h3>
+      <ul>
+        <li><strong>Cards de categoria</strong> no topo (Refil, Elemento, Bebedouro, etc) com contadores</li>
+        <li><strong>Barra de filtros</strong>: busca, status (vencido/vence em), categoria, cidade, operadora</li>
+        <li><strong>View switcher</strong>: 🔥 Top Hoje · 📋 Lista · 🗂️ Kanban · 📋 Tarefas · 💬 Inbox</li>
+        <li><strong>Tabela</strong> com clientes (até 200 por página)</li>
+      </ul>
+      <h3>Colunas da tabela</h3>
+      <table class="tr-table">
+        <tr><th>Coluna</th><th>O que mostra</th></tr>
+        <tr><td>Nome</td><td>Nome do cliente. Clica pra abrir drawer completo.</td></tr>
+        <tr><td>Telefone</td><td>Click pra copiar. Use nos contatos via WATI/Z-API.</td></tr>
+        <tr><td>Cidade</td><td>Click pra filtrar todos da mesma cidade.</td></tr>
+        <tr><td>Categoria</td><td>Produto do cliente (refil, elemento, bebedouro…).</td></tr>
+        <tr><td>Data compra / Próxima troca</td><td>Quando comprou e quando deveria trocar.</td></tr>
+        <tr><td>Status</td><td>Vencido / Vence em 30d / Futuro.</td></tr>
+        <tr><td>Operadora</td><td>Quem é responsável pelo contato.</td></tr>
+        <tr><td>Ticket estimado</td><td>R$ que o cliente costuma gastar na troca.</td></tr>
+        <tr><td>Último template</td><td>Última mensagem automática enviada.</td></tr>
+        <tr><td>Ações</td><td>Botões: 💬 Chat, 📱 Z-API, 💬 WATI, CRM, 🤖 Núbia.</td></tr>
+      </table>
+    </section>
+
+    <!-- 4. Top Hoje -->
+    <section class="tr-section" id="cap4">
+      <h2><span class="num">4</span> 🔥 Top Hoje — a fila do dia</h2>
+      <p>É <strong>o atalho mais importante</strong> pra vocês. Em vez de olhar uma tabela com 800 clientes e ficar perdida, clica <strong>🔥 Top Hoje</strong> e o sistema mostra os <strong>30 mais urgentes</strong>.</p>
+      <h3>O que o sistema considera</h3>
+      <table class="tr-table">
+        <tr><th>Sinal</th><th>Peso</th></tr>
+        <tr><td>Vencimento (mais dias vencido = mais urgente)</td><td>até 50 pts</td></tr>
+        <tr><td>Ticket estimado (mais R$ = mais prioridade)</td><td>até 30 pts</td></tr>
+        <tr><td>Status "agendado" (não pode esquecer!)</td><td>+25 pts</td></tr>
+        <tr><td>Cliente nunca foi contatado</td><td>+6 pts</td></tr>
+        <tr><td>Já mandou template recente (evita spam)</td><td>-18 pts</td></tr>
+        <tr><td>Cliente já comprou / "não quer" / "Núbia atendendo"</td><td>zerado</td></tr>
+      </table>
+      <div class="tr-callout tip">💡 <strong>Rotina sugerida:</strong> abre <code>/manutencao</code> → clica 🔥 Top Hoje → ataca de cima pra baixo. Os 10 primeiros têm badge <strong>🔥 #1 · 87</strong> (rank · score) destacado.</div>
+      <h3>Combina com filtros</h3>
+      <p>Você pode aplicar filtros <em>antes</em> de ligar o Top Hoje:</p>
+      <ul>
+        <li><strong>Operadora = barbara</strong> + Top Hoje → vê só os SEUS clientes mais urgentes</li>
+        <li><strong>Categoria = refil</strong> + Top Hoje → só os refis mais urgentes</li>
+        <li><strong>Cidade = Taubaté</strong> + Top Hoje → só Taubaté</li>
+      </ul>
+    </section>
+
+    <!-- 5. Filtros -->
+    <section class="tr-section" id="cap5">
+      <h2><span class="num">5</span> Filtros: categoria, status, refil/elemento</h2>
+      <p>A barra de filtros tá logo abaixo do view switcher:</p>
+      <h3>Filtros principais</h3>
+      <ul>
+        <li><strong>🔍 Busca:</strong> nome, telefone ou cidade. Digita e filtra na hora.</li>
+        <li><strong>📅 Status:</strong> Vencidos / Vence em X dias / Futuro.</li>
+        <li><strong>📦 Categoria:</strong> Refil, Bebedouro, Elemento, Iron Free, etc.</li>
+        <li><strong>📍 Cidade</strong></li>
+        <li><strong>👤 Operadora:</strong> filtra por quem está responsável.</li>
+        <li><strong>🏷️ Status manual:</strong> em contato / sem resposta / agendado / vendido / perdido.</li>
+      </ul>
+      <h3>Sub-filtro Refil ↔ Elemento Filtrante</h3>
+      <p>Quando você seleciona <strong>Categoria = Refis</strong> (ou Bebedouro_refil, Elemento), aparece um <strong>sub-select extra</strong> pra distinguir:</p>
+      <table class="tr-table">
+        <tr><th>Sub-tipo</th><th>O que entra aqui</th></tr>
+        <tr><td>💧 Refil de bebedouro</td><td>AF/AF15/AF25, BBL, Sana, Planeta Água, WFS, Overflow, Soft, Bliss, Noblesse, Da Vinci, Europa Fluir/For Pet/HF</td></tr>
+        <tr><td>🔩 Elemento filtrante</td><td>Cartucho, Carbon Block, Elemento, American Filter, Filtro de Entrada, FE\d+, Inox, Fibra, Tanque</td></tr>
+        <tr><td>❓ Sem classificação</td><td>Produto sem identificador reconhecível — verificar manualmente</td></tr>
+      </table>
+    </section>
+
+    <!-- 6. Drawer -->
+    <section class="tr-section" id="cap6">
+      <h2><span class="num">6</span> Drawer do cliente</h2>
+      <p>Quando você clica no <strong>nome</strong> de um cliente, abre um painel lateral com tudo sobre ele.</p>
+      <h3>O que tem no drawer</h3>
+      <ul>
+        <li>Dados de contato (telefone, cidade, endereço, e-mail)</li>
+        <li>Histórico de compras e produtos</li>
+        <li>Data da próxima troca prevista</li>
+        <li>Ticket estimado (R$)</li>
+        <li>Último template enviado por WATI</li>
+        <li>Notas internas</li>
+        <li>Status manual (você atualiza conforme conversa)</li>
+        <li>Botões de ação rápida</li>
+      </ul>
+      <div class="tr-callout">💡 <strong>Dica:</strong> use o ícone <span class="tr-kbd">👁️</span> ao lado do nome pra abrir um "quick card" menor (não fecha a tabela). Click no nome direto abre o drawer completo.</div>
+    </section>
+
+    <!-- 7. Ações de contato -->
+    <section class="tr-section" id="cap7">
+      <h2><span class="num">7</span> Ações de contato (WATI, Z-API, CRM)</h2>
+      <p>Cada linha da tabela tem botões pequenos no fim. Use o certo pra cada situação:</p>
+      <table class="tr-table">
+        <tr><th>Botão</th><th>Quando usar</th><th>Limitação</th></tr>
+        <tr><td>💬 <strong>Chat</strong></td><td>Conversa rápida com histórico WATI inline (mini-janela flutuante)</td><td>Apenas dentro da janela de 24h da última msg do cliente</td></tr>
+        <tr><td>📱 <strong>Z-API</strong></td><td>Mandar mensagem WhatsApp sem restrição de janela 24h</td><td>Modelos limitados, use com cuidado</td></tr>
+        <tr><td>💬 <strong>WATI</strong></td><td>Abrir conversa na inbox WATI (interface completa)</td><td>Só funciona se cliente respondeu nas últimas 24h</td></tr>
+        <tr><td><strong>CRM</strong></td><td>Abrir o lead/deal direto no Zoho em nova aba</td><td>Pra ver ou editar dados de origem</td></tr>
+        <tr><td>🤖 <strong>Núbia</strong></td><td>Disparar contato automático pela IA</td><td>Só admin/gestor. Núbia mantém a conversa</td></tr>
+      </table>
+      <div class="tr-callout warn">⚠ <strong>Regra de ouro:</strong> se o cliente já está conversando com você (humano), <strong>NÃO</strong> ativa Núbia em paralelo. Ela manda templates por cima da sua conversa e você perde a venda.</div>
+    </section>
+
+    <!-- 8. Status manual -->
+    <section class="tr-section" id="cap8">
+      <h2><span class="num">8</span> Status manual da conversa</h2>
+      <p>Depois de ligar/mandar mensagem, <strong>atualize o status manual</strong> do cliente. Isso ajuda a fila a saber se já tentou ou não.</p>
+      <table class="tr-table">
+        <tr><th>Status</th><th>Quando marcar</th><th>Efeito no Top Hoje</th></tr>
+        <tr><td>em_contato</td><td>Conversa rolando, esperando próxima resposta</td><td>+5 pts (segue priorizado)</td></tr>
+        <tr><td>sem_resposta</td><td>Tentou e cliente não respondeu</td><td>+10 pts (vai voltar mais cedo)</td></tr>
+        <tr><td>agendado</td><td>Cliente confirmou data pra trocar</td><td>+25 pts (não esquecer!)</td></tr>
+        <tr><td>vendido</td><td>Conversão fechada</td><td>zerado (sai da fila)</td></tr>
+        <tr><td>perdido</td><td>Cliente comprou em outro lugar</td><td>zerado</td></tr>
+        <tr><td>nao_quer</td><td>Cliente não quer trocar agora</td><td>-15 pts (cai pro fim da fila)</td></tr>
+        <tr><td>ja_fez</td><td>Já trocou recentemente</td><td>zerado</td></tr>
+      </table>
+    </section>
+
+    <% if (typeof isGestor !== 'undefined' && isGestor) { %>
+    <!-- 9. Gestor: Atribuir e distribuir -->
+    <section class="tr-section" id="cap9">
+      <h2><span class="num">9</span> (Gestor) Atribuir e distribuir clientes</h2>
+      <p>Como gestora do time Reflow, você tem 2 caminhos pra distribuir leads pras operadoras:</p>
+      <h3>Atribuição manual</h3>
+      <div class="tr-step"><b>1.</b> Aplique filtros (ex: Top Hoje + Categoria=refil)</div>
+      <div class="tr-step"><b>2.</b> Marque o checkbox dos clientes que quer atribuir</div>
+      <div class="tr-step"><b>3.</b> Na barra que aparece em cima da tabela, escolha "Barbara" no dropdown</div>
+      <div class="tr-step"><b>4.</b> Clica <strong>Atribuir</strong> — todos vão pra Barbara de uma vez</div>
+      <h3>Distribuição equilibrada (round-robin)</h3>
+      <div class="tr-step"><b>1.</b> Marque vários clientes no checkbox</div>
+      <div class="tr-step"><b>2.</b> Clica <strong>Distribuir Equilibrado</strong></div>
+      <div class="tr-step"><b>3.</b> No modal, marque quais operadoras participam (já vem filtrado pelo seu time — Reflow)</div>
+      <div class="tr-step"><b>4.</b> Confirma. O sistema divide round-robin: 1º vai pra Barbara, 2º pra próxima, 3º volta pra Barbara…</div>
+      <div class="tr-callout warn">⚠ Você só vê e atribui pra operadores do <strong>seu time (Reflow)</strong>. Pra cruzar time, precisa de admin (Paulo).</div>
+      <h3>Lote N — pra disparar em massa</h3>
+      <p>Tem os botões <span class="tr-kbd">▶ Primeiros N</span> e <span class="tr-kbd">↻ Próximos N</span> pra selecionar em lotes (ex: 70 por vez). Útil pra distribuir 200 clientes em 3 rodadas.</p>
+    </section>
+    <% } %>
+
+    <!-- 10. Boas práticas -->
+    <section class="tr-section" id="cap10">
+      <h2><span class="num">10</span> Boas práticas</h2>
+      <div class="tr-callout tip">✅ <strong>Sempre marque status manual</strong> depois de conversar. Sem isso, a fila acha que ninguém ainda tentou.</div>
+      <div class="tr-callout tip">✅ <strong>Use o Top Hoje como rotina:</strong> abre a tela, clica, ataca os 30. Sem perder tempo decidindo quem ligar.</div>
+      <div class="tr-callout tip">✅ <strong>Reclassifique produto quando errado:</strong> se um cliente cai em Refil mas é Elemento Filtrante, peça pro Paulo ou Daniela usar o botão ⚙️ Admin (só visual, não muda no Zoho).</div>
+      <div class="tr-callout warn">❌ <strong>Não edite o Zoho diretamente sem alinhar.</strong> Use o botão CRM pra ver, mas mudanças passam pela Daniela.</div>
+      <div class="tr-callout warn">❌ <strong>Não dispare Núbia pra cliente que você já está atendendo.</strong> Ela atropela a conversa.</div>
+      <div class="tr-callout warn">❌ <strong>Não compartilhe senha do portal</strong> nem deixe logado em computador público.</div>
+    </section>
+
+    <!-- 11. Quando algo der errado -->
+    <section class="tr-section" id="cap11">
+      <h2><span class="num">11</span> Quando algo der errado</h2>
+      <table class="tr-table">
+        <tr><th>Problema</th><th>O que fazer</th></tr>
+        <tr><td>Não consegue logar</td><td>Confere maiúscula/minúscula da senha. Se ainda assim falhar, fala com o Paulo</td></tr>
+        <tr><td>Cliente sumiu da lista</td><td>Limpa todos os filtros (botão "Limpar"). Talvez tenha algum filtro ativo</td></tr>
+        <tr><td>Top Hoje vazio</td><td>Significa que ninguém tem score &gt; 0 na visão atual. Tira filtros muito restritivos</td></tr>
+        <tr><td>WATI bloqueado (janela 24h)</td><td>Use Z-API que não tem essa restrição. Ou manda template</td></tr>
+        <tr><td>Núbia continua mandando msg pro seu cliente</td><td>Fala com Paulo pra mutar manualmente (endpoint /admin/mute na Núbia)</td></tr>
+        <tr><td>Algo travou ou deu erro estranho</td><td>F5 (recarregar). Persiste? Manda print pra Daniela/Paulo</td></tr>
+      </table>
+      <div class="tr-callout">📞 <strong>Quem chama:</strong>
+        <ul style="margin:8px 0">
+          <li><strong>Daniela</strong> — fluxo do dia, dúvidas de processo, reclassificação</li>
+          <li><strong>Paulo</strong> — bugs do sistema, senhas, dúvidas técnicas</li>
+        </ul>
+      </div>
+    </section>
+
+    <div style="text-align:center;margin:40px 0;padding:20px;color:var(--text-muted);font-size:12px">
+      <p>🔄 <strong>Reflow</strong> — Tudo de Filtro · Treinamento funcional do CRM</p>
+      <p style="font-size:11px">Última atualização: 2026-06-01</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Scroll spy: destaca capítulo ativo no menu lateral
+const links = document.querySelectorAll('#tr-menu a');
+const sections = document.querySelectorAll('.tr-section');
+function _scrollSpy(){
+  const y = window.scrollY + 120;
+  let active = sections[0]?.id;
+  sections.forEach(s => { if (s.offsetTop <= y) active = s.id; });
+  links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#'+active));
+  // progress bar
+  const max = document.body.scrollHeight - window.innerHeight;
+  const pct = max > 0 ? (window.scrollY / max) * 100 : 0;
+  const bar = document.getElementById('tr-progress');
+  if (bar) bar.style.width = pct + '%';
+}
+window.addEventListener('scroll', _scrollSpy, { passive: true });
+_scrollSpy();
+// Smooth scroll nos links
+links.forEach(a => a.addEventListener('click', e => {
+  e.preventDefault();
+  const t = document.querySelector(a.getAttribute('href'));
+  if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}));
+</script>

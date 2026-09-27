@@ -1,0 +1,415 @@
+<% const activePage = 'intake'; const pageTitle = 'Monitor de Intake'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.im-wrap{padding:14px 22px 100px;max-width:1500px;margin:0 auto}
+.im-h{font-size:20px;color:var(--text);margin:0 0 4px;font-weight:800;display:flex;align-items:center;gap:12px}
+.im-h .live{display:inline-flex;align-items:center;gap:5px;background:rgba(34,197,94,.12);color:#22c55e;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;border:1px solid rgba(34,197,94,.3);text-transform:uppercase;letter-spacing:.4px}
+.im-h .live span.dot{width:6px;height:6px;border-radius:50%;background:#22c55e;animation:imPulse 1.4s infinite}
+@keyframes imPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.im-sub{color:var(--text-muted);font-size:12px;margin:0 0 14px}
+.im-filters{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 14px}
+.im-filters label{color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+.im-filters select,.im-filters input{background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px}
+.im-filters button{background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;cursor:pointer;font-weight:700}
+.im-filters button:hover{background:#2563eb}
+.im-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:18px}
+.im-card{background:linear-gradient(135deg,var(--bg-card),var(--bg-card));border:1px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color .2s}
+.im-card:hover,.im-card.active{border-color:#3b82f6}
+.im-card .lbl{color:var(--text-muted);font-size:9px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;margin-bottom:4px}
+.im-card .val{font-size:26px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.im-card.ok .val{color:#22c55e}.im-card.warn .val{color:#f59e0b}.im-card.err .val{color:#ef4444}.im-card.info .val{color:#3b82f6}
+.im-section{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px}
+.im-section h2{font-size:14px;color:var(--text-muted);margin:0 0 10px;display:flex;align-items:center;gap:8px;font-weight:700}
+.im-section h2 .cnt{background:#222;padding:2px 8px;border-radius:12px;font-size:12px;color:#fff}
+.im-table{width:100%;border-collapse:collapse;font-size:11px}
+.im-table th{text-align:left;padding:6px 6px;color:#555;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+.im-table td{padding:5px 6px;border-bottom:1px solid #161616;color:var(--text)}
+.im-table tr:hover{background:var(--bg-card)}
+.im-table tr.expanded{background:#111}
+.im-table a{color:#3b82f6;text-decoration:none}
+.im-table a:hover{text-decoration:underline}
+.issue{background:#7f1d1d;color:#fca5a5;padding:1px 6px;border-radius:4px;font-size:10px;margin-right:3px;display:inline-block;margin-bottom:2px}
+.ok-badge{color:#22c55e;font-size:11px}
+.tier-diamante{color:#a78bfa;font-weight:700}.tier-ouro{color:#fbbf24;font-weight:700}.tier-prata{color:#94a3b8;font-weight:700}.tier-bronze{color:#f97316}.tier-pedra{color:#555}
+.act-btn{background:#222;border:1px solid var(--border);color:#fff;padding:3px 7px;border-radius:4px;font-size:10px;cursor:pointer;white-space:nowrap;margin:1px}
+.act-btn:hover{background:#333;color:#fff}
+.act-btn.wati{border-color:#25d366;color:#25d366}.act-btn.wati:hover{background:#25d366;color:#000}
+.act-btn.zapi{border-color:#f59e0b;color:#f59e0b}.act-btn.zapi:hover{background:#f59e0b;color:#000}
+.act-btn.fix{border-color:#8b5cf6;color:#8b5cf6}.act-btn.fix:hover{background:#8b5cf6;color:#fff}
+.act-btn.owner{border-color:#06b6d4;color:#06b6d4}.act-btn.owner:hover{background:#06b6d4;color:#000}
+/* Detail card */
+.detail-row td{padding:0!important;border:none!important}
+.detail-card{background:#111;border:1px solid var(--border);border-radius:8px;margin:6px 8px 10px;padding:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px 20px}
+.detail-card .df{margin-bottom:6px}.detail-card .df .dl{color:#555;font-size:9px;text-transform:uppercase;letter-spacing:.3px;font-weight:700}.detail-card .df .dv{color:var(--text);font-size:12px;word-break:break-all}
+.detail-card .df .dv.warn{color:#fbbf24}.detail-card .df .dv.err{color:#f87171}
+.detail-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--border)}
+/* Modal */
+.im-modal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:9999;display:none;align-items:center;justify-content:center}
+.im-modal-bg.show{display:flex}
+.im-modal{background:var(--bg-hover);border:1px solid var(--border);border-radius:12px;padding:20px;width:440px;max-width:90vw}
+.im-modal h3{color:var(--text);font-size:16px;margin:0 0 12px}
+.im-modal textarea{width:100%;background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:10px;font-size:13px;resize:vertical;min-height:80px;font-family:inherit}
+.im-modal select{background:var(--bg-card);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px}
+.im-modal .modal-info{color:var(--text-muted);font-size:12px;margin-bottom:10px}
+.im-modal .modal-btns{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
+.im-modal .modal-btns button{padding:8px 16px;border-radius:6px;border:none;font-size:12px;font-weight:700;cursor:pointer}
+.im-modal .modal-btns .send{background:#3b82f6;color:#fff}.im-modal .modal-btns .cancel{background:#333;color:#fff}
+.im-modal .modal-result{margin-top:10px;padding:8px;border-radius:6px;font-size:12px;display:none}
+.im-modal .modal-result.ok{display:block;background:#052e16;color:#4ade80;border:1px solid #166534}
+.im-modal .modal-result.err{display:block;background:#1a0505;color:#fca5a5;border:1px solid #7f1d1d}
+.im-loading{text-align:center;padding:40px;color:#555;font-size:14px}
+.im-error{background:#1a0505;border:1px solid #ef4444;border-radius:8px;padding:12px;color:#fca5a5;margin-bottom:14px}
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:99999;animation:fadeIn .3s}
+.toast.ok{background:#052e16;color:#4ade80;border:1px solid #166534}
+.toast.err{background:#1a0505;color:#fca5a5;border:1px solid #7f1d1d}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+/* Chat modal */
+.chat-modal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:99998;display:none;align-items:center;justify-content:center}
+.chat-modal-bg.show{display:flex}
+.chat-modal{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;width:500px;max-width:95vw;height:70vh;display:flex;flex-direction:column;overflow:hidden}
+.chat-header{padding:12px 16px;background:#111;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.chat-header h3{color:var(--text);font-size:14px;margin:0}
+.chat-header .close-btn{background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer}
+.chat-header .close-btn:hover{color:var(--text)}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:6px}
+.chat-msg{max-width:80%;padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.4;word-wrap:break-word}
+.chat-msg.lead{align-self:flex-start;background:#1e293b;color:#e2e8f0;border-bottom-left-radius:2px}
+.chat-msg.nubia{align-self:flex-end;background:#065f46;color:#d1fae5;border-bottom-right-radius:2px}
+.chat-msg .meta{font-size:10px;color:var(--text-muted);margin-top:3px}
+.chat-msg.nubia .meta{color:#6ee7b7}
+.chat-input{padding:10px 14px;background:#111;border-top:1px solid var(--border);display:flex;gap:8px}
+.chat-input input{flex:1;background:var(--bg-hover);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:20px;font-size:13px;outline:none}
+.chat-input input:focus{border-color:#25d366}
+.chat-input button{background:#25d366;color:#fff;border:none;border-radius:20px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer}
+.chat-input button:hover{background:#1da851}
+.chat-input button:disabled{background:#333;color:#ddd;cursor:not-allowed}
+.chat-loading{text-align:center;padding:40px;color:#555}
+</style>
+
+<div class="im-wrap">
+  <h1 class="im-h">Monitor de Intake <span class="live"><span class="dot"></span> ao vivo</span></h1>
+  <p class="im-sub" id="subtitle">Carregando...</p>
+  <div class="im-filters">
+    <label>Data:</label><input type="date" id="fDate" />
+    <label>Canal:</label>
+    <select id="fChannel"><option value="all">Todos</option><option value="google_ads">Google Ads</option><option value="facebook">Facebook</option><option value="ctwa">CTWA</option><option value="leadster">Leadster</option><option value="wpforms">WPForms</option><option value="outro">Outros</option></select>
+    <button onclick="loadData()">Filtrar</button>
+    <button onclick="document.getElementById('fDate').value=todayStr;loadData()" style="background:#333">Hoje</button>
+  </div>
+  <div id="cards" class="im-cards"></div>
+  <div id="error-box" style="display:none" class="im-error"></div>
+  <div id="sections"><div class="im-loading">Carregando leads...</div></div>
+</div>
+
+<!-- Chat Modal -->
+<div class="chat-modal-bg" id="chatBg">
+  <div class="chat-modal">
+    <div class="chat-header">
+      <h3 id="chatTitle">Chat</h3>
+      <button class="close-btn" onclick="closeChat()">&times;</button>
+    </div>
+    <div class="chat-msgs" id="chatMsgs"><div class="chat-loading">Carregando conversa...</div></div>
+    <div class="chat-input">
+      <input type="text" id="chatInput" placeholder="Digite sua mensagem..." onkeydown="if(event.key==='Enter')sendChat()" />
+      <button id="chatSendBtn" onclick="sendChat()">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<div class="im-modal-bg" id="modalBg">
+  <div class="im-modal">
+    <h3 id="modalTitle">Acao</h3>
+    <div class="modal-info" id="modalInfo"></div>
+    <div id="modalBody"></div>
+    <div class="modal-btns">
+      <button class="cancel" onclick="closeModal()">Cancelar</button>
+      <button class="send" id="modalSend" onclick="sendAction()">Enviar</button>
+    </div>
+    <div class="modal-result" id="modalResult"></div>
+  </div>
+</div>
+
+<script>
+const SOURCE_CFG = {
+  google_ads:{label:'Google Ads',icon:'&#x1F50D;'},facebook:{label:'Facebook Lead Ads',icon:'&#x1F4D8;'},
+  ctwa:{label:'CTWA',icon:'&#x1F4AC;'},leadster:{label:'Leadster',icon:'&#x1F916;'},
+  wpforms:{label:'WPForms',icon:'&#x1F4DD;'},outro:{label:'Outros',icon:'&#x2753;'},
+};
+const SELLERS = {
+  'Italo':{id:'6311862000155498009',phone:'5512991513007'},'Gabriel F.':{id:'6311862000147889029',phone:'5512988555418'},
+  'Gabriel M.':{id:'6311862000204758001',phone:'5512981864649'},'Tiago':{id:'6311862000035557001',phone:'5512996335058'},
+  'Pedro':{id:'6311862000198998002',phone:'5512982855000'},'Guilherme':{id:'6311862000214730001',phone:'5512996391085'},
+};
+let _data=null, _modalAction=null, _expanded={};
+const todayStr=new Date().toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'});
+document.getElementById('fDate').value=todayStr;
+
+function toast(msg,ok){const t=document.createElement('div');t.className='toast '+(ok?'ok':'err');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
+
+function renderCards(s){
+  const ch=document.getElementById('fChannel').value;
+  document.getElementById('cards').innerHTML=[
+    {k:'all',l:'Total',v:s.total,c:'ok'},{k:'google_ads',l:'Google Ads',v:s.google_ads,c:'info'},
+    {k:'facebook',l:'Facebook',v:s.facebook,c:'info'},{k:'ctwa',l:'CTWA',v:s.ctwa,c:'info'},
+    {k:'leadster',l:'Leadster',v:s.leadster,c:'info'},{k:'wpforms',l:'WPForms',v:s.wpforms,c:'info'},
+    {k:'_d',l:'Duplicatas',v:s.duplicatas,c:s.duplicatas>0?'err':'ok'},{k:'_e',l:'Erros',v:s.erros,c:s.erros>0?'warn':'ok'},
+  ].map(i=>`<div class="im-card ${i.c} ${ch===i.k?'active':''}" onclick="filterCh('${i.k}')"><div class="lbl">${i.l}</div><div class="val">${i.v}</div></div>`).join('');
+}
+function filterCh(k){if(k.startsWith('_'))return;document.getElementById('fChannel').value=k;renderAll()}
+
+function renderSections(data){
+  const box=document.getElementById('sections'),ch=document.getElementById('fChannel').value;let html='';
+  for(const[key,cfg]of Object.entries(SOURCE_CFG)){
+    if(ch!=='all'&&ch!==key)continue;
+    const entries=data[key]||[];
+    html+=`<div class="im-section"><h2>${cfg.icon} ${cfg.label} <span class="cnt">${entries.length}</span></h2>`;
+    if(entries.length){
+      html+=`<table class="im-table"><tr><th></th><th>Hora</th><th>Nome</th><th>Tel</th><th>Stage</th><th>Owner</th><th>Campanha</th><th>Cidade</th><th>Prazo</th><th>Score</th><th>Tier</th><th>Alertas</th><th>Acoes</th></tr>`;
+      entries.sort((a,b)=>b.created.localeCompare(a.created));
+      for(const e of entries){
+        const tc=e.tier?'tier-'+e.tier.toLowerCase():'';
+        const iss=e.issues.length?e.issues.map(i=>`<span class="issue">${i}</span>`).join(''):'<span class="ok-badge">OK</span>';
+        const esc=s=>s.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+        const isExp=_expanded[e.id];
+        html+=`<tr class="${isExp?'expanded':''}" id="row-${e.id}">
+          <td><span style="cursor:pointer;font-size:14px" onclick="toggleDetail('${e.id}')">${isExp?'&#x25BC;':'&#x25B6;'}</span></td>
+          <td>${e.created}</td>
+          <td><a href="${e.crmLink}" target="_blank" title="${e.email||''}">${e.name.slice(0,22)}</a></td>
+          <td title="${e.phoneRaw}">${e.phone}</td>
+          <td>${(e.stage||'').slice(0,16)}</td>
+          <td>${e.owner.split(' ')[0]}</td>
+          <td>${e.campaign||'-'}</td>
+          <td>${(e.cidade||'-').slice(0,18)}</td>
+          <td>${(e.prazo||'-').slice(0,12)}</td>
+          <td>${e.score}</td>
+          <td class="${tc}">${e.tier||'-'}</td>
+          <td>${iss}</td>
+          <td style="white-space:nowrap">
+            <button class="act-btn wati" onclick="openChat('${esc(e.phoneRaw)}','${esc(e.name)}')">Chat</button>
+            <button class="act-btn zapi" onclick="openZapi('${esc(e.phoneRaw)}','${esc(e.name)}','${e.id}','${esc(e.owner)}')">Avisar</button>
+          </td></tr>`;
+        if(isExp){
+          html+=`<tr class="detail-row"><td colspan="13"><div class="detail-card">
+            <div><div class="df"><div class="dl">Nome Completo</div><div class="dv ${e.issues.some(i=>i.includes('NOME'))?'err':''}">${e.name}</div></div>
+            <div class="df"><div class="dl">Email</div><div class="dv">${e.email||'-'}</div></div>
+            <div class="df"><div class="dl">Telefone</div><div class="dv">${e.phoneRaw}</div></div></div>
+            <div><div class="df"><div class="dl">Cidade</div><div class="dv ${!e.cidade?'warn':''}">${e.cidade||'SEM CIDADE'}</div></div>
+            <div class="df"><div class="dl">Tipo de Agua</div><div class="dv">${e.tipoAgua||'-'}</div></div>
+            <div class="df"><div class="dl">Queixa</div><div class="dv">${e.queixa||'-'}</div></div>
+            <div class="df"><div class="dl">Imovel</div><div class="dv">${e.imovel||'-'}</div></div></div>
+            <div><div class="df"><div class="dl">Lead Source</div><div class="dv">${e.leadSource||'-'}</div></div>
+            <div class="df"><div class="dl">Pipeline</div><div class="dv">${e.pipeline||'-'}</div></div>
+            <div class="df"><div class="dl">GCLID</div><div class="dv">${e.gclid||'-'}</div></div>
+            <div class="df"><div class="dl">Analise</div><div class="dv">${e.analise||'-'}</div></div>
+            <div class="df"><div class="dl">Tags</div><div class="dv">${e.tags||'-'}</div></div></div>
+            <div class="detail-actions">
+              <a href="${e.crmLink}" target="_blank" class="act-btn" style="border-color:#3b82f6;color:#3b82f6;text-decoration:none;padding:5px 12px">Abrir no Zoho</a>
+              ${e.issues.length?`<button class="act-btn fix" onclick="openFix('${e.id}','${esc(e.phoneRaw)}','${esc(e.name)}','${esc(e.cidade||'')}','${esc(e.owner)}')">Corrigir</button>`:''}
+              <button class="act-btn owner" onclick="openChangeOwner('${e.id}','${esc(e.name)}','${esc(e.owner)}')">Trocar Dono</button>
+              <button class="act-btn wati" onclick="openWati('${esc(e.phoneRaw)}','${esc(e.name)}','${e.id}')" style="padding:5px 12px">Enviar WhatsApp</button>
+              <button class="act-btn zapi" onclick="openZapi('${esc(e.phoneRaw)}','${esc(e.name)}','${e.id}','${esc(e.owner)}')" style="padding:5px 12px">Avisar Vendedor</button>
+            </div>
+          </div></td></tr>`;
+        }
+      }
+      html+='</table>';
+    }else{html+='<p style="color:#555;font-size:12px">Nenhum lead</p>';}
+    html+='</div>';
+  }
+  box.innerHTML=html||'<div class="im-section"><p style="color:#555">Nenhum lead</p></div>';
+}
+
+function toggleDetail(id){_expanded[id]=!_expanded[id];renderAll()}
+function renderAll(){if(!_data)return;renderCards(_data.stats);renderSections(_data)}
+
+// Auto-fix
+async function autoFix(dealId,phone){
+  try{
+    const r=await fetch('/intake-monitor/auto-fix',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dealId,phone})});
+    const d=await r.json();
+    toast(d.detail||d.error,d.ok);
+    if(d.ok&&Object.keys(d.fixes||{}).length)setTimeout(loadData,1000);
+  }catch(e){toast('Erro: '+e.message,false)}
+}
+
+// Change Owner
+function openChangeOwner(dealId,name,currentOwner){
+  _modalAction={type:'owner',dealId};
+  document.getElementById('modalTitle').textContent='Trocar Dono do Lead';
+  document.getElementById('modalInfo').textContent=`Lead: ${name} | Dono atual: ${currentOwner}`;
+  document.getElementById('modalBody').innerHTML=`<select id="ownerSelect" style="width:100%;background:#0d0d0d;border:1px solid #333;color:#fff;padding:8px;border-radius:6px;font-size:13px">
+    ${Object.entries(SELLERS).map(([n,s])=>`<option value="${s.id}" ${currentOwner.includes(n.split('.')[0])?'selected':''}>${n}</option>`).join('')}</select>`;
+  document.getElementById('modalSend').textContent='Trocar Dono';
+  document.getElementById('modalResult').className='modal-result';
+  document.getElementById('modalBg').classList.add('show');
+}
+
+// WATI msg
+function openWati(phone,name,dealId){
+  _modalAction={type:'wati',phone,dealId};
+  document.getElementById('modalTitle').textContent='Enviar WhatsApp pro Lead';
+  document.getElementById('modalInfo').textContent=`Para: ${name} (...${phone.slice(-4)})`;
+  document.getElementById('modalBody').innerHTML=`<textarea id="modalMsg" placeholder="Oi ${name.split(' ')[0]}, tudo bem?..." style="width:100%;background:#0d0d0d;border:1px solid #333;color:#fff;border-radius:6px;padding:10px;font-size:13px;min-height:80px;font-family:inherit;resize:vertical"></textarea>`;
+  document.getElementById('modalSend').textContent='Enviar';
+  document.getElementById('modalResult').className='modal-result';
+  document.getElementById('modalBg').classList.add('show');
+  setTimeout(()=>document.getElementById('modalMsg')?.focus(),100);
+}
+
+// Z-API alert
+function openZapi(phone,name,dealId,owner){
+  let sp='';const of=owner.split(' ')[0].toLowerCase();
+  for(const[n,s]of Object.entries(SELLERS))if(n.toLowerCase().startsWith(of)){sp=s.phone;break}
+  _modalAction={type:'zapi',phone,name,dealId,sellerPhone:sp};
+  document.getElementById('modalTitle').textContent='Avisar Vendedor';
+  document.getElementById('modalInfo').innerHTML=`Lead: ${name} | Vendedor: <select id="sellerSelect" style="background:#0d0d0d;border:1px solid #333;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px">
+    ${Object.entries(SELLERS).map(([n,s])=>`<option value="${s.phone}" ${s.phone===sp?'selected':''}>${n}</option>`).join('')}</select>`;
+  document.getElementById('modalBody').innerHTML=`<textarea id="modalMsg" style="width:100%;background:#0d0d0d;border:1px solid #333;color:#fff;border-radius:6px;padding:10px;font-size:13px;min-height:80px;font-family:inherit;resize:vertical">Oi! O lead ${name} (tel: ${phone}) precisa de atencao. Consegue entrar em contato?</textarea>`;
+  document.getElementById('modalSend').textContent='Enviar';
+  document.getElementById('modalResult').className='modal-result';
+  document.getElementById('modalBg').classList.add('show');
+}
+
+function closeModal(){document.getElementById('modalBg').classList.remove('show');_modalAction=null}
+
+async function sendAction(){
+  if(!_modalAction)return;
+  const result=document.getElementById('modalResult'),btn=document.getElementById('modalSend');
+  btn.disabled=true;btn.textContent='Enviando...';
+  try{
+    let resp;
+    if(_modalAction.type==='wati'){
+      const msg=document.getElementById('modalMsg')?.value?.trim();if(!msg){alert('Digite mensagem');btn.disabled=false;btn.textContent='Enviar';return}
+      resp=await fetch('/intake-monitor/send-wati',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:_modalAction.phone,message:msg})});
+    }else if(_modalAction.type==='zapi'){
+      const msg=document.getElementById('modalMsg')?.value?.trim();const sp=document.getElementById('sellerSelect')?.value||_modalAction.sellerPhone;
+      resp=await fetch('/intake-monitor/alert-seller',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sellerPhone:sp,leadName:_modalAction.name,leadPhone:_modalAction.phone,dealId:_modalAction.dealId,message:msg})});
+    }else if(_modalAction.type==='owner'){
+      const sel=document.getElementById('ownerSelect');const oid=sel.value;const oname=sel.options[sel.selectedIndex].text;
+      resp=await fetch('/intake-monitor/change-owner',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dealId:_modalAction.dealId,newOwnerId:oid,newOwnerName:oname})});
+    }else if(_modalAction.type==='fix'){
+      const fixes={};
+      const n=document.getElementById('fixName')?.value?.trim();
+      const ci=document.getElementById('fixCidade')?.value?.trim();
+      const utm=document.getElementById('fixUtm')?.value;
+      const ls=document.getElementById('fixLeadSrc')?.value;
+      const ow=document.getElementById('fixOwner')?.value;
+      const pl=document.getElementById('fixPipeline')?.value;
+      const camp=document.getElementById('fixCampaign')?.value?.trim();
+      if(n)fixes.Deal_Name=n;
+      if(ci)fixes.Cidade=ci;
+      if(utm){fixes.UTM_Source=utm;fixes.UTM_Source_alternativa=utm}
+      if(ls)fixes.Lead_Source=ls;
+      if(ow)fixes.Owner=ow;
+      if(pl)fixes.Pipeline=pl;
+      if(camp){fixes.Campaign_name=camp;fixes.Campaign_name_lista=camp;fixes.UTM_Campaign=camp;fixes.UTM_Campaign_lista=camp}
+      if(!Object.keys(fixes).length){alert('Nenhum campo preenchido');btn.disabled=false;btn.textContent='Salvar Correcoes';return}
+      resp=await fetch('/intake-monitor/manual-fix',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dealId:_modalAction.dealId,phone:_modalAction.phone,fixes})});
+    }
+    const d=await resp.json();
+    if(d.ok){result.className='modal-result ok';result.textContent=d.detail||'Feito!';setTimeout(()=>{closeModal();loadData()},1500)}
+    else{result.className='modal-result err';result.textContent=d.detail||d.error||'Erro'}
+  }catch(e){result.className='modal-result err';result.textContent='Erro: '+e.message}
+  btn.disabled=false;btn.textContent='Enviar';
+}
+
+async function loadData(){
+  try{
+    const date=document.getElementById('fDate').value;
+    const r=await fetch('/intake-monitor/data'+(date?'?date='+date:''));
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    _data=await r.json();if(_data.error)throw new Error(_data.error);
+    document.getElementById('subtitle').textContent=`${date||todayStr} | ${_data.stats.total} leads | Atualiza 30s`;
+    renderAll();document.getElementById('error-box').style.display='none';
+  }catch(e){const eb=document.getElementById('error-box');eb.style.display='block';eb.textContent='Erro: '+e.message}
+}
+
+document.getElementById('fChannel').addEventListener('change',renderAll);
+loadData();setInterval(loadData,30000);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeChat()}});
+document.getElementById('modalBg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
+document.getElementById('chatBg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeChat()});
+
+// ═══ CORRIGIR (formulário editável) ═══
+function openFix(dealId,phone,name,cidade,owner){
+  _modalAction={type:'fix',dealId,phone};
+  document.getElementById('modalTitle').textContent='Corrigir Lead';
+  document.getElementById('modalInfo').textContent=`Deal: ${name} | Tel: ...${phone.slice(-4)}`;
+  document.getElementById('modalBody').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label style="color:#888;font-size:10px;display:block;margin-bottom:3px">NOME</label>
+        <input id="fixName" value="${name}" style="width:100%;background:#0d0d0d;border:1px solid #333;color:#fff;padding:8px;border-radius:6px;font-size:13px"/></div>
+      <div><label style="color:#888;font-size:10px;display:block;margin-bottom:3px">CIDADE</label>
+        <input id="fixCidade" value="${cidade}" style="width:100%;background:#0d0d0d;border:1px solid #333;color:#fff;padding:8px;border-radius:6px;font-size:13px"/></div>
+      <div><label style="color:#888;font-size:10px;display:block;margin-bottom:3px">UTM_SOURCE</label>
+        <select id="fixUtm" style="width:100%;background:#0d0d0d;border:1px solid #333;color:#fff;padding:8px;border-radius:6px;font-size:13px">
+          <option value="">Nao alterar</option><option value="google_ads">google_ads</option><option value="facebook_ads">facebook_ads</option><option value="meta">meta</option><option value="organic">organic</option></select></div>
+      <div><label style="color:#888;font-size:10px;display:block;margin-bottom:3px">LEAD SOURCE</label>
+        <select id="fixLeadSrc" style="width:100%;background:#0d0d0d;border:1px solid #333;color:#fff;padding:8px;border-radius:6px;font-size:13px">
+          <option value="">Nao alterar</option><option value="Busca Paga - GOOGLE_ADS">Google Ads</option><option value="Busca Paga - Facebook Ads">Facebook Ads</option><option value="CTWA">CTWA</option><option value="Contato pelo Site">Contato pelo Site</option><option value="Indicação">Indicacao</option></select></div>
+      <div><label style="color:#888;font-size:10px;display:block;margin-bottom:3px">DONO</label>
+        <select id="fixOwner" style="width:100%;background:#0d0d0d;border:1px solid #333;color:#fff;padding:8px;border-radius:6px;font-size:13px">
+          <option value="">Nao alterar</option>${Object.entries(SELLERS).map(([n,s])=>`<option value="${s.id}" ${owner.includes(n.split('.')[0])?'selected':''}>${n}</option>`).join('')}</select></div>
+      <div><label style="color:#888;font-size:10px;display:block;margin-bottom:3px">PIPELINE</label>
+        <select id="fixPipeline" style="width:100%;background:#0d0d0d;border:1px solid #333;color:#fff;padding:8px;border-radius:6px;font-size:13px">
+          <option value="">Nao alterar</option><option value="Funil água não tratada">Funil agua nao tratada</option><option value="Funil estação de tratamento">Funil estacao tratamento</option><option value="Geral">Geral (Bebedouro/Purificador)</option><option value="LP - Funil água não tratada">LP - Condominio</option></select></div>
+    </div>
+    <div style="margin-top:10px"><label style="color:#888;font-size:10px;display:block;margin-bottom:3px">CAMPANHA (Campaign_name)</label>
+      <input id="fixCampaign" placeholder="Ex: pesquisa_filtros_de_entrada" style="width:100%;background:#0d0d0d;border:1px solid #333;color:#fff;padding:8px;border-radius:6px;font-size:13px"/></div>
+    <p style="color:#555;font-size:10px;margin-top:8px">Preencha apenas os campos que quer corrigir. Campos vazios nao serao alterados.</p>
+  `;
+  document.getElementById('modalSend').textContent='Salvar Correcoes';
+  document.getElementById('modalResult').className='modal-result';
+  document.getElementById('modalBg').classList.add('show');
+}
+
+// ═══ CHAT ═══
+let _chatPhone='';
+async function openChat(phone,name){
+  _chatPhone=phone;
+  document.getElementById('chatTitle').textContent=`${name} (...${phone.slice(-4)})`;
+  document.getElementById('chatMsgs').innerHTML='<div class="chat-loading">Carregando conversa...</div>';
+  document.getElementById('chatInput').value='';
+  document.getElementById('chatBg').classList.add('show');
+  try{
+    const r=await fetch(`/intake-monitor/chat?phone=${phone}`);
+    const d=await r.json();
+    if(!d.ok)throw new Error(d.error);
+    const box=document.getElementById('chatMsgs');
+    if(!d.messages.length){box.innerHTML='<div class="chat-loading">Nenhuma mensagem encontrada</div>';return}
+    box.innerHTML=d.messages.map(m=>{
+      if(!m.text)return '';
+      const cls=m.owner?'nubia':'lead';
+      const who=m.owner?(m.operator||'Nubia'):'Lead';
+      const time=m.time?m.time.slice(11,16):'';
+      return `<div class="chat-msg ${cls}"><div>${m.text}</div><div class="meta">${who} ${time}</div></div>`;
+    }).join('');
+    box.scrollTop=box.scrollHeight;
+  }catch(e){
+    document.getElementById('chatMsgs').innerHTML=`<div class="chat-loading" style="color:#f87171">Erro: ${e.message}</div>`;
+  }
+  setTimeout(()=>document.getElementById('chatInput').focus(),200);
+}
+function closeChat(){document.getElementById('chatBg').classList.remove('show');_chatPhone=''}
+async function sendChat(){
+  const msg=document.getElementById('chatInput').value.trim();
+  if(!msg||!_chatPhone)return;
+  const btn=document.getElementById('chatSendBtn');
+  btn.disabled=true;
+  try{
+    const r=await fetch('/intake-monitor/send-wati',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:_chatPhone,message:msg})});
+    const d=await r.json();
+    if(d.ok){
+      const box=document.getElementById('chatMsgs');
+      box.innerHTML+=`<div class="chat-msg nubia"><div>${msg}</div><div class="meta">Voce agora</div></div>`;
+      box.scrollTop=box.scrollHeight;
+      document.getElementById('chatInput').value='';
+      toast('Mensagem enviada!',true);
+    }else{
+      toast(d.detail||'Janela fechada (>24h)',false);
+    }
+  }catch(e){toast('Erro: '+e.message,false)}
+  btn.disabled=false;
+}
+</script>

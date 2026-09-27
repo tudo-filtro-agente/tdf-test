@@ -1,0 +1,540 @@
+<% const activePage = 'operacional'; const pageTitle = 'Cliente · Operacional'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+  .cl-shell { padding: 16px 20px 40px; max-width: 1400px; margin: 0 auto; }
+  .cl-h { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; }
+  .cl-h .row1 { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .cl-h h1 { margin: 0; font-size: 22px; color: var(--text); }
+  .cl-h .sub { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+  .cl-h .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { padding: 8px 14px; border-radius: 8px; border: 1px solid; font-size: 12px; font-weight: 700; cursor: pointer; background: transparent; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-pri { background: #25D366; color: #000; border-color: #25D366; }
+  .btn-sec { color: #93c5fd; border-color: #1f6feb; }
+  .btn-warn { color: #fbbf24; border-color: #eab308; }
+  .btn-purple { color: #c4b5fd; border-color: #a371f7; }
+  .btn-ghost { color: var(--text-muted); border-color: var(--border); }
+
+  .cl-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+  @media (max-width: 900px) { .cl-meta { grid-template-columns: repeat(2, 1fr); } }
+  .cl-meta .it { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .cl-meta .it .l { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; }
+  .cl-meta .it .v { color: var(--text); font-size: 13px; font-weight: 600; margin-top: 2px; word-break: break-word; }
+
+  .cl-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 14px; flex-wrap: wrap; }
+  .cl-tab { padding: 10px 16px; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; font-size: 13px; font-weight: 600; }
+  .cl-tab.active { color: var(--text); border-bottom-color: #25D366; }
+
+  .cl-pad { display: none; }
+  .cl-pad.active { display: block; }
+
+  .panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  .panel h3 { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; margin: 0 0 12px; }
+  .panel .body { color: var(--text); font-size: 13px; line-height: 1.55; }
+
+  .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 700; }
+  .b-on { background: rgba(34,197,94,.15); color: #4ade80; }
+  .b-off { background: rgba(148,163,184,.15); color: #94a3b8; }
+  .b-warn { background: rgba(234,179,8,.15); color: #fbbf24; }
+  .b-danger { background: rgba(239,68,68,.18); color: #f87171; }
+
+  .msg-list { display: flex; flex-direction: column; gap: 8px; max-height: 60vh; overflow-y: auto; }
+  .msg { padding: 10px 14px; border-radius: 10px; max-width: 78%; font-size: 12.5px; line-height: 1.5; word-wrap: break-word; }
+  .msg.outbound { background: rgba(37,211,102,.08); border: 1px solid rgba(37,211,102,.25); align-self: flex-end; color: var(--text); }
+  .msg.inbound { background: var(--bg); border: 1px solid var(--border); align-self: flex-start; color: var(--text); }
+  .msg .meta { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+  .msg .badge { margin-right: 4px; }
+
+  .tl-list { position: relative; padding-left: 24px; }
+  .tl-list::before { content: ''; position: absolute; left: 8px; top: 4px; bottom: 4px; width: 2px; background: var(--border); }
+  .tl-item { position: relative; padding-bottom: 14px; }
+  .tl-item::before { content: ''; position: absolute; left: -22px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: #25D366; border: 2px solid var(--bg-card); }
+  .tl-item.note::before { background: #fbbf24; }
+  .tl-item.zoho_stage_updated::before { background: #a371f7; }
+  .tl-item .e-type { font-size: 11px; font-weight: 700; color: var(--text); }
+  .tl-item .e-time { font-size: 10px; color: var(--text-muted); }
+  .tl-item .e-detail { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  textarea.notes { width: 100%; min-height: 80px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical; }
+  .stage-row { display: grid; grid-template-columns: 110px 1fr 110px; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .stage-row select, .stage-row input { padding: 7px 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; font-size: 12px; }
+
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--bg-card); border: 1px solid var(--border); padding: 12px 16px; border-radius: 8px; color: var(--text); font-size: 13px; z-index: 9999; max-width: 400px; }
+  .toast.success { border-color: #25D366; }
+  .toast.error { border-color: #ef4444; }
+</style>
+
+<div class="cl-shell">
+  <div id="cl-header"><div style="text-align:center;color:var(--text-muted);padding:40px">Carregando…</div></div>
+
+  <div class="cl-tabs" id="cl-tabs">
+    <div class="cl-tab active" data-pad="resumo">📋 Resumo</div>
+    <div class="cl-tab" data-pad="inbox">💬 Inbox WATI <span id="cl-inbox-c" class="badge b-on" style="margin-left:6px;display:none"></span></div>
+    <div class="cl-tab" data-pad="timeline">⏱ Timeline</div>
+    <div class="cl-tab" data-pad="notas">📝 Notas + Zoho</div>
+  </div>
+
+  <div id="pad-resumo" class="cl-pad active"><div id="resumo-body"></div></div>
+  <div id="pad-inbox" class="cl-pad"><div id="inbox-body"></div></div>
+  <div id="pad-timeline" class="cl-pad"><div id="timeline-body"></div></div>
+  <div id="pad-notas" class="cl-pad"><div id="notas-body"></div></div>
+</div>
+
+<script>
+const SALE_ID = <%= saleId %>;
+const State = { card: null };
+
+function toast(msg, kind='success') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+async function api(path, opts={}) {
+  const r = await fetch(path, {
+    method: opts.method || 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`${r.status} — ${t.substring(0,200)}`);
+  }
+  return r.json();
+}
+
+function fmtDate(s) {
+  if (!s) return '—';
+  const d = new Date(s);
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+}
+
+function fmtMoney(n) {
+  if (n == null) return '—';
+  return 'R$ ' + parseFloat(n).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+}
+
+async function load() {
+  try {
+    State.card = await api(`/operacional/api/sales/${SALE_ID}/card`);
+    renderHeader();
+    renderResumo();
+    renderInbox();
+    renderTimeline();
+    renderNotas();
+  } catch (e) {
+    document.getElementById('cl-header').innerHTML = `<div style="color:#f87171;padding:20px">${e.message}</div>`;
+  }
+}
+
+function renderHeader() {
+  const c = State.card;
+  const sale = c.sale;
+  const links = c.links || {};
+
+  document.getElementById('cl-header').innerHTML = `
+    <div class="cl-h">
+      <div class="row1">
+        <div>
+          <h1>${sale.customer_name || '(sem nome)'}</h1>
+          <div class="sub">
+            ${sale.product_line || '—'}
+            ${sale.pedido_sige ? ' · SIGE <code style="color:#fbbf24">'+sale.pedido_sige+'</code>' : ''}
+            ${sale.vendor_name ? ' · vendedor: '+sale.vendor_name : ''}
+          </div>
+        </div>
+        <div class="actions">
+          ${links.whatsapp ? `<a href="${links.whatsapp}" target="_blank" class="btn btn-pri">📱 WhatsApp</a>` : ''}
+          <button class="btn btn-pri" onclick="openManualWa()">📱 WhatsApp + log</button>
+          ${links.crm ? `<a href="${links.crm}" target="_blank" class="btn btn-purple">🪜 Abrir no CRM</a>` : ''}
+          <a href="/operacional" class="btn btn-ghost">← Painel</a>
+        </div>
+      </div>
+      <div class="cl-meta">
+        <div class="it"><div class="l">Status</div><div class="v">${sale.status}</div></div>
+        <div class="it"><div class="l">Queue</div><div class="v">${sale.queue}</div></div>
+        <div class="it"><div class="l">Delivery</div><div class="v">${sale.delivery_type || '—'}</div></div>
+        <div class="it"><div class="l">Valor</div><div class="v">${fmtMoney(sale.amount)}</div></div>
+        <div class="it"><div class="l">Telefone</div><div class="v">${sale.customer_phone || '—'}</div></div>
+        <div class="it"><div class="l">Cidade</div><div class="v">${sale.address?.city || '—'}/${sale.address?.state || ''}</div></div>
+        <div class="it"><div class="l">Vendido</div><div class="v">${fmtDate(sale.sold_at)}</div></div>
+        <div class="it"><div class="l">Prazo</div><div class="v">${fmtDate(sale.promised_until)}</div></div>
+      </div>
+
+      <!-- F-ROUTE-INTEL — Condomínio + Material pickup -->
+      <div style="background:#0D1117;border:1px solid #21262D;border-radius:8px;padding:12px 14px;margin-top:10px">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#93c5fd;margin-bottom:10px;font-weight:700">🏢 Restrições de acesso / Logística</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
+          <label style="display:flex;align-items:center;gap:8px;color:#cbd5e1;font-size:12px;cursor:pointer">
+            <input type="checkbox" id="ccd-is-condo" ${sale.is_condominio?'checked':''} onchange="ccdSaveCondominio()"> É condomínio? (afeta priorização da rota)
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;color:#cbd5e1;font-size:12px;cursor:pointer">
+            <input type="checkbox" id="ccd-pickup" ${sale.requires_material_pickup?'checked':''} onchange="ccdSaveCondominio()"> Precisa material no estoque (Cristiano)
+          </label>
+        </div>
+        <div style="display:grid;grid-template-columns:140px 1fr;gap:10px;align-items:center">
+          <label style="color:#888;font-size:11px">Horário limite</label>
+          <input type="time" id="ccd-deadline" value="${sale.condominio_deadline_time || ''}" onchange="ccdSaveCondominio()" style="background:#0D1117;border:1px solid #30363D;color:#fff;padding:5px 8px;border-radius:4px;font-size:12px;width:120px">
+          <label style="color:#888;font-size:11px">Regras / notas</label>
+          <input type="text" id="ccd-notes" value="${(sale.condominio_notes||'').replace(/"/g,'&quot;')}" placeholder="ex: porteiro pede CPF, sem furadeira depois das 14h" onblur="ccdSaveCondominio()" style="background:#0D1117;border:1px solid #30363D;color:#fff;padding:5px 8px;border-radius:4px;font-size:12px">
+        </div>
+        <div id="ccd-save-status" style="font-size:10px;color:#666;margin-top:6px">​</div>
+      </div>
+    </div>
+  `;
+}
+
+// F-CLIENT-ROUTE-LINK
+async function clientLoadFits() {
+  const c = State.card; if (!c) return;
+  const result = document.getElementById('client-fits-result');
+  result.innerHTML = '⏳ Buscando rotas compatíveis…';
+  try {
+    const r = await fetch(`/operacional/api/sales/${c.sale.id}/route-fits?max_km=15&days_ahead=7&min_score=30`, { credentials:'same-origin' });
+    const d = await r.json();
+    if (!d.fits?.length) {
+      result.innerHTML = `<div style="color:#888;padding:8px">Nenhuma rota compatível nos próximos 7 dias.<br><span style="font-size:10px">${d.total_found===0?'Aumente o raio ou crie rota nova.':''}</span></div>`;
+      return;
+    }
+    result.innerHTML = d.fits.map(f => {
+      const cls = f.score >= 70 ? '#22c55e' : (f.score >= 50 ? '#fbbf24' : '#fb923c');
+      return `
+        <div style="background:#0D1117;border:1px solid #21262D;border-left:3px solid ${cls};border-radius:6px;padding:8px 12px;margin-bottom:6px;display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center">
+          <div>
+            <div style="color:#fff;font-weight:700;font-size:12px">Rota #${f.route_id} · ${f.technician_name||'sem tech'} · ${new Date(f.route_date).toLocaleDateString('pt-BR')}</div>
+            <div style="color:#888;font-size:10px;margin-top:2px">${f.rationale}</div>
+          </div>
+          <span style="background:${cls};color:#000;font-weight:800;padding:3px 8px;border-radius:4px;font-size:11px">${f.score}</span>
+          <button onclick="clientAttachToRoute(${f.route_id})" style="background:#1f6feb;color:#fff;border:0;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700">+ Encaixar</button>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    result.innerHTML = `<div style="color:#f87171">${e.message}</div>`;
+  }
+}
+
+async function clientAttachToRoute(routeId) {
+  const c = State.card; if (!c) return;
+  if (!confirm(`Encaixar essa sale na rota #${routeId}?`)) return;
+  try {
+    const r = await fetch(`/operacional/api/routes/${routeId}/stops`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ sale_ids:[c.sale.id] }), credentials:'same-origin'
+    });
+    if (!r.ok) throw new Error((await r.json()).error || `HTTP ${r.status}`);
+    alert(`✅ Encaixado na rota #${routeId}. Sale agora em_rota.`);
+    location.reload();
+  } catch (e) { alert(e.message); }
+}
+
+async function clientCreateSoloRoute() {
+  const c = State.card; if (!c) return;
+  const dateDefault = new Date(Date.now()+86400000).toISOString().slice(0,10);
+  const date = prompt('Data da rota (YYYY-MM-DD):', dateDefault);
+  if (!date) return;
+  const techId = prompt('Technician ID (use /operacional/config → Técnicos pra ver IDs):');
+  if (!techId) return;
+  try {
+    const r = await fetch('/operacional/api/routes', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ route_date: date, technician_id: parseInt(techId), sale_ids:[c.sale.id], status:'pendente' }),
+      credentials:'same-origin',
+    });
+    if (!r.ok) throw new Error((await r.json()).error || `HTTP ${r.status}`);
+    const d = await r.json();
+    alert(`✅ Rota #${d.route_id} criada. Pode confirmar pelo editor.`);
+    location.reload();
+  } catch (e) { alert(e.message); }
+}
+
+async function ccdSaveCondominio() {
+  const c = State.card;
+  if (!c) return;
+  const status = document.getElementById('ccd-save-status');
+  status.textContent = '⏳ salvando…';
+  const body = {
+    is_condominio: document.getElementById('ccd-is-condo').checked,
+    condominio_deadline_time: document.getElementById('ccd-deadline').value || null,
+    condominio_notes: document.getElementById('ccd-notes').value || null,
+    requires_material_pickup: document.getElementById('ccd-pickup').checked,
+  };
+  try {
+    const r = await fetch(`/operacional/api/sales/${c.sale.id}/condominio`, {
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body), credentials:'same-origin'
+    });
+    if (!r.ok) throw new Error((await r.json()).error || `HTTP ${r.status}`);
+    // Atualiza State.card
+    Object.assign(State.card.sale, body);
+    status.textContent = '✅ salvo';
+    setTimeout(() => { status.textContent = '​'; }, 2000);
+  } catch (e) {
+    status.textContent = '❌ ' + e.message;
+  }
+}
+
+function renderResumo() {
+  const c = State.card;
+  const html = [];
+
+  // F-CLIENT-ROUTE-LINK — Painel "Rota" só aparece se está aguardando_rota
+  if (c.sale.status === 'aguardando_rota') {
+    html.push(`
+      <div class="panel" style="border-left:3px solid #fbbf24">
+        <h3>🛣 Vincular a uma rota</h3>
+        <div class="body">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+            <button class="btn btn-pri" onclick="clientLoadFits()">🤖 Buscar rotas compatíveis</button>
+            <button class="btn btn-warn" onclick="clientCreateSoloRoute()">🛣 Criar rota só com esse cliente</button>
+          </div>
+          <div id="client-fits-result" style="color:#888;font-size:12px"></div>
+        </div>
+      </div>
+    `);
+  } else if (c.sale.status === 'em_rota' || c.sale.status === 'agendado') {
+    html.push(`
+      <div class="panel" style="border-left:3px solid #22c55e">
+        <h3>🛣 Rota</h3>
+        <div class="body">
+          <span style="color:#22c55e;font-weight:700">${c.sale.status === 'agendado' ? '✅ Agendado' : '⏳ Em rota'}</span>
+          <div style="margin-top:8px;font-size:11px;color:#888">
+            ${c.visit?.auvo_task_id ? `🟠 Auvo task: <code>${c.visit.auvo_task_id}</code><br>` : ''}
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  // Endereço
+  if (c.sale.address) {
+    html.push(`
+      <div class="panel">
+        <h3>📍 Endereço</h3>
+        <div class="body">${c.sale.address.raw || '—'}<br>
+          <span style="color:#888">${c.sale.address.city || ''} / ${c.sale.address.state || ''} · CEP ${c.sale.address.cep || '—'}</span><br>
+          <span style="font-size:11px;color:#666">geocode: ${c.sale.address.geocode_status || '?'}${c.sale.address.lat ? ' · '+c.sale.address.lat+','+c.sale.address.lng : ''}</span>
+        </div>
+      </div>
+    `);
+  }
+
+  // Sugestão IA
+  if (c.suggestion) {
+    const score = c.suggestion.match_score || 0;
+    html.push(`
+      <div class="panel">
+        <h3>🤖 Sugestão IA <span class="badge ${score>=70?'b-on':score>=50?'b-warn':'b-danger'}">score ${score}</span></h3>
+        <div class="body">
+          ${c.suggestion.technician_name ? '<b>Técnico:</b> '+c.suggestion.technician_name+'<br>' : ''}
+          ${c.suggestion.distance_km != null ? '<b>Distância:</b> '+c.suggestion.distance_km+' km · ' : ''}
+          ${c.suggestion.added_time_min != null ? '<b>+tempo:</b> '+c.suggestion.added_time_min+' min<br><br>' : ''}
+          <div style="white-space:pre-wrap;color:#aaa;font-size:12px">${(c.suggestion.rationale || '').replace(/</g,'&lt;')}</div>
+        </div>
+      </div>
+    `);
+  }
+
+  // Visit
+  if (c.visit) {
+    html.push(`
+      <div class="panel">
+        <h3>🛠 Visita Técnica · ${c.visit.status}</h3>
+        <div class="body">
+          <b>Tipo:</b> ${c.visit.visit_type}<br>
+          ${c.visit.technician_name ? '<b>Técnico:</b> '+c.visit.technician_name+'<br>' : ''}
+          ${c.visit.scheduled_for ? '<b>Agendada:</b> '+fmtDate(c.visit.scheduled_for)+'<br>' : ''}
+          ${c.visit.auvo_task_id ? '<b>AUVO Task ID:</b> <code>'+c.visit.auvo_task_id+'</code><br>' : ''}
+          ${c.visit.blocked_reason ? '<span class="badge b-warn">⚠ '+c.visit.blocked_reason+'</span>' : ''}
+        </div>
+      </div>
+    `);
+  }
+
+  // Shipment
+  if (c.shipment) {
+    html.push(`
+      <div class="panel">
+        <h3>📦 Envio · ${c.shipment.stage}</h3>
+        <div class="body">
+          ${c.shipment.tracking_code ? '<b>Tracking:</b> <code>'+c.shipment.tracking_code+'</code><br>' : ''}
+          ${c.shipment.expected_delivery ? '<b>Previsão:</b> '+c.shipment.expected_delivery+'<br>' : ''}
+          ${c.shipment.delivered_at ? '<b>Entregue:</b> '+fmtDate(c.shipment.delivered_at)+'<br>' : ''}
+          ${c.shipment.history?.length ? '<br><b>Histórico:</b><br>' + c.shipment.history.map(h => `<span style="color:#888;font-size:11px">• ${fmtDate(h.at)} · ${h.from || '(início)'} → ${h.to}${h.by ? ' ('+h.by+')' : ''}</span>`).join('<br>') : ''}
+        </div>
+      </div>
+    `);
+  }
+
+  // Pós-venda
+  if (c.post_sale) {
+    html.push(`
+      <div class="panel">
+        <h3>📞 Pós-venda · ${c.post_sale.status || c.post_sale.current_stage || '—'}</h3>
+        <div class="body">
+          ${c.post_sale.owner ? '<b>Owner:</b> '+c.post_sale.owner+'<br>' : ''}
+          ${c.post_sale.next_action ? '<b>Próxima ação:</b> '+c.post_sale.next_action+'<br>' : ''}
+          ${c.post_sale.next_action_at ? '<b>Quando:</b> '+fmtDate(c.post_sale.next_action_at)+'<br>' : ''}
+          ${c.post_sale.satisfaction_score ? '<b>Satisfação:</b> '+'⭐'.repeat(c.post_sale.satisfaction_score)+'<br>' : ''}
+          ${c.post_sale.upsell_opportunity ? '<span class="badge b-warn">💰 upsell: '+c.post_sale.upsell_opportunity+'</span><br>' : ''}
+          ${c.post_sale.pendencies ? '<br><b>Pendências:</b><br><span style="color:#fbbf24">'+c.post_sale.pendencies+'</span>' : ''}
+        </div>
+      </div>
+    `);
+  }
+
+  // Observações originais da venda
+  if (c.sale.observations) {
+    html.push(`
+      <div class="panel">
+        <h3>💬 Combinado com cliente (Zoho Description original)</h3>
+        <div class="body" style="white-space:pre-wrap;color:#ddd">${c.sale.observations}</div>
+      </div>
+    `);
+  }
+
+  document.getElementById('resumo-body').innerHTML = html.join('') || '<div class="panel"><div class="body">Nenhuma informação adicional</div></div>';
+}
+
+function renderInbox() {
+  const msgs = State.card.wati_messages || [];
+  document.getElementById('cl-inbox-c').textContent = msgs.length;
+  document.getElementById('cl-inbox-c').style.display = msgs.length ? 'inline-block' : 'none';
+  if (!msgs.length) {
+    document.getElementById('inbox-body').innerHTML = '<div class="panel"><div class="body" style="text-align:center;color:#666">Nenhuma mensagem WATI ainda</div></div>';
+    return;
+  }
+  document.getElementById('inbox-body').innerHTML = `
+    <div class="panel">
+      <h3>💬 Histórico WATI · ${msgs.length} mensagens</h3>
+      <div class="msg-list">
+        ${msgs.map(m => `
+          <div class="msg ${m.direction === 'inbound' ? 'inbound' : 'outbound'}">
+            ${m.template_name ? '<span class="badge b-on">'+m.template_name+'</span>' : ''}
+            ${m.mode === 'manual_link' ? '<span class="badge b-warn">📱 manual</span>' : ''}
+            ${m.delivery_status === 'failed' ? '<span class="badge b-danger">falhou</span>' : ''}
+            <div>${(m.body || m.inbound_text || '').replace(/</g,'&lt;').replace(/\\n/g,'<br>')}</div>
+            <div class="meta">${m.direction || '—'} · ${m.trigger_event} · ${fmtDate(m.sent_at)} ${m.opened_by ? '· por '+m.opened_by : ''}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderTimeline() {
+  const tl = State.card.timeline || [];
+  if (!tl.length) {
+    document.getElementById('timeline-body').innerHTML = '<div class="panel"><div class="body" style="text-align:center;color:#666">Sem eventos</div></div>';
+    return;
+  }
+  document.getElementById('timeline-body').innerHTML = `
+    <div class="panel">
+      <h3>⏱ Linha do tempo · ${tl.length} eventos</h3>
+      <div class="tl-list">
+        ${tl.map(e => `
+          <div class="tl-item ${e.event_type}">
+            <div class="e-type">${e.event_type} <span class="e-time">${fmtDate(e.at)} · ${e.actor || e.event_source || '—'}</span></div>
+            <div class="e-detail">${formatPayload(e)}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function formatPayload(e) {
+  if (!e.payload) return '';
+  if (e.event_type === 'note') return e.payload.text || '';
+  if (e.event_type === 'zoho_stage_updated') {
+    return `${e.payload.module} → ${e.payload.new_stage}${e.payload.notes ? ' — '+e.payload.notes : ''}`;
+  }
+  return `<code style="font-size:10px;color:#888">${JSON.stringify(e.payload)}</code>`;
+}
+
+function renderNotas() {
+  document.getElementById('notas-body').innerHTML = `
+    <div class="panel">
+      <h3>📝 Adicionar nota</h3>
+      <div class="body">
+        <p style="color:#888;font-size:11px;margin-top:0">Nota fica no Portal (timeline) E sincroniza com Description do Deal no Zoho automaticamente.</p>
+        <textarea id="note-text" class="notes" placeholder="Ex: Cliente confirmou instalação pra terça às 14h. Pediu pra avisar 30 min antes."></textarea>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+          <label style="font-size:12px;color:#aaa"><input type="checkbox" id="note-sync-zoho" checked> sincronizar com Zoho Deal</label>
+          <button class="btn btn-pri" onclick="addNote()">➕ Adicionar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>🔄 Atualizar etapa no Zoho</h3>
+      <div class="body">
+        <p style="color:#888;font-size:11px;margin-top:0">Atualiza Stage do Deal, Etapa do Envio ou Estagio do Pós-venda diretamente no Zoho. Cria evento na timeline.</p>
+        <div class="stage-row">
+          <select id="stage-target">
+            <option value="deal">Deal</option>
+            <option value="shipment">Envio</option>
+            <option value="postsale">Pós-venda</option>
+          </select>
+          <input id="stage-new" placeholder="Novo stage (ex: 'Fechado Ganho', 'Em separação', 'Instalado')">
+          <button class="btn btn-warn" onclick="syncStage()">🔄 Aplicar</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function addNote() {
+  const text = document.getElementById('note-text').value.trim();
+  if (!text) { toast('Digite a nota', 'error'); return; }
+  const sync = document.getElementById('note-sync-zoho').checked;
+  try {
+    const r = await api(`/operacional/api/sales/${SALE_ID}/notes`, { method: 'POST', body: { text, sync_to_zoho: sync } });
+    if (r.zoho_synced) toast('Nota salva + sincronizada com Zoho ✓', 'success');
+    else if (r.zoho_error) toast('Salva local · Zoho falhou: '+r.zoho_error, 'error');
+    else toast('Nota salva ✓', 'success');
+    document.getElementById('note-text').value = '';
+    await load();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function syncStage() {
+  const target = document.getElementById('stage-target').value;
+  const new_stage = document.getElementById('stage-new').value.trim();
+  if (!new_stage) { toast('Digite o stage novo', 'error'); return; }
+  if (!confirm(`Atualizar ${target} pra "${new_stage}" no Zoho?`)) return;
+  try {
+    const r = await api(`/operacional/api/sales/${SALE_ID}/zoho/stage`, { method: 'POST', body: { target, new_stage } });
+    toast(`${r.module} atualizado pra "${r.new_stage}" ✓`, 'success');
+    document.getElementById('stage-new').value = '';
+    await load();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function openManualWa() {
+  const sale = State.card.sale;
+  const msg = prompt('Mensagem pré-preenchida (opcional):',
+    `Olá ${(sale.customer_name||'').split(' ')[0]}, aqui é da Tudo de Filtro sobre seu pedido ${sale.product_line || ''}.`);
+  if (msg === null) return;
+  try {
+    const r = await api('/operacional/api/whatsapp/manual-link', {
+      method: 'POST',
+      body: { sale_id: SALE_ID, body: msg, mode: 'manual' }
+    });
+    window.open(r.link, '_blank');
+    toast('WhatsApp aberto + log registrado', 'success');
+    await load();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+document.getElementById('cl-tabs').addEventListener('click', (e) => {
+  if (!e.target.dataset.pad) return;
+  const pad = e.target.dataset.pad;
+  document.querySelectorAll('.cl-tab').forEach(t => t.classList.toggle('active', t.dataset.pad === pad));
+  document.querySelectorAll('.cl-pad').forEach(p => p.classList.toggle('active', p.id === `pad-${pad}`));
+});
+
+load();
+</script>

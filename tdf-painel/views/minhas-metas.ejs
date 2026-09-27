@@ -1,0 +1,217 @@
+<% const activePage = 'cockpit'; const pageTitle = 'Minhas Metas — Painel do Closer'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.mm-wrap{max-width:1400px;margin:0 auto;padding:24px;color:var(--text)}
+.mm-hero{background:linear-gradient(135deg,#1f0d2a,var(--bg));border:2px solid #10b981;border-radius:14px;padding:18px;margin-bottom:18px}
+.mm-hero h1{margin:0;font-size:20px;background:linear-gradient(135deg,#fff,#10b981);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mm-overall{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px}
+.mm-stat{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.mm-stat .v{color:var(--text);font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.mm-stat .k{color:#9ca3af;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+.mm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px}
+.mm-meta-card{background:#161725;border:1px solid var(--border);border-radius:12px;padding:16px;border-left:4px solid var(--c, #10b981)}
+.mm-meta-card.atras{border-left-color:#ef4444}
+.mm-meta-card.no-pace{border-left-color:#10b981}
+.mm-meta-card.alerta{border-left-color:#fbbf24}
+.mm-meta-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.mm-meta-head .ttl{flex:1;font-weight:800;font-size:14px;color:var(--text)}
+.mm-meta-bar{height:10px;background:var(--bg-card);border-radius:5px;overflow:hidden;margin:8px 0}
+.mm-meta-fill{height:100%;transition:width .4s}
+.mm-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;font-size:11px}
+.mm-mini-grid .lbl{color:#9ca3af;font-size:9px;text-transform:uppercase;font-weight:700}
+.mm-mini-grid .val{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
+.mm-section{background:#161725;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.mm-section h3{margin:0 0 10px;font-size:14px;color:var(--text)}
+.mm-deal{background:rgba(255,255,255,.02);border:1px solid #1a1a1a;border-radius:6px;padding:8px;margin-bottom:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mm-deal:hover{border-color:#a371f7}
+.mm-deal .nome{flex:1;color:var(--text);font-weight:700;font-size:12px}
+.mm-deal .meta{color:#9ca3af;font-size:11px;display:flex;gap:10px}
+.mm-deal .acts{display:flex;gap:4px}
+.mm-deal .acts a, .mm-deal .acts button{background:#1f1f2e;color:#ddd;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;text-decoration:none}
+</style>
+
+<div class="mm-wrap">
+  <div id="mm-content"><div style="text-align:center;color:var(--text-muted);padding:40px">⏳ Carregando minhas metas...</div></div>
+</div>
+
+<script>
+async function mmCarregar(){
+  try {
+    // 1. Busca metas
+    const r = await fetch('/cockpit/minhas-metas');
+    const d = await r.json();
+    if (d.error) {
+      document.getElementById('mm-content').innerHTML = `<div style="background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:10px;padding:20px;color:#fca5a5">❌ ${d.error}</div>`;
+      return;
+    }
+    // 2. Busca dados extras em paralelo
+    const [scoreSemR, raioxR, proxR] = await Promise.all([
+      fetch('/cockpit/score-semana?dias=7').then(r => r.json()).catch(() => ({})),
+      fetch('/cockpit/raiox-dia').then(r => r.json()).catch(() => ({})),
+      fetch('/cockpit/proxima-acao').then(r => r.json()).catch(() => ({})),
+    ]);
+    mmRender(d, scoreSemR, raioxR, proxR);
+  } catch(e) {
+    document.getElementById('mm-content').innerHTML = `<div style="color:#ef4444;padding:20px">${e.message}</div>`;
+  }
+}
+
+function mmFmtR(v){ if (v==null) return '—'; return 'R$ '+Math.round(v).toLocaleString('pt-BR'); }
+function mmFmtN(v){ if (v==null) return '—'; return Number(v).toLocaleString('pt-BR'); }
+
+function mmRender(d, scoreSem, raiox, proxima){
+  const T = d.total;
+  const pctMes = d.pct_mes;
+  let html = `
+    <div class="mm-hero">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:24px">🎯</span>
+        <h1>Minhas Metas — ${d.closer}</h1>
+        <span style="margin-left:auto;color:#9ca3af;font-size:11px">${d.mes} · dia ${d.dias_decorridos}/${d.ultimo_dia_mes} (${pctMes}% do mês)</span>
+      </div>
+      <div class="mm-overall">
+        <div class="mm-stat"><div class="v" style="color:#10b981">${mmFmtR(T.real_rs)}</div><div class="k">Realizado</div></div>
+        <div class="mm-stat"><div class="v" style="color:#fbbf24">${mmFmtR(T.meta_rs)}</div><div class="k">Meta total</div></div>
+        <div class="mm-stat"><div class="v" style="color:${T.pct>=pctMes?'#10b981':T.pct>=pctMes-15?'#fbbf24':'#ef4444'}">${T.pct||0}%</div><div class="k">Atingimento</div></div>
+        <div class="mm-stat"><div class="v" style="color:#a371f7">${mmFmtR(T.proj_rs)}</div><div class="k">Projeção fim do mês</div></div>
+        <div class="mm-stat"><div class="v" style="color:#fff">${d.dias_restantes}</div><div class="k">Dias restantes</div></div>
+      </div>
+    </div>
+  `;
+
+  // Próxima ação destaque
+  if (proxima && proxima.titulo) {
+    const cor = proxima.prioridade === 'CRITICA' ? '#ef4444' : proxima.prioridade === 'ALTA' ? '#fbbf24' : '#22c55e';
+    html += `
+      <div class="mm-section" style="border-left:4px solid ${cor}">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:22px">⚡</span>
+          <div style="flex:1">
+            <div style="color:${cor};font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px">${proxima.prioridade||'PRÓXIMA AÇÃO'}</div>
+            <div style="color:#fff;font-weight:800;font-size:14px;margin-top:2px">${proxima.titulo}</div>
+            <div style="color:#aaa;font-size:11px;margin-top:2px">${proxima.descricao||''}</div>
+          </div>
+          ${proxima.link ? `<a href="${proxima.link}" style="background:${cor};color:#000;text-decoration:none;border-radius:6px;padding:8px 14px;font-weight:800;font-size:12px">${proxima.action_label||'Ir →'}</a>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // Cards de cada meta
+  if (!d.metas.length) {
+    html += `
+      <div class="mm-section">
+        <h3 style="color:#fbbf24">⚠️ Você ainda não tem metas cadastradas</h3>
+        <p style="color:#aaa;font-size:12px">Peça ao admin pra cadastrar suas metas em <a href="/admin/metas-closer-produto-page" style="color:#10b981">Metas Individuais</a>.
+        Ex: Bebedouro R$ 30k, Refil R$ 8k, Filtro de Entrada R$ 25k.</p>
+      </div>
+    `;
+  } else {
+    html += '<h3 style="color:#9ca3af;font-size:12px;text-transform:uppercase;font-weight:800;letter-spacing:.4px;margin:18px 0 10px">📋 Minhas metas (' + d.metas.length + ')</h3>';
+    html += '<div class="mm-grid">';
+    d.metas.forEach(m => {
+      const pctRs = m.pct_rs || 0;
+      const cls = pctRs >= pctMes ? 'no-pace' : pctRs >= pctMes - 15 ? 'alerta' : 'atras';
+      const corBar = pctRs >= 100 ? '#10b981' : pctRs >= pctMes ? '#22c55e' : pctRs >= pctMes - 15 ? '#fbbf24' : '#ef4444';
+      const widthBar = Math.min(100, pctRs);
+      html += `
+        <div class="mm-meta-card ${cls}" style="--c:${corBar}">
+          <div class="mm-meta-head">
+            <span class="ttl">${m.label}</span>
+            <span style="color:${corBar};font-weight:800;font-size:18px">${pctRs}%</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#aaa;margin-bottom:4px">
+            <span><strong style="color:#fff">${mmFmtR(m.real_rs)}</strong> de ${mmFmtR(m.meta_rs)}</span>
+            <span>${m.real_qtd}/${m.meta_qtd} vendas</span>
+          </div>
+          <div class="mm-meta-bar"><div class="mm-meta-fill" style="background:${corBar};width:${widthBar}%"></div></div>
+          <div class="mm-mini-grid">
+            <div><div class="lbl">Falta</div><div class="val" style="color:${corBar}">${mmFmtR(m.falta_rs)}</div></div>
+            <div><div class="lbl">Pace por dia</div><div class="val">${mmFmtR(m.pace_rs_dia)}</div></div>
+            <div><div class="lbl">Projeção mês</div><div class="val" style="color:${m.proj_rs>=m.meta_rs?'#10b981':'#fbbf24'}">${mmFmtR(m.proj_rs)}</div></div>
+            <div><div class="lbl">Status</div><div class="val" style="color:${corBar}">${pctRs>=100?'✅ Bateu':m.no_pace?'🟢 No pace':'🔴 Atrás'}</div></div>
+          </div>
+          ${m.deals_top.length ? `
+            <details style="margin-top:10px"><summary style="cursor:pointer;color:#9ca3af;font-size:11px;font-weight:700">▸ ${m.deals_top.length} top vendas do mês</summary>
+              ${m.deals_top.map(d => `<div style="font-size:10px;color:#aaa;padding:3px 0;border-bottom:1px solid #1a1a1a"><strong style="color:#fff">${d.nome}</strong> · ${mmFmtR(d.valor)} · ${d.data}</div>`).join('')}
+            </details>
+          ` : ''}
+        </div>
+      `;
+    });
+    html += '</div>';
+  }
+
+  // Score da semana
+  if (scoreSem && scoreSem.semana) {
+    const corMed = scoreSem.resumo.media >= 70 ? '#10b981' : scoreSem.resumo.media >= 55 ? '#fbbf24' : '#ef4444';
+    html += `
+      <div class="mm-section">
+        <h3>📊 Score da Semana — Rubrica Rigorosa</h3>
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+          <div><span style="color:#9ca3af;font-size:10px">Média 7d</span><br><strong style="color:${corMed};font-size:22px">${scoreSem.resumo.media}/100</strong></div>
+          <div><span style="color:#9ca3af;font-size:10px">Tendência</span><br><strong style="color:${scoreSem.resumo.tendencia==='subindo'?'#10b981':scoreSem.resumo.tendencia==='caindo'?'#ef4444':'#9ca3af'}">${scoreSem.resumo.tendencia==='subindo'?'↗ Subindo':scoreSem.resumo.tendencia==='caindo'?'↘ Caindo':'→ Estável'}</strong></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+          ${scoreSem.semana.map(d => {
+            const pct = (d.total / 100) * 100;
+            const c = d.cor || '#666';
+            return `<div title="${d.dow} ${d.data} · ${d.classificacao}" style="background:${c}22;border:1px solid ${c};border-radius:5px;padding:6px;text-align:center"><div style="font-size:9px;color:#888">${d.dow}</div><div style="color:${c};font-weight:800;font-size:14px">${d.total}</div></div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // Leads parados (do raiox)
+  if (raiox && raiox.parados?.length) {
+    html += `
+      <div class="mm-section" style="border-left:4px solid #ef4444">
+        <h3 style="color:#ef4444">⏰ Leads parados (>48h sem contato)</h3>
+        <div style="margin-top:6px">
+          ${raiox.parados.slice(0, 8).map(d => {
+            const tier = d.tier || '';
+            return `
+              <div class="mm-deal">
+                ${tier ? `<span style="background:rgba(251,191,36,.15);color:#fbbf24;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:700">${tier}</span>` : ''}
+                <span class="nome">${d.nome||'?'}</span>
+                <span class="meta">${d.diasParado||'?'}d parado · ${mmFmtR(d.amount||0)}</span>
+                <span class="acts">
+                  <a href="/manutencao#${d.id}" target="_blank">📂 Drawer</a>
+                  ${d.crmLink ? `<a href="${d.crmLink}" target="_blank">🌐 Zoho</a>` : ''}
+                </span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+  if (raiox && raiox.novos?.length) {
+    html += `
+      <div class="mm-section" style="border-left:4px solid #5ba3f5">
+        <h3 style="color:#5ba3f5">🆕 Leads novos pra contatar (${raiox.novos.length})</h3>
+        <div style="margin-top:6px">
+          ${raiox.novos.slice(0, 5).map(d => `
+            <div class="mm-deal">
+              ${d.tier ? `<span style="background:rgba(251,191,36,.15);color:#fbbf24;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:700">${d.tier}</span>` : ''}
+              <span class="nome">${d.nome||'?'}</span>
+              <span class="meta">criado ${d.criadoHa||''} · ${mmFmtR(d.amount||0)}</span>
+              <span class="acts">
+                <a href="/manutencao#${d.id}" target="_blank">📂 Atender</a>
+              </span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  document.getElementById('mm-content').innerHTML = html;
+}
+
+mmCarregar();
+// Auto-refresh a cada 5min
+setInterval(mmCarregar, 5*60*1000);
+</script>

@@ -1,0 +1,15 @@
+{
+  "apr_paulo": {
+    "id": "apr_paulo",
+    "nome": "Paulo Camargo Junior",
+    "whatsapp": "5512991513007",
+    "email": "theroomsjc@gmail.com",
+    "nivel": "titular",
+    "limiteValor": 0,
+    "empresasAutorizadas": [],
+    "ativo": true,
+    "userLogin": "paulo",
+    "createdAt": "2026-05-08T00:26:11.199Z",
+    "updatedAt": null
+  }
+}

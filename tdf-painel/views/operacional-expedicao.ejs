@@ -1,0 +1,290 @@
+<% const activePage = 'operacional'; const pageTitle = 'Operacional · Expedição'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+  .exp-shell { max-width: 1500px; margin: 0 auto; padding: 0 14px; }
+  .exp-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .exp-head h1 { margin: 0; font-size: 22px; color: var(--text); }
+  .exp-head .sub { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+  .exp-head .clock { font-size: 16px; font-weight: 800; color: #22d3ee; font-variant-numeric: tabular-nums; }
+
+  .exp-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  @media (max-width: 1100px) { .exp-cols { grid-template-columns: 1fr; } }
+
+  .exp-col { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; min-height: 200px; }
+  .exp-col h2 { margin: 0 0 10px; font-size: 13px; color: var(--text); display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+  .exp-col h2 .badge { background: var(--border); color: var(--text); padding: 2px 9px; border-radius: 8px; font-size: 11px; font-weight: 800; }
+  .exp-col.envios { border-top: 3px solid #1f6feb; }
+  .exp-col.entregas { border-top: 3px solid #22c55e; }
+  .exp-col.refis { border-top: 3px solid #fb923c; }
+
+  .exp-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .exp-item.idade-critico { border-left: 3px solid #ef4444; }
+  .exp-item.idade-alto { border-left: 3px solid #fb923c; }
+  .exp-item.idade-atencao { border-left: 3px solid #fbbf24; }
+  .exp-item.idade-ok { border-left: 3px solid #22c55e; }
+  .exp-item .top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; margin-bottom: 6px; }
+  .exp-item .name { color: var(--text); font-size: 13px; font-weight: 700; line-height: 1.3; }
+  .exp-item .meta { color: var(--text-muted); font-size: 11px; margin-top: 3px; line-height: 1.4; }
+  .exp-item .meta b { color: var(--text); }
+  .exp-item .age-pill { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; white-space: nowrap; }
+  .exp-item .age-pill.critico { background: #ef4444; color:#fff; }
+  .exp-item .age-pill.alto { background: #fb923c; color:#fff; }
+  .exp-item .age-pill.atencao { background: #fbbf24; color: #000; }
+  .exp-item .age-pill.ok { background: #22c55e; color: #000; }
+  .exp-item .age-pill.neutro { background: #475569; color:#fff; }
+  .exp-item .actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .exp-item button { background: transparent; border: 1px solid; padding: 5px 10px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; transition: transform .12s; }
+  .exp-item button.primary { color: #22c55e; border-color: #22c55e; }
+  .exp-item button.primary:hover { transform: scale(1.04); background: #22c55e; color: #000; }
+  .exp-item button.secondary { color: var(--text-muted); border-color: #444; }
+
+  .exp-empty { color: var(--text-muted); text-align: center; padding: 24px; font-size: 12px; }
+
+  .exp-filters { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
+  .exp-filters input, .exp-filters select { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 5px; font-size: 12px; outline: none; }
+  .exp-filters .stat { color: var(--text-muted); font-size: 11px; }
+  .exp-filters .stat b { color: var(--text); }
+
+  .tv-mode .exp-head { display: none; }
+  .tv-mode .exp-filters { display: none; }
+  body.tv-mode { background: #000; }
+  body.tv-mode .exp-shell { max-width: 100%; padding: 8px; }
+
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--bg-card); border: 1px solid #22c55e; color: #22c55e; padding: 10px 14px; border-radius: 6px; font-size: 12px; z-index: 9999; opacity: 0; transition: opacity .2s; }
+  .toast.show { opacity: 1; }
+  .toast.error { border-color: #ef4444; color: #ef4444; }
+</style>
+
+<div class="exp-shell">
+  <div class="exp-head">
+    <div>
+      <h1>📦 Painel de Expedição</h1>
+      <div class="sub" id="exp-sub">Carregando…</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="clock" id="exp-clock">--:--:--</span>
+      <button onclick="expRefresh()" style="background:transparent;border:1px solid #58a6ff;color:#58a6ff;padding:6px 12px;border-radius:5px;font-size:11px;cursor:pointer">↻ atualizar</button>
+      <button onclick="expToggleTV()" style="background:transparent;border:1px solid #a371f7;color:#a371f7;padding:6px 12px;border-radius:5px;font-size:11px;cursor:pointer">📺 modo TV</button>
+    </div>
+  </div>
+
+  <div class="exp-filters">
+    <input type="text" id="exp-search" placeholder="🔍 buscar cliente, cidade, produto…" oninput="expRender()" style="min-width:280px">
+    <select id="exp-filter-age" onchange="expRender()">
+      <option value="">Toda idade</option>
+      <option value="critico">≥14 dias (crítico)</option>
+      <option value="alto">≥7 dias (alto)</option>
+      <option value="atencao">≥3 dias (atenção)</option>
+    </select>
+    <span class="stat">Envios: <b id="cnt-envios">0</b></span>
+    <span class="stat">·</span>
+    <span class="stat">Entregas: <b id="cnt-entregas">0</b></span>
+    <span class="stat">·</span>
+    <span class="stat">Refis vencidos: <b id="cnt-refis">0</b></span>
+    <span class="stat" style="margin-left:auto">refresh 60s</span>
+  </div>
+
+  <div class="exp-cols">
+    <div class="exp-col envios">
+      <h2>🚚 Envios Transportadora <span class="badge" id="badge-envios">0</span></h2>
+      <div id="col-envios" class="exp-empty">Carregando…</div>
+    </div>
+    <div class="exp-col entregas">
+      <h2>🚐 Entregas TDF (caminhão próprio) <span class="badge" id="badge-entregas">0</span></h2>
+      <div id="col-entregas" class="exp-empty">Carregando…</div>
+    </div>
+    <div class="exp-col refis">
+      <h2>💧 Refis Vencidos (informativo) <span class="badge" id="badge-refis">0</span></h2>
+      <div id="col-refis" class="exp-empty">Carregando…</div>
+    </div>
+  </div>
+</div>
+
+<div id="exp-toast" class="toast"></div>
+
+<script>
+let EXP_DATA = null;
+
+async function _api(path, opts={}) {
+  const r = await fetch(path, {
+    method: opts.method || 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+    credentials: 'same-origin',
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`${r.status} ${t.substring(0,200)}`);
+  }
+  return r.json();
+}
+
+function _esc(s){ return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function _toast(msg, kind='success') {
+  const t = document.getElementById('exp-toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (kind === 'error' ? ' error' : '');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function _fmtDate(iso) {
+  if (!iso) return '?';
+  try { return new Date(iso).toLocaleDateString('pt-BR'); } catch { return iso; }
+}
+
+function _agePill(days, color) {
+  if (days == null) return `<span class="age-pill neutro">sem data</span>`;
+  return `<span class="age-pill ${color}">${days}d</span>`;
+}
+
+function _renderEnvio(item) {
+  const s = item.sale || {};
+  const cliente = s.customer_name || `Sale #${s.id||'?'}`;
+  const cidade = s.city || '?';
+  const produto = s.product_line || 'produto ?';
+  const vendido = _fmtDate(s.sold_at);
+  const idadeVenda = _agePill(item.days_since_sale, item.days_since_sale_color);
+  const idadeStage = _agePill(item.stage_age_days, item.stage_age_color);
+  return `<div class="exp-item idade-${item.days_since_sale_color || 'neutro'}" data-text="${_esc((cliente+' '+cidade+' '+produto).toLowerCase())}" data-age="${item.days_since_sale_color}">
+    <div class="top">
+      <div>
+        <div class="name">${_esc(cliente)}</div>
+        <div class="meta">📦 ${_esc(produto)} · 📍 ${_esc(cidade)}<br>vendido ${vendido} ${idadeVenda} · stage ${_esc(item.stage)} ${idadeStage}${item.tracking_code?` · rastreio ${_esc(item.tracking_code)}`:''}</div>
+      </div>
+    </div>
+    ${item.next_stage ? `<div class="actions">
+      <button class="primary" onclick="expShipTransition(${item.id}, '${item.next_stage}', '${_esc(item.next_action_label||'avançar')}')">✓ ${_esc(item.next_action_label||'avançar')}</button>
+    </div>` : ''}
+  </div>`;
+}
+
+function _renderEntrega(item) {
+  const s = item.sale || {};
+  const cliente = s.customer_name || `Sale #${s.id||'?'}`;
+  const cidade = s.city || '?';
+  const produto = item.product_description || s.product_line || 'produto ?';
+  const vendido = _fmtDate(s.sold_at);
+  const ideal = _fmtDate(item.ideal_delivery_date);
+  const idadeVenda = _agePill(item.days_since_sale, item.days_since_sale_color);
+  return `<div class="exp-item idade-${item.days_since_sale_color || 'neutro'}" data-text="${_esc((cliente+' '+cidade+' '+produto).toLowerCase())}" data-age="${item.days_since_sale_color}">
+    <div class="top">
+      <div>
+        <div class="name">${_esc(cliente)}</div>
+        <div class="meta">📦 ${_esc(produto)} · 📍 ${_esc(cidade)}<br>vendido ${vendido} ${idadeVenda} · stage ${_esc(item.stage)} · ideal ${ideal}${item.delivery_type?` · ${_esc(item.delivery_type)}`:''}</div>
+      </div>
+    </div>
+    ${item.next_stage ? `<div class="actions">
+      <button class="primary" onclick="expDelivTransition(${item.id}, '${item.next_stage}', '${_esc(item.next_action_label||'avançar')}')">✓ ${_esc(item.next_action_label||'avançar')}</button>
+    </div>` : ''}
+  </div>`;
+}
+
+function _renderRefil(item) {
+  const s = item.sale || {};
+  const cliente = s.customer_name || `Sale #${s.id||'?'}`;
+  const cidade = s.city || '?';
+  const ult = _fmtDate(item.last_done_at);
+  return `<div class="exp-item idade-${item.stage_age_color || 'neutro'}" data-text="${_esc((cliente+' '+cidade+' '+item.product_category).toLowerCase())}" data-age="${item.stage_age_color}">
+    <div class="top">
+      <div>
+        <div class="name">${_esc(cliente)}</div>
+        <div class="meta">💧 ${_esc(item.product_category)} · 📍 ${_esc(cidade)}<br>último refil ${ult} · ciclo ${item.cycle_days}d · <b style="color:#ef4444">vencido há ${item.days_overdue}d</b></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function expRender() {
+  if (!EXP_DATA) return;
+  const search = (document.getElementById('exp-search').value || '').toLowerCase().trim();
+  const ageFilter = document.getElementById('exp-filter-age').value;
+  const passes = (item) => {
+    if (search) {
+      const txt = (
+        (item.sale?.customer_name||'') + ' ' +
+        (item.sale?.city||'') + ' ' +
+        (item.sale?.product_line||'') + ' ' +
+        (item.product_description||'') + ' ' +
+        (item.product_category||'')
+      ).toLowerCase();
+      if (!txt.includes(search)) return false;
+    }
+    if (ageFilter) {
+      const c = item.days_since_sale_color || item.stage_age_color;
+      const order = { critico: 3, alto: 2, atencao: 1, ok: 0 };
+      const want = order[ageFilter] || 0;
+      const cur = order[c] || 0;
+      if (cur < want) return false;
+    }
+    return true;
+  };
+  const envios = (EXP_DATA.envios_transportadora || []).filter(passes);
+  const entregas = (EXP_DATA.entregas_tdf || []).filter(passes);
+  const refis = (EXP_DATA.refis_pendentes || []).filter(passes);
+
+  document.getElementById('col-envios').innerHTML = envios.length
+    ? envios.map(_renderEnvio).join('')
+    : '<div class="exp-empty">✅ Sem envios pendentes</div>';
+  document.getElementById('col-entregas').innerHTML = entregas.length
+    ? entregas.map(_renderEntrega).join('')
+    : '<div class="exp-empty">✅ Sem entregas pendentes</div>';
+  document.getElementById('col-refis').innerHTML = refis.length
+    ? refis.map(_renderRefil).join('')
+    : '<div class="exp-empty">✅ Sem refis vencidos</div>';
+
+  document.getElementById('badge-envios').textContent = envios.length;
+  document.getElementById('badge-entregas').textContent = entregas.length;
+  document.getElementById('badge-refis').textContent = refis.length;
+  document.getElementById('cnt-envios').textContent = (EXP_DATA.summary?.envios_transportadora || 0);
+  document.getElementById('cnt-entregas').textContent = (EXP_DATA.summary?.entregas_tdf || 0);
+  document.getElementById('cnt-refis').textContent = (EXP_DATA.summary?.refis_vencidos || 0);
+
+  const total = (EXP_DATA.summary?.total_acoes_pendentes || 0);
+  document.getElementById('exp-sub').textContent = `${total} ações pendentes · gerado ${new Date(EXP_DATA.generated_at).toLocaleTimeString('pt-BR')}`;
+}
+
+async function expRefresh() {
+  try {
+    EXP_DATA = await _api('/operacional/api/expedicao');
+    expRender();
+  } catch (e) {
+    document.getElementById('exp-sub').textContent = `Erro: ${e.message}`;
+    document.getElementById('col-envios').innerHTML = `<div class="exp-empty" style="color:#f87171">${_esc(e.message)}</div>`;
+    document.getElementById('col-entregas').innerHTML = '';
+    document.getElementById('col-refis').innerHTML = '';
+  }
+}
+
+async function expShipTransition(id, toStage, label) {
+  if (!confirm(`Confirma: ${label}?`)) return;
+  try {
+    await _api(`/operacional/api/shipments/${id}/transition`, { method: 'POST', body: { to_stage: toStage, changed_by: 'expedicao' } });
+    _toast(`✓ Envio #${id} → ${toStage}`);
+    expRefresh();
+  } catch (e) { _toast(e.message, 'error'); }
+}
+
+async function expDelivTransition(id, toStage, label) {
+  if (!confirm(`Confirma: ${label}?`)) return;
+  try {
+    await _api(`/operacional/api/deliveries/${id}/transition`, { method: 'POST', body: { to_stage: toStage, changed_by: 'expedicao' } });
+    _toast(`✓ Entrega #${id} → ${toStage}`);
+    expRefresh();
+  } catch (e) { _toast(e.message, 'error'); }
+}
+
+function expToggleTV() {
+  document.body.classList.toggle('tv-mode');
+}
+
+function tickExpClock() {
+  document.getElementById('exp-clock').textContent = new Date().toLocaleTimeString('pt-BR');
+}
+
+tickExpClock();
+setInterval(tickExpClock, 1000);
+expRefresh();
+setInterval(expRefresh, 60000);
+</script>

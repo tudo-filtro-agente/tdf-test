@@ -1,0 +1,226 @@
+<% const activePage = 'ferramentas'; const pageTitle = 'Ferramentas'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<main class="portal-content">
+  <div class="section-header">
+    <h1>🛠️ Ferramentas</h1>
+    <p>Todas as ferramentas disponíveis para você vender mais e melhor.</p>
+  </div>
+
+  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:20px; margin-top:24px;">
+
+    <!-- Gerador de Propostas (NOVO) -->
+    <a href="/ferramentas/gerador-propostas" target="_blank" style="position:relative;display:block;background:linear-gradient(135deg, #0F1420 0%, #20191f 100%);border:1px solid #EC489940;border-radius:16px;padding:24px;text-decoration:none;color:#fff;transition:all 0.3s;box-shadow:0 0 20px rgba(236,72,153,0.12);">
+      <span style="position:absolute;top:14px;right:14px;background:#EC4899;color:#fff;padding:3px 10px;border-radius:20px;font-size:0.65rem;font-weight:700;letter-spacing:0.5px;">NOVO</span>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#EC4899,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:24px;">📄</div>
+        <div>
+          <div style="font-size:1.2rem;font-weight:700;color:#EC4899;">Gerador de Propostas</div>
+          <div style="font-size:0.75rem;color:#8899AA;">Monte propostas profissionais em segundos</div>
+        </div>
+      </div>
+      <p style="font-size:0.85rem;color:#8899AA;line-height:1.5;margin-bottom:16px;">
+        Crie propostas comerciais padronizadas da Tudo de Filtro na hora: escolha produtos, valores e condições, e gere um documento pronto pra enviar ao cliente.
+      </p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <span style="background:#EC489920;color:#EC4899;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Proposta na hora</span>
+        <span style="background:#8B5CF620;color:#8B5CF6;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Padrão TDF</span>
+        <span style="background:#22C55E20;color:#22C55E;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Pronto pra enviar</span>
+      </div>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+        <span style="font-size:0.75rem;color:#EC4899;">Abrir gerador →</span>
+      </div>
+    </a>
+
+    <!-- Closy -->
+    <a href="https://closy-app-production.up.railway.app" target="_blank" style="display:block;background:linear-gradient(135deg, #0F1420 0%, #1a1f35 100%);border:1px solid #4F8CFF40;border-radius:16px;padding:24px;text-decoration:none;color:#fff;transition:all 0.3s;box-shadow:0 0 20px rgba(79,140,255,0.1);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#4F8CFF,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:24px;">📊</div>
+        <div>
+          <div style="font-size:1.2rem;font-weight:700;color:#4F8CFF;">Closy</div>
+          <div style="font-size:0.75rem;color:#8899AA;">IA de Análise de Ligações</div>
+        </div>
+      </div>
+      <p style="font-size:0.85rem;color:#8899AA;line-height:1.5;margin-bottom:16px;">
+        Todas as suas ligações são analisadas automaticamente por IA. Veja seu score, pontos fortes, onde melhorar e ouça suas gravações.
+      </p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <span style="background:#4F8CFF20;color:#4F8CFF;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Score de Ligações</span>
+        <span style="background:#22C55E20;color:#22C55E;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Feedback IA</span>
+        <span style="background:#8B5CF620;color:#8B5CF6;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Simulador de Vendas</span>
+        <span style="background:#F59E0B20;color:#F59E0B;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Ranking do Time</span>
+      </div>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:0.75rem;color:#4F8CFF;">Acessar Closy →</span>
+        <span style="font-size:0.65rem;color:#484F58;">Login: seu email @tudodefiltro.com.br / tdf2026</span>
+      </div>
+    </a>
+
+    <!-- Simulador de Vendas -->
+    <a href="https://closy-app-production.up.railway.app/dashboard/training" target="_blank" style="display:block;background:linear-gradient(135deg, #0F1420 0%, #1a2520 100%);border:1px solid #22C55E40;border-radius:16px;padding:24px;text-decoration:none;color:#fff;transition:all 0.3s;box-shadow:0 0 20px rgba(34,197,94,0.1);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#22C55E,#16A34A);display:flex;align-items:center;justify-content:center;font-size:24px;">🎯</div>
+        <div>
+          <div style="font-size:1.2rem;font-weight:700;color:#22C55E;">Simulador de Vendas</div>
+          <div style="font-size:0.75rem;color:#8899AA;">Treine com cliente IA</div>
+        </div>
+      </div>
+      <p style="font-size:0.85rem;color:#8899AA;line-height:1.5;margin-bottom:16px;">
+        Pratique vendas contra um cliente simulado por IA. 5 cenários: Qualificação, Objeção de Preço, Cliente Desconfiado, Fechamento e mais.
+      </p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <span style="background:#22C55E20;color:#22C55E;padding:4px 10px;border-radius:20px;font-size:0.7rem;">5 Cenários</span>
+        <span style="background:#F59E0B20;color:#F59E0B;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Avaliação IA</span>
+        <span style="background:#EF444420;color:#EF4444;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Dificuldade Ajustável</span>
+      </div>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+        <span style="font-size:0.75rem;color:#22C55E;">Começar Treino →</span>
+      </div>
+    </a>
+
+    <!-- Top Ligações -->
+    <a href="https://closy-app-production.up.railway.app/dashboard/top-calls" target="_blank" style="display:block;background:linear-gradient(135deg, #0F1420 0%, #251a20 100%);border:1px solid #F59E0B40;border-radius:16px;padding:24px;text-decoration:none;color:#fff;transition:all 0.3s;box-shadow:0 0 20px rgba(245,158,11,0.1);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#F59E0B,#D97706);display:flex;align-items:center;justify-content:center;font-size:24px;">🏆</div>
+        <div>
+          <div style="font-size:1.2rem;font-weight:700;color:#F59E0B;">Top Ligações</div>
+          <div style="font-size:0.75rem;color:#8899AA;">Aprenda com os melhores</div>
+        </div>
+      </div>
+      <p style="font-size:0.85rem;color:#8899AA;line-height:1.5;margin-bottom:16px;">
+        Veja as 3 melhores ligações da semana e do mês. Ouça, aprenda com quem está mandando bem e melhore seu score.
+      </p>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+        <span style="font-size:0.75rem;color:#F59E0B;">Ver Top Ligações →</span>
+      </div>
+    </a>
+
+    <!-- IA Consulta -->
+    <a href="/ia" style="display:block;background:linear-gradient(135deg, #0F1420 0%, #1a1a30 100%);border:1px solid #8B5CF640;border-radius:16px;padding:24px;text-decoration:none;color:#fff;transition:all 0.3s;box-shadow:0 0 20px rgba(139,92,246,0.1);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#8B5CF6,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:24px;">🤖</div>
+        <div>
+          <div style="font-size:1.2rem;font-weight:700;color:#8B5CF6;">IA Consulta</div>
+          <div style="font-size:0.75rem;color:#8899AA;">Tire dúvidas com IA</div>
+        </div>
+      </div>
+      <p style="font-size:0.85rem;color:#8899AA;line-height:1.5;margin-bottom:16px;">
+        Pergunte qualquer coisa sobre produtos, técnicas de venda, processos. A IA responde com base no conhecimento da Tudo de Filtro.
+      </p>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+        <span style="font-size:0.75rem;color:#8B5CF6;">Abrir IA Consulta →</span>
+      </div>
+    </a>
+
+    <!-- Zoho CRM -->
+    <a href="https://crmplus.zoho.com/tudodefiltro3711" target="_blank" style="display:block;background:linear-gradient(135deg, #0F1420 0%, #201a1a 100%);border:1px solid #EF444440;border-radius:16px;padding:24px;text-decoration:none;color:#fff;transition:all 0.3s;box-shadow:0 0 20px rgba(239,68,68,0.1);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#EF4444,#DC2626);display:flex;align-items:center;justify-content:center;font-size:24px;">📋</div>
+        <div>
+          <div style="font-size:1.2rem;font-weight:700;color:#EF4444;">Zoho CRM</div>
+          <div style="font-size:0.75rem;color:#8899AA;">Gestão de Leads</div>
+        </div>
+      </div>
+      <p style="font-size:0.85rem;color:#8899AA;line-height:1.5;">
+        Acesse o CRM para gerenciar seus leads, negociações e pipeline de vendas.
+      </p>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+        <span style="font-size:0.75rem;color:#EF4444;">Abrir Zoho CRM →</span>
+      </div>
+    </a>
+
+    <!-- GoTo Connect -->
+    <a href="https://app.goto.com" target="_blank" style="display:block;background:linear-gradient(135deg, #0F1420 0%, #0F2020 100%);border:1px solid #00B4D840;border-radius:16px;padding:24px;text-decoration:none;color:#fff;transition:all 0.3s;box-shadow:0 0 20px rgba(0,180,216,0.1);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#00B4D8,#0077B6);display:flex;align-items:center;justify-content:center;font-size:24px;">📞</div>
+        <div>
+          <div style="font-size:1.2rem;font-weight:700;color:#00B4D8;">GoTo Connect</div>
+          <div style="font-size:0.75rem;color:#8899AA;">Telefonia VoIP</div>
+        </div>
+      </div>
+      <p style="font-size:0.85rem;color:#8899AA;line-height:1.6;margin-bottom:12px;">
+        Sistema de telefonia da empresa. Todas as ligações que você faz e recebe passam pelo GoTo Connect. É por aqui que as gravações são feitas e enviadas automaticamente pro Closy analisar.
+      </p>
+      <div style="background:#00B4D810;border-radius:8px;padding:12px;margin-bottom:12px;">
+        <div style="color:#00B4D8;font-size:0.8rem;font-weight:600;margin-bottom:6px;">O que você pode fazer:</div>
+        <ul style="color:#8899AA;font-size:0.8rem;line-height:1.8;padding-left:16px;margin:0;">
+          <li>Fazer e receber ligações pelo ramal</li>
+          <li>Ver histórico de chamadas</li>
+          <li>Ouvir gravações de ligações</li>
+          <li>Consultar analytics de chamadas</li>
+        </ul>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <span style="background:#00B4D820;color:#00B4D8;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Ligações</span>
+        <span style="background:#00B4D820;color:#00B4D8;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Gravações</span>
+        <span style="background:#00B4D820;color:#00B4D8;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Ramal</span>
+      </div>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;">
+        <span style="font-size:0.75rem;color:#00B4D8;">Abrir GoTo Connect →</span>
+        <span style="font-size:0.65rem;color:#484F58;">Use seu login corporativo</span>
+      </div>
+    </a>
+
+    <!-- WATI WhatsApp -->
+    <a href="https://live.wati.io" target="_blank" style="display:block;background:linear-gradient(135deg, #0F1420 0%, #0F200F 100%);border:1px solid #25D36640;border-radius:16px;padding:24px;text-decoration:none;color:#fff;transition:all 0.3s;box-shadow:0 0 20px rgba(37,211,102,0.1);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#25D366,#128C7E);display:flex;align-items:center;justify-content:center;font-size:24px;">💬</div>
+        <div>
+          <div style="font-size:1.2rem;font-weight:700;color:#25D366;">WATI</div>
+          <div style="font-size:0.75rem;color:#8899AA;">WhatsApp Business API</div>
+        </div>
+      </div>
+      <p style="font-size:0.85rem;color:#8899AA;line-height:1.6;margin-bottom:12px;">
+        Plataforma oficial de WhatsApp Business da empresa. Todos os leads que entram pelo WhatsApp (anúncios, site, indicação) são atendidos aqui. A Núbia (IA SDR) também trabalha por aqui, qualificando leads automaticamente antes de passar pro closer.
+      </p>
+      <div style="background:#25D36610;border-radius:8px;padding:12px;margin-bottom:12px;">
+        <div style="color:#25D366;font-size:0.8rem;font-weight:600;margin-bottom:6px;">O que você pode fazer:</div>
+        <ul style="color:#8899AA;font-size:0.8rem;line-height:1.8;padding-left:16px;margin:0;">
+          <li>Responder leads pelo WhatsApp</li>
+          <li>Ver conversas atribuídas a você</li>
+          <li>Enviar templates aprovados</li>
+          <li>Ver histórico de conversas com cada lead</li>
+          <li>Transferir conversa pra outro vendedor</li>
+        </ul>
+      </div>
+      <div style="background:#F59E0B15;border:1px solid #F59E0B30;border-radius:8px;padding:10px;margin-bottom:12px;">
+        <div style="color:#F59E0B;font-size:0.8rem;">💡 <strong>Dica:</strong> Quando um lead chega pelo WhatsApp, a Núbia (IA) já faz as primeiras perguntas de qualificação. Quando o lead está pronto, ela avisa você pra ligar. Fique de olho nas notificações!</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <span style="background:#25D36620;color:#25D366;padding:4px 10px;border-radius:20px;font-size:0.7rem;">WhatsApp</span>
+        <span style="background:#25D36620;color:#25D366;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Leads</span>
+        <span style="background:#25D36620;color:#25D366;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Núbia IA</span>
+        <span style="background:#25D36620;color:#25D366;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Templates</span>
+      </div>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;">
+        <span style="font-size:0.75rem;color:#25D366;">Abrir WATI →</span>
+        <span style="font-size:0.65rem;color:#484F58;">Use seu login @tudodefiltro</span>
+      </div>
+    </a>
+
+    <!-- Treinamentos -->
+    <a href="/treinamento" style="display:block;background:linear-gradient(135deg, #0F1420 0%, #201520 100%);border:1px solid #EC489940;border-radius:16px;padding:24px;text-decoration:none;color:#fff;transition:all 0.3s;box-shadow:0 0 20px rgba(236,72,153,0.1);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#EC4899,#BE185D);display:flex;align-items:center;justify-content:center;font-size:24px;">📚</div>
+        <div>
+          <div style="font-size:1.2rem;font-weight:700;color:#EC4899;">Treinamentos</div>
+          <div style="font-size:0.75rem;color:#8899AA;">Técnicas de Vendas</div>
+        </div>
+      </div>
+      <p style="font-size:0.85rem;color:#8899AA;line-height:1.6;margin-bottom:12px;">
+        7 módulos completos de técnicas de vendas: Rapport, Sondagem SPIN, Gatilhos Mentais, Quebra de Objeções, Fechamento, Pós-Venda e Vendas por WhatsApp. Tudo com exemplos reais da Tudo de Filtro.
+      </p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <span style="background:#EC489920;color:#EC4899;padding:4px 10px;border-radius:20px;font-size:0.7rem;">7 Módulos</span>
+        <span style="background:#EC489920;color:#EC4899;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Exercícios</span>
+        <span style="background:#EC489920;color:#EC4899;padding:4px 10px;border-radius:20px;font-size:0.7rem;">Simulador IA</span>
+      </div>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+        <span style="font-size:0.75rem;color:#EC4899;">Começar Treinamentos →</span>
+      </div>
+    </a>
+
+  </div>
+</main>
+
+</div></body></html>

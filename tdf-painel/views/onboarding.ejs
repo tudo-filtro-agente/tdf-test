@@ -1,0 +1,902 @@
+<% const activePage = 'onboarding'; const pageTitle = 'Onboarding'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar-container">
+  <div class="progress-bar-label">
+    <span>Progresso Geral</span>
+    <span id="progress-pct">0%</span>
+  </div>
+  <div class="progress-bar-track">
+    <div class="progress-bar-fill" id="progress-fill"></div>
+  </div>
+</div>
+
+<div class="container content-area">
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc" id="toc">
+  <h2>Indice do Treinamento</h2>
+  <ul class="toc-list">
+    <li><a href="#mod1">1. A Empresa <span class="toc-time">45 min</span></a></li>
+    <li><a href="#mod2">2. Conhecimento de Agua <span class="toc-time">60 min</span></a></li>
+    <li><a href="#mod3">3. Linha de Produtos <span class="toc-time">90 min</span></a></li>
+    <li><a href="#mod4">4. Regras Comerciais <span class="toc-time">45 min</span></a></li>
+    <li><a href="#mod5">5. Qualificacao de Leads <span class="toc-time">60 min</span></a></li>
+    <li><a href="#mod6">6. Processo de Vendas <span class="toc-time">90 min</span></a></li>
+    <li><a href="#mod7">7. Objecoes e Respostas <span class="toc-time">60 min</span></a></li>
+    <li><a href="#mod8">8. Ferramentas <span class="toc-time">45 min</span></a></li>
+    <li><a href="#mod9">9. Frases Proibidas <span class="toc-time">30 min</span></a></li>
+    <li><a href="#mod10">10. Agua de Poco -- Guia Completo <span class="toc-time">90 min</span></a></li>
+    <li><a href="#mod11">11. Vendas para Condominios <span class="toc-time">60 min</span></a></li>
+    <li><a href="#cert">Certificado de Conclusao <span class="toc-time">--</span></a></li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODULE 1: A EMPRESA -->
+<!-- ============================================================ -->
+<div class="module" id="mod1">
+  <div class="module-header" onclick="toggleModule(this)">
+    <h2>1. A Empresa</h2>
+    <span class="arrow">&#9660;</span>
+  </div>
+  <div class="module-body">
+    <div class="module-content">
+      <div class="module-meta"><span>Dia 1</span><span>45 minutos</span></div>
+
+      <h3>Quem Somos</h3>
+      <p>A <strong>Tudo de Filtro</strong> e uma empresa especializada em solucoes de tratamento de agua, com sede em <strong>Sao Jose dos Campos - SP</strong>. Atuamos em todo o Brasil com vendas internas (Inside Sales), atendendo residencias, condominios e empresas.</p>
+      <p>Nosso diferencial esta na <strong>consultoria tecnica personalizada</strong>: nao vendemos filtros genericos. Diagnosticamos o problema da agua do cliente e indicamos a solucao exata.</p>
+
+      <h3>Missao, Visao e Valores</h3>
+      <div class="card-grid">
+        <div class="card"><h4>Missao</h4><p>Levar agua limpa e segura para todas as familias e empresas do Brasil, com solucoes tecnicas e atendimento consultivo de excelencia.</p></div>
+        <div class="card"><h4>Visao</h4><p>Ser a maior referencia em tratamento de agua residencial e comercial do Brasil.</p></div>
+        <div class="card"><h4>Valores</h4><ul><li>Transparencia com o cliente</li><li>Excelencia tecnica</li><li>Atendimento consultivo</li><li>Agilidade no atendimento</li><li>Compromisso com resultados</li></ul></div>
+      </div>
+
+      <h3>Estrutura do Time</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Funcao</th><th>O que Faz</th></tr>
+        <tr><td><strong>SDRs</strong></td><td>Primeiro contato, qualificam leads, registram no CRM, passam pro closer</td></tr>
+        <tr><td><strong>Closers</strong></td><td>Recebem leads qualificados, fazem venda consultiva, fecham negocio</td></tr>
+        <tr><td><strong>Operacoes</strong></td><td>Coordena instalacoes, logistica, agenda equipe tecnica</td></tr>
+        <tr><td><strong>Novo Vendedor</strong></td><td>Hibrido SDR/Closer -- aprende ambas funcoes</td></tr>
+      </table></div>
+
+      <h3>Nossas Ferramentas</h3>
+      <div class="card-grid">
+        <div class="card"><h4>Zoho CRM</h4><p>Sistema central. Todos os leads, negocios, follow-ups e pipeline ficam aqui. Se nao ta no CRM, nao existe.</p></div>
+        <div class="card"><h4>WATI (WhatsApp)</h4><p>Plataforma de WhatsApp profissional. Follow-ups, envio de propostas, mensagens automatizadas.</p></div>
+        <div class="card"><h4>GoTo Connect</h4><p>Telefonia profissional. Ligacoes, transferencias, gravacoes. Toda ligacao e registrada.</p></div>
+      </div>
+
+      <div class="alert alert-info"><strong>Regra de ouro:</strong> Respondemos todo lead em menos de 5 minutos. Velocidade de resposta e o maior fator de conversao.</div>
+
+      <h3>Checklist do Dia 1</h3>
+      <ul class="checklist">
+        <li><input type="checkbox" id="c1_1" onchange="saveProgress()"><label for="c1_1">Li e entendi a missao/visao/valores da empresa</label></li>
+        <li><input type="checkbox" id="c1_2" onchange="saveProgress()"><label for="c1_2">Entendi a estrutura do time e o papel de cada funcao</label></li>
+        <li><input type="checkbox" id="c1_3" onchange="saveProgress()"><label for="c1_3">Sei quais sao as 3 ferramentas principais (Zoho, WATI, GoTo)</label></li>
+        <li><input type="checkbox" id="c1_4" onchange="saveProgress()"><label for="c1_4">Entendi que meu papel inicial e hibrido SDR/Closer</label></li>
+      </ul>
+
+      <div class="quiz">
+        <h4>Quiz -- Modulo 1</h4>
+        <div class="quiz-question" data-correct="b">
+          <p>1. Qual e o modelo de vendas da Tudo de Filtro?</p>
+          <div class="quiz-options">
+            <label><input type="radio" name="q1_1" value="a"><span> a) Venda em loja fisica</span></label>
+            <label><input type="radio" name="q1_1" value="b"><span> b) Inside Sales -- SDR qualifica, Closer vende, equipe instala</span></label>
+            <label><input type="radio" name="q1_1" value="c"><span> c) E-commerce puro sem contato humano</span></label>
+          </div>
+          <div class="quiz-answer correct">Correto! Inside Sales com processo SDR > Closer > Instalacao.</div>
+          <div class="quiz-answer incorrect">Incorreto. Nosso modelo e Inside Sales: SDR qualifica, Closer vende, equipe instala.</div>
+          <button class="quiz-btn" onclick="checkQuiz(this)">Verificar Resposta</button>
+        </div>
+        <div class="quiz-question" data-correct="c">
+          <p>2. Em quanto tempo devemos responder um lead?</p>
+          <div class="quiz-options">
+            <label><input type="radio" name="q1_2" value="a"><span> a) Ate 1 hora</span></label>
+            <label><input type="radio" name="q1_2" value="b"><span> b) Ate 30 minutos</span></label>
+            <label><input type="radio" name="q1_2" value="c"><span> c) Menos de 5 minutos</span></label>
+          </div>
+          <div class="quiz-answer correct">Correto! Velocidade e o maior fator de conversao.</div>
+          <div class="quiz-answer incorrect">Incorreto. A meta e menos de 5 minutos!</div>
+          <button class="quiz-btn" onclick="checkQuiz(this)">Verificar Resposta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODULE 2: CONHECIMENTO DE AGUA -->
+<!-- ============================================================ -->
+<div class="module" id="mod2">
+  <div class="module-header" onclick="toggleModule(this)">
+    <h2>2. Conhecimento de Agua</h2>
+    <span class="arrow">&#9660;</span>
+  </div>
+  <div class="module-body">
+    <div class="module-content">
+      <div class="module-meta"><span>Dia 1-2</span><span>60 minutos</span></div>
+
+      <h3>Agua de Estacao de Tratamento (Rua / Sabesp)</h3>
+      <p>A agua sai <strong>limpa</strong> da estacao de tratamento. Porem, percorre <strong>milhares de quilometros de tubulacoes antigas</strong> ate chegar na casa do cliente.</p>
+      <p>No caminho, a agua coleta:</p>
+      <ul><li><strong>Barro</strong> -- dos canos deteriorados</li><li><strong>Limo</strong> -- acumulo biologico</li><li><strong>Lodo</strong> -- sedimentos depositados</li><li><strong>Ferrugem</strong> -- dos canos de ferro antigos</li><li><strong>Sedimentos diversos</strong></li><li><strong>Cloro residual</strong> -- que causa gosto e cheiro</li></ul>
+      <p>Toda essa sujeira chega na <strong>caixa d'agua</strong> do cliente e se acumula.</p>
+
+      <div class="alert alert-warning"><strong>Insight para o cliente:</strong> "Limpar a caixa a cada 6 meses ajuda, mas nao resolve -- porque a sujeira chega todo dia, o dia inteiro."</div>
+
+      <h3>Agua de Poco (Artesiano ou Caipira)</h3>
+      <p>O problema principal da agua de poco e a presenca de <strong>Ferro e Manganes</strong>. Sinais classicos:</p>
+      <ul><li>Agua <strong>amarelada ou avermelhada</strong></li><li><strong>Mancha roupas</strong> na lavagem</li><li><strong>Danifica equipamentos</strong></li><li>Gosto metalico</li></ul>
+
+      <div class="alert alert-danger"><strong>REGRA ABSOLUTA:</strong> O UNICO produto que remove ferro e manganes da agua e o <strong>Iron Free</strong>. NUNCA venda filtro de entrada para agua de poco com ferro.</div>
+
+      <h3>Tecnica SPIN -- Aumentar Consciencia</h3>
+      <div class="script-box" data-label="SCRIPT SPIN">1. "Voce sabia que a agua sai limpa da estacao, mas percorre milhares de km de canos antigos?"
+
+2. "Ja viu aquela sujeira no fundo da caixa d'agua? E barro, limo e ferrugem."
+
+3. "Isso tudo vai pro chuveiro, pra comida, pro cafe..."
+
+4. "Limpar a caixa a cada 6 meses ajuda, mas nao resolve -- a sujeira chega todo dia."</div>
+
+      <h3>Resumo Rapido</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Tipo de Agua</th><th>Problema</th><th>Solucao</th></tr>
+        <tr><td>Estacao (rua/Sabesp)</td><td>Barro, limo, ferrugem, cloro</td><td>Filtro de Entrada</td></tr>
+        <tr><td>Poco (artesiano/caipira)</td><td>Ferro e Manganes</td><td>Iron Free (UNICO)</td></tr>
+      </table></div>
+
+      <h3>Checklist</h3>
+      <ul class="checklist">
+        <li><input type="checkbox" id="c2_1" onchange="saveProgress()"><label for="c2_1">Entendi o caminho da agua da estacao ate a torneira</label></li>
+        <li><input type="checkbox" id="c2_2" onchange="saveProgress()"><label for="c2_2">Sei os 6 contaminantes da agua de estacao</label></li>
+        <li><input type="checkbox" id="c2_3" onchange="saveProgress()"><label for="c2_3">Sei que ferro/manganes so resolve com Iron Free</label></li>
+        <li><input type="checkbox" id="c2_4" onchange="saveProgress()"><label for="c2_4">Decorei o script SPIN de 4 perguntas</label></li>
+        <li><input type="checkbox" id="c2_5" onchange="saveProgress()"><label for="c2_5">Consigo explicar por que limpar a caixa nao resolve</label></li>
+      </ul>
+
+      <div class="quiz">
+        <h4>Quiz -- Modulo 2</h4>
+        <div class="quiz-question" data-correct="a">
+          <p>1. Um cliente diz que a agua do poco dele esta amarelada. Qual produto resolve?</p>
+          <div class="quiz-options">
+            <label><input type="radio" name="q2_1" value="a"><span> a) Iron Free</span></label>
+            <label><input type="radio" name="q2_1" value="b"><span> b) American Filter Inox</span></label>
+            <label><input type="radio" name="q2_1" value="c"><span> c) Light Filter</span></label>
+          </div>
+          <div class="quiz-answer correct">Correto! Agua amarelada de poco = Ferro = Iron Free.</div>
+          <div class="quiz-answer incorrect">Incorreto. Agua de poco com ferro so resolve com Iron Free.</div>
+          <button class="quiz-btn" onclick="checkQuiz(this)">Verificar Resposta</button>
+        </div>
+        <div class="quiz-question" data-correct="b">
+          <p>2. Por que limpar a caixa d'agua a cada 6 meses nao resolve?</p>
+          <div class="quiz-options">
+            <label><input type="radio" name="q2_2" value="a"><span> a) Porque a caixa e muito grande</span></label>
+            <label><input type="radio" name="q2_2" value="b"><span> b) Porque a sujeira chega todo dia pelos canos antigos</span></label>
+            <label><input type="radio" name="q2_2" value="c"><span> c) Porque a Sabesp nao trata a agua direito</span></label>
+          </div>
+          <div class="quiz-answer correct">Correto! A sujeira entra todo dia pelos canos antigos.</div>
+          <div class="quiz-answer incorrect">Incorreto. O problema e que a sujeira entra todo dia.</div>
+          <button class="quiz-btn" onclick="checkQuiz(this)">Verificar Resposta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODULE 3: LINHA DE PRODUTOS -->
+<!-- ============================================================ -->
+<div class="module" id="mod3">
+  <div class="module-header" onclick="toggleModule(this)">
+    <h2>3. Linha de Produtos</h2>
+    <span class="arrow">&#9660;</span>
+  </div>
+  <div class="module-body">
+    <div class="module-content">
+      <div class="module-meta"><span>Dia 2-3</span><span>90 minutos</span></div>
+
+      <h3>Filtros de Entrada (Agua de Estacao)</h3>
+      <div class="card-grid">
+        <div class="card"><h4>Light Filter</h4><p>Filtro de entrada residencial. Linha acessivel para agua tratada.</p><ul><li>Ideal para: casas e apartamentos</li><li>Posicao: entrada de preco</li></ul></div>
+        <div class="card"><h4>Filtrali</h4><p>Intermediario. Excelente relacao custo-beneficio.</p><ul><li>Ideal para: quem quer qualidade sem investir no premium</li><li>Posicao: melhor custo-beneficio</li></ul></div>
+        <div class="card"><h4>American Filter Inox</h4><p>Linha premium. Aco inoxidavel 304.</p><p class="price">Consulte valores com a gestão</p><ul><li>Garantia: <strong>10 anos</strong></li><li>Material: aco inoxidavel 304</li></ul></div>
+        <div class="card"><h4>American Filter FRP</h4><p>Versao em fibra. Mais acessivel que o Inox.</p><ul><li>Garantia: <strong>3 anos</strong></li><li>Material: fibra (FRP)</li></ul></div>
+      </div>
+
+      <h3>Tratamento Especial</h3>
+      <div class="card-grid">
+        <div class="card" style="border-color: var(--danger);"><h4>Iron Free</h4><p><strong>Tratamento de ferro em agua de poco.</strong> Venda tecnica que exige analise.</p><p class="price">Valor sob consulta (depende do dimensionamento)</p><ul><li>Unico produto que remove ferro/manganes</li><li>Requer analise da agua</li><li>Venda tecnica -- closer especializado</li></ul></div>
+        <div class="card" style="border-color: var(--warning);"><h4>Scale Stop</h4><p>Anti-incrustacao. Combate calcario e dureza.</p><ul><li>Produto-chave para <strong>combo/upsell</strong></li><li>Ideal para oferecer junto com American Filter</li><li>Protege tubulacoes e aquecedores</li></ul></div>
+      </div>
+
+      <h3>Complementares</h3>
+      <div class="card-grid">
+        <div class="card"><h4>GIOM Purificador</h4><p>Purificador de ponto de uso. Linha complementar.</p></div>
+        <div class="card"><h4>Bebedouros</h4><p>Industriais e comerciais. Ticket medio ~R$ 2.000.</p></div>
+        <div class="card"><h4>Valvula Automatica</h4><p>Acessorio de upsell. Automatiza a retrolavagem.</p></div>
+      </div>
+
+      <h3>Elemento Filtrante -- Nosso Diferencial Exclusivo</h3>
+      <div class="alert alert-success"><strong>Cristais de Quartzo + Zeolita</strong> -- Mistura EXCLUSIVA da Tudo de Filtro. Maior retencao de particulas do mercado.</div>
+      <ul><li><strong>Troca a cada 3 anos</strong> -- agua de estacao</li><li><strong>Troca a cada 2 anos</strong> -- agua de poco</li><li>Pos-venda liga e avisa o cliente quando esta na hora</li><li>Ate 250 km de SJC: equipe faz visita para trocar</li><li>Acima de 250 km: envia para o Brasil todo com instrucoes</li></ul>
+
+      <h3>Regra de Ouro dos Produtos</h3>
+      <div class="alert alert-danger"><strong>DECORE ISSO:</strong><br>Agua de poco = <strong>Iron Free</strong> (UNICO)<br>Agua de estacao = <strong>Filtro de Entrada</strong><br><br><strong>NUNCA</strong> venda filtro de entrada para problema de ferro em poco!</div>
+
+      <h3>Checklist</h3>
+      <ul class="checklist">
+        <li><input type="checkbox" id="c3_1" onchange="saveProgress()"><label for="c3_1">Conheco todos os filtros de entrada (Light, Filtrali, American Inox, American FRP)</label></li>
+        <li><input type="checkbox" id="c3_2" onchange="saveProgress()"><label for="c3_2">Sei o preco e garantia do American Filter Inox</label></li>
+        <li><input type="checkbox" id="c3_3" onchange="saveProgress()"><label for="c3_3">Entendi o Iron Free e quando indicar</label></li>
+        <li><input type="checkbox" id="c3_4" onchange="saveProgress()"><label for="c3_4">Sei o que e Scale Stop e quando usar como upsell</label></li>
+        <li><input type="checkbox" id="c3_5" onchange="saveProgress()"><label for="c3_5">Entendi o diferencial do elemento filtrante (quartzo + zeolita)</label></li>
+        <li><input type="checkbox" id="c3_6" onchange="saveProgress()"><label for="c3_6">Decorei a Regra de Ouro: poco=Iron Free, estacao=filtro entrada</label></li>
+      </ul>
+
+      <div class="quiz">
+        <h4>Quiz -- Modulo 3</h4>
+        <div class="quiz-question" data-correct="b">
+          <p>1. Qual o preco do American Filter Inox + instalacao?</p>
+          <div class="quiz-options">
+            <label><input type="radio" name="q3_1" value="a"><span> a) R$ 2.490 + R$ 490</span></label>
+            <label><input type="radio" name="q3_1" value="b"><span> b) R$ 3.490 + valor da instalação</span></label>
+            <label><input type="radio" name="q3_1" value="c"><span> c) R$ 4.990 + R$ 690</span></label>
+          </div>
+          <div class="quiz-answer correct">Correto! R$ 3.490 o filtro + valor da instalação a instalacao.</div>
+          <div class="quiz-answer incorrect">Incorreto. O American Filter Inox custa R$ 3.490 + valor da instalação.</div>
+          <button class="quiz-btn" onclick="checkQuiz(this)">Verificar Resposta</button>
+        </div>
+        <div class="quiz-question" data-correct="c">
+          <p>2. Qual a frequencia de troca do elemento para agua de poco?</p>
+          <div class="quiz-options">
+            <label><input type="radio" name="q3_2" value="a"><span> a) A cada 1 ano</span></label>
+            <label><input type="radio" name="q3_2" value="b"><span> b) A cada 3 anos</span></label>
+            <label><input type="radio" name="q3_2" value="c"><span> c) A cada 2 anos</span></label>
+          </div>
+          <div class="quiz-answer correct">Correto! Poco = 2 anos. Estacao = 3 anos.</div>
+          <div class="quiz-answer incorrect">Incorreto. Para agua de poco a troca e a cada 2 anos.</div>
+          <button class="quiz-btn" onclick="checkQuiz(this)">Verificar Resposta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODULE 4: REGRAS COMERCIAIS -->
+<!-- ============================================================ -->
+<div class="module" id="mod4">
+  <div class="module-header" onclick="toggleModule(this)">
+    <h2>4. Regras Comerciais</h2>
+    <span class="arrow">&#9660;</span>
+  </div>
+  <div class="module-body">
+    <div class="module-content">
+      <div class="module-meta"><span>Dia 3</span><span>45 minutos</span></div>
+
+      <h3>Frete</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Regiao</th><th>Condicao</th></tr>
+        <tr><td><strong>Sao Paulo (CEP 01 a 19)</strong></td><td>Frete GRATIS</td></tr>
+        <tr><td>Fora de SP</td><td>Transportadoras: Rodonaves, Jadlog ou Melhor Envio</td></tr>
+      </table></div>
+      <p><strong>Todos os produtos com pronta entrega.</strong></p>
+
+      <h3>Formas de Pagamento</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Forma</th><th>Condicao</th></tr>
+        <tr><td><strong>Cartao de Credito</strong></td><td>Ate 7x sem juros</td></tr>
+        <tr><td><strong>PIX / A vista</strong></td><td>Desconto especial</td></tr>
+        <tr><td><strong>Boleto</strong></td><td>Somente PJ (ver regras abaixo)</td></tr>
+      </table></div>
+
+      <h3>Regras para Boleto (PJ)</h3>
+      <div class="alert alert-warning"><strong>Boleto so para Pessoa Juridica.</strong> Requisitos: CNPJ com <strong>2+ anos</strong>, sem restricao SPC/Serasa, <strong>3 referencias comerciais</strong>, <strong>1 referencia bancaria</strong>.</div>
+      <p><strong>Primeira compra boleto:</strong> 50% a vista + 50% em 28 dias.</p>
+
+      <h3>Instalacao</h3>
+      <div class="card-grid">
+        <div class="card"><h4>Preco Padrao</h4><p class="price">valor da instalação</p><p>Inclui mao de obra e material basico.</p></div>
+        <div class="card" style="border-color: var(--success);"><h4>Cortesia</h4><p>Pode ser oferecida como <strong>moeda de troca</strong>.</p><div class="alert alert-danger" style="margin-top: 8px;"><strong>NUNCA de desconto no produto!</strong> Se precisar ceder algo, use a instalacao cortesia.</div></div>
+      </div>
+
+      <h3>Visita Tecnica</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Situacao</th><th>Valor</th><th>Obs</th></tr>
+        <tr><td>Poco sem analise (ate 250 km)</td><td>R$ 800</td><td>Abonado se fechar na hora</td></tr>
+      </table></div>
+
+      <h3>Checklist</h3>
+      <ul class="checklist">
+        <li><input type="checkbox" id="c4_1" onchange="saveProgress()"><label for="c4_1">Sei as regras de frete (SP gratis, fora SP = transportadora)</label></li>
+        <li><input type="checkbox" id="c4_2" onchange="saveProgress()"><label for="c4_2">Sei as 3 formas de pagamento e condicoes</label></li>
+        <li><input type="checkbox" id="c4_3" onchange="saveProgress()"><label for="c4_3">Entendi as regras de boleto PJ</label></li>
+        <li><input type="checkbox" id="c4_4" onchange="saveProgress()"><label for="c4_4">Sei que instalacao cortesia e moeda de troca (nunca desconto no produto)</label></li>
+        <li><input type="checkbox" id="c4_5" onchange="saveProgress()"><label for="c4_5">Entendi a logica da visita tecnica de R$ 800</label></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODULE 5: QUALIFICACAO DE LEADS -->
+<!-- ============================================================ -->
+<div class="module" id="mod5">
+  <div class="module-header" onclick="toggleModule(this)">
+    <h2>5. Qualificacao de Leads</h2>
+    <span class="arrow">&#9660;</span>
+  </div>
+  <div class="module-body">
+    <div class="module-content">
+      <div class="module-meta"><span>Dia 3-4</span><span>60 minutos</span></div>
+
+      <h3>Papel do SDR</h3>
+      <div class="flow">
+        <span class="flow-step">Lead entra</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Responder &lt;5 min</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Qualificar</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Registrar CRM</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Passar pro Closer</span>
+      </div>
+
+      <h3>Script de Abertura (Telefone)</h3>
+      <div class="script-box" data-label="ABERTURA">"Oi [NOME], tudo bem? Aqui e o [SEU NOME] da Tudo de Filtro.
+Vi que voce demonstrou interesse em tratamento de agua.
+Posso te fazer umas perguntas rapidas?"</div>
+
+      <h3>8 Perguntas Obrigatorias de Qualificacao</h3>
+      <div class="table-wrap"><table>
+        <tr><th>#</th><th>Pergunta</th><th>Campo no CRM</th></tr>
+        <tr><td><strong>1</strong></td><td>"Me conta: o que ta acontecendo com a agua ai?"</td><td>Problema_Principal</td></tr>
+        <tr><td><strong>2</strong></td><td>"A agua vem da rua/Sabesp ou de poco artesiano?"</td><td>Tipo_de_gua</td></tr>
+        <tr><td><strong>3</strong></td><td>"E pra casa, condominio ou empresa?"</td><td>Segmento</td></tr>
+        <tr><td><strong>4</strong></td><td>"Quantos banheiros tem ai? / Quantas pessoas?"</td><td>(dimensionamento)</td></tr>
+        <tr><td><strong>5</strong></td><td>"Ja fez alguma analise da agua?"</td><td>Possui_an_lise</td></tr>
+        <tr><td><strong>6</strong></td><td>"E algo que quer resolver agora ou ainda ta pesquisando?"</td><td>Prazo_para_a_Compra</td></tr>
+        <tr><td><strong>7</strong></td><td>"Ja tem ideia de quanto pretende investir?"</td><td>NAO fale preco!</td></tr>
+        <tr><td><strong>8</strong></td><td>"Alem de voce, mais alguem participa dessa decisao?"</td><td>(mapear decisores)</td></tr>
+      </table></div>
+
+      <div class="alert alert-danger"><strong>REGRA POCO -- GRAVISSIMO:</strong><br>Se a agua e de poco, o SDR: NAO indica produto, NAO passa preco, NAO recomenda solucao. Faz a sondagem completa e passa TUDO pro closer especializado.</div>
+
+      <h3>Teste de Vazao Caseiro</h3>
+      <div class="script-box" data-label="ORIENTACAO AO CLIENTE">"Pega um balde de 20 litros, abre a torneira antes da caixa d'agua,
+e cronometra quanto tempo leva pra encher.
+
+Se encher em 2 minutos = vazao de 600 litros/hora."</div>
+
+      <h3>Checklist</h3>
+      <ul class="checklist">
+        <li><input type="checkbox" id="c5_1" onchange="saveProgress()"><label for="c5_1">Decorei o script de abertura</label></li>
+        <li><input type="checkbox" id="c5_2" onchange="saveProgress()"><label for="c5_2">Sei as 8 perguntas obrigatorias de qualificacao</label></li>
+        <li><input type="checkbox" id="c5_3" onchange="saveProgress()"><label for="c5_3">Entendi a REGRA POCO (nao indica produto, nao passa preco)</label></li>
+        <li><input type="checkbox" id="c5_4" onchange="saveProgress()"><label for="c5_4">Sei orientar o cliente no teste de vazao caseiro</label></li>
+        <li><input type="checkbox" id="c5_5" onchange="saveProgress()"><label for="c5_5">Sei quais campos registrar no CRM</label></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODULE 6: PROCESSO DE VENDAS -->
+<!-- ============================================================ -->
+<div class="module" id="mod6">
+  <div class="module-header" onclick="toggleModule(this)">
+    <h2>6. Processo de Vendas</h2>
+    <span class="arrow">&#9660;</span>
+  </div>
+  <div class="module-body">
+    <div class="module-content">
+      <div class="module-meta"><span>Dia 4-5</span><span>90 minutos</span></div>
+
+      <h3>Os 8 Pilares da Venda Consultiva</h3>
+      <div class="card-grid">
+        <div class="card"><h4>1. Identificar Perfil</h4><p>O cliente e <strong>tecnico</strong> (quer dados) ou <strong>emocional</strong> (quer seguranca)?</p></div>
+        <div class="card"><h4>2. Diagnosticar Problema REAL</h4><p>Antes de falar de produto, entenda o problema real.</p></div>
+        <div class="card"><h4>3. Traduzir Specs em Imagens</h4><p>"Remove particulas menores que um fio de cabelo"</p></div>
+        <div class="card"><h4>4. Valor ANTES do Preco</h4><p>Sequencia: <strong>Problema > Dor > Consequencia > Solucao > PRECO</strong></p></div>
+        <div class="card"><h4>5. Objecoes de Preco</h4><p>Parcelamento, comparacao de custo mensal, ancoragem.</p></div>
+        <div class="card"><h4>6. Multiplos Decisores</h4><p>Prepare material, ofereca call conjunta.</p></div>
+        <div class="card"><h4>7. Urgencia com Logica REAL</h4><p>Mostre o custo de adiar, sem pressao vazia.</p></div>
+        <div class="card"><h4>8. Fechar com Proximo Passo</h4><p>TODA conversa termina com <strong>data + hora</strong>.</p></div>
+      </div>
+
+      <h3>Sequencia de Construcao de Valor</h3>
+      <div class="flow">
+        <span class="flow-step">Problema</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Dor</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Consequencia</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Solucao</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step" style="background: var(--gold); color: #000;">PRECO</span>
+      </div>
+
+      <h3>Cadencia de Follow-up</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Dia</th><th>Canal</th><th>Acao</th></tr>
+        <tr><td><strong>D+0</strong></td><td>Telefone + Email</td><td>Ligacao + envio da proposta</td></tr>
+        <tr><td><strong>D+1</strong></td><td>WhatsApp</td><td>"Recebeu a proposta? Ficou alguma duvida?"</td></tr>
+        <tr><td><strong>D+3</strong></td><td>WhatsApp</td><td>Mensagem de valor (depoimento, dado, beneficio)</td></tr>
+        <tr><td><strong>D+5</strong></td><td>Telefone</td><td>Ligacao com senso de urgencia real</td></tr>
+        <tr><td><strong>D+7</strong></td><td>WhatsApp</td><td>"Vou encerrar seu atendimento, mas fico a disposicao"</td></tr>
+      </table></div>
+
+      <h3>Estrategias de Upsell</h3>
+      <div class="alert alert-success"><strong>Combos que funcionam:</strong><ul><li><strong>American Filter + Scale Stop</strong> -- protecao completa</li><li><strong>Qualquer filtro + Valvula Automatica</strong> -- praticidade</li><li><strong>Instalacao cortesia</strong> -- como incentivo pra fechar o combo</li></ul></div>
+
+      <h3>Checklist</h3>
+      <ul class="checklist">
+        <li><input type="checkbox" id="c6_1" onchange="saveProgress()"><label for="c6_1">Sei os 8 pilares da venda consultiva</label></li>
+        <li><input type="checkbox" id="c6_2" onchange="saveProgress()"><label for="c6_2">Entendi a sequencia Problema > Dor > Consequencia > Solucao > Preco</label></li>
+        <li><input type="checkbox" id="c6_3" onchange="saveProgress()"><label for="c6_3">Decorei a cadencia de follow-up (D+0 a D+7)</label></li>
+        <li><input type="checkbox" id="c6_4" onchange="saveProgress()"><label for="c6_4">Sei os combos de upsell</label></li>
+        <li><input type="checkbox" id="c6_5" onchange="saveProgress()"><label for="c6_5">Entendi que TODA conversa termina com proximo passo (data+hora)</label></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODULE 7: OBJECOES -->
+<!-- ============================================================ -->
+<div class="module" id="mod7">
+  <div class="module-header" onclick="toggleModule(this)">
+    <h2>7. Objecoes e Respostas</h2>
+    <span class="arrow">&#9660;</span>
+  </div>
+  <div class="module-body">
+    <div class="module-content">
+      <div class="module-meta"><span>Dia 5-6</span><span>60 minutos</span></div>
+
+      <h3>Regra de Ouro das Objecoes</h3>
+      <div class="flow">
+        <span class="flow-step">1. Validar</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">2. Transformar em Pergunta</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">3. Voltar pro Diagnostico</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">4. Fechar com Proximo Passo</span>
+      </div>
+
+      <h3>As 8 Objecoes Mais Comuns</h3>
+
+      <div class="objection" onclick="this.classList.toggle('open')">
+        <div class="objection-header">"E muito caro" <span>+</span></div>
+        <div class="objection-body">
+          <div class="script-box" data-label="RESPOSTA">1. VALIDAR: "Entendo perfeitamente, [NOME]."
+
+2. TRANSFORMAR: "Me deixa te fazer uma conta rapida: quanto voce gasta por mes com galao de agua?"
+
+3. DIAGNOSTICO: "Se gasta R$ 150/mes em galoes, sao R$ 1.800 por ano. Em 2 anos, R$ 3.600 -- mais que o filtro."
+
+4. FECHAR: "Parcelamos em ate 7x sem juros. Fica menos de R$ 500 por mes."</div>
+        </div>
+      </div>
+
+      <div class="objection" onclick="this.classList.toggle('open')">
+        <div class="objection-header">"Vou pesquisar mais" <span>+</span></div>
+        <div class="objection-body">
+          <div class="script-box" data-label="RESPOSTA">1. VALIDAR: "Faz muito bem em pesquisar."
+
+2. TRANSFORMAR: "Posso te ajudar nessa comparacao? O que exatamente voce quer comparar?"
+
+3. DIAGNOSTICO: "Compare: material do filtro, garantia, tipo de elemento filtrante e se inclui instalacao."
+
+4. FECHAR: "Pesquisa tranquilo e eu te ligo quinta pra gente comparar ponto a ponto."</div>
+        </div>
+      </div>
+
+      <div class="objection" onclick="this.classList.toggle('open')">
+        <div class="objection-header">"Achei mais barato na internet" <span>+</span></div>
+        <div class="objection-body">
+          <div class="script-box" data-label="RESPOSTA">1. VALIDAR: "Pode ser mesmo, tem opcoes mais baratas por ai."
+
+2. TRANSFORMAR: "E aco inox ou plastico? Quantos anos de garantia? Inclui instalacao? Elemento e quartzo com zeolita?"
+
+3. DIAGNOSTICO: "Nosso: Inox 304, 10 anos garantia, elemento exclusivo, instalacao profissional, pos-venda ativo."
+
+4. FECHAR: "Comparando ponto a ponto, o investimento faz sentido."</div>
+        </div>
+      </div>
+
+      <div class="objection" onclick="this.classList.toggle('open')">
+        <div class="objection-header">"Vou pensar" <span>+</span></div>
+        <div class="objection-body">
+          <div class="script-box" data-label="RESPOSTA">1. VALIDAR: "Claro, decisao importante merece reflexao."
+
+2. TRANSFORMAR: "O que exatamente precisa pensar? E sobre o valor, o produto, ou o momento?"
+
+3. DIAGNOSTICO: Trate a objecao real que aparecer.
+
+4. FECHAR: "Te ligo amanha as [HORA] pra gente conversar. Pode ser?"
+
+REGRA: NUNCA aceite "vou pensar" sem agendar retorno!</div>
+        </div>
+      </div>
+
+      <div class="objection" onclick="this.classList.toggle('open')">
+        <div class="objection-header">"Preciso falar com marido/esposa/socio" <span>+</span></div>
+        <div class="objection-body">
+          <div class="script-box" data-label="RESPOSTA">1. VALIDAR: "Faz sentido, decisao assim e bom decidir junto."
+
+2. TRANSFORMAR: "Posso te mandar um material completo?"
+
+3. DIAGNOSTICO: "Ou melhor: que tal a gente marcar uma call rapida de 15 min com voces dois?"
+
+4. FECHAR: "Qual o melhor horario pra voces dois?"</div>
+        </div>
+      </div>
+
+      <div class="objection" onclick="this.classList.toggle('open')">
+        <div class="objection-header">"Nao e o momento" <span>+</span></div>
+        <div class="objection-body">
+          <div class="script-box" data-label="RESPOSTA">1. VALIDAR: "Entendo, timing e importante."
+
+2. TRANSFORMAR: "O que muda daqui a 1 mes, 2 meses?"
+
+3. DIAGNOSTICO: "Enquanto isso, cada dia sua familia consome agua com barro, ferrugem e cloro."
+
+4. FECHAR: "Se a gente parcelar pra caber no orcamento atual? 7x que comeca so mes que vem."</div>
+        </div>
+      </div>
+
+      <div class="objection" onclick="this.classList.toggle('open')">
+        <div class="objection-header">"Nao sei se funciona pra minha agua" <span>+</span></div>
+        <div class="objection-body">
+          <div class="script-box" data-label="RESPOSTA">1. VALIDAR: "Otima preocupacao! Cada agua e diferente."
+
+2. TRANSFORMAR: Voltar pro diagnostico. "A agua vem da rua ou de poco?"
+
+3. DIAGNOSTICO: Fazer as 8 perguntas de qualificacao.
+
+4. FECHAR: "O especialista vai dimensionar a solucao exata pra sua agua."</div>
+        </div>
+      </div>
+
+      <div class="objection" onclick="this.classList.toggle('open')">
+        <div class="objection-header">"Ja comprei filtro antes e nao resolveu" <span>+</span></div>
+        <div class="objection-body">
+          <div class="script-box" data-label="RESPOSTA">1. VALIDAR: "Lamento que tenha tido essa experiencia."
+
+2. TRANSFORMAR: "Qual filtro era? Era dimensionado pra sua vazao?"
+
+3. DIAGNOSTICO: "Na maioria dos casos: subdimensionado, cartucho generico, sem instalacao profissional."
+
+4. FECHAR: "A gente so indica produto depois do diagnostico completo."</div>
+        </div>
+      </div>
+
+      <h3>Checklist</h3>
+      <ul class="checklist">
+        <li><input type="checkbox" id="c7_1" onchange="saveProgress()"><label for="c7_1">Sei a regra: Validar > Pergunta > Diagnostico > Proximo Passo</label></li>
+        <li><input type="checkbox" id="c7_2" onchange="saveProgress()"><label for="c7_2">Pratiquei a resposta pra "e muito caro"</label></li>
+        <li><input type="checkbox" id="c7_3" onchange="saveProgress()"><label for="c7_3">Sei que NUNCA aceito "vou pensar" sem agendar retorno</label></li>
+        <li><input type="checkbox" id="c7_4" onchange="saveProgress()"><label for="c7_4">Sei lidar com multiplos decisores</label></li>
+        <li><input type="checkbox" id="c7_5" onchange="saveProgress()"><label for="c7_5">Sei reconstruir confianca com cliente que teve experiencia ruim</label></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODULE 8: FERRAMENTAS -->
+<!-- ============================================================ -->
+<div class="module" id="mod8">
+  <div class="module-header" onclick="toggleModule(this)">
+    <h2>8. Ferramentas</h2>
+    <span class="arrow">&#9660;</span>
+  </div>
+  <div class="module-body">
+    <div class="module-content">
+      <div class="module-meta"><span>Dia 6-7</span><span>45 minutos</span></div>
+
+      <h3>Zoho CRM -- Seu Painel de Controle</h3>
+      <p>Tudo que voce faz precisa estar no CRM. <strong>Se nao ta no Zoho, nao aconteceu.</strong></p>
+
+      <h4>Campos Obrigatorios ao Registrar Lead</h4>
+      <div class="table-wrap"><table>
+        <tr><th>Campo</th><th>Vem da Pergunta #</th><th>Exemplo</th></tr>
+        <tr><td>Problema_Principal</td><td>Pergunta 1</td><td>"Agua com gosto de cloro"</td></tr>
+        <tr><td>Tipo_de_gua</td><td>Pergunta 2</td><td>"Estacao" ou "Poco"</td></tr>
+        <tr><td>Segmento</td><td>Pergunta 3</td><td>"Residencial" / "Condominio"</td></tr>
+        <tr><td>Possui_an_lise</td><td>Pergunta 5</td><td>"Sim" ou "Nao"</td></tr>
+        <tr><td>Prazo_para_a_Compra</td><td>Pergunta 6</td><td>"Imediato" / "Pesquisando"</td></tr>
+      </table></div>
+
+      <h4>Pipeline de Vendas</h4>
+      <div class="flow">
+        <span class="flow-step">Novo Lead</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Qualificado</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Proposta Enviada</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Negociacao</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step" style="background: var(--success);">Fechado/Ganho</span>
+      </div>
+
+      <h3>WATI -- WhatsApp Profissional</h3>
+      <ul><li><strong>Follow-ups:</strong> D+1, D+3, D+7</li><li><strong>Envio de propostas</strong></li><li><strong>Confirmacao de agendamentos</strong></li><li>Mensagens <strong>curtas e objetivas</strong></li><li>NUNCA mande mensagem depois das 20h</li></ul>
+
+      <h3>GoTo Connect -- Telefonia</h3>
+      <ul><li><strong>Primeiro contato</strong> com lead (&lt; 5 min)</li><li>Fale de pe ou sentado com postura ereta</li><li>Sorria ao falar -- o cliente escuta o sorriso</li><li>Tenha o CRM aberto durante a ligacao</li><li>TODAS as ligacoes sao gravadas (coaching)</li></ul>
+
+      <h3>Checklist</h3>
+      <ul class="checklist">
+        <li><input type="checkbox" id="c8_1" onchange="saveProgress()"><label for="c8_1">Sei quais campos preencher no Zoho CRM</label></li>
+        <li><input type="checkbox" id="c8_2" onchange="saveProgress()"><label for="c8_2">Entendi os stages do pipeline</label></li>
+        <li><input type="checkbox" id="c8_3" onchange="saveProgress()"><label for="c8_3">Sei quando usar WhatsApp vs Telefone</label></li>
+        <li><input type="checkbox" id="c8_4" onchange="saveProgress()"><label for="c8_4">Conheco as boas praticas do WATI</label></li>
+        <li><input type="checkbox" id="c8_5" onchange="saveProgress()"><label for="c8_5">Sei que todas as ligacoes sao gravadas</label></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODULE 9: FRASES PROIBIDAS -->
+<!-- ============================================================ -->
+<div class="module" id="mod9">
+  <div class="module-header" onclick="toggleModule(this)">
+    <h2>9. Frases Proibidas</h2>
+    <span class="arrow">&#9660;</span>
+  </div>
+  <div class="module-body">
+    <div class="module-content">
+      <div class="module-meta"><span>Dia 7</span><span>30 minutos</span></div>
+
+      <h3>O Que NUNCA Dizer (e o que dizer no lugar)</h3>
+      <div class="table-wrap"><table>
+        <tr><th style="background: rgba(248,81,73,0.15); width: 45%;">PROIBIDO</th><th style="background: rgba(63,185,80,0.15); width: 55%;">DIGA ISSO</th></tr>
+        <tr><td><strong>"E caro"</strong></td><td>"O investimento varia conforme a necessidade"</td></tr>
+        <tr><td><strong>"Depende"</strong></td><td>"Nosso especialista vai analisar e dar resposta exata"</td></tr>
+        <tr><td><strong>"Vou ver e te retorno"</strong></td><td>"Vou anotar e nosso especialista te liga ate [HORA]"</td></tr>
+        <tr><td><strong>"Nao sei"</strong></td><td>"Vou pedir pro especialista te explicar em detalhes"</td></tr>
+        <tr><td><strong>"So um minutinho"</strong></td><td>"Me da um instante que vou consultar"</td></tr>
+        <tr><td><strong>"Voce nao quer..."</strong></td><td>"Voce gostaria de..."</td></tr>
+        <tr><td><strong>"Infelizmente"</strong></td><td>"O que posso fazer e..."</td></tr>
+        <tr><td><strong>"Esse e o mais barato"</strong></td><td>"Esse e o que melhor atende sua necessidade"</td></tr>
+      </table></div>
+
+      <div class="alert alert-danger"><strong>Por que isso importa?</strong> Cada frase proibida transmite inseguranca. As alternativas transmitem <strong>controle, especialidade e cuidado</strong>.</div>
+
+      <h3>Checklist</h3>
+      <ul class="checklist">
+        <li><input type="checkbox" id="c9_1" onchange="saveProgress()"><label for="c9_1">Li a tabela completa de frases proibidas</label></li>
+        <li><input type="checkbox" id="c9_2" onchange="saveProgress()"><label for="c9_2">Pratiquei as alternativas em voz alta</label></li>
+        <li><input type="checkbox" id="c9_3" onchange="saveProgress()"><label for="c9_3">Entendi POR QUE cada frase e proibida</label></li>
+        <li><input type="checkbox" id="c9_4" onchange="saveProgress()"><label for="c9_4">Me gravei praticando e ouvi a gravacao</label></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODULE 10: AGUA DE POCO -->
+<!-- ============================================================ -->
+<div class="module" id="mod10">
+  <div class="module-header" onclick="toggleModule(this)">
+    <h2>10. Agua de Poco -- Guia Completo</h2>
+    <span class="arrow">&#9660;</span>
+  </div>
+  <div class="module-body">
+    <div class="module-content">
+
+      <div class="alert alert-danger"><strong>REGRA #1: NUNCA CONFUNDIR PRODUTOS</strong><ul><li><strong>Iron Free</strong> = SOMENTE para ferro e manganes (agua amarelada/vermelha)</li><li><strong>Scale Stop</strong> = SOMENTE para calcario e dureza (manchas brancas)</li><li><strong>Filtro de Entrada</strong> = para sedimentos, barro, cloro (agua de estacao)</li><li>NUNCA indicar Iron Free pra calcario!</li><li>NUNCA indicar Scale Stop pra ferro!</li></ul></div>
+
+      <h3>Problemas Comuns de Agua de Poco</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Sintoma</th><th>Problema</th><th>Produto</th></tr>
+        <tr><td>Agua amarelada/vermelha</td><td>Ferro/Manganes</td><td><strong>Iron Free</strong></td></tr>
+        <tr><td>Mancha roupa de marrom</td><td>Ferro</td><td><strong>Iron Free</strong></td></tr>
+        <tr><td>Manchas BRANCAS no box</td><td>Calcario/Dureza</td><td><strong>Scale Stop</strong></td></tr>
+        <tr><td>Chuveiro entope</td><td>Calcario</td><td><strong>Scale Stop</strong></td></tr>
+        <tr><td>Agua com areia/turva</td><td>Sedimentos</td><td><strong>Pre-filtro</strong></td></tr>
+        <tr><td>Cheiro de ovo podre</td><td>Enxofre (H2S)</td><td><strong>Iron Free</strong></td></tr>
+      </table></div>
+
+      <h3>Tabela Iron Free</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Modelo</th><th>Vazao</th><th>Indicacao</th><th>Preco</th></tr>
+        <tr><td>Iron Free 1000</td><td>Ate 1.000 L/h</td><td>Residencial pequeno</td><td>R$5.990</td></tr>
+        <tr><td>Iron Free 1500</td><td>Ate 1.500 L/h</td><td>Residencial medio</td><td>R$7.990</td></tr>
+        <tr><td>Iron Free 2000</td><td>Ate 2.000 L/h</td><td>Residencial grande/chacara</td><td>R$9.990</td></tr>
+        <tr><td>Iron Free 3000</td><td>Ate 3.000 L/h</td><td>Sitio/condominio pequeno</td><td>R$12.990</td></tr>
+        <tr><td>Iron Free 5000</td><td>Ate 5.000 L/h</td><td>Condominio/empresa</td><td>R$17.575</td></tr>
+      </table></div>
+
+      <h3>Combinacoes Comuns</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Cenario</th><th>Solucao</th><th>Faixa</th></tr>
+        <tr><td>Poco com ferro</td><td>Iron Free</td><td>R$5.990-17.575</td></tr>
+        <tr><td>Poco com calcario</td><td>Scale Stop</td><td>R$4.980-5.590</td></tr>
+        <tr><td>Poco com ferro + calcario</td><td>Iron Free + Scale Stop</td><td>R$10.970+</td></tr>
+        <tr><td>Poco com areia + ferro</td><td>Pre-filtro + Iron Free</td><td>R$7.490+</td></tr>
+      </table></div>
+
+      <h3>Visita Tecnica -- R$800</h3>
+      <div class="card"><p><strong>Quando:</strong> Lead com agua de poco, sem analise, ate 250km de SJC</p><p><strong>Inclui:</strong> Coleta + analise de ferro/manganes no local</p><p><strong>Se fechar:</strong> Valor ABONADO (gratis!)</p><p><strong>Acima 250km:</strong> +R$200/100km</p></div>
+
+      <h3>Teste de Vazao Caseiro</h3>
+      <div class="card"><p>"Pega um balde de 20L. Abre a torneira direto da bomba. Cronometra quanto tempo leva pra encher."</p><p><strong>Exemplo:</strong> 20L em 2 min = 10L/min = 600L/hora</p></div>
+
+      <h3>Perguntas Obrigatorias</h3>
+      <ul class="checklist">
+        <li><input type="checkbox" id="p10_1" onchange="saveProgress()"><label for="p10_1">"Qual o problema com a agua?"</label></li>
+        <li><input type="checkbox" id="p10_2" onchange="saveProgress()"><label for="p10_2">"Agua amarelada, vermelha, cheiro, mancha roupa?"</label></li>
+        <li><input type="checkbox" id="p10_3" onchange="saveProgress()"><label for="p10_3">"Tem manchas brancas no box/torneiras?" (calcario)</label></li>
+        <li><input type="checkbox" id="p10_4" onchange="saveProgress()"><label for="p10_4">"Usa so poco ou tem Sabesp tambem?" (CRITICO)</label></li>
+        <li><input type="checkbox" id="p10_5" onchange="saveProgress()"><label for="p10_5">"Ja fez analise de agua?"</label></li>
+        <li><input type="checkbox" id="p10_6" onchange="saveProgress()"><label for="p10_6">"Sabe a vazao da bomba?"</label></li>
+        <li><input type="checkbox" id="p10_7" onchange="saveProgress()"><label for="p10_7">"Quantos pontos de uso?"</label></li>
+        <li><input type="checkbox" id="p10_8" onchange="saveProgress()"><label for="p10_8">"Cidade e CEP?"</label></li>
+        <li><input type="checkbox" id="p10_9" onchange="saveProgress()"><label for="p10_9">"Residencia ou empresa?"</label></li>
+        <li><input type="checkbox" id="p10_10" onchange="saveProgress()"><label for="p10_10">"Prazo pra resolver?"</label></li>
+      </ul>
+
+      <h3>Dados de Vendas -- Poco</h3>
+      <div class="card" style="border-left: 3px solid var(--success);"><p>Ticket medio: <strong>R$8.810</strong> | Maximo: <strong>R$56.000</strong></p><p>Google Ads: 48% | Facebook: 30%</p><p>Closers especialistas: Italo (R$13.335) e Gabriel Ferreira (R$10.007)</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODULE 11: VENDAS PARA CONDOMINIOS -->
+<!-- ============================================================ -->
+<div class="module" id="mod11">
+  <div class="module-header" onclick="toggleModule(this)">
+    <h2>11. Vendas para Condominios</h2>
+    <span class="arrow">&#9660;</span>
+  </div>
+  <div class="module-body">
+    <div class="module-content">
+
+      <div class="card" style="border-left: 3px solid var(--success);">
+        <h3 style="border: none; padding: 0; margin: 0 0 8px 0;">Por que Condominio e especial?</h3>
+        <p>Ticket medio: <strong>R$5.932</strong> | Maximo: <strong>R$62.000</strong></p>
+        <p>Google Ads: 72,5% dos leads | Conversao: 11,5%</p>
+        <p>Venda B2B disfarçada de B2C -- tem assembleia, sindico, administradora</p>
+      </div>
+
+      <h3>Quem Decide a Compra</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Quem</th><th>% dos leads</th><th>Poder de Decisao</th></tr>
+        <tr><td>Sindico morador</td><td>60%</td><td>Alto (decide rapido)</td></tr>
+        <tr><td>Morador comum</td><td>25%</td><td>Baixo (precisa falar com sindico)</td></tr>
+        <tr><td>Administradora</td><td>10%</td><td>Medio (faz cotacao)</td></tr>
+        <tr><td>Zelador</td><td>5%</td><td>Baixo (identifica problema)</td></tr>
+      </table></div>
+
+      <div class="alert alert-warning"><strong>Regra de Ouro:</strong><ul><li>Ate R$3.000 -- sindico geralmente aprova sozinho</li><li>Acima R$3.000 -- quase sempre precisa de assembleia</li><li>SEMPRE pergunte: "Voce decide sozinho ou precisa de assembleia?"</li></ul></div>
+
+      <h3>Produtos para Condominio</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Modelo</th><th>Vazao</th><th>Indicacao</th><th>Faixa</th></tr>
+        <tr><td>Light Filter 1000</td><td>1.000 L/h</td><td>Condo pequeno (ate 20 unid)</td><td>R$1.890-2.490</td></tr>
+        <tr><td>American Filter 2000</td><td>2.000 L/h</td><td>Condo medio (20-50 unid)</td><td>R$2.990-3.590</td></tr>
+        <tr><td>American Filter Inox 3000</td><td>3.000 L/h</td><td>Condo grande (50-100 unid)</td><td>R$3.990-5.590</td></tr>
+        <tr><td>Filtrali Industrial</td><td>10.000 L/h</td><td>Condo clube/grande porte</td><td>R$8.000+</td></tr>
+      </table></div>
+
+      <h3>Argumento Valor Diluido</h3>
+      <div class="card"><p>"Em um condominio de 50 apartamentos, o filtro de R$3.990 sai <strong>R$79,80 por apartamento</strong>. E o preco de um galao de agua mineral. Mas resolve o problema pra sempre."</p></div>
+
+      <h3>Checklist Qualificacao Condominio</h3>
+      <ul class="checklist">
+        <li><input type="checkbox" id="p11_1" onchange="saveProgress()"><label for="p11_1">Identificou se e sindico, morador ou administradora?</label></li>
+        <li><input type="checkbox" id="p11_2" onchange="saveProgress()"><label for="p11_2">Perguntou quantas unidades/apartamentos?</label></li>
+        <li><input type="checkbox" id="p11_3" onchange="saveProgress()"><label for="p11_3">Tipo de agua (rua ou poco)?</label></li>
+        <li><input type="checkbox" id="p11_4" onchange="saveProgress()"><label for="p11_4">Qual o problema (moradores reclamam de que)?</label></li>
+        <li><input type="checkbox" id="p11_5" onchange="saveProgress()"><label for="p11_5">Decide sozinho ou precisa de assembleia?</label></li>
+        <li><input type="checkbox" id="p11_6" onchange="saveProgress()"><label for="p11_6">Dimensionou o filtro correto?</label></li>
+        <li><input type="checkbox" id="p11_7" onchange="saveProgress()"><label for="p11_7">Mandou proposta formal (PDF)?</label></li>
+        <li><input type="checkbox" id="p11_8" onchange="saveProgress()"><label for="p11_8">Agendou follow-up semanal?</label></li>
+        <li><input type="checkbox" id="p11_9" onchange="saveProgress()"><label for="p11_9">Ofereceu material pra assembleia?</label></li>
+        <li><input type="checkbox" id="p11_10" onchange="saveProgress()"><label for="p11_10">Registrou com tag "condominio" no CRM?</label></li>
+      </ul>
+
+      <h3>Objecoes Condominio</h3>
+      <div class="card"><p><strong>"Vou pedir 3 orcamentos"</strong></p><p>"Perfeito! Compare: material, garantia, elemento filtrante e pos-venda. Nao so preco."</p></div>
+      <div class="card"><p><strong>"A assembleia nao aprovou"</strong></p><p>"Posso preparar uma apresentacao pra proxima assembleia. Ja ajudamos varios condominios a aprovar."</p></div>
+      <div class="card"><p><strong>"E muito caro"</strong></p><p>"Quanto o condominio gasta por ano com limpeza de caixa dagua? O filtro elimina isso e se paga em menos de 2 anos."</p></div>
+
+      <div class="alert alert-danger"><strong>Erros que Queimam a Venda:</strong><ul><li>Tratar como venda residencial (condo tem burocracia!)</li><li>Desistir apos 2 semanas (condo leva 30-60 dias!)</li><li>Falar so com morador (sindico que compra!)</li><li>Nao mandar proposta formal</li><li>Ignorar a administradora</li><li>Follow-up por 60 dias, nao 7!</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CERTIFICATE -->
+<!-- ============================================================ -->
+<div id="cert">
+  <div class="certificate">
+    <h2>Certificado de Conclusao</h2>
+    <p>Certificamos que</p>
+    <p class="name"><%= user.name.toUpperCase() %></p>
+    <p>concluiu com sucesso o <strong>Programa de Onboarding Comercial</strong><br>da <strong>Tudo de Filtro</strong>, compreendendo 11 modulos de treinamento.</p>
+    <p style="margin-top: 24px; font-size: 0.85rem; color: var(--text-muted);">
+      <span id="cert-progress">Progresso: 0%</span><br>
+      <span id="cert-status" style="color: var(--warning);">Complete todos os checklists para validar o certificado.</span>
+    </p>
+    <p style="margin-top: 16px; font-size: 0.9rem; color: var(--text-muted);" id="cert-date"></p>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// MODULE TOGGLE
+function toggleModule(header) {
+  const mod = header.parentElement;
+  mod.classList.toggle('open');
+}
+
+// QUIZ CHECKING
+function checkQuiz(btn) {
+  const question = btn.closest('.quiz-question');
+  const correct = question.getAttribute('data-correct');
+  const selected = question.querySelector('input:checked');
+  const answers = question.querySelectorAll('.quiz-answer');
+  answers.forEach(a => a.style.display = 'none');
+  if (!selected) { alert('Selecione uma opcao antes de verificar.'); return; }
+  if (selected.value === correct) {
+    question.querySelector('.quiz-answer.correct').style.display = 'block';
+  } else {
+    question.querySelector('.quiz-answer.incorrect').style.display = 'block';
+  }
+}
+
+// PROGRESS TRACKING
+function saveProgress() {
+  const checkboxes = document.querySelectorAll('.checklist input[type="checkbox"]');
+  const state = {};
+  let checked = 0;
+  let total = checkboxes.length;
+  checkboxes.forEach(cb => {
+    state[cb.id] = cb.checked;
+    if (cb.checked) checked++;
+  });
+  localStorage.setItem('tdf-onboarding-progress-<%= user.username %>', JSON.stringify(state));
+  updateProgressBar(checked, total);
+}
+
+function loadProgress() {
+  const saved = localStorage.getItem('tdf-onboarding-progress-<%= user.username %>');
+  if (!saved) return;
+  const state = JSON.parse(saved);
+  const checkboxes = document.querySelectorAll('.checklist input[type="checkbox"]');
+  let checked = 0;
+  let total = checkboxes.length;
+  checkboxes.forEach(cb => {
+    if (state[cb.id]) { cb.checked = true; checked++; }
+  });
+  updateProgressBar(checked, total);
+}
+
+function updateProgressBar(checked, total) {
+  const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('cert-progress').textContent = 'Progresso: ' + pct + '%';
+  const status = document.getElementById('cert-status');
+  if (pct === 100) {
+    status.textContent = 'CERTIFICADO VALIDADO -- Parabens!';
+    status.style.color = 'var(--success)';
+    document.getElementById('cert-date').textContent = 'Data: ' + new Date().toLocaleDateString('pt-BR');
+  } else {
+    status.textContent = 'Complete todos os checklists para validar o certificado.';
+    status.style.color = 'var(--warning)';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadProgress();
+  const firstMod = document.querySelector('.module');
+  if (firstMod) firstMod.classList.add('open');
+});
+</script>
+
+</body>
+</html>

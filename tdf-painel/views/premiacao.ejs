@@ -1,0 +1,145 @@
+<% var pageTitle = 'Premiação v7'; var activePage = 'premiacao'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+<style>
+.pv-wrap{max-width:1000px;margin:0 auto;padding:0 16px 80px;color:#c9d4de}
+.pv-h1{color:var(--text);font-size:1.6rem;margin:16px 0 2px}
+.pv-sub{color:#8899AA;margin:0 0 8px}
+.pv-card{background:var(--bg);border:1px solid #1f2b3a;border-radius:14px;padding:18px;margin:16px 0}
+.pv-card h2{color:#00AAFF;font-size:1.2rem;margin:0 0 12px;border-left:3px solid #00AAFF;padding-left:10px}
+.pv-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.pv-grid{grid-template-columns:1fr}}
+.pv-lbl{font-size:.82rem;color:#8899AA;display:block;margin-bottom:4px}
+.pv-in{width:100%;background:#0b1220;border:1px solid #2a3a4d;color:#dbe7f0;border-radius:9px;padding:10px 12px;font-family:inherit;font-size:.95rem}
+.pv-out{margin-top:14px}
+.pv-row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#0b1220;border:1px solid #1f2b3a;border-radius:10px;padding:11px 13px;margin:6px 0;flex-wrap:wrap}
+.pv-row .nm{color:var(--text)}
+.pv-row .vl{font-weight:800;color:#3FB950;font-variant-numeric:tabular-nums}
+.pv-total{background:linear-gradient(100deg,#0a1a2e,#12283d);border:1px solid #00AAFF55;border-radius:12px;padding:14px;margin-top:10px;font-size:1.05rem;color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.pv-total b{font-size:1.5rem;color:#3FB950}
+.pv-badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px}
+.pv-normal{background:rgba(0,170,255,.15);color:#00AAFF;border:1px solid #00AAFF44}
+.pv-dif{background:rgba(163,113,247,.15);color:#c084fc;border:1px solid #A371F744}
+.pv-table{width:100%;border-collapse:collapse;font-size:.86rem;margin-top:6px}
+.pv-table th,.pv-table td{border:1px solid #1f2b3a;padding:8px 10px;text-align:left}
+.pv-table th{background:#0b1725;color:#00AAFF}
+.pv-callout{border-radius:10px;padding:11px 13px;margin:10px 0;font-size:.86rem}
+.pv-warn{background:rgba(245,158,11,.08);border:1px solid #F59E0B55;color:#f0d9a8}
+.pv-danger{background:rgba(239,68,68,.08);border:1px solid #ef444455;color:#f2c4c4}
+.pv-info{background:rgba(0,170,255,.06);border:1px solid #00AAFF44;color:#bfe3fb}
+.pv-list{margin:6px 0;padding-left:18px}.pv-list li{margin:4px 0}
+.pv-cl{border-left:2px solid #A371F7;padding:4px 0 4px 10px;margin:8px 0}
+.pv-cl b{color:#c084fc}
+</style>
+<div class="pv-wrap">
+  <h1 class="pv-h1">🏆 <%= META.titulo %></h1>
+  <p class="pv-sub"><%= META.aplicavel %> · versão <%= META.versao %></p>
+  <div class="pv-callout pv-info">⚖️ <b>Natureza jurídica:</b> <%= META.natureza %> <span style="color:#8899AA">(<%= META.aviso %>)</span></div>
+
+  <!-- ============ SIMULADOR ============ -->
+  <div class="pv-card">
+    <h2>🧮 Simulador de premiação (entrada manual)</h2>
+    <div class="pv-grid">
+      <div><label class="pv-lbl">Faturamento validado no mês (R$)</label><input id="pvFat" class="pv-in" type="number" min="0" step="1000" value="90000"></div>
+      <div><label class="pv-lbl">Mix Alto Ticket (HT) — % do faturamento</label><input id="pvHt" class="pv-in" type="number" min="0" max="100" value="30"></div>
+      <div><label class="pv-lbl">Válvulas automáticas vendidas (un)</label><input id="pvValv" class="pv-in" type="number" min="0" value="0"></div>
+      <div><label class="pv-lbl">Instalações cobradas à parte (un)</label><input id="pvInst" class="pv-in" type="number" min="0" value="0"></div>
+      <div><label class="pv-lbl">Combos completos (un)</label><input id="pvCombo" class="pv-in" type="number" min="0" value="0"></div>
+    </div>
+    <div class="pv-out" id="pvOut"></div>
+    <div class="pv-callout pv-warn" style="margin-top:6px">⚠️ Entre o piso e o teto, a faixa exata do prêmio de régua está <b>pendente de confirmação v7</b> — o simulador mostra o mínimo garantido (piso) e sinaliza. Válvula/instalação usam as faixas 5/10/15 (aplica a maior atingida). Combo limitado a 6/mês.</div>
+  </div>
+
+  <!-- ============ RÉGUAS ============ -->
+  <div class="pv-card">
+    <h2>📊 Régua principal (por faturamento validado)</h2>
+    <% [REGUAS.normal, REGUAS.diferenciada].forEach(function(r){ %>
+      <h3 style="color:var(--text);margin:14px 0 4px"><%= r.nome %> <span class="pv-badge <%= r.id==='normal'?'pv-normal':'pv-dif' %>"><%= r.condicao %></span></h3>
+      <div style="overflow-x:auto"><table class="pv-table">
+        <thead><tr><th>Faturamento validado</th><th>Prêmio</th></tr></thead>
+        <tbody>
+          <% r.faixas.forEach(function(f,i){ %>
+            <tr><td>R$ <%= f.fat.toLocaleString('pt-BR') %> <span style="color:#8899AA">(<%= f.label %>)</span></td><td><b style="color:#3FB950">R$ <%= f.premio.toLocaleString('pt-BR') %></b></td></tr>
+            <% if(i===0 && r.intermediariasPendentes){ %><tr><td colspan="2" style="color:#F59E0B">⏳ Faixas intermediárias — pendentes de confirmação v7</td></tr><% } %>
+          <% }) %>
+        </tbody>
+      </table></div>
+    <% }) %>
+    <div class="pv-callout pv-info" style="margin-top:8px"><b>Alto Ticket (HT):</b> <%= HT_PRODUTOS.join(', ') %> e demais assim classificados na tabela comercial vigente (lista a fechar).</div>
+  </div>
+
+  <!-- ============ EXCELÊNCIA ============ -->
+  <div class="pv-card">
+    <h2>⭐ Programa de Excelência em Mix (cumulativo à régua)</h2>
+    <div class="pv-callout pv-danger">🔒 <b>Elegibilidade:</b> <%= EXCELENCIA.condicaoGlobal %></div>
+    <div style="overflow-x:auto"><table class="pv-table">
+      <thead><tr><th>Modalidade</th><th>5 un</th><th>10 un</th><th>15 un</th></tr></thead>
+      <tbody><% EXCELENCIA.modalidades.forEach(function(m){ %><tr><td><b><%= m.nome %></b></td><% m.tiers.forEach(function(t){ %><td>R$ <%= t.premio.toLocaleString('pt-BR') %></td><% }) %></tr><% }) %></tbody>
+    </table></div>
+    <div class="pv-callout pv-info" style="margin-top:8px"><b>Combo Completo:</b> R$ <%= EXCELENCIA.combo.premioUnit %> por combo · teto <%= EXCELENCIA.combo.teto %>/mês (máx R$ <%= EXCELENCIA.combo.tetoValor.toLocaleString('pt-BR') %>). <%= EXCELENCIA.combo.definicao %></div>
+    <div style="color:#8899AA;font-size:.85rem;margin-top:6px"><%= EXCELENCIA.cumulativo %></div>
+  </div>
+
+  <!-- ============ APURAÇÃO ============ -->
+  <div class="pv-card">
+    <h2>📋 Regras de apuração e pagamento</h2>
+    <b style="color:var(--text)">Venda válida (requisitos cumulativos)</b>
+    <ul class="pv-list"><% APURACAO.vendaValida.forEach(function(x){ %><li><%= x %></li><% }) %></ul>
+    <div class="pv-callout pv-warn"><b>Vendas ≥ R$ 100.000:</b> <%= APURACAO.altoValor %></div>
+    <div class="pv-callout pv-danger"><b>Estornos posteriores:</b> <%= APURACAO.estornos %></div>
+  </div>
+
+  <!-- ============ CLÁUSULAS + PENDÊNCIAS ============ -->
+  <div class="pv-card">
+    <h2>📜 Cláusulas oficiais</h2>
+    <% CLAUSULAS.forEach(function(c){ %><div class="pv-cl"><b>Cláusula <%= c.id %> — <%= c.titulo %>.</b> <%= c.texto %></div><% }) %>
+    <h2 style="margin-top:16px">⏳ Pendências desta versão (antes da publicação oficial)</h2>
+    <ul class="pv-list"><% PENDENCIAS.forEach(function(p){ %><li style="color:#F59E0B"><%= p %></li><% }) %></ul>
+  </div>
+</div>
+
+<script>
+(function(){
+  var REGUAS = <%- JSON.stringify(REGUAS) %>;
+  var EXC = <%- JSON.stringify(EXCELENCIA) %>;
+  function brl(v){ return 'R$ '+Number(v).toLocaleString('pt-BR'); }
+  function tierPremio(count, tiers){ var p=0; tiers.forEach(function(t){ if(count>=t.un) p=t.premio; }); return p; }
+  function calc(){
+    var fat=+document.getElementById('pvFat').value||0;
+    var ht=Math.max(0,Math.min(100,+document.getElementById('pvHt').value||0));
+    var qv=+document.getElementById('pvValv').value||0, qi=+document.getElementById('pvInst').value||0, qc=+document.getElementById('pvCombo').value||0;
+    var reg = ht>=51 ? REGUAS.diferenciada : REGUAS.normal;
+    var out='', reguaPremio=0, elegivel=false, reguaMsg='';
+    out+='<div class="pv-row"><span class="nm">Régua aplicável</span><span class="vl">'+reg.nome+' <span class="pv-badge '+(reg.id==='normal'?'pv-normal':'pv-dif')+'">HT '+ht+'%</span></span></div>';
+    if(fat < reg.piso){
+      elegivel=false; reguaPremio=0;
+      reguaMsg='<div class="pv-callout pv-danger">Faturamento '+brl(fat)+' está ABAIXO do piso de '+brl(reg.piso)+' → <b>sem prêmio de régua e sem Excelência</b> (Cláusula 6.2.2).</div>';
+    } else if(fat >= reg.teto){
+      elegivel=true; reguaPremio=reg.premioTeto;
+      reguaMsg='<div class="pv-callout pv-info">Teto validado atingido ('+brl(reg.teto)+'+).</div>';
+    } else {
+      elegivel=true; reguaPremio=reg.premioPiso;
+      reguaMsg='<div class="pv-callout pv-warn">Elegível ✓. Prêmio mínimo garantido '+brl(reg.premioPiso)+' (piso). A faixa exata para '+brl(fat)+' está <b>pendente de confirmação v7</b> — o valor final pode ser maior.</div>';
+    }
+    out+='<div class="pv-row"><span class="nm">Prêmio de régua'+(elegivel&&fat<reg.teto?' (mínimo/piso)':'')+'</span><span class="vl">'+brl(reguaPremio)+'</span></div>'+reguaMsg;
+    // Excelência (gated)
+    var exc=0, pv=0, pi=0, pc=0;
+    if(elegivel){
+      pv=tierPremio(qv, EXC.modalidades[0].tiers);
+      pi=tierPremio(qi, EXC.modalidades[1].tiers);
+      pc=Math.min(qc, EXC.combo.teto)*EXC.combo.premioUnit;
+      exc=pv+pi+pc;
+      out+='<div class="pv-row"><span class="nm">Excelência — Válvula ('+qv+' un)</span><span class="vl">'+brl(pv)+'</span></div>';
+      out+='<div class="pv-row"><span class="nm">Excelência — Instalação ('+qi+' un)</span><span class="vl">'+brl(pi)+'</span></div>';
+      out+='<div class="pv-row"><span class="nm">Excelência — Combo ('+Math.min(qc,EXC.combo.teto)+'/'+EXC.combo.teto+' un)</span><span class="vl">'+brl(pc)+'</span></div>';
+    } else if(qv+qi+qc>0){
+      out+='<div class="pv-callout pv-danger">Você lançou válvulas/instalações/combos, mas <b>sem atingir o piso da régua não há prêmio de Excelência</b> (Cláusula 6.2.1).</div>';
+    }
+    var total=reguaPremio+exc;
+    out+='<div class="pv-total"><span>Total estimado no mês</span><b>'+brl(total)+'</b></div>';
+    if(elegivel && fat<reg.teto) out+='<div style="color:#8899AA;font-size:.82rem;margin-top:6px">* "Estimado" porque a faixa intermediária de régua ainda é pendente. Válvula/instalação/combo já são definitivos.</div>';
+    document.getElementById('pvOut').innerHTML=out;
+  }
+  ['pvFat','pvHt','pvValv','pvInst','pvCombo'].forEach(function(id){ document.getElementById(id).addEventListener('input',calc); });
+  calc();
+})();
+</script>

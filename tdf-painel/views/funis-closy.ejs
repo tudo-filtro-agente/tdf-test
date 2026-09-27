@@ -1,0 +1,270 @@
+<% const activePage = 'manutencao'; const pageTitle = 'Funis CRM Closy'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.fl-wrap{max-width:1300px;margin:0 auto;padding:18px 24px 80px}
+.fl-h{font-size:22px;color:var(--text);margin:0 0 4px;font-weight:800}
+.fl-sub{color:var(--text-muted);font-size:13px;margin:0 0 14px}
+.fl-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+.fl-bar a{color:#7cb9f5;text-decoration:none;font-size:12px}
+.fl-bar a:hover{text-decoration:underline}
+
+.fl-grid{display:grid;grid-template-columns:280px 1fr;gap:14px}
+@media(max-width:900px){.fl-grid{grid-template-columns:1fr}}
+
+.fl-list{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:8px;max-height:calc(100vh - 200px);overflow-y:auto}
+.fl-list h3{margin:0;padding:8px 10px;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border)}
+.fl-item{padding:10px 12px;border-radius:6px;cursor:pointer;border:1px solid transparent;transition:all .15s;margin-top:4px}
+.fl-item:hover{background:var(--bg-card);border-color:#222}
+.fl-item.active{background:#1f6feb22;border-color:#1f6feb}
+.fl-item .nome{color:var(--text);font-weight:700;font-size:13px}
+.fl-item .desc{color:var(--text-muted);font-size:10px;margin-top:3px;line-height:1.3}
+.fl-item .badge{display:inline-block;background:#222;color:#ddd;font-size:9px;padding:2px 6px;border-radius:8px;margin-top:5px;text-transform:uppercase;font-weight:700}
+.fl-item.template .badge{background:#a371f7;color:#fff}
+
+.fl-edit{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:18px}
+.fl-edit h3{margin:0 0 14px;color:var(--text);font-size:15px;display:flex;align-items:center;gap:10px}
+.fl-edit label{display:block;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin:10px 0 4px;font-weight:700}
+.fl-edit input,.fl-edit select,.fl-edit textarea{width:100%;background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit}
+.fl-edit textarea{resize:vertical;min-height:50px}
+
+.fl-etapas{margin-top:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px}
+.fl-etapas h4{margin:0 0 10px;color:var(--text);font-size:13px;display:flex;align-items:center;gap:8px}
+.fl-etapas h4 button{margin-left:auto;background:#1f6feb;border:none;color:#fff;padding:5px 12px;border-radius:5px;font-size:11px;cursor:pointer;font-weight:700}
+.fl-etapa{display:grid;grid-template-columns:30px 70px 90px 1fr 70px 30px;gap:6px;align-items:center;padding:6px;border-bottom:1px solid #1a1a1a;font-size:12px}
+.fl-etapa input{padding:5px 7px !important;font-size:12px !important}
+.fl-etapa .move{cursor:grab;color:var(--text-muted);text-align:center}
+.fl-etapa .del{background:transparent;color:#f87171;border:1px solid #ef4444;border-radius:4px;padding:3px 6px;font-size:10px;cursor:pointer}
+
+.fl-acts{margin-top:18px;display:flex;gap:8px;justify-content:flex-end}
+.fl-acts button{padding:9px 16px;font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;border:1px solid}
+.fl-acts .save{background:#22c55e;color:#000;border-color:#22c55e}
+.fl-acts .save:hover{background:#16a34a}
+.fl-acts .clone{background:#1f6feb;color:#fff;border-color:#1f6feb}
+.fl-acts .del{background:transparent;color:#f87171;border-color:#ef4444}
+.fl-acts .new{background:#a371f7;color:#fff;border-color:#a371f7}
+
+.fl-empty{padding:60px 20px;text-align:center;color:var(--text-muted);font-size:13px}
+</style>
+
+<div class="fl-wrap">
+  <h1 class="fl-h">🪜 Funis Customizados · CRM Closy</h1>
+  <p class="fl-sub">Crie funis específicos por tipo de produto (bebedouro, iron free, filtro de entrada). Cada funil tem suas próprias etapas. <strong>Toda etapa precisa ter <code>finalizado_ganho</code> e <code>finalizado_perdido</code></strong> pra agregação funcionar.</p>
+
+  <div class="fl-bar">
+    <a href="/manutencao">← Voltar ao CRM Closy</a>
+    <span style="flex:1"></span>
+    <button class="new" onclick="novoFunil()" style="padding:7px 14px;font-size:11px;font-weight:700;border-radius:5px;cursor:pointer;border:none;background:#a371f7;color:#fff">+ Novo Funil</button>
+  </div>
+
+  <div class="fl-grid">
+    <div class="fl-list">
+      <h3>Funis cadastrados</h3>
+      <div id="lista"></div>
+    </div>
+
+    <div class="fl-edit" id="editor">
+      <div class="fl-empty">Selecione um funil à esquerda ou clique em <strong>+ Novo Funil</strong></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let _FUNIS = [];
+let _TEMPLATES = [];
+let _ATIVO = null;
+
+async function carregar(){
+  const r = await fetch('/manutencao/funis');
+  const d = await r.json();
+  _FUNIS = d.funis || [];
+  _TEMPLATES = d.templates || [];
+  renderLista();
+  if (_ATIVO) {
+    const f = _FUNIS.find(x => x.id === _ATIVO);
+    if (f) renderEditor(f);
+  }
+}
+
+function renderLista(){
+  const html = _FUNIS.map(f => `
+    <div class="fl-item ${f.id===_ATIVO?'active':''} ${f.isDefault?'template':''}" onclick="selecionar('${f.id}')">
+      <div class="nome">${f.nome}</div>
+      <div class="desc">${f.descricao||''}</div>
+      <span class="badge">${f.produtoCategoria||'qualquer'}</span>
+      <span class="badge" style="background:#1f6feb;color:#fff">${(f.etapas||[]).length} etapas</span>
+      ${f.isDefault?'<span class="badge">PADRÃO</span>':''}
+    </div>
+  `).join('');
+  document.getElementById('lista').innerHTML = html || '<div class="fl-empty" style="padding:30px">Nenhum funil ainda</div>';
+}
+
+function selecionar(id){
+  _ATIVO = id;
+  const f = _FUNIS.find(x => x.id === id);
+  if (!f) return;
+  renderLista();
+  renderEditor(f);
+}
+
+function renderEditor(f){
+  const isDefault = f.isDefault;
+  const html = `
+    <h3>${isDefault?'🔒 ':''}${f.nome} <span style="color:#666;font-size:11px;font-weight:400">(${f.id})</span></h3>
+    <label>ID interno (não muda depois)</label>
+    <input type="text" id="f-id" value="${f.id}" ${f.id==='default'?'disabled':''} placeholder="ex: bebedouro_b2b">
+    <label>Nome de exibição</label>
+    <input type="text" id="f-nome" value="${f.nome||''}">
+    <label>Categoria de produto (qual produto usa esse funil)</label>
+    <input type="text" id="f-cat" value="${f.produtoCategoria||''}" placeholder="bebedouro / iron_free / filtro_entrada / qualquer">
+    <label>Descrição</label>
+    <textarea id="f-desc">${f.descricao||''}</textarea>
+
+    <div class="fl-etapas">
+      <h4>Etapas (ordem é a ordem do kanban) <button onclick="addEtapa()">+ Etapa</button></h4>
+      <div id="etapas-list">
+        ${(f.etapas||[]).map((e, i) => etapaHTML(e, i)).join('')}
+      </div>
+    </div>
+
+    <div class="fl-acts">
+      ${!isDefault?`<button class="del" onclick="deletarFunil('${f.id}')">🗑️ Deletar</button>`:''}
+      <button class="clone" onclick="clonarFunil()">📋 Clonar este funil</button>
+      <button class="save" onclick="salvarFunil()">💾 Salvar</button>
+    </div>
+  `;
+  document.getElementById('editor').innerHTML = html;
+}
+
+function etapaHTML(e, i){
+  return `
+    <div class="fl-etapa" data-idx="${i}">
+      <span class="move" title="reordenar (em breve)">≡</span>
+      <input type="text" value="${e.icon||'📌'}" onchange="updEtapa(${i},'icon',this.value)" maxlength="3">
+      <input type="color" value="${e.cor||'#5ba3f5'}" onchange="updEtapa(${i},'cor',this.value)" style="height:30px;padding:2px !important">
+      <input type="text" value="${e.label||''}" onchange="updEtapa(${i},'label',this.value)" placeholder="Label da etapa">
+      <input type="text" value="${e.id||''}" onchange="updEtapa(${i},'id',this.value)" placeholder="id_interno" style="font-family:monospace">
+      <button class="del" onclick="removerEtapa(${i})" title="Remover">×</button>
+    </div>
+  `;
+}
+
+function updEtapa(i, field, val){
+  const f = _FUNIS.find(x => x.id === _ATIVO);
+  if (!f || !f.etapas[i]) return;
+  f.etapas[i][field] = val;
+}
+
+function addEtapa(){
+  const f = _FUNIS.find(x => x.id === _ATIVO);
+  if (!f) return;
+  if (!Array.isArray(f.etapas)) f.etapas = [];
+  // Insere antes do finalizado_ganho se existir, senão no fim
+  const idxGanho = f.etapas.findIndex(e => e.id === 'finalizado_ganho');
+  const novaEtapa = { id:'etapa_'+Date.now(), label:'Nova etapa', icon:'📌', cor:'#5ba3f5' };
+  if (idxGanho >= 0) f.etapas.splice(idxGanho, 0, novaEtapa);
+  else f.etapas.push(novaEtapa);
+  renderEditor(f);
+}
+
+function removerEtapa(i){
+  const f = _FUNIS.find(x => x.id === _ATIVO);
+  if (!f) return;
+  const e = f.etapas[i];
+  if (e.id === 'finalizado_ganho' || e.id === 'finalizado_perdido') {
+    alert('Não dá pra remover finalizado_ganho ou finalizado_perdido — sistema usa pra agregação.');
+    return;
+  }
+  f.etapas.splice(i, 1);
+  renderEditor(f);
+}
+
+function novoFunil(){
+  const nome = prompt('Nome do novo funil:');
+  if (!nome) return;
+  const id = (prompt('ID interno (sem espaços, ex: bebedouro_b2b):') || '').trim().replace(/\s+/g,'_').toLowerCase();
+  if (!id) return;
+  if (_FUNIS.some(f => f.id === id)) { alert('Já existe um funil com esse ID'); return; }
+  // Pergunta se quer partir de um template
+  const opts = _TEMPLATES.map((t, i) => `${i+1}. ${t.nome}`).join('\n');
+  const escolha = prompt(`Quer partir de um template?\n\n${opts}\n\nDigite o número OU deixe em branco pra começar do zero:`);
+  let etapas;
+  if (escolha) {
+    const t = _TEMPLATES[parseInt(escolha) - 1];
+    etapas = t ? JSON.parse(JSON.stringify(t.etapas)) : [];
+  }
+  if (!etapas || !etapas.length) {
+    etapas = [
+      { id:'base_sem_contato',  label:'Base sem contato',  icon:'📋', cor:'#6b7280' },
+      { id:'em_andamento',      label:'Em andamento',      icon:'⚙️', cor:'#5ba3f5' },
+      { id:'finalizado_ganho',  label:'Finalizado Ganho',  icon:'🏆', cor:'#22c55e' },
+      { id:'finalizado_perdido',label:'Finalizado Perdido',icon:'❌', cor:'#ef4444' },
+    ];
+  }
+  const novo = { id, nome, descricao:'', produtoCategoria:'', etapas };
+  _FUNIS.push(novo);
+  _ATIVO = id;
+  renderLista();
+  renderEditor(novo);
+}
+
+function clonarFunil(){
+  const f = _FUNIS.find(x => x.id === _ATIVO);
+  if (!f) return;
+  const id = (prompt('ID do novo funil clonado:', f.id+'_copia') || '').trim().replace(/\s+/g,'_').toLowerCase();
+  if (!id) return;
+  if (_FUNIS.some(x => x.id === id)) { alert('Já existe'); return; }
+  const novo = JSON.parse(JSON.stringify(f));
+  novo.id = id;
+  novo.nome = (f.nome || '') + ' (cópia)';
+  novo.isDefault = false;
+  _FUNIS.push(novo);
+  _ATIVO = id;
+  renderLista();
+  renderEditor(novo);
+}
+
+async function salvarFunil(){
+  const f = _FUNIS.find(x => x.id === _ATIVO);
+  if (!f) return;
+  // Pega valores dos inputs
+  const idEl = document.getElementById('f-id');
+  if (idEl && !idEl.disabled) f.id = idEl.value.trim().replace(/\s+/g,'_').toLowerCase();
+  f.nome = document.getElementById('f-nome').value.trim();
+  f.produtoCategoria = document.getElementById('f-cat').value.trim();
+  f.descricao = document.getElementById('f-desc').value.trim();
+  // Valida finalização
+  const ids = (f.etapas||[]).map(e => e.id);
+  if (!ids.includes('finalizado_ganho') || !ids.includes('finalizado_perdido')) {
+    alert('Funil precisa ter as etapas finalizado_ganho e finalizado_perdido (mesmo que com label customizado).');
+    return;
+  }
+  try {
+    const r = await fetch('/manutencao/funis', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ funil: f }),
+    });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    _ATIVO = f.id;
+    await carregar();
+    alert('✅ Funil salvo!');
+  } catch(e){ alert(e.message); }
+}
+
+async function deletarFunil(id){
+  if (!confirm('Deletar este funil? Clientes que usavam vão voltar pro funil padrão.')) return;
+  try {
+    const r = await fetch('/manutencao/funis/'+encodeURIComponent(id), { method:'DELETE' });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    _ATIVO = null;
+    await carregar();
+    document.getElementById('editor').innerHTML = '<div class="fl-empty">Selecione um funil ou crie um novo</div>';
+  } catch(e){ alert(e.message); }
+}
+
+carregar();
+</script>
+
+</div></body></html>

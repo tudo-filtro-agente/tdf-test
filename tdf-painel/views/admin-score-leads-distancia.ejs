@@ -1,0 +1,197 @@
+<% const activePage = 'admin-score-leads'; const pageTitle = 'Score de Leads — Distância'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.lsd-wrap{max-width:1500px;margin:0 auto;padding:24px;color:var(--text)}
+.lsd-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #a371f7;border-radius:12px;padding:18px;margin-bottom:14px}
+.lsd-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.lsd-tab{background:transparent;color:#9ca3af;border:none;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;text-decoration:none}
+.lsd-tab.active{color:#c084fc;border-bottom-color:#a371f7}
+.lsd-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.lsd-card{background:#161725;border:1px solid var(--border);border-radius:10px;padding:14px}
+.lsd-card h3{margin:0 0 10px;color:#c084fc;font-size:14px}
+.lsd-band-row{display:grid;grid-template-columns:1.6fr 90px 90px 70px 60px 60px;gap:6px;align-items:center;background:#0a0a0f;border:1px solid var(--border);border-radius:5px;padding:6px;margin-bottom:5px}
+.lsd-band-row input, .lsd-band-row select{background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:5px 7px;font-size:11px}
+.lsd-band-row .lab{font-size:11px;color:#9ca3af;font-weight:700}
+.lsd-btn{background:#a371f7;color:#fff;border:none;border-radius:5px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer}
+.lsd-btn.s{background:#10b981;color:#000}
+.lsd-btn.d{background:#ef4444}
+.lsd-btn.g{background:#374151}
+.lsd-city-tbl{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}
+.lsd-city-tbl th{text-align:left;color:#c084fc;padding:6px 8px;border-bottom:1px solid var(--border)}
+.lsd-city-tbl td{padding:5px 8px;border-bottom:1px solid #1a1a2a;color:var(--text)}
+.lsd-city-tbl input{background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:4px;padding:4px 7px;font-size:11px;width:90%}
+</style>
+
+<div class="lsd-wrap">
+  <div class="lsd-header">
+    <h1 style="color:#c084fc;margin:0;font-size:20px">📍 Faixas de Distância & Cidades</h1>
+    <p style="color:#9ca3af;font-size:12px;margin:8px 0 0">
+      Faixas de km que viram bônus/penalização no score. Cidades são consultadas pela cidade do lead
+      no Zoho (campo <code>Cidade</code>) e cruzadas com esta tabela pra calcular km até São José dos Campos.
+    </p>
+  </div>
+
+  <div class="lsd-tabs">
+    <a class="lsd-tab" href="/admin/score-leads">📋 Critérios</a>
+    <a class="lsd-tab active" href="/admin/score-leads/distancia">📍 Distância & Cidades</a>
+    <a class="lsd-tab" href="/admin/score-leads/cadencia">⏱️ Cadência por Tier</a>
+    <a class="lsd-tab" href="/admin/score-leads/teste">🧪 Testar Lead</a>
+    <a class="lsd-tab" href="/admin/score-leads/overrides">✋ Overrides Manuais</a>
+    <a class="lsd-tab" href="/admin/score-leads/auditoria">📜 Auditoria</a>
+  </div>
+
+  <div class="lsd-grid">
+    <div class="lsd-card">
+      <h3>Faixas por Produto</h3>
+      <div style="margin-bottom:10px">
+        <label style="color:#9ca3af;font-size:11px;font-weight:700">Produto:</label>
+        <select id="lsd-prod" onchange="lsdLoadBands()" style="background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:5px 10px;font-size:12px;margin-left:6px">
+          <option value="FILTRO_ENTRADA_AGUA_TRATADA">Filtro Entrada — Tratada</option>
+          <option value="FILTRO_ENTRADA_POCO">Filtro Entrada — Poço</option>
+          <option value="IRON_FREE" selected>Iron Free</option>
+          <option value="SCALE_STOP">Scale Stop</option>
+          <option value="BEBEDOURO_INDUSTRIAL">Bebedouro Industrial</option>
+          <option value="PURIFICADOR">Purificador</option>
+          <option value="REFIL_MANUTENCAO">Refil</option>
+          <option value="PECAS_ACESSORIOS">Peças</option>
+          <option value="OUTROS">Outros</option>
+        </select>
+        <button class="lsd-btn" onclick="lsdNewBand()" style="margin-left:8px">➕ Nova faixa</button>
+      </div>
+      <div id="lsd-bands"></div>
+    </div>
+
+    <div class="lsd-card">
+      <h3>Lookup de cidade</h3>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <input id="lsd-lookup" placeholder="Digite uma cidade (qualquer grafia)" style="flex:1;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:7px 10px;font-size:12px">
+        <button class="lsd-btn" onclick="lsdLookup()">🔍 Buscar</button>
+      </div>
+      <div id="lsd-lookup-result" style="background:#0a0a0f;border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;color:#9ca3af;min-height:60px"></div>
+
+      <h3 style="margin-top:18px">Cidades cadastradas</h3>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <input id="lsd-city-q" placeholder="Filtrar..." style="flex:1;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:6px 10px;font-size:12px">
+        <button class="lsd-btn" onclick="lsdLoadCities()">🔄</button>
+        <button class="lsd-btn s" onclick="lsdNewCity()">➕ Cidade</button>
+      </div>
+      <div id="lsd-cities" style="max-height:500px;overflow:auto"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function lsdLoadBands(){
+  const product = document.getElementById('lsd-prod').value;
+  const r = await fetch(`/api/lead-score/distance-bands?product_type=${encodeURIComponent(product)}&include_inactive=1`).then(r=>r.json());
+  if (!r.ok) { document.getElementById('lsd-bands').innerHTML = `<div style="color:#ef4444">${r.error}</div>`; return; }
+  document.getElementById('lsd-bands').innerHTML = (r.items||[]).map(b => `
+    <div class="lsd-band-row">
+      <input value="${escapeHtml(b.label)}" id="lsd-b-${b.id}-label">
+      <input type="number" step="0.01" placeholder="min km" value="${b.min_km==null?'':b.min_km}" id="lsd-b-${b.id}-min">
+      <input type="number" step="0.01" placeholder="max km" value="${b.max_km==null?'':b.max_km}" id="lsd-b-${b.id}-max">
+      <input type="number" placeholder="pts" value="${b.points}" id="lsd-b-${b.id}-pts">
+      <select id="lsd-b-${b.id}-act">
+        <option value="1" ${b.is_active?'selected':''}>ativo</option>
+        <option value="0" ${!b.is_active?'selected':''}>inativo</option>
+      </select>
+      <div style="display:flex;gap:3px;justify-content:flex-end">
+        <button class="lsd-btn s" onclick='lsdSaveBand(${JSON.stringify({id:b.id,code:b.code,product_type:b.product_type}).replace(/'/g,"&apos;")})'>💾</button>
+        <button class="lsd-btn d" onclick="lsdDeleteBand(${b.id})">🗑️</button>
+      </div>
+    </div>
+  `).join('') || '<div style="color:#888;padding:14px;text-align:center">Nenhuma faixa cadastrada.</div>';
+}
+
+async function lsdSaveBand(b){
+  const payload = {
+    code: b.code, product_type: b.product_type,
+    label: document.getElementById(`lsd-b-${b.id}-label`).value,
+    min_km: document.getElementById(`lsd-b-${b.id}-min`).value || null,
+    max_km: document.getElementById(`lsd-b-${b.id}-max`).value || null,
+    points: Number(document.getElementById(`lsd-b-${b.id}-pts`).value),
+    is_active: document.getElementById(`lsd-b-${b.id}-act`).value === '1',
+  };
+  const r = await fetch('/api/lead-score/distance-bands', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) }).then(r=>r.json());
+  if (!r.ok) alert(r.error||'erro');
+  lsdLoadBands();
+}
+
+async function lsdDeleteBand(id){
+  if (!confirm('Excluir essa faixa?')) return;
+  await fetch(`/api/lead-score/distance-bands/${id}`, { method:'DELETE' });
+  lsdLoadBands();
+}
+
+async function lsdNewBand(){
+  const code = prompt('Código da faixa (ex: until_500):'); if (!code) return;
+  const label = prompt('Label exibido:') || code;
+  const minKm = prompt('Min km (deixe vazio = sem mínimo):');
+  const maxKm = prompt('Max km (deixe vazio = sem máximo):');
+  const pts = Number(prompt('Pontos:') || 0);
+  const product = document.getElementById('lsd-prod').value;
+  await fetch('/api/lead-score/distance-bands', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ code, product_type: product, label, min_km: minKm||null, max_km: maxKm||null, points: pts, is_active: true, priority: 100 })
+  });
+  lsdLoadBands();
+}
+
+async function lsdLookup(){
+  const q = document.getElementById('lsd-lookup').value;
+  const r = await fetch(`/api/lead-score/cities/lookup?q=${encodeURIComponent(q)}`).then(r=>r.json());
+  const el = document.getElementById('lsd-lookup-result');
+  if (!r.ok) { el.innerHTML = `<span style="color:#ef4444">${r.error}</span>`; return; }
+  if (!r.found || !r.distance) { el.innerHTML = `<span style="color:#f59e0b">⚠️ Cidade "${escapeHtml(q)}" NÃO cadastrada — cai em faixa "nacional"</span>`; return; }
+  el.innerHTML = `
+    <div><strong style="color:#c084fc">${escapeHtml(r.distance.display)}</strong></div>
+    <div style="color:#10b981;font-size:18px;font-weight:800;margin-top:4px">${r.distance.km==null?'(km não cadastrado)':r.distance.km+' km'} de SJC</div>
+  `;
+}
+
+async function lsdLoadCities(){
+  const q = document.getElementById('lsd-city-q').value;
+  const r = await fetch(`/api/lead-score/cities?q=${encodeURIComponent(q)}&limit=300`).then(r=>r.json());
+  if (!r.ok) return;
+  const html = `
+    <table class="lsd-city-tbl">
+      <tr><th>Cidade</th><th style="width:40px">UF</th><th style="width:80px">km SJC</th><th style="width:50px"></th></tr>
+      ${(r.items||[]).map(c=>`
+        <tr>
+          <td>${escapeHtml(c.cidade_display)}</td>
+          <td>${escapeHtml(c.uf||'')}</td>
+          <td><input type="number" value="${c.distance_km_sjc==null?'':c.distance_km_sjc}" id="lsd-c-${c.id}-km"></td>
+          <td><button class="lsd-btn s" onclick='lsdSaveCity(${JSON.stringify(c).replace(/'/g,"&apos;")})'>💾</button></td>
+        </tr>
+      `).join('')}
+    </table>
+  `;
+  document.getElementById('lsd-cities').innerHTML = html;
+}
+
+async function lsdSaveCity(c){
+  const km = document.getElementById(`lsd-c-${c.id}-km`).value;
+  await fetch('/api/lead-score/cities', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ cidade_display: c.cidade_display, uf: c.uf, distance_km_sjc: km, cidade_normalizada: c.cidade_normalizada })
+  });
+  lsdLoadCities();
+}
+
+async function lsdNewCity(){
+  const display = prompt('Nome exibido da cidade:'); if (!display) return;
+  const uf = prompt('UF (2 letras):') || '';
+  const km = prompt('Distância em km até SJC:') || '';
+  await fetch('/api/lead-score/cities', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ cidade_display: display, uf: uf.toUpperCase(), distance_km_sjc: km || null })
+  });
+  lsdLoadCities();
+}
+
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+lsdLoadBands();
+lsdLoadCities();
+</script>

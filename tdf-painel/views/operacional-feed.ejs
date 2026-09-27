@@ -1,0 +1,173 @@
+<% const activePage = 'operacional'; const pageTitle = 'Operacional · Atividade'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+  .fd-shell { max-width: 1400px; margin: 0 auto; padding: 0 14px; }
+  .fd-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+  .fd-head h1 { margin: 0; font-size: 18px; color: var(--text); }
+  .fd-head .sub { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+
+  .fd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 1000px) { .fd-grid { grid-template-columns: 1fr; } }
+
+  .fd-col { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; }
+  .fd-col h3 { margin: 0 0 12px; font-size: 13px; color: #93c5fd; text-transform: uppercase; letter-spacing: .5px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+  .fd-col h3 .badge { background: var(--border); color: var(--text); padding: 2px 8px; border-radius: 8px; font-size: 11px; font-weight: 800; }
+  .fd-col h3 .badge.crit { background: #ef4444; }
+
+  /* Alert card */
+  .al-item {
+    display: grid; grid-template-columns: 36px 1fr auto;
+    gap: 10px; padding: 10px 12px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-left: 3px solid var(--c, #475569);
+    border-radius: 6px; margin-bottom: 6px;
+    align-items: center;
+    text-decoration: none;
+    transition: transform .15s;
+  }
+  .al-item:hover { transform: translateX(2px); border-color: #1f6feb; }
+  .al-item .ic { font-size: 22px; text-align: center; }
+  .al-item .info .title { color: var(--text); font-weight: 700; font-size: 12px; }
+  .al-item .info .subtitle { color: var(--text-muted); font-size: 10px; margin-top: 2px; }
+  .al-item .sev { font-size: 9px; padding: 2px 6px; border-radius: 3px; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; }
+  .al-item .sev.critical { background: #ef4444; color:#fff; }
+  .al-item .sev.high { background: #fb923c; color: #000; }
+  .al-item .sev.medium { background: #fbbf24; color: #000; }
+  .al-item.critical { --c: #ef4444; }
+  .al-item.high { --c: #fb923c; }
+  .al-item.medium { --c: #fbbf24; }
+
+  /* Activity item */
+  .ac-item {
+    display: grid; grid-template-columns: 60px 1fr auto;
+    gap: 10px; padding: 8px 12px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; margin-bottom: 5px;
+    font-size: 11px;
+  }
+  .ac-item .time { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .ac-item .desc { color: #cbd5e1; }
+  .ac-item .desc b { color: var(--text); }
+  .ac-item .kind { background: var(--border); color: #93c5fd; padding: 2px 6px; border-radius: 3px; font-size: 9px; text-transform: uppercase; letter-spacing: .3px; font-weight: 700; }
+  .ac-item.alert { border-left: 3px solid #ef4444; }
+  .ac-item.intake { border-left: 3px solid #fbbf24; }
+  .ac-item.timeline { border-left: 3px solid #1f6feb; }
+
+  .fd-empty { color: var(--text-muted); padding: 30px; text-align: center; font-size: 12px; }
+  .btn { padding: 7px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid; background: transparent; }
+  .btn-sec { color: #93c5fd; border-color: #1f6feb; }
+</style>
+
+<div class="fd-shell">
+  <div class="fd-head">
+    <div>
+      <h1>🔔 Atividade & Alertas</h1>
+      <div class="sub" id="fd-sub">Carregando…</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:11px;color:var(--text-muted)">refresh auto 20s</span>
+      <button class="btn btn-sec" onclick="fdLoad()" style="background:#1f6feb;color:#fff">🔄 Atualizar</button>
+      <a href="/operacional" class="btn btn-sec" style="text-decoration:none">← Painel</a>
+    </div>
+  </div>
+
+  <div class="fd-grid">
+    <div class="fd-col">
+      <h3>⚠ Alertas acionáveis <span class="badge" id="fd-alert-count">0</span></h3>
+      <div id="fd-alerts"><div class="fd-empty">Carregando…</div></div>
+    </div>
+    <div class="fd-col">
+      <h3>📜 Atividade recente <span class="badge" id="fd-recent-count">0</span></h3>
+      <div id="fd-recent"><div class="fd-empty">Carregando…</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function _api(p) {
+  const r = await fetch(p, { credentials:'same-origin' });
+  if (!r.ok) throw new Error(`${r.status}`);
+  return r.json();
+}
+
+function timeAgo(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const diffS = (Date.now() - d.getTime()) / 1000;
+  if (diffS < 60) return 'agora';
+  if (diffS < 3600) return Math.floor(diffS/60) + 'min';
+  if (diffS < 86400) return Math.floor(diffS/3600) + 'h';
+  return Math.floor(diffS/86400) + 'd';
+}
+
+function describe(item) {
+  if (item.kind === 'alert') {
+    return `<b>${item.severity?.toUpperCase()||'?'}</b> · ${item.description||item.event_type}`;
+  }
+  if (item.kind === 'intake') {
+    return `Intake #${item.intake_id} · ${item.event_type} <span style="color:#888">(${item.source}${item.actor?' · '+item.actor:''})</span>`;
+  }
+  // timeline
+  let txt = `<b>${item.event_type}</b>`;
+  if (item.sale_id) txt += ` · sale #${item.sale_id}`;
+  if (item.actor) txt += ` · ${item.actor}`;
+  if (item.payload) {
+    const p = item.payload;
+    if (p.route_id) txt += ` · rota #${p.route_id}`;
+    if (p.technician_name) txt += ` · ${p.technician_name}`;
+  }
+  return txt;
+}
+
+async function fdLoad() {
+  try {
+    const [alerts, recent] = await Promise.all([
+      _api('/operacional/api/feed/alerts'),
+      _api('/operacional/api/feed/recent?limit=40'),
+    ]);
+
+    // Header sub
+    document.getElementById('fd-sub').innerHTML = `${alerts.count} alerta(s) ativos · ${recent.items.length} eventos recentes · agora: ${new Date(alerts.as_of).toLocaleTimeString('pt-BR')}`;
+
+    // Alerts
+    document.getElementById('fd-alert-count').textContent = alerts.count;
+    if (alerts.by_severity.critical > 0) document.getElementById('fd-alert-count').classList.add('crit');
+    const alertsEl = document.getElementById('fd-alerts');
+    if (!alerts.alerts.length) {
+      alertsEl.innerHTML = '<div class="fd-empty">🎉 Nenhum alerta no momento</div>';
+    } else {
+      alertsEl.innerHTML = alerts.alerts.map(a => `
+        ${a.link ? `<a href="${a.link}" ${a.link.startsWith('http')?'target="_blank"':''} class="al-item ${a.severity}">` : `<div class="al-item ${a.severity}">`}
+          <div class="ic">${a.icon}</div>
+          <div class="info">
+            <div class="title">${a.title}</div>
+            <div class="subtitle">${a.subtitle||''} · ${timeAgo(a.ts)} atrás</div>
+          </div>
+          <span class="sev ${a.severity}">${a.severity}</span>
+        ${a.link ? '</a>' : '</div>'}
+      `).join('');
+    }
+
+    // Recent
+    document.getElementById('fd-recent-count').textContent = recent.items.length;
+    const recentEl = document.getElementById('fd-recent');
+    if (!recent.items.length) {
+      recentEl.innerHTML = '<div class="fd-empty">Sem eventos recentes</div>';
+    } else {
+      recentEl.innerHTML = recent.items.map(i => `
+        <div class="ac-item ${i.kind}">
+          <div class="time">${timeAgo(i.ts)}</div>
+          <div class="desc">${describe(i)}</div>
+          <span class="kind">${i.kind}</span>
+        </div>
+      `).join('');
+    }
+  } catch (e) {
+    document.getElementById('fd-alerts').innerHTML = `<div class="fd-empty" style="color:#f87171">${e.message}</div>`;
+  }
+}
+
+fdLoad();
+setInterval(fdLoad, 20000);
+</script>

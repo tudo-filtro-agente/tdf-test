@@ -1,0 +1,460 @@
+<% const activePage = 'operacional'; const pageTitle = 'Operacional · Dashboard do Dia'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+  .db-shell { max-width: 1400px; margin: 0 auto; padding: 0 14px; }
+  .db-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+  .db-head h1 { margin: 0; font-size: 22px; color: var(--text); }
+  .db-head .sub { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+  .db-head .clock { font-size: 18px; font-weight: 800; color: #22d3ee; font-variant-numeric: tabular-nums; }
+  .db-head .clock small { font-size: 10px; color: var(--text-muted); display: block; text-align: right; font-weight: 400; }
+
+  .db-row { display: grid; gap: 12px; margin-bottom: 14px; }
+  .db-row.kpis { grid-template-columns: repeat(4, 1fr); }
+  .db-row.two { grid-template-columns: 1fr 1fr; }
+  .db-row.three { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 1100px) { .db-row.kpis, .db-row.three { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 700px) { .db-row.kpis, .db-row.three, .db-row.two { grid-template-columns: 1fr; } }
+
+  .kpi {
+    background: linear-gradient(135deg, var(--bg-card), var(--bg));
+    border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px;
+    border-top: 4px solid var(--c, #1f6feb);
+    position: relative; overflow: hidden;
+  }
+  .kpi .lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; font-weight: 700; }
+  .kpi .val { font-size: 38px; font-weight: 900; color: var(--text); line-height: 1.05; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .kpi .sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .kpi .ic { position: absolute; right: 14px; top: 14px; font-size: 22px; opacity: .4; }
+  .kpi.alert { border-top-color: #ef4444; }
+  .kpi.warn { border-top-color: #fbbf24; }
+  .kpi.ok { border-top-color: #22c55e; }
+
+  .panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; }
+  .panel h3 { margin: 0 0 12px; font-size: 12px; color: #93c5fd; text-transform: uppercase; letter-spacing: .5px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+  .panel h3 .count { background: var(--border); color: var(--text); padding: 2px 9px; border-radius: 8px; font-size: 11px; font-weight: 800; }
+
+  .progress-bar { background: var(--bg); border-radius: 10px; height: 28px; overflow: hidden; display: flex; }
+  .progress-bar .seg { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text); font-weight: 700; transition: width .3s; }
+  .progress-bar .seg.done { background: #22c55e; }
+  .progress-bar .seg.prog { background: #fbbf24; color: #000; }
+  .progress-bar .seg.pend { background: #475569; }
+
+  .row-item { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 8px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 5px; align-items: center; }
+  .row-item .left { color: var(--text); font-size: 12px; }
+  .row-item .left .meta { color: var(--text-muted); font-size: 10px; margin-top: 2px; }
+  .row-item .right { color: var(--c, #fff); font-weight: 800; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .row-item.aging .right.crit { color: #ef4444; }
+  .row-item.aging .right.warn { color: #fbbf24; }
+
+  .city-bar { display: grid; grid-template-columns: 1fr 50px; gap: 8px; align-items: center; padding: 6px 0; }
+  .city-bar .city { color: var(--text); font-size: 12px; }
+  .city-bar .bar { background: var(--bg); height: 10px; border-radius: 5px; overflow: hidden; position: relative; margin-top: 4px; }
+  .city-bar .bar div { height: 100%; background: linear-gradient(90deg, #22d3ee, #1f6feb); border-radius: 5px; }
+  .city-bar .count { color: #22d3ee; font-weight: 800; font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .status-pill { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; margin-right: 4px; text-transform: uppercase; letter-spacing: .3px; cursor: pointer; transition: transform .12s; }
+  .status-pill:hover { transform: scale(1.08); }
+  .status-pill.agendado { background: #22c55e; color: #000; }
+  .status-pill.em_rota { background: #1f6feb; color:#fff; }
+  .status-pill.pendente { background: #fbbf24; color: #000; }
+  .status-pill.concluido { background: #475569; color:#fff; }
+  .status-pill.cancelado { background: #ef4444; color:#fff; }
+  .kpi.clickable { cursor: pointer; transition: transform .12s, border-top-color .2s; }
+  .kpi.clickable:hover { transform: translateY(-2px); border-top-color: #a371f7; }
+
+  .db-drawer-back { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:9998; display:none; }
+  .db-drawer-back.open { display:block; }
+  .db-drawer { position:fixed; right:0; top:0; height:100vh; width:520px; max-width:95vw; background:var(--bg); border-left:1px solid var(--border); z-index:9999; transform:translateX(100%); transition:transform .2s ease; display:flex; flex-direction:column; }
+  .db-drawer.open { transform:translateX(0); }
+  .db-drawer .head { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .db-drawer .head h2 { margin:0; color:var(--text); font-size:15px; }
+  .db-drawer .head button { background:transparent; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; }
+  .db-drawer .body { flex:1; overflow-y:auto; padding:12px 18px; }
+  .db-drawer .item { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-bottom:6px; }
+  .db-drawer .item a { color:var(--text); text-decoration:none; display:block; font-size:13px; font-weight:600; }
+  .db-drawer .item .meta { color:var(--text-muted); font-size:11px; margin-top:3px; }
+  .db-drawer .item:hover { border-color:#a371f7; }
+  .db-drawer .empty { color:var(--text-muted); padding:30px; text-align:center; font-size:12px; }
+</style>
+
+<div class="db-shell">
+  <div class="db-head">
+    <div>
+      <h1>📊 Dashboard Operacional</h1>
+      <div class="sub" id="db-sub">Carregando…</div>
+    </div>
+    <div class="clock">
+      <span id="db-clock">--:--:--</span>
+      <small>refresh auto 30s</small>
+    </div>
+  </div>
+
+  <!-- F8 — Centro de Comando IA + Alertas Críticos -->
+  <div id="db-command" style="margin-bottom:14px"></div>
+
+  <!-- F8 — Tendência 14d (sparklines) -->
+  <div id="db-trend" style="margin-bottom:14px"></div>
+
+  <div id="db-content"><div style="text-align:center;color:var(--text-muted);padding:40px">Carregando…</div></div>
+</div>
+
+<!-- Drawer pra listas -->
+<div class="db-drawer-back" id="db-drawer-back" onclick="dbCloseDrawer()"></div>
+<div class="db-drawer" id="db-drawer">
+  <div class="head">
+    <h2 id="db-drawer-title">Lista</h2>
+    <button onclick="dbCloseDrawer()">×</button>
+  </div>
+  <div class="body" id="db-drawer-body">⏳ Carregando…</div>
+</div>
+
+<script>
+async function _api(p) {
+  const r = await fetch(p, { credentials:'same-origin' });
+  if (!r.ok) throw new Error(`${r.status}`);
+  return r.json();
+}
+
+function tickClock() {
+  document.getElementById('db-clock').textContent = new Date().toLocaleTimeString('pt-BR');
+}
+
+function dbOpenDrawer(title){
+  document.getElementById('db-drawer-title').textContent = title;
+  document.getElementById('db-drawer-body').innerHTML = '⏳ Carregando…';
+  document.getElementById('db-drawer-back').classList.add('open');
+  document.getElementById('db-drawer').classList.add('open');
+}
+function dbCloseDrawer(){
+  document.getElementById('db-drawer-back').classList.remove('open');
+  document.getElementById('db-drawer').classList.remove('open');
+}
+function _escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function dbShowAwaiting(){
+  dbOpenDrawer('⏳ Sales aguardando rota');
+  try {
+    // listSales com status aguardando_rota
+    const r = await _api('/operacional/api/sales?status=aguardando_rota&limit=200');
+    const items = Array.isArray(r) ? r : (r.items || r.sales || r.data || []);
+    if (!items.length) {
+      document.getElementById('db-drawer-body').innerHTML = '<div class="empty">🎉 Nenhuma sale aguardando rota</div>';
+      return;
+    }
+    document.getElementById('db-drawer-body').innerHTML = items.map(s => {
+      const h = s.hours_waiting || s.aging_hours;
+      const ageLabel = h != null
+        ? (h < 24 ? Math.round(h)+'h' : Math.floor(h/24)+'d')
+        : (s.created_at ? new Date(s.created_at).toLocaleString('pt-BR') : '');
+      const ageColor = (h && h >= 48) ? '#ef4444' : (h && h >= 24) ? '#fbbf24' : '#22c55e';
+      return `<div class="item">
+        <a href="/operacional/cliente/${_escapeHtml(s.id || s.sale_id)}" target="_blank">
+          ${_escapeHtml(s.customer_name || s.cliente || '— sem nome —')}
+          <span style="float:right;color:${ageColor};font-weight:800;font-size:12px">${ageLabel}</span>
+        </a>
+        <div class="meta">${_escapeHtml(s.city || s.cidade || 'sem cidade')} · sale #${_escapeHtml(s.id || s.sale_id)} · ${_escapeHtml(s.product || s.produto || '')}</div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('db-drawer-body').innerHTML = `<div class="empty" style="color:#ef4444">erro: ${e.message}</div>`;
+  }
+}
+
+async function dbShowRoutes(filterStatus){
+  const title = filterStatus ? `🛣 Rotas — ${filterStatus}` : '🛣 Rotas hoje';
+  dbOpenDrawer(title);
+  try {
+    const today = new Date().toISOString().slice(0,10);
+    // Backend aceita date_from + date_to (não 'date'). Bug fix.
+    const url = `/operacional/api/routes?date_from=${today}&date_to=${today}${filterStatus?'&status='+encodeURIComponent(filterStatus):''}&limit=200`;
+    const r = await _api(url);
+    const items = Array.isArray(r) ? r : (r.items || r.routes || r.data || []);
+    if (!items.length) {
+      document.getElementById('db-drawer-body').innerHTML = '<div class="empty">Nenhuma rota encontrada</div>';
+      return;
+    }
+    document.getElementById('db-drawer-body').innerHTML = items.map(rt => `
+      <div class="item">
+        <a href="/operacional/routes/${_escapeHtml(rt.id || rt.route_id)}" target="_blank">
+          ${_escapeHtml(rt.name || rt.technician_name || rt.tech || 'Rota #'+rt.id)}
+          <span class="status-pill ${_escapeHtml(rt.status||'')}" style="float:right;cursor:default">${_escapeHtml(rt.status||'')}</span>
+        </a>
+        <div class="meta">
+          ${rt.date ? new Date(rt.date).toLocaleDateString('pt-BR') : ''}
+          · ${rt.stops_count || rt.stops?.length || 0} parada(s)
+          ${rt.technician_name ? '· 👷 '+_escapeHtml(rt.technician_name) : ''}
+          ${rt.km != null ? '· '+Math.round(rt.km)+'km' : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('db-drawer-body').innerHTML = `<div class="empty" style="color:#ef4444">erro: ${e.message}</div>`;
+  }
+}
+
+async function dbLoad() {
+  try {
+    const d = await _api('/operacional/api/dashboard/today');
+    document.getElementById('db-sub').textContent = `${d.date} · ${d.routes_today.total} rota(s) · ${d.stops_today.total} parada(s) · ${d.technicians.in_field}/${d.technicians.active} técnicos em campo`;
+
+    const stops = d.stops_today;
+    const pctDone = stops.total ? (stops.concluded / stops.total * 100) : 0;
+    const pctProg = stops.total ? (stops.in_progress / stops.total * 100) : 0;
+    const pctPend = 100 - pctDone - pctProg;
+
+    const c = document.getElementById('db-content');
+    c.innerHTML = `
+      <!-- KPIs principais -->
+      <div class="db-row kpis">
+        <div class="kpi clickable" onclick="dbShowRoutes()" title="Clique pra ver lista de rotas"><div class="ic">🛣</div><div class="lbl">Rotas hoje</div><div class="val">${d.routes_today.total}</div><div class="sub">${Object.entries(d.routes_today.by_status||{}).map(([k,v]) => `<span class="status-pill ${k}" onclick="event.stopPropagation();dbShowRoutes('${k}')" title="Clique pra ver rotas ${k}">${k}: ${v}</span>`).join('')}</div></div>
+        <div class="kpi ${pctDone>=70?'ok':pctDone>=30?'warn':''}"><div class="ic">✅</div><div class="lbl">Paradas concluídas</div><div class="val">${stops.concluded}<span style="font-size:18px;color:#888"> / ${stops.total}</span></div><div class="sub">${stops.progress_pct||0}% do dia</div></div>
+        <div class="kpi ok"><div class="ic">👷</div><div class="lbl">Técnicos em campo</div><div class="val">${d.technicians.in_field}<span style="font-size:18px;color:#888"> / ${d.technicians.active}</span></div><div class="sub">GPS últimas 2h</div></div>
+        <div class="kpi clickable ${d.queue_aguardando_rota.critical_over_48h>0?'alert':''}" onclick="dbShowAwaiting()" title="Clique pra ver lista completa"><div class="ic">⏳</div><div class="lbl">Aguardando rota</div><div class="val">${d.queue_aguardando_rota.count}</div><div class="sub">${d.queue_aguardando_rota.critical_over_48h>0?'⚠ '+d.queue_aguardando_rota.critical_over_48h+' há mais de 48h':'sem críticas'} · <span style="color:#a371f7">clique pra ver lista</span></div></div>
+      </div>
+
+      <!-- Progress bar grande -->
+      <div class="panel" style="margin-bottom:14px">
+        <h3>Progresso do dia <span class="count">${stops.total} stops</span></h3>
+        <div class="progress-bar">
+          ${pctDone > 0 ? `<div class="seg done" style="width:${pctDone}%">${stops.concluded} ✓</div>` : ''}
+          ${pctProg > 0 ? `<div class="seg prog" style="width:${pctProg}%">${stops.in_progress} ▶</div>` : ''}
+          ${pctPend > 0 ? `<div class="seg pend" style="width:${pctPend}%">${stops.pending} ⏸</div>` : ''}
+        </div>
+        <div style="display:flex;gap:18px;margin-top:10px;font-size:11px;color:#888;flex-wrap:wrap">
+          <span>📨 ${d.routes_today.briefings_sent} briefing(s) enviado(s) hoje</span>
+          <span>🛒 ${d.sales_today} venda(s) registradas hoje</span>
+          <span>🚨 ${d.alerts.speed_today} alerta(s) de velocidade hoje</span>
+        </div>
+      </div>
+
+      <!-- 3 painéis -->
+      <div class="db-row three">
+        <!-- Aging -->
+        <div class="panel">
+          <h3>⏰ Sales mais antigas na fila <span class="count">${d.queue_aguardando_rota.count}</span></h3>
+          ${(d.queue_aguardando_rota.top_aging || []).map(p => {
+            const cls = p.hours_waiting >= 48 ? 'crit' : (p.hours_waiting >= 24 ? 'warn' : '');
+            return `
+              <a href="/operacional/cliente/${p.sale_id}" target="_blank" class="row-item aging" style="text-decoration:none">
+                <div class="left">
+                  <div>${p.customer_name||'—'}</div>
+                  <div class="meta">${p.city||'sem cidade'} · sale #${p.sale_id}</div>
+                </div>
+                <div class="right ${cls}">${p.hours_waiting<24 ? p.hours_waiting.toFixed(0)+'h' : Math.floor(p.hours_waiting/24)+'d'}</div>
+              </a>
+            `;
+          }).join('') || '<div style="color:#666;padding:14px;text-align:center;font-size:12px">🎉 Fila vazia</div>'}
+        </div>
+
+        <!-- Top cidades -->
+        <div class="panel">
+          <h3>📍 Top cidades 30d <span class="count">${d.top_cities_30d.length}</span></h3>
+          ${(d.top_cities_30d||[]).map((c,i) => {
+            const max = d.top_cities_30d[0]?.count || 1;
+            const pct = (c.count / max) * 100;
+            return `
+              <div class="city-bar">
+                <div>
+                  <div class="city">${i+1}. ${c.city}</div>
+                  <div class="bar"><div style="width:${pct}%"></div></div>
+                </div>
+                <div class="count">${c.count}</div>
+              </div>
+            `;
+          }).join('') || '<div style="color:#666;padding:14px;text-align:center;font-size:12px">Sem dados</div>'}
+        </div>
+
+        <!-- Outros KPIs -->
+        <div class="panel">
+          <h3>📊 Outros</h3>
+          <div class="row-item"><div class="left"><div>🤖 Intakes aguardando Morgana</div><div class="meta">de ${d.intakes.total_active} ativos</div></div><div class="right" style="color:${d.intakes.awaiting_morgana>0?'#fbbf24':'#22c55e'}">${d.intakes.awaiting_morgana}</div></div>
+          <div class="row-item"><div class="left"><div>🚚 Entregas TDF em aberto</div><div class="meta">kanban Entregas</div></div><div class="right" style="color:#a371f7">${d.deliveries_open}</div></div>
+          <div class="row-item"><div class="left"><div>📦 Envios transportadora</div><div class="meta">kanban Envios</div></div><div class="right" style="color:#1f6feb">${d.shipments_open}</div></div>
+          <div class="row-item"><div class="left"><div>🚨 Alertas velocidade hoje</div><div class="meta">excesso GPS</div></div><div class="right" style="color:${d.alerts.speed_today>0?'#ef4444':'#22c55e'}">${d.alerts.speed_today}</div></div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:14px;color:#666;font-size:11px">
+        <a href="/operacional" style="color:#93c5fd;text-decoration:none">← Painel</a> ·
+        <a href="/operacional/gantt" style="color:#22d3ee;text-decoration:none">📅 Gantt</a> ·
+        <a href="/operacional/mapa" style="color:#22c55e;text-decoration:none">🗺 Mapa</a> ·
+        <a href="/operacional/onboarding" style="color:#25D366;text-decoration:none">👋 Onboarding</a>
+      </div>
+    `;
+  } catch (e) {
+    document.getElementById('db-content').innerHTML = `<div style="color:#f87171;padding:30px;text-align:center">${e.message}</div>`;
+  }
+}
+
+dbLoad();
+tickClock();
+setInterval(tickClock, 1000);
+setInterval(dbLoad, 30000);
+
+// ===== F8 — Centro de Comando: alerts críticos + 5 cards insight IA =====
+const ABA_INSIGHT_LABEL = {
+  instalacoes: '🔧 Instalações',
+  envios: '📦 Envios',
+  bebedouros: '🚚 Bebedouros',
+  manutencao: '🔄 Manutenção',
+  posvenda: '📞 Pós-venda',
+};
+const SEV_CMD_COLOR = { critical: '#ef4444', warning: '#fb923c', info: '#fbbf24' };
+
+function _alertItem(a) {
+  const link = a.link ? `<a href="${a.link}" style="color:#58a6ff;font-size:11px;text-decoration:none">abrir ↗</a>` : '';
+  const ts = a.last_seen_at ? new Date(a.last_seen_at).toLocaleString('pt-BR') : '';
+  return `<div style="padding:8px 10px;background:#0D1117;border:1px solid #21262D;border-left:3px solid ${SEV_CMD_COLOR[a.severity]||'#fb923c'};border-radius:6px;margin-bottom:5px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center">
+    <div>
+      <div style="color:#fff;font-size:12px;line-height:1.35">${_escapeHtml(a.message)}</div>
+      <div style="color:#666;font-size:10px;margin-top:3px">${a.alert_type} · ${ts}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+      ${link}
+      <button onclick="dbAckCmdAlert(${a.id})" style="background:transparent;border:1px solid #444;color:#aaa;padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer">marcar visto</button>
+    </div>
+  </div>`;
+}
+
+function _insightCard(key, data, err) {
+  const label = ABA_INSIGHT_LABEL[key] || key;
+  if (err) {
+    return `<div class="panel" style="border-left:3px solid #444"><h3>${label}</h3><div style="color:#888;font-size:11px">${_escapeHtml(err)}</div></div>`;
+  }
+  const acoes = (data.acoes || []).slice(0, 3).map(a => `<li>${_escapeHtml(a)}</li>`).join('');
+  return `<div class="panel" style="border-left:3px solid #a371f7">
+    <h3>${label} <span class="count" style="background:#a371f7;color:#fff">IA</span></h3>
+    <div style="color:#e6edf3;font-size:12px;line-height:1.45;margin-bottom:6px">${_escapeHtml(data.insight || '—')}</div>
+    ${acoes ? `<ul style="margin:0 0 0 18px;padding:0;color:#aaa;font-size:11px">${acoes}</ul>` : ''}
+    <div style="margin-top:6px;display:flex;justify-content:space-between;font-size:10px;color:#666">
+      <a href="/operacional" style="color:#a371f7;text-decoration:none">abrir aba ↗</a>
+      <span>${data.from_cache ? '(cache)' : '(fresh)'}</span>
+    </div>
+  </div>`;
+}
+
+async function dbAckCmdAlert(id) {
+  try {
+    await fetch(`/operacional/api/alerts/${id}/ack`, { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'} });
+    dbCommandLoad();
+  } catch {}
+}
+
+async function dbCommandLoad() {
+  const el = document.getElementById('db-command');
+  if (!el) return;
+  // casca: bloco de alerts + grid 5 colunas de insights (placeholders)
+  el.innerHTML = `
+    <div class="panel" style="border-top:3px solid #ef4444;margin-bottom:12px">
+      <h3>🚨 Alertas críticos abertos <span class="count" id="cmd-alert-count">…</span></h3>
+      <div id="cmd-alerts-body"><div style="color:#666;font-size:12px;padding:8px">Carregando…</div></div>
+    </div>
+    <div class="db-row" style="grid-template-columns:repeat(5,1fr);gap:10px">
+      ${Object.keys(ABA_INSIGHT_LABEL).map(k => `<div id="cmd-ins-${k}" class="panel" style="border-left:3px solid #2a2230"><h3>${ABA_INSIGHT_LABEL[k]} <span class="count">IA</span></h3><div style="color:#666;font-size:11px">Pensando…</div></div>`).join('')}
+    </div>
+  `;
+
+  // alerts críticos (rápido)
+  _api('/operacional/api/alerts?status=open&severity=critical&limit=10')
+    .then(r => {
+      document.getElementById('cmd-alert-count').textContent = (r.alerts||[]).length;
+      const body = document.getElementById('cmd-alerts-body');
+      if (!r.alerts || r.alerts.length === 0) {
+        body.innerHTML = '<div style="color:#22c55e;padding:8px;font-size:12px">✅ Nenhum alerta crítico aberto.</div>';
+        return;
+      }
+      body.innerHTML = r.alerts.map(_alertItem).join('');
+    })
+    .catch(e => {
+      document.getElementById('cmd-alerts-body').innerHTML = `<div style="color:#f87171;padding:8px;font-size:11px">Erro: ${_escapeHtml(e.message)}</div>`;
+    });
+
+  // insights por aba (paralelos, atualiza cada um quando termina)
+  for (const k of Object.keys(ABA_INSIGHT_LABEL)) {
+    _api(`/operacional/api/aba/${k}/insight`)
+      .then(d => { document.getElementById(`cmd-ins-${k}`).outerHTML = `<div id="cmd-ins-${k}">${_insightCard(k, d)}</div>`; })
+      .catch(e => { document.getElementById(`cmd-ins-${k}`).outerHTML = `<div id="cmd-ins-${k}">${_insightCard(k, null, 'IA indisponível: '+e.message)}</div>`; });
+  }
+}
+
+dbCommandLoad();
+setInterval(dbCommandLoad, 60000);
+
+// ===== F8 — Tendência 14d (SVG sparkline inline, zero dependência) =====
+function _sparkline(values, color = '#22d3ee', height = 50, width = 220) {
+  if (!values || values.length === 0) return '<div style="color:#666;font-size:11px;padding:8px">sem dados</div>';
+  const nums = values.map(v => Number(v) || 0);
+  const max = Math.max(...nums, 1);
+  const min = Math.min(...nums, 0);
+  const range = (max - min) || 1;
+  const stepX = width / Math.max(nums.length - 1, 1);
+  const pts = nums.map((v, i) => {
+    const x = i * stepX;
+    const y = height - ((v - min) / range) * height;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const last = nums[nums.length - 1];
+  const first = nums[0];
+  const delta = last - first;
+  const arrow = delta > 0 ? '↑' : (delta < 0 ? '↓' : '→');
+  const arrowColor = delta > 0 ? '#22c55e' : (delta < 0 ? '#ef4444' : '#888');
+  return `<svg width="${width}" height="${height}" style="display:block">
+    <polyline fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${pts}"/>
+    <circle cx="${(nums.length-1)*stepX}" cy="${height - ((last-min)/range)*height}" r="3" fill="${color}"/>
+  </svg>
+  <div style="font-size:11px;color:#888;margin-top:2px">último: <b style="color:#fff">${last}</b> <span style="color:${arrowColor}">${arrow} ${Math.abs(delta).toFixed(0)}</span></div>`;
+}
+
+async function dbTrendLoad() {
+  const el = document.getElementById('db-trend');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;color:#666;padding:14px">Carregando série…</div>';
+  try {
+    const r = await _api('/operacional/api/metrics/daily?days=14');
+    const series = r.series || [];
+    if (series.length === 0) {
+      el.innerHTML = `<div class="panel"><h3>📈 Tendência 14d</h3><div style="color:#888;font-size:12px;padding:8px">Sem snapshots ainda. <a href="javascript:dbTrendBackfill()" style="color:#a371f7">rodar backfill 14d agora</a></div></div>`;
+      return;
+    }
+    const pending = series.map(s => s.sales_pending);
+    const routes = series.map(s => s.new_routes);
+    const fits = series.map(s => s.fits_in_route);
+    const cost = series.map(s => s.cost_estimated);
+    const labels = series.map(s => s.date.substring(5));
+    el.innerHTML = `
+      <div class="panel">
+        <h3>📈 Tendência 14 dias <span class="count">${series.length} dias</span></h3>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+          <div><div style="font-size:11px;color:#888;margin-bottom:4px">Aguardando rota</div>${_sparkline(pending, '#fbbf24')}</div>
+          <div><div style="font-size:11px;color:#888;margin-bottom:4px">Rotas novas/dia</div>${_sparkline(routes, '#1f6feb')}</div>
+          <div><div style="font-size:11px;color:#888;margin-bottom:4px">Stops/dia</div>${_sparkline(fits, '#22c55e')}</div>
+          <div><div style="font-size:11px;color:#888;margin-bottom:4px">Custo estimado R$</div>${_sparkline(cost, '#a371f7')}</div>
+        </div>
+        <div style="margin-top:8px;color:#666;font-size:10px;display:flex;justify-content:space-between">
+          <span>de ${labels[0]} a ${labels[labels.length-1]} (BRT)</span>
+          <a href="javascript:dbTrendRunNow()" style="color:#58a6ff;text-decoration:none">↻ snapshot agora</a>
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    el.innerHTML = `<div class="panel"><h3>📈 Tendência 14d</h3><div style="color:#f87171;font-size:11px;padding:8px">${e.message}</div></div>`;
+  }
+}
+
+async function dbTrendRunNow() {
+  try {
+    await fetch('/operacional/api/metrics/run-now', { method:'POST', credentials:'same-origin' });
+    dbTrendLoad();
+  } catch (e) { alert('falhou: ' + e.message); }
+}
+async function dbTrendBackfill() {
+  try {
+    await fetch('/operacional/api/metrics/backfill?days=14', { method:'POST', credentials:'same-origin' });
+    dbTrendLoad();
+  } catch (e) { alert('falhou: ' + e.message); }
+}
+
+dbTrendLoad();
+setInterval(dbTrendLoad, 5 * 60 * 1000);  // 5min
+</script>

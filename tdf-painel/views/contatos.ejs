@@ -1,0 +1,211 @@
+<% const activePage = 'contatos'; const pageTitle = 'Contatos WhatsApp'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.ct-wrap{max-width:1300px;margin:0 auto;padding:18px 24px 80px}
+.ct-h{font-size:22px;color:var(--text);margin:0 0 4px;font-weight:800;display:flex;align-items:center;gap:10px}
+.ct-sub{color:var(--text-muted);font-size:13px;margin:0 0 16px}
+.ct-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px}
+.ct-bar input,.ct-bar select{padding:8px 12px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px}
+.ct-bar .stat{font-size:11px;color:var(--text-muted);margin-left:auto}
+.ct-bar .stat strong{color:var(--text)}
+.ct-tbl{width:100%;border-collapse:collapse;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ct-tbl th{text-align:left;padding:10px 12px;font-size:10px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.4px;border-bottom:1px solid var(--border);background:var(--bg-card)}
+.ct-tbl td{padding:10px 12px;border-bottom:1px solid #1a1a1a;color:var(--text);font-size:13px}
+.ct-tbl tr:hover td{background:var(--bg-hover)}
+.ct-tbl .pill-existe{display:inline-block;padding:2px 8px;background:rgba(91,163,245,.2);color:#7cb9f5;border-radius:10px;font-size:10px;font-weight:700}
+.ct-tbl .pill-novo{display:inline-block;padding:2px 8px;background:rgba(34,197,94,.2);color:#4ade80;border-radius:10px;font-size:10px;font-weight:700}
+.ct-tbl button{padding:5px 12px;background:#0d2818;color:#4ade80;border:1px solid #22c55e;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer}
+.ct-tbl button:hover{background:#0f3a22}
+.ct-tbl a{color:#5ba3f5;text-decoration:none;font-size:11px;font-weight:700}
+.ct-pag{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:14px;font-size:12px;color:var(--text-muted)}
+.ct-pag button{padding:6px 14px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text-muted);font-weight:700;cursor:pointer}
+.ct-pag button:disabled{opacity:.4;cursor:not-allowed}
+
+/* Modal converter */
+.cv-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;padding:30px 20px;overflow-y:auto}
+.cv-bg.open{display:block}
+.cv{max-width:520px;margin:30px auto;background:var(--bg-card);border:2px solid #22c55e;border-radius:14px;padding:24px 28px;color:var(--text)}
+.cv h2{margin:0 0 14px;font-size:18px;color:var(--text);display:flex;align-items:center;gap:10px}
+.cv label{display:block;font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin:10px 0 4px}
+.cv input,.cv select,.cv textarea{width:100%;padding:9px 11px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;font-family:inherit}
+.cv .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cv .acts{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.cv .acts button{padding:9px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid}
+.cv .acts .cancel{background:var(--bg-hover);color:var(--text-muted);border-color:#333}
+.cv .acts .save{background:#0d2818;color:#4ade80;border-color:#22c55e}
+</style>
+
+<div class="ct-wrap">
+  <h1 class="ct-h">📇 Contatos WhatsApp</h1>
+  <p class="ct-sub">Contatos exportados da conta Z-API pareada. Use pra converter prospects em Lead/Deal no Zoho CRM principal — quem ainda não é cliente.</p>
+
+  <div class="ct-bar">
+    <input type="text" id="ct-search" placeholder="🔍 Buscar nome ou telefone..." oninput="ctRender()" style="flex:1;min-width:220px">
+    <select id="ct-filter" onchange="ctRender()">
+      <option value="todos">Todos</option>
+      <option value="novos">🟢 Apenas novos (não são cliente)</option>
+      <option value="existe">🔵 Já são cliente no Zoho</option>
+    </select>
+    <button onclick="ctCarregar(true)" style="padding:8px 14px;background:#1e3a5f;color:#7cb9f5;border:1px solid #5ba3f5;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">🔄 Atualizar</button>
+    <span class="stat"><strong id="ct-total">0</strong> contatos · <strong id="ct-novos" style="color:#4ade80">0</strong> novos</span>
+  </div>
+
+  <div style="overflow-x:auto"><table class="ct-tbl" id="ct-tbl">
+    <thead><tr>
+      <th>Nome</th><th>Telefone</th><th>Status</th><th>Stage CRM</th><th>Ações</th>
+    </tr></thead>
+    <tbody id="ct-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:30px">Carregando contatos...</td></tr></tbody>
+  </table></div>
+
+  <div class="ct-pag">
+    <button onclick="ctPag(-1)" id="ct-prev">← Anterior</button>
+    <span>Página <strong id="ct-page-num">1</strong></span>
+    <button onclick="ctPag(1)" id="ct-next">Próxima →</button>
+  </div>
+</div>
+
+<!-- Modal converter -->
+<div class="cv-bg" id="cv-bg" onclick="if(event.target===this)cvFechar()">
+  <div class="cv">
+    <h2>🚀 Converter em Lead</h2>
+    <label>Nome do cliente *</label>
+    <input type="text" id="cv-nome" placeholder="Nome completo">
+    <label>Telefone (do WhatsApp)</label>
+    <input type="text" id="cv-fone" disabled>
+    <div class="row">
+      <div>
+        <label>Cidade</label>
+        <input type="text" id="cv-cidade" placeholder="Ex: São José dos Campos">
+      </div>
+      <div>
+        <label>Produto de interesse</label>
+        <select id="cv-produto">
+          <option value="">— A definir —</option>
+          <option>American Filter</option>
+          <option>Iron Free</option>
+          <option>Scale Stop</option>
+          <option>Bebedouro</option>
+          <option>Refil</option>
+          <option>Outros</option>
+        </select>
+      </div>
+    </div>
+    <label>Observação (opcional)</label>
+    <textarea id="cv-obs" rows="3" placeholder="Como veio o contato, dor identificada, etc."></textarea>
+    <div class="acts">
+      <button class="cancel" onclick="cvFechar()">Cancelar</button>
+      <button class="save" onclick="cvSalvar()">🚀 Criar Lead no Zoho</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _CTS = [];
+let _PAGE = 1;
+const _PAGE_SIZE = 100;
+
+async function ctCarregar(force){
+  document.getElementById('ct-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:30px">Carregando contatos do WhatsApp...</td></tr>';
+  try {
+    const r = await fetch(`/admin/whatsapp/contatos?page=${_PAGE}&pageSize=${_PAGE_SIZE}${force?'&t='+Date.now():''}`);
+    const d = await r.json();
+    if (d.error) {
+      document.getElementById('ct-tbody').innerHTML = `<tr><td colspan="5" style="text-align:center;color:#f87171;padding:30px">${d.error}<br><span style="color:#888;font-size:11px">Verifique se Z-API está conectado em /admin/whatsapp</span></td></tr>`;
+      return;
+    }
+    _CTS = d.contatos || [];
+    document.getElementById('ct-page-num').textContent = _PAGE;
+    document.getElementById('ct-prev').disabled = _PAGE === 1;
+    document.getElementById('ct-next').disabled = _CTS.length < _PAGE_SIZE;
+    ctRender();
+  } catch(e) {
+    document.getElementById('ct-tbody').innerHTML = `<tr><td colspan="5" style="color:#f87171;text-align:center;padding:30px">Erro: ${e.message}</td></tr>`;
+  }
+}
+
+function ctRender(){
+  const search = (document.getElementById('ct-search').value||'').toLowerCase();
+  const filter = document.getElementById('ct-filter').value;
+  const list = _CTS.filter(c => {
+    if (filter === 'novos' && c.jaCliente) return false;
+    if (filter === 'existe' && !c.jaCliente) return false;
+    if (search) {
+      const blob = `${c.name} ${c.phone}`.toLowerCase();
+      if (!blob.includes(search)) return false;
+    }
+    return true;
+  });
+  document.getElementById('ct-total').textContent = list.length;
+  document.getElementById('ct-novos').textContent = list.filter(c => !c.jaCliente).length;
+
+  if (!list.length) {
+    document.getElementById('ct-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:30px">Nenhum contato neste filtro</td></tr>';
+    return;
+  }
+  const fmtFone = p => {
+    const c = String(p).replace(/\D/g,'');
+    if (c.length === 13) return `+55 ${c.slice(2,4)} ${c.slice(4,9)}-${c.slice(9)}`;
+    if (c.length === 11) return `(${c.slice(0,2)}) ${c.slice(2,7)}-${c.slice(7)}`;
+    return p;
+  };
+  document.getElementById('ct-tbody').innerHTML = list.map(c => `
+    <tr>
+      <td style="font-weight:700">${c.name || '<span style="color:#666;font-style:italic">sem nome</span>'}</td>
+      <td style="font-family:monospace;font-size:12px;color:#aaa">${fmtFone(c.phone)}</td>
+      <td>${c.jaCliente ? '<span class="pill-existe">✓ Já é cliente</span>' : '<span class="pill-novo">🟢 Novo</span>'}</td>
+      <td style="font-size:11px;color:#888">${c.jaCliente?.stage || '—'}</td>
+      <td>${c.jaCliente
+        ? `<a href="https://crmplus.zoho.com/tudodefiltro3711/index.do/cxapp/crm/org856385701/tab/Potentials/${c.jaCliente.dealId}" target="_blank">📂 Abrir no CRM</a>`
+        : `<button onclick="cvAbrir('${c.phone}','${(c.name||'').replace(/'/g,"\\'")}')">🚀 Converter em Lead</button>`
+      }</td>
+    </tr>
+  `).join('');
+}
+
+function ctPag(delta){
+  _PAGE = Math.max(1, _PAGE + delta);
+  ctCarregar(true);
+}
+
+// Modal converter
+function cvAbrir(phone, nome){
+  document.getElementById('cv-nome').value = nome || '';
+  document.getElementById('cv-fone').value = phone;
+  document.getElementById('cv-cidade').value = '';
+  document.getElementById('cv-produto').value = '';
+  document.getElementById('cv-obs').value = '';
+  document.getElementById('cv-bg').classList.add('open');
+  setTimeout(() => document.getElementById('cv-nome').focus(), 50);
+}
+function cvFechar(){ document.getElementById('cv-bg').classList.remove('open'); }
+async function cvSalvar(){
+  const nome = document.getElementById('cv-nome').value.trim();
+  const phone = document.getElementById('cv-fone').value;
+  if (!nome) { alert('Nome obrigatório'); return; }
+  const body = {
+    phone, nome,
+    cidade: document.getElementById('cv-cidade').value.trim(),
+    produtoInteresse: document.getElementById('cv-produto').value,
+    observacao: document.getElementById('cv-obs').value.trim(),
+  };
+  try {
+    const r = await fetch('/admin/whatsapp/converter-lead', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (d.jaExiste) { alert(`Já existe lead pra esse número:\n${d.name} (${d.stage})`); return; }
+    if (d.error) { alert('Erro: '+d.error); return; }
+    alert('✅ Lead criado no Zoho!\n\nClique OK pra abrir no CRM.');
+    if (d.crmLink) window.open(d.crmLink, '_blank');
+    cvFechar();
+    ctCarregar(true);
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+document.addEventListener('keydown', e => { if(e.key==='Escape') cvFechar(); });
+
+ctCarregar();
+</script>
+
+</div></body></html>

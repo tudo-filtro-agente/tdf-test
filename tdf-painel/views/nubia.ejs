@@ -1,0 +1,357 @@
+<% const activePage = 'nubia'; const pageTitle = 'Núbia SDR IA'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.nubia-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+@media(max-width:900px){.nubia-grid{grid-template-columns:repeat(2,1fr)}}
+.n-metric{background:#111827;border:1px solid #1e3a5f;border-radius:8px;padding:14px;text-align:center}
+.n-metric .num{font-size:28px;font-weight:bold}.n-metric .lbl{font-size:11px;color:#7a8ba0;margin-top:2px}
+.n-panel{background:#111827;border:1px solid #1e3a5f;border-radius:8px;margin-bottom:12px;overflow:hidden}
+.n-panel-hd{background:#1e293b;padding:8px 14px;font-size:13px;color:#00d4ff;font-weight:600;display:flex;justify-content:space-between}
+.n-panel-bd{padding:10px 14px;max-height:420px;overflow-y:auto}
+.n-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.n-tbl th{text-align:left;padding:6px 8px;color:#7a8ba0;border-bottom:1px solid #1e3a5f;font-weight:normal}
+.n-tbl td{padding:5px 8px;border-bottom:1px solid #0f1b3d}
+.n-tbl tr:hover{background:#1e293b}
+.n-sb{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;color:var(--text)}
+.n-sb-novo{background:#3b82f6}.n-sb-atendimento_ativo{background:#2ecc71}
+.n-sb-aguardando_cliente{background:#f39c12}.n-sb-aguardando_closer{background:#8b5cf6}
+.n-sb-em_followup{background:#f97316}.n-sb-qualificado{background:#10b981}
+.n-sb-proposta{background:#06b6d4}.n-sb-perdido{background:#ef4444}
+.n-sb-nutricao{background:#a855f7}.n-sb-escalado_humano{background:#dc2626}
+.n-states{display:flex;flex-wrap:wrap;gap:8px}
+.n-sc{background:#1e293b;border-radius:6px;padding:8px 14px;text-align:center;min-width:90px}
+.n-sc .num{font-size:22px;font-weight:bold;color:#00d4ff}.n-sc .lbl{font-size:10px;color:#7a8ba0}
+.n-cmd{display:flex;gap:8px;margin-top:8px}
+.n-cmd input{flex:1;background:#0a0a1a;border:1px solid #1e3a5f;color:#e0e0e0;padding:8px 12px;border-radius:6px;font-size:13px}
+.n-cmd button{background:#00d4ff;color:#0a0a1a;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer}
+.n-cmd button:hover{background:#00b8d9}
+.n-qbtns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.n-qb{background:#1e293b;border:1px solid #334155;color:#e0e0e0;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px}
+.n-qb:hover{background:#334155;border-color:#00d4ff}
+.n-hd-row{display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.n-badge{padding:4px 12px;border-radius:12px;font-size:12px;font-weight:700}
+.n-badge-on{background:#2ecc71;color:#fff}.n-badge-off{background:#555;color:#ddd}
+.n-badge-warn{background:#f39c12;color:#fff}
+.n-layout{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:900px){.n-layout{grid-template-columns:1fr}}
+.green{color:#2ecc71}.yellow{color:#f39c12}.red{color:#e74c3c}.blue{color:#00d4ff}
+.n-refresh{font-size:11px;color:#475569}
+#n-toast{position:fixed;bottom:20px;right:20px;background:#2ecc71;color:#fff;padding:10px 20px;border-radius:8px;display:none;font-size:13px;z-index:999}
+</style>
+
+<div class="n-hd-row">
+  <span id="n-status" class="n-badge n-badge-on">...</span>
+  <span id="n-plantao" class="n-badge n-badge-off">Plantão: -</span>
+  <span id="n-model" style="color:#475569;font-size:12px">...</span>
+  <span class="n-refresh">Auto-refresh: 15s</span>
+  <span id="n-ts" class="n-refresh"></span>
+</div>
+
+<div class="nubia-grid" id="n-metrics"></div>
+
+<div class="n-layout">
+  <!-- Left: Active leads -->
+  <div>
+    <div class="n-panel">
+      <div class="n-panel-hd">Leads Ativos (24h) <span id="n-lc" class="blue">0</span></div>
+      <div class="n-panel-bd" id="n-leads" style="max-height:600px"></div>
+    </div>
+  </div>
+
+  <!-- Right: States + Changes + Errors -->
+  <div>
+    <div class="n-panel">
+      <div class="n-panel-hd">Estados</div>
+      <div class="n-panel-bd" id="n-states"></div>
+    </div>
+    <div class="n-panel">
+      <div class="n-panel-hd">Mudanças de Estado</div>
+      <div class="n-panel-bd" id="n-changes" style="max-height:200px"></div>
+    </div>
+    <div class="n-panel">
+      <div class="n-panel-hd">Erros (24h) <span id="n-ec">0</span></div>
+      <div class="n-panel-bd" id="n-errors" style="max-height:200px"></div>
+    </div>
+    <div class="n-panel">
+      <div class="n-panel-hd">Escalados</div>
+      <div class="n-panel-bd" id="n-esc" style="max-height:200px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Atendimentos do dia -->
+<div class="n-panel" style="margin:0 0 12px 0">
+  <div class="n-panel-hd">Atendimentos Hoje <span id="n-atd-count" class="blue">0</span></div>
+  <div class="n-panel-bd" id="n-atendimentos" style="max-height:500px"></div>
+</div>
+
+<!-- Leads Bloqueados (humano assumiu) -->
+<div class="n-panel" style="margin:0 0 12px 0">
+  <div class="n-panel-hd" style="background:#2d1f0f;color:#f39c12">🚫 Núbia Bloqueada (Humano Ativo) <span id="n-blocked-count" style="color:#f39c12">0</span></div>
+  <div class="n-panel-bd" id="n-blocked" style="max-height:300px"></div>
+</div>
+
+<!-- Nudges da janela WhatsApp -->
+<div class="n-panel" style="margin:0 0 12px 0">
+  <div class="n-panel-hd">Nudges Janela WhatsApp <span id="n-nudge-count" class="blue">0</span></div>
+  <div class="n-panel-bd" id="n-nudges" style="max-height:200px"></div>
+</div>
+
+<!-- Commands -->
+<div class="n-panel">
+  <div class="n-panel-hd">Comandos</div>
+  <div class="n-panel-bd">
+    <div class="n-qbtns" id="n-qbtns">
+      <button class="n-qb" onclick="nCmd('status')">Status</button>
+      <button class="n-qb" onclick="nCmd('leads parados')">Leads Parados</button>
+      <button class="n-qb" onclick="nCmd('quantos leads hoje')">Leads Hoje</button>
+      <button class="n-qb" onclick="nTogglePlantao()">Plantão On/Off</button>
+      <button class="n-qb" onclick="nBackfill()" style="border-color:#f39c12;color:#f39c12">Backfill Deal IDs</button>
+    </div>
+    <div class="n-cmd">
+      <input id="n-input" placeholder="plantao Tiago, ligar 12999999999, status..." onkeypress="if(event.key==='Enter')nExec()">
+      <button onclick="nExec()">Enviar</button>
+    </div>
+    <div id="n-result" style="padding:6px 0;font-size:12px;color:#7a8ba0;min-height:18px"></div>
+  </div>
+</div>
+
+<div id="n-toast"></div>
+
+<script>
+const NUBIA_API = 'https://generous-upliftment-production-271e.up.railway.app';
+let nData = null, nClosers = [];
+
+function nToast(m,c='#2ecc71'){const t=document.getElementById('n-toast');t.textContent=m;t.style.background=c;t.style.display='block';setTimeout(()=>t.style.display='none',3000)}
+function nSC(s){return 'n-sb-'+(s||'novo').replace(/ /g,'_')}
+function nSL(s){return (s||'novo').replace(/_/g,' ')}
+
+function nMetrics(d){
+  const q=d.queue||{},p=q.pending||0;
+  const qC=p===0?'green':(p<5?'yellow':'red');
+  const sC=(d.sla.ok_pct||0)>=95?'green':((d.sla.ok_pct||0)>=80?'yellow':'red');
+  document.getElementById('n-metrics').innerHTML=`
+    <div class="n-metric"><div class="num ${qC}">${p}</div><div class="lbl">Pendentes</div></div>
+    <div class="n-metric"><div class="num">${q.done_last_hour||0}</div><div class="lbl">Msgs/Hora</div></div>
+    <div class="n-metric"><div class="num">${d.msgs_today||0}</div><div class="lbl">Msgs Hoje</div></div>
+    <div class="n-metric"><div class="num ${sC}">${d.sla.ok_pct||0}%</div><div class="lbl">SLA OK</div></div>
+    <div class="n-metric"><div class="num">${d.sla.avg_seconds||0}s</div><div class="lbl">Resp Média</div></div>
+    <div class="n-metric"><div class="num">${d.sla.p90_seconds||0}s</div><div class="lbl">P90</div></div>
+    <div class="n-metric"><div class="num blue">${d.followups.active||0}</div><div class="lbl">Follow-ups</div></div>
+    <div class="n-metric"><div class="num green">${d.followups.responded_24h||0}</div><div class="lbl">Responderam</div></div>
+    <div class="n-metric"><div class="num ${(d.sem_proxima_acao||0)>0?'yellow':'green'}">${d.sem_proxima_acao||0}</div><div class="lbl">Sem Próx. Ação</div></div>
+    <div class="n-metric"><div class="num ${(d.acoes_vencidas||0)>5?'red':((d.acoes_vencidas||0)>0?'yellow':'green')}">${d.acoes_vencidas||0}</div><div class="lbl">Ações Vencidas</div></div>
+    <div class="n-metric"><div class="num green">${d.janelas_abertas||0}</div><div class="lbl">Janelas Abertas</div></div>
+    <div class="n-metric"><div class="num ${(d.sem_owner||0)>0?'red':'green'}">${d.sem_owner||0}</div><div class="lbl">Sem Owner</div></div>`;
+}
+
+function _esc(s){return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}
+function _crmUrl(dealId){return dealId?'https://crmplus.zoho.com/tudodefiltro3711/index.do/cxapp/crm/org856385701/tab/Potentials/'+dealId:''}
+
+function nLeads(leads){
+  document.getElementById('n-lc').textContent=leads.length;
+  if(!leads.length){document.getElementById('n-leads').innerHTML='<div style="color:#475569">Sem leads ativos</div>';return}
+  let h='<table class="n-tbl"><tr><th>Nome</th><th>Estado</th><th>Info</th><th>Dono</th><th>Atividade</th><th></th></tr>';
+  for(const l of leads){
+    const crmUrl=_crmUrl(l.deal_id);
+    const hasChat=l.phone_full&&l.deal_id;
+    const scoreColor=l.score>=7?'#2ecc71':(l.score>=4?'#f39c12':'#666');
+    const info=[];
+    if(l.cidade)info.push(l.cidade);
+    if(l.tipo_agua)info.push(l.tipo_agua);
+    if(l.prazo)info.push('⏰'+l.prazo);
+    if(l.dor)info.push('💢'+l.dor.substring(0,40));
+    h+=`<tr>
+      <td>
+        <strong style="cursor:${l.deal_id?'pointer':'default'};color:${l.deal_id?'#00d4ff':'#e0e0e0'}"
+          ${l.deal_id?`onclick="window.abrirClienteDrawer&&window.abrirClienteDrawer('${_esc(l.deal_id)}',{phone:'${_esc(l.phone_full)}',nome:'${_esc(l.name)}'})"`:''}>
+          ${l.name||'?'}
+        </strong>
+        <br><span style="color:#475569;font-size:10px">...${l.phone} · ${l.product||''}</span>
+        ${l.score?`<span style="color:${scoreColor};font-size:10px;margin-left:4px">★${l.score}</span>`:''}
+        ${l.window_open?'<span title="Janela 24h aberta" style="font-size:10px;margin-left:3px">🟢</span>':'<span title="Janela fechada" style="font-size:10px;margin-left:3px;opacity:.4">🔴</span>'}
+      </td>
+      <td><span class="n-sb ${nSC(l.state)}">${nSL(l.state)}</span></td>
+      <td style="font-size:10px;color:#7a8ba0;max-width:180px">${info.join(' · ')||'-'}</td>
+      <td>${l.owner||'-'}</td>
+      <td style="font-size:10px">
+        <span title="Cliente">👤${l.last_client||'-'}</span>
+        <span title="Bot" style="margin-left:4px">🤖${l.last_bot||'-'}</span>
+        ${l.last_human?`<span title="Humano" style="margin-left:4px">👨‍💼${l.last_human}</span>`:''}
+      </td>
+      <td style="white-space:nowrap">
+        ${hasChat?`<button onclick="window.abrirChat&&abrirChat('${_esc(l.deal_id)}','${_esc(l.phone_full)}','${_esc(l.name)}')" style="background:linear-gradient(135deg,#0f3a1a,#22c55e22);color:#22c55e;border:1px solid #22c55e;border-radius:5px;padding:3px 7px;font-size:10px;font-weight:700;cursor:pointer" title="Abrir chat WATI">💬</button>`:''}
+        ${crmUrl?`<a href="${crmUrl}" target="_blank" style="background:#1e293b;color:#00d4ff;border:1px solid #00d4ff;border-radius:5px;padding:3px 7px;font-size:10px;font-weight:700;text-decoration:none;margin-left:3px" title="Abrir no Zoho CRM">CRM</a>`:''}
+        <button onclick="nTakeover('${_esc(l.phone_full)}','${_esc(l.name)}')" style="background:#1e293b;color:#f39c12;border:1px solid #f39c12;border-radius:5px;padding:3px 7px;font-size:9px;font-weight:700;cursor:pointer;margin-left:3px" title="Humano assume — pausa Núbia">✋</button>
+        <button onclick="nRelease('${_esc(l.phone_full)}','${_esc(l.name)}')" style="background:#1e293b;color:#2ecc71;border:1px solid #2ecc71;border-radius:5px;padding:3px 7px;font-size:9px;font-weight:700;cursor:pointer;margin-left:2px" title="Devolver para Núbia">🤖</button>
+      </td>
+    </tr>`;
+  }
+  document.getElementById('n-leads').innerHTML=h+'</table>';
+}
+
+function nStates(states){
+  let h='<div class="n-states">';
+  for(const[s,c] of Object.entries(states||{})) h+=`<div class="n-sc"><div class="num">${c}</div><div class="lbl">${nSL(s)}</div></div>`;
+  document.getElementById('n-states').innerHTML=h+'</div>';
+}
+
+function nChanges(ch){
+  if(!ch.length){document.getElementById('n-changes').innerHTML='<div style="color:#475569">Sem mudanças</div>';return}
+  let h='<table class="n-tbl"><tr><th>Hora</th><th>Lead</th><th>Transição</th></tr>';
+  for(const c of ch) h+=`<tr><td>${c.time||'-'}</td><td>...${c.phone}</td><td>${c.detail}</td></tr>`;
+  document.getElementById('n-changes').innerHTML=h+'</table>';
+}
+
+function nErrors(errs){
+  document.getElementById('n-ec').textContent=errs.length;
+  if(!errs.length){document.getElementById('n-errors').innerHTML='<div class="green">Nenhum erro</div>';return}
+  let h='<table class="n-tbl"><tr><th>Hora</th><th>Tel</th><th>Erro</th></tr>';
+  for(const e of errs) h+=`<tr><td>${e.time||'-'}</td><td>...${e.phone}</td><td style="color:#ef4444">${e.msg}</td></tr>`;
+  document.getElementById('n-errors').innerHTML=h+'</table>';
+}
+
+function nEsc(esc){
+  if(!esc.length){document.getElementById('n-esc').innerHTML='<div class="green">Nenhum</div>';return}
+  let h='<table class="n-tbl"><tr><th>Hora</th><th>Tel</th><th>Msg</th><th>Erro</th></tr>';
+  for(const e of esc) h+=`<tr><td>${e.time||'-'}</td><td>...${e.phone}</td><td>${e.text}</td><td style="color:#ef4444">${e.error}</td></tr>`;
+  document.getElementById('n-esc').innerHTML=h+'</table>';
+}
+
+function nHeader(d){
+  document.getElementById('n-status').textContent=d.horario_comercial?'Horário Comercial':'Fora do Horário';
+  document.getElementById('n-status').className='n-badge '+(d.horario_comercial?'n-badge-on':'n-badge-warn');
+  document.getElementById('n-plantao').textContent='Plantão: '+(d.plantao||'OFF');
+  document.getElementById('n-plantao').className='n-badge '+(d.plantao?'n-badge-on':'n-badge-off');
+  document.getElementById('n-model').textContent=d.model;
+  document.getElementById('n-ts').textContent='Atualizado: '+d.timestamp;
+  nClosers=d.closers||[];
+}
+
+async function nRefresh(){
+  try{
+    const r=await fetch(NUBIA_API+'/api/dashboard');
+    const d=await r.json();
+    if(d.error){console.error(d.error);return}
+    nData=d;
+    nHeader(d);nMetrics(d);nLeads(d.active_leads||[]);nStates(d.states);
+    nChanges(d.state_changes||[]);nErrors(d.errors||[]);nEsc(d.escalated||[]);
+    nAtendimentos(d.atendimentos_hoje||[]);nNudges(d.nudges_hoje||[]);
+    nLoadBlocked();
+  }catch(e){console.error('Nubia refresh:',e)}
+}
+
+async function nExec(){
+  const inp=document.getElementById('n-input');
+  const cmd=inp.value.trim();if(!cmd)return;inp.value='';
+  document.getElementById('n-result').textContent='Enviando...';
+  if(cmd.toLowerCase().match(/^plant[aã]o/)){
+    const name=cmd.replace(/plant[aã]o/i,'').trim();
+    try{
+      const r=await fetch(NUBIA_API+'/plantao',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(name&&name!=='off'?{name}:{off:true})});
+      const d=await r.json();
+      document.getElementById('n-result').textContent=JSON.stringify(d);
+      nToast(d.message||d.status||'OK');nRefresh();
+    }catch(e){document.getElementById('n-result').textContent='Erro: '+e}
+    return;
+  }
+  document.getElementById('n-result').textContent='Comando enviado via Z-API';nToast('Enviado');
+}
+function nCmd(c){document.getElementById('n-input').value=c;nExec()}
+function nTogglePlantao(){
+  if(nData&&nData.plantao){document.getElementById('n-input').value='plantao off'}
+  else{const n=prompt('Closer de plantão:\\n'+(nClosers||[]).join(', '));if(n)document.getElementById('n-input').value='plantao '+n;else return}
+  nExec();
+}
+
+function nAtendimentos(atd){
+  document.getElementById('n-atd-count').textContent=atd.length;
+  if(!atd.length){document.getElementById('n-atendimentos').innerHTML='<div style="color:#475569">Nenhum atendimento hoje</div>';return}
+  let h='<table class="n-tbl"><tr><th>Hora</th><th>Nome</th><th>Msg do Cliente</th><th>Estágio</th><th>Dono</th><th>Produto</th><th></th></tr>';
+  for(const a of atd){
+    const crmUrl=_crmUrl(a.deal_id);
+    const hasChat=a.phone_full&&a.deal_id;
+    h+=`<tr>
+      <td>${a.hora||'-'}</td>
+      <td>
+        <strong style="cursor:${a.deal_id?'pointer':'default'};color:${a.deal_id?'#00d4ff':'#e0e0e0'}"
+          ${a.deal_id?`onclick="window.abrirClienteDrawer&&window.abrirClienteDrawer('${_esc(a.deal_id)}',{phone:'${_esc(a.phone_full)}',nome:'${_esc(a.nome)}'})"`:''}>
+          ${a.nome||'?'}
+        </strong>
+        <br><span style="color:#475569;font-size:10px">...${a.phone}</span>
+      </td>
+      <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(a.msg_cliente||'').replace(/"/g,'&quot;')}">${a.msg_cliente||'-'}</td>
+      <td><span class="n-sb ${nSC(a.estagio)}">${nSL(a.estagio)}</span></td>
+      <td>${a.dono||'-'}</td>
+      <td>${a.produto||'-'}</td>
+      <td style="white-space:nowrap">
+        ${hasChat?`<button onclick="window.abrirChat&&abrirChat('${_esc(a.deal_id)}','${_esc(a.phone_full)}','${_esc(a.nome)}')" style="background:linear-gradient(135deg,#0f3a1a,#22c55e22);color:#22c55e;border:1px solid #22c55e;border-radius:5px;padding:3px 7px;font-size:10px;font-weight:700;cursor:pointer" title="Chat">💬</button>`:''}
+        ${crmUrl?`<a href="${crmUrl}" target="_blank" style="background:#1e293b;color:#00d4ff;border:1px solid #00d4ff;border-radius:5px;padding:3px 7px;font-size:10px;font-weight:700;text-decoration:none;margin-left:3px" title="CRM">CRM</a>`:''}
+      </td>
+    </tr>`;
+  }
+  document.getElementById('n-atendimentos').innerHTML=h+'</table>';
+}
+
+function nNudges(nudges){
+  document.getElementById('n-nudge-count').textContent=nudges.length;
+  if(!nudges.length){document.getElementById('n-nudges').innerHTML='<div style="color:#475569">Nenhum nudge hoje</div>';return}
+  let h='<table class="n-tbl"><tr><th>Hora</th><th>Lead</th><th>Mensagem</th></tr>';
+  for(const n of nudges) h+=`<tr><td>${n.hora||'-'}</td><td>...${n.phone}</td><td>${n.msg}</td></tr>`;
+  document.getElementById('n-nudges').innerHTML=h+'</table>';
+}
+
+async function nTakeover(phone,name){
+  if(!confirm(`Assumir conversa de ${name||phone}?\nNúbia será PAUSADA para este lead.`))return;
+  try{
+    const r=await fetch(NUBIA_API+'/admin/takeover',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,by:'<%= user.name %>',reason:'Assumido via painel'})});
+    const d=await r.json();
+    nToast(`${name||phone}: humano assumiu`,'#f39c12');nRefresh();
+  }catch(e){nToast('Erro: '+e,'#e74c3c')}
+}
+
+async function nRelease(phone,name){
+  if(!confirm(`Devolver ${name||phone} para Núbia?`))return;
+  try{
+    const r=await fetch(NUBIA_API+'/admin/release',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,status:'ATIVA'})});
+    const d=await r.json();
+    nToast(`${name||phone}: Núbia reativada`,'#2ecc71');nRefresh();
+  }catch(e){nToast('Erro: '+e,'#e74c3c')}
+}
+
+async function nLoadBlocked(){
+  try{
+    const r=await fetch(NUBIA_API+'/admin/blocked');
+    const d=await r.json();
+    document.getElementById('n-blocked-count').textContent=d.count||0;
+    if(!d.leads||!d.leads.length){document.getElementById('n-blocked').innerHTML='<div class="green">Nenhum lead bloqueado</div>';return}
+    let h='<table class="n-tbl"><tr><th>Nome</th><th>Dono</th><th>Status</th><th>Bloqueado por</th><th>Quando</th><th></th></tr>';
+    for(const l of d.leads){
+      h+=`<tr>
+        <td><strong>${l.name||'?'}</strong><br><span style="color:#475569;font-size:10px">...${l.phone}</span></td>
+        <td>${l.owner||'-'}</td>
+        <td style="color:#f39c12;font-size:10px">${l.nubia_status||'-'}</td>
+        <td>${l.takeover_by||'-'}</td>
+        <td>${l.takeover_at||'-'}</td>
+        <td><button onclick="nRelease('${_esc(l.phone_full)}','${_esc(l.name)}')" style="background:#0f3a1a;color:#2ecc71;border:1px solid #2ecc71;border-radius:5px;padding:3px 7px;font-size:9px;font-weight:700;cursor:pointer">🤖 Devolver</button></td>
+      </tr>`;
+    }
+    document.getElementById('n-blocked').innerHTML=h+'</table>';
+  }catch(e){console.error('Blocked load:',e)}
+}
+
+async function nBackfill(){
+  if(!confirm('Buscar deal_id no Zoho para leads sem CRM linkado?\nIsso pode levar alguns minutos.'))return;
+  nToast('Backfill iniciado...','#f39c12');
+  try{
+    const r=await fetch(NUBIA_API+'/admin/backfill-deal-ids',{method:'POST'});
+    const d=await r.json();
+    nToast(`Backfill: ${d.updated||0} atualizados, ${d.not_found||0} não encontrados`);
+    document.getElementById('n-result').textContent=JSON.stringify(d);
+    nRefresh();
+  }catch(e){nToast('Erro: '+e,'#e74c3c')}
+}
+
+nRefresh();setInterval(nRefresh,15000);
+</script>

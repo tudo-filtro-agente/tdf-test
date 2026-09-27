@@ -1,0 +1,150 @@
+<% const activePage = 'auditoria-crm'; const pageTitle = 'Auditoria · Influência da IA'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.aud-wrap{max-width:1500px;margin:0 auto;padding:20px}
+.aud-head h1{font-size:22px;color:var(--text);margin:0;display:flex;align-items:center;gap:10px}
+.aud-head .sub{color:var(--text-muted);font-size:13px;margin-top:2px}
+.aud-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin:18px 0}
+.aud-tab{padding:10px 18px;color:var(--text-muted);text-decoration:none;border-bottom:3px solid transparent;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.aud-tab:hover{color:var(--text)}
+.aud-tab.active{color:#00AAFF;border-bottom-color:#00AAFF}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.card.ia{border-color:#3399FF55;background:linear-gradient(180deg,#0D1F33,var(--bg-card))}
+.card.nubia{border-color:#A371F755;background:linear-gradient(180deg,#1A0D2E,var(--bg-card))}
+.card.ok{border-color:#3FB95055}
+.card.warn{border-color:#D2992255}
+.card.danger{border-color:#F8514955}
+.card .label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px}
+.card .value{font-size:24px;font-weight:800;color:var(--text);line-height:1;margin-bottom:4px}
+.card .sub{font-size:11px;color:var(--text-muted)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+@media(max-width:768px){.compare{grid-template-columns:1fr}}
+.compare .col{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:18px}
+.compare .col.ia{border-left:4px solid #3399FF}
+.compare .col.nope{border-left:4px solid var(--text-muted)}
+.compare h3{margin:0 0 14px;color:var(--text);font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.compare .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--bg-hover);font-size:13px}
+.compare .row:last-child{border-bottom:none}
+.compare .row .k{color:var(--text-muted)}
+.compare .row .v{color:var(--text);font-weight:600}
+.compare .winner{color:#3FB950;margin-left:6px;font-weight:700}
+.delta{padding:14px 16px;background:linear-gradient(135deg,#0D1F33,var(--bg-card));border:1px solid #3399FF;border-radius:10px;margin-top:18px}
+.delta h3{color:#3399FF;margin:0 0 10px;font-size:14px;text-transform:uppercase;letter-spacing:.4px}
+.delta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.delta-item{padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px}
+.delta-item .label{font-size:10px;color:var(--text-muted);text-transform:uppercase;font-weight:700}
+.delta-item .v{font-size:18px;font-weight:800;color:var(--text);margin-top:4px}
+.delta-item .pct{font-size:11px;margin-top:2px}
+.delta-item .pct.up{color:#3FB950}
+.delta-item .pct.down{color:#F85149}
+.filters{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.filters select{padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px}
+</style>
+
+<div class="aud-wrap">
+  <div>
+    <h1>🧠 Influência da IA</h1>
+    <div class="sub">Quanto Claude e Núbia estão movendo o ponteiro de verdade.</div>
+  </div>
+
+  <nav class="aud-tabs">
+    <a class="aud-tab" href="/auditoria-crm">Visão geral</a>
+    <a class="aud-tab active" href="/auditoria-crm/influencia-ia">Influência da IA</a>
+    <a class="aud-tab" href="/auditoria-crm/distribuicao-leads">Distribuição de leads</a>
+    <a class="aud-tab" href="/auditoria-crm/vendedores">Vendedores</a>
+    <a class="aud-tab" href="/auditoria-crm/sistemica-ia">🔬 Sistêmica IA</a>
+  </nav>
+
+  <div class="filters">
+    <label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px">Período:</label>
+    <select id="f-period" onchange="reload()">
+      <option value="today">Hoje</option>
+      <option value="last7">7 dias</option>
+      <option value="last30" selected>30 dias</option>
+      <option value="last90">90 dias</option>
+    </select>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="delta" id="delta"></div>
+
+  <div class="compare">
+    <div class="col ia">
+      <h3>🧠 Com IA <span style="color:#3399FF;font-size:11px">leads tocados por Claude/Núbia</span></h3>
+      <div id="col-ia"></div>
+    </div>
+    <div class="col nope">
+      <h3>👤 Sem IA <span style="color:var(--text-muted);font-size:11px">leads que ficaram só com humanos</span></h3>
+      <div id="col-nope"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function fmtNum(n) { return Number(n || 0).toLocaleString('pt-BR'); }
+function fmtMoney(n) { return 'R$ ' + Number(n || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 }); }
+
+async function reload() {
+  const period = document.getElementById('f-period').value;
+  const r = await fetch('/api/auditoria-crm/influencia-ia?period=' + period).then(r => r.json());
+  if (!r.ok) return;
+  const m = r.metrics; const c = r.compare;
+
+  const cards = [
+    { label: 'Leads tocados pela IA', value: fmtNum(m.leads_ia), cls: 'ia' },
+    { label: 'Qualificados pela Núbia', value: fmtNum(m.qualificados_ia), cls: 'nubia' },
+    { label: 'Distribuídos pela IA', value: fmtNum(m.distribuidos_ia), cls: 'ia' },
+    { label: 'Follow-ups Núbia', value: fmtNum(m.followups_nubia), cls: 'nubia' },
+    { label: 'Recomendações Claude', value: fmtNum(m.recomendacoes), cls: 'ia' },
+    { label: 'Ações IA executadas', value: fmtNum(m.acoes_ia_executadas), cls: 'ok' },
+    { label: 'Ganhos com IA', value: fmtNum(m.won_com_ia), cls: 'ok' },
+    { label: 'Perdas com IA', value: fmtNum(m.lost_com_ia), cls: 'warn' },
+    { label: 'Receita influenciada', value: fmtMoney(m.receita_ia), cls: 'ok', sub: 'Soma deals fechados em leads que IA tocou' },
+  ];
+  document.getElementById('cards').innerHTML = cards.map(c => `
+    <div class="card ${c.cls}">
+      <div class="label">${c.label}</div>
+      <div class="value">${c.value}</div>
+      ${c.sub ? `<div class="sub">${c.sub}</div>` : ''}
+    </div>
+  `).join('');
+
+  // Delta
+  const taxaDelta = c.com_ia.taxa_fechamento - c.sem_ia.taxa_fechamento;
+  const receitaDelta = c.com_ia.receita - c.sem_ia.receita;
+  const leadsDelta = c.com_ia.leads - c.sem_ia.leads;
+  const deltaItems = [
+    { label: 'Δ Taxa de fechamento', value: (taxaDelta >= 0 ? '+' : '') + taxaDelta.toFixed(1) + 'pp', cls: taxaDelta >= 0 ? 'up' : 'down' },
+    { label: 'Δ Receita IA vs sem IA', value: fmtMoney(receitaDelta), cls: receitaDelta >= 0 ? 'up' : 'down' },
+    { label: 'Δ Volume de leads', value: (leadsDelta >= 0 ? '+' : '') + fmtNum(leadsDelta), cls: leadsDelta >= 0 ? 'up' : 'down' },
+    { label: 'Total de leads no período', value: fmtNum(m.leads_total), cls: 'up' },
+  ];
+  document.getElementById('delta').innerHTML = `
+    <h3>📊 Com IA vs Sem IA</h3>
+    <div class="delta-grid">
+      ${deltaItems.map(d => `
+        <div class="delta-item">
+          <div class="label">${d.label}</div>
+          <div class="v">${d.value}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  const rows = (col) => `
+    <div class="row"><span class="k">Quantidade de leads</span><span class="v">${fmtNum(col.leads)}</span></div>
+    <div class="row"><span class="k">Ganhos</span><span class="v">${fmtNum(col.won)}</span></div>
+    <div class="row"><span class="k">Perdas</span><span class="v">${fmtNum(col.lost)}</span></div>
+    <div class="row"><span class="k">Taxa de fechamento</span><span class="v">${col.taxa_fechamento.toFixed(1)}%</span></div>
+    <div class="row"><span class="k">Receita</span><span class="v">${fmtMoney(col.receita)}</span></div>
+    <div class="row"><span class="k">Ticket médio</span><span class="v">${col.won > 0 ? fmtMoney(col.receita / col.won) : '—'}</span></div>
+  `;
+  document.getElementById('col-ia').innerHTML = rows(c.com_ia);
+  document.getElementById('col-nope').innerHTML = rows(c.sem_ia);
+}
+
+document.addEventListener('DOMContentLoaded', reload);
+</script>

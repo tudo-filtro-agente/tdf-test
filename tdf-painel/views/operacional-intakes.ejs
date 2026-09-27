@@ -1,0 +1,278 @@
+<% const activePage = 'operacional'; const pageTitle = 'Operacional · Agendamento Núbia'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+  .in-shell { max-width:1300px; margin:0 auto; padding:0 14px }
+  .in-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px }
+  .in-head h1 { margin:0; font-size:18px; color:var(--text) }
+  .in-head .sub { color:var(--text-muted); font-size:12px; margin-top:2px }
+
+  .in-stats { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:14px }
+  @media (max-width:900px) { .in-stats { grid-template-columns:repeat(2,1fr) } }
+  .in-stat { background:var(--bg-card); border:1px solid var(--border); border-top:3px solid var(--c); border-radius:8px; padding:10px 12px; cursor:pointer; transition:transform .15s }
+  .in-stat:hover { transform:translateY(-1px); border-color:var(--c) }
+  .in-stat.active { box-shadow:0 0 0 2px var(--c) inset }
+  .in-stat .lbl { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px }
+  .in-stat .val { font-size:22px; color:var(--text); font-weight:900; line-height:1.1; margin-top:3px }
+
+  .in-list { display:flex; flex-direction:column; gap:10px }
+  .in-card { background:var(--bg-card); border:1px solid var(--border); border-left:4px solid var(--c); border-radius:8px; padding:14px }
+  .in-card-h { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; margin-bottom:8px; flex-wrap:wrap }
+  .in-card-h .info .name { color:var(--text); font-weight:800; font-size:14px }
+  .in-card-h .info .meta { color:var(--text-muted); font-size:11px; margin-top:3px }
+  .in-card-h .info .product { color:#cbd5e1; font-size:12px; margin-top:4px }
+  .in-card-h .status { background:var(--border); color:var(--text); padding:3px 10px; border-radius:5px; font-size:10px; text-transform:uppercase; letter-spacing:.5px; font-weight:700; white-space:nowrap }
+  .in-card-h .status.awaiting_morgana { background:#fbbf24; color:#000 }
+  .in-card-h .status.morgana_approved { background:#22c55e; color:#000 }
+  .in-card-h .status.scheduled { background:#1f6feb; color:#fff }
+  .in-card-h .status.error { background:#ef4444; color:#fff }
+  .in-card-h .status.created { background:#475569; color:#fff }
+  .in-card-h .status.suggestions_generated { background:#fb923c; color:#000 }
+
+  .in-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; background:var(--bg); padding:10px 12px; border-radius:6px; margin-bottom:10px; font-size:11px }
+  @media (max-width:700px) { .in-info-grid { grid-template-columns:1fr } }
+  .in-info-grid .k { color:var(--text-muted) }
+  .in-info-grid .v { color:var(--text) }
+
+  .in-suggestions { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:10px; margin-top:10px }
+  .in-suggestions h5 { margin:0 0 8px; font-size:11px; color:#93c5fd; text-transform:uppercase; letter-spacing:.5px }
+  .in-sug { display:grid; grid-template-columns:24px 1fr auto auto; gap:10px; align-items:center; padding:8px 10px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; margin-bottom:5px; transition:border-color .15s }
+  .in-sug:hover { border-color:#1f6feb }
+  .in-sug.best { border-color:#22c55e }
+  .in-sug .rank { color:var(--text); font-weight:800; text-align:center; width:24px; height:24px; line-height:24px; border-radius:50%; background:var(--border); font-size:11px }
+  .in-sug.best .rank { background:#22c55e; color:#000 }
+  .in-sug .info .date { color:var(--text); font-weight:700; font-size:13px }
+  .in-sug .info .rationale { color:var(--text-muted); font-size:10px; margin-top:2px }
+  .in-sug .score { background:#22c55e; color:#000; font-weight:800; padding:3px 8px; border-radius:5px; font-size:11px }
+  .in-sug .score.med { background:#fbbf24 }
+  .in-sug .score.low { background:#f87171; color:#fff }
+  .in-sug button { background:#1f6feb; color:#fff; border:0; padding:6px 12px; border-radius:5px; cursor:pointer; font-size:11px; font-weight:700 }
+  .in-sug button:hover { background:#388bfd }
+
+  .in-actions { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap }
+  .btn { padding:7px 14px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; border:1px solid; background:transparent }
+  .btn-sec { color:#93c5fd; border-color:#1f6feb }
+  .btn-warn { color:#fbbf24; border-color:#eab308 }
+  .btn-danger { color:#ef4444; border-color:#ef4444 }
+  .btn-prim { background:#1f6feb; color:#fff; border-color:#1f6feb }
+  .in-empty { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:40px; text-align:center; color:var(--text-muted) }
+
+  .badge-cat { background:var(--border); padding:2px 7px; border-radius:4px; font-size:9px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.4px; font-weight:700 }
+  .badge-cat.filtro_entrada { background:rgba(34,197,94,.15); color:#22c55e }
+  .badge-cat.bebedouro_instalacao { background:rgba(163,113,247,.15); color:#a371f7 }
+  .badge-cat.bebedouro_entrega { background:rgba(251,146,60,.15); color:#fb923c }
+  .badge-cat.refil { background:rgba(34,211,238,.15); color:#22d3ee }
+</style>
+
+<div class="in-shell">
+  <div class="in-head">
+    <div>
+      <h1>🤖 Agendamento Núbia <span style="font-size:11px;color:var(--text-muted);font-weight:400">(F-INTAKE)</span></h1>
+      <div class="sub">Vendas novas viram intakes automaticamente. IA sugere 3 datas. Você (Morgana) aprova uma.</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sec" onclick="inScan()">🔄 Scan Sales agora</button>
+      <a href="/operacional" class="btn btn-sec" style="text-decoration:none">← Painel</a>
+    </div>
+  </div>
+
+  <div class="in-stats" id="in-stats">
+    <div class="in-stat active" data-filter="awaiting_morgana" style="--c:#fbbf24" onclick="inFilter('awaiting_morgana')">
+      <div class="lbl">⚠ Aguardando você</div>
+      <div class="val" id="ist-awaiting">0</div>
+    </div>
+    <div class="in-stat" data-filter="created" style="--c:#475569" onclick="inFilter('created')">
+      <div class="lbl">📥 Recém criados</div>
+      <div class="val" id="ist-created">0</div>
+    </div>
+    <div class="in-stat" data-filter="error" style="--c:#ef4444" onclick="inFilter('error')">
+      <div class="lbl">❌ Erro</div>
+      <div class="val" id="ist-error">0</div>
+    </div>
+    <div class="in-stat" data-filter="morgana_approved" style="--c:#22c55e" onclick="inFilter('morgana_approved')">
+      <div class="lbl">✅ Aprovados</div>
+      <div class="val" id="ist-approved">0</div>
+    </div>
+    <div class="in-stat" data-filter="all" style="--c:#1f6feb" onclick="inFilter('all')">
+      <div class="lbl">🔍 Tudo</div>
+      <div class="val" id="ist-all">0</div>
+    </div>
+  </div>
+
+  <div class="in-list" id="in-list"><div class="in-empty">Carregando…</div></div>
+</div>
+
+<script>
+let IN = { all: [], filter: 'awaiting_morgana' };
+
+async function _api(path, opts={}) {
+  const r = await fetch(path, {
+    method: opts.method || 'GET',
+    headers: {'Content-Type':'application/json'},
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+    credentials: 'same-origin',
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`${r.status} — ${t.substring(0,200)}`);
+  }
+  return r.json();
+}
+
+async function inLoad() {
+  try {
+    IN.all = await _api('/operacional/api/intakes?limit=200');
+    const by = { all: IN.all.length, awaiting_morgana: 0, created: 0, error: 0, morgana_approved: 0 };
+    for (const i of IN.all) { if (by[i.status] !== undefined) by[i.status]++; }
+    document.getElementById('ist-awaiting').textContent = by.awaiting_morgana;
+    document.getElementById('ist-created').textContent = by.created;
+    document.getElementById('ist-error').textContent = by.error;
+    document.getElementById('ist-approved').textContent = by.morgana_approved;
+    document.getElementById('ist-all').textContent = by.all;
+    inRender();
+  } catch (e) {
+    document.getElementById('in-list').innerHTML = `<div class="in-empty" style="color:#f87171">${e.message}</div>`;
+  }
+}
+
+function inFilter(f) {
+  IN.filter = f;
+  document.querySelectorAll('.in-stat').forEach(s => s.classList.toggle('active', s.dataset.filter === f));
+  inRender();
+}
+
+function inRender() {
+  const items = IN.filter === 'all' ? IN.all : IN.all.filter(i => i.status === IN.filter);
+  const list = document.getElementById('in-list');
+  if (!items.length) {
+    list.innerHTML = '<div class="in-empty">Nenhum intake nesse estado</div>';
+    return;
+  }
+  list.innerHTML = items.map(renderCard).join('');
+}
+
+function renderCard(i) {
+  const cat = i.product_category;
+  const color = {
+    filtro_entrada: '#22c55e',
+    bebedouro_instalacao: '#a371f7',
+    bebedouro_entrega: '#fb923c',
+    refil: '#22d3ee',
+    outro: '#475569',
+  }[cat] || '#475569';
+  const collected = i.collected_data || {};
+  const customer = collected.customer_name || '—';
+  const phone = collected.customer_phone || '';
+  const product = collected.product_initial || '';
+
+  const sugs = i.suggested_dates || [];
+  const sugsHtml = sugs.length ? `
+    <div class="in-suggestions">
+      <h5>💡 Sugestões IA</h5>
+      ${sugs.map((s, idx) => {
+        const score = s.score || 0;
+        const scoreClass = score >= 70 ? '' : (score >= 50 ? 'med' : 'low');
+        const isBest = idx === 0;
+        return `
+          <div class="in-sug ${isBest?'best':''}">
+            <div class="rank">${idx+1}</div>
+            <div class="info">
+              <div class="date">📅 ${new Date(s.date).toLocaleDateString('pt-BR', {weekday:'short', day:'2-digit', month:'short'})}</div>
+              <div class="rationale">${s.rationale || '—'}${s.source==='new_route'?' (rota nova)':''}</div>
+            </div>
+            <div class="score ${scoreClass}">${score}</div>
+            ${i.status === 'awaiting_morgana' ? `<button onclick="inApprove(${i.id}, ${idx})">Aceitar →</button>` : '<span></span>'}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  ` : '';
+
+  return `
+    <div class="in-card" style="--c:${color}">
+      <div class="in-card-h">
+        <div class="info">
+          <div class="name">${customer} <span class="badge-cat ${cat}">${cat.replace(/_/g,' ')}</span></div>
+          <div class="meta">Intake #${i.id} · Sale #${i.sale_id} ${phone?'· '+phone:''} · criado ${new Date(i.created_at).toLocaleString('pt-BR')}</div>
+          ${product ? `<div class="product">📦 ${product}</div>` : ''}
+        </div>
+        <span class="status ${i.status}">${i.status.replace(/_/g, ' ')}</span>
+      </div>
+
+      ${i.error_message ? `<div style="background:rgba(239,68,68,.1);color:#fca5a5;padding:6px 10px;border-radius:5px;font-size:11px;margin-bottom:8px">⚠ ${i.error_message}</div>` : ''}
+
+      <div class="in-info-grid">
+        <div class="k">Categoria</div><div class="v">${cat}</div>
+        ${collected.preferred_day ? `<div class="k">Dia preferido</div><div class="v">${collected.preferred_day}</div>` : ''}
+        ${collected.preferred_window ? `<div class="k">Janela</div><div class="v">${collected.preferred_window}</div>` : ''}
+        ${collected.address_confirmed ? `<div class="k">Endereço</div><div class="v">${collected.address_confirmed}</div>` : ''}
+        ${collected.voltage ? `<div class="k">Voltagem</div><div class="v">${collected.voltage}V</div>` : ''}
+        ${collected.install_location ? `<div class="k">Local</div><div class="v">${collected.install_location}</div>` : ''}
+      </div>
+
+      ${sugsHtml}
+
+      <div class="in-actions">
+        ${i.status === 'created' || i.status === 'collecting_info' || i.status === 'error' ? `<button class="btn btn-warn" onclick="inGenerate(${i.id})">🤖 Gerar sugestões agora</button>` : ''}
+        <a href="/operacional/cliente/${i.sale_id}" target="_blank" class="btn btn-sec" style="text-decoration:none">📋 Card cliente</a>
+        ${i.status !== 'cancelled' && i.status !== 'scheduled' ? `<button class="btn btn-danger" onclick="inCancel(${i.id})">✕ Cancelar</button>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+async function inGenerate(id) {
+  if (!confirm('Gerar 3 sugestões de data/técnico/rota pra esse intake?')) return;
+  try {
+    const r = await _api(`/operacional/api/intakes/${id}/generate-suggestions`, { method:'POST', body:{} });
+    if (!r.ok) {
+      alert('Sem sugestões: ' + (r.error || 'sem rotas disponíveis no horizonte'));
+    }
+    await inLoad();
+  } catch (e) { alert(e.message); }
+}
+
+async function inApprove(id, idx) {
+  const intake = IN.all.find(x => x.id === id);
+  const sug = intake?.suggested_dates?.[idx];
+  if (!sug) return;
+  const txt = `Confirmar agendamento?\n\n📅 ${new Date(sug.date).toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'long'})}\n👷 ${sug.technician_name || '—'}\n🎯 Score ${sug.score}\n\nAo confirmar:\n• Visit será criada\n• Task no Auvo será gerada automaticamente\n• Sale vira "agendado"`;
+  if (!confirm(txt)) return;
+  try {
+    const r = await _api(`/operacional/api/intakes/${id}/approve`, { method:'POST', body:{ approved_date_idx: idx } });
+    let msg = `✅ Agendamento aprovado!\n\nStatus intake: ${r.intake_status}`;
+    if (r.visit?.ok) {
+      msg += `\n✅ Visit #${r.visit.visit_id} criada`;
+      if (r.visit.auvo_task_id) {
+        msg += `\n✅ Auvo Task: ${r.visit.auvo_task_id}`;
+      } else {
+        msg += `\n⚠ Auvo: pendente (job retry_pending tenta em 10min)`;
+      }
+    } else if (r.visit?.error) {
+      msg += `\n❌ Visit não criada: ${r.visit.error}`;
+    }
+    alert(msg);
+    await inLoad();
+  } catch (e) { alert(e.message); }
+}
+
+async function inCancel(id) {
+  const reason = prompt('Motivo do cancelamento:');
+  if (!reason) return;
+  try {
+    await _api(`/operacional/api/intakes/${id}/cancel`, { method:'POST', body:{ reason } });
+    await inLoad();
+  } catch (e) { alert(e.message); }
+}
+
+async function inScan() {
+  try {
+    const r = await _api('/operacional/api/intakes/scan', { method:'POST', body:{} });
+    alert(`Scan completo:\nNovos: ${r.created || 0}\nIgnorados (não agendáveis): ${r.skipped_outro || 0}\nJá existiam: ${r.skipped_existing || 0}`);
+    await inLoad();
+  } catch (e) { alert(e.message); }
+}
+
+inLoad();
+setInterval(inLoad, 30000); // refresh auto 30s
+</script>

@@ -1,0 +1,224 @@
+<% const activePage = 'operacional'; const pageTitle = 'Operacional · Triagem'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+  .tr-shell { max-width: 1100px; margin: 0 auto; padding: 0 14px; }
+  .tr-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+  .tr-head h1 { margin: 0; font-size: 22px; color: var(--text); }
+  .tr-head .sub { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+
+  .tr-summary { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .tr-pill { background: var(--bg-card); border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; font-size: 12px; color: var(--text); }
+  .tr-pill b { color: var(--text); font-size: 14px; margin-left: 4px; }
+  .tr-pill.sem_cidade { border-left: 3px solid #ef4444; }
+  .tr-pill.sem_geocode { border-left: 3px solid #fb923c; }
+  .tr-pill.endereco_so_cidade { border-left: 3px solid #fbbf24; }
+  .tr-pill.endereco_incompleto { border-left: 3px solid #fbbf24; }
+  .tr-pill.sem_sugestao_ia { border-left: 3px solid #a371f7; }
+  .tr-pill.pronta_pra_rota { border-left: 3px solid #22c55e; }
+
+  .tr-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: flex-start; }
+  .tr-item.dias-3 { border-left: 3px solid #fbbf24; }
+  .tr-item.dias-7 { border-left: 3px solid #fb923c; }
+  .tr-item.dias-14 { border-left: 3px solid #ef4444; }
+  .tr-item.dias-28 { border-left: 3px solid #ef4444; box-shadow: 0 0 0 1px #ef4444 inset; }
+  .tr-name { color: var(--text); font-size: 14px; font-weight: 700; }
+  .tr-meta { color: var(--text-muted); font-size: 11px; margin-top: 4px; line-height: 1.5; }
+  .tr-meta b { color: var(--text); }
+  .tr-blocker { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+  .tr-blocker.sem_cidade, .tr-blocker.sem_geocode { background: #ef4444; color:#fff; }
+  .tr-blocker.endereco_so_cidade, .tr-blocker.endereco_incompleto { background: #fbbf24; color: #000; }
+  .tr-blocker.sem_sugestao_ia { background: #a371f7; color:#fff; }
+  .tr-blocker.pronta_pra_rota { background: #22c55e; color: #000; }
+
+  .tr-age { font-size: 32px; font-weight: 900; color: #ef4444; font-variant-numeric: tabular-nums; line-height: 1; min-width: 80px; text-align: right; }
+  .tr-age small { display: block; font-size: 10px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+  .tr-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; min-width: 180px; }
+  .tr-actions button { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 6px 12px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: transform .12s; }
+  .tr-actions button:hover { transform: scale(1.04); background: #ef4444; color:#fff; }
+  .tr-actions button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .tr-actions a.deal-link { color: #58a6ff; font-size: 11px; text-decoration: none; }
+
+  .tr-empty { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 36px; text-align: center; color: #22c55e; font-size: 14px; }
+
+  .tr-toast { position: fixed; bottom: 20px; right: 20px; background: var(--bg-card); border: 1px solid #22c55e; color: #22c55e; padding: 10px 14px; border-radius: 6px; font-size: 12px; z-index: 9999; opacity: 0; transition: opacity .2s; }
+  .tr-toast.show { opacity: 1; }
+  .tr-toast.error { border-color: #ef4444; color: #ef4444; }
+</style>
+
+<div class="tr-shell">
+  <div class="tr-head">
+    <div>
+      <h1>🩺 Triagem — Sales aguardando rota</h1>
+      <div class="sub" id="tr-sub">Carregando…</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="trRefresh()" style="background:transparent;border:1px solid #58a6ff;color:#58a6ff;padding:6px 12px;border-radius:5px;font-size:11px;cursor:pointer">↻ atualizar</button>
+    </div>
+  </div>
+
+  <div class="tr-summary" id="tr-summary"></div>
+
+  <div id="tr-list"><div class="tr-empty" style="color:var(--text-muted)">⏳ Carregando…</div></div>
+</div>
+
+<div id="tr-toast" class="tr-toast"></div>
+
+<script>
+async function _api(p, o={}) {
+  const r = await fetch(p, {
+    method: o.method || 'GET',
+    headers: {'Content-Type':'application/json'},
+    body: o.body ? JSON.stringify(o.body) : undefined,
+    credentials: 'same-origin',
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`${r.status} — ${t.substring(0,200)}`);
+  }
+  return r.json();
+}
+function _esc(s){ return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function _toast(msg, kind='success'){
+  const t = document.getElementById('tr-toast');
+  t.textContent = msg;
+  t.className = 'tr-toast show' + (kind === 'error' ? ' error' : '');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+const BLOCKER_LABEL = {
+  sem_cidade: '🚫 sem cidade',
+  sem_geocode: '🚫 sem geocode',
+  endereco_so_cidade: '⚠ só cidade (sem rua/CEP)',
+  endereco_incompleto: '⚠ endereço incompleto',
+  sem_sugestao_ia: '🤖 sem sugestão IA',
+  pronta_pra_rota: '✅ pronta pra rota',
+};
+
+function _ageClass(days) {
+  if (days >= 28) return 'dias-28';
+  if (days >= 14) return 'dias-14';
+  if (days >= 7) return 'dias-7';
+  if (days >= 3) return 'dias-3';
+  return '';
+}
+
+function _fmtBRL(v) {
+  if (!v) return '?';
+  return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderItem(it) {
+  const days = it.days_waiting;
+  const ai = it.ai_suggestion;
+  const blocker = it.blocker || '?';
+  const amt = _fmtBRL(it.amount);
+  const city = it.city || '?';
+  const phone = it.customer_phone || '?';
+  return `<div class="tr-item ${_ageClass(days)}">
+    <div>
+      <div class="tr-name">${_esc(it.customer_name)} <span class="tr-blocker ${blocker}">${BLOCKER_LABEL[blocker] || blocker}</span></div>
+      <div class="tr-meta">
+        📦 <b>${_esc(it.product_line)}</b> · 💰 ${_esc(amt)} · 📍 <b>${_esc(city)}</b> · 📱 ${_esc(phone)}<br>
+        Lead source: ${_esc(it.lead_source || '?')} · Vendido em ${(it.sold_at||'').substring(0,10)} (${days}d · ${it.hours_waiting}h)
+        ${ai ? `<br>🤖 IA sugere: ${_esc(ai.suggestion_type)} · score ${ai.match_score?.toFixed(0) || '?'} · ${_esc((ai.rationale||'').substring(0,120))}` : ''}
+      </div>
+    </div>
+    <div class="tr-actions">
+      <div class="tr-age">${days}d<small>${it.hours_waiting}h parado</small></div>
+      <a class="deal-link" href="/operacional/cliente/${it.id}" target="_blank">abrir cliente ↗</a>
+      <select onchange="trSetQueue(${it.id}, this.value, this)" style="background:#0D1117;color:#fff;border:1px solid #444;padding:5px 8px;border-radius:5px;font-size:11px;cursor:pointer">
+        <option value="">queue atual: ${_esc(it.queue || '?')}</option>
+        <option value="tecnica">🔧 tecnica (Filtros Entrada)</option>
+        <option value="bebedouro">🚚 bebedouro</option>
+        <option value="manutencao">🔄 manutencao</option>
+        <option value="envio">📦 envio (transportadora)</option>
+        <option value="retirada">🏪 retirada (loja)</option>
+      </select>
+      <button onclick="trEscalate(${it.id}, this)">🚨 Escalar Morgana</button>
+    </div>
+  </div>`;
+}
+
+async function trRefresh() {
+  document.getElementById('tr-sub').textContent = 'Atualizando…';
+  try {
+    const r = await _api('/operacional/api/triagem/pending');
+    const items = r.items || [];
+    const total = r.count || 0;
+    document.getElementById('tr-sub').textContent = `${total} sales aguardando rota · gerado ${new Date().toLocaleTimeString('pt-BR')}`;
+
+    // summary pills
+    const blockers = r.blockers || {};
+    const order = ['sem_cidade', 'sem_geocode', 'endereco_so_cidade', 'endereco_incompleto', 'sem_sugestao_ia', 'pronta_pra_rota'];
+    let summary = '';
+    for (const k of order) {
+      const n = blockers[k] || 0;
+      if (n > 0) summary += `<div class="tr-pill ${k}">${BLOCKER_LABEL[k] || k}: <b>${n}</b></div>`;
+    }
+    document.getElementById('tr-summary').innerHTML = summary || '';
+
+    // list
+    if (items.length === 0) {
+      document.getElementById('tr-list').innerHTML = '<div class="tr-empty">🎉 Zero sales aguardando rota. Backlog limpo!</div>';
+    } else {
+      document.getElementById('tr-list').innerHTML = items.map(renderItem).join('');
+    }
+  } catch (e) {
+    document.getElementById('tr-sub').textContent = 'Erro: ' + e.message;
+    document.getElementById('tr-list').innerHTML = `<div class="tr-empty" style="color:#f87171">${_esc(e.message)}</div>`;
+  }
+}
+
+async function trSetQueue(saleId, queue, sel) {
+  if (!queue) return;
+  if (!confirm(`Definir queue=${queue} pra sale #${saleId}?`)) {
+    sel.value = '';
+    return;
+  }
+  sel.disabled = true;
+  try {
+    const r = await _api(`/operacional/api/triagem/${saleId}/set-queue?queue=${encodeURIComponent(queue)}`, { method: 'POST' });
+    if (r.ok) {
+      _toast(`✓ sale #${saleId} → queue=${queue}`);
+      trRefresh();
+    } else {
+      _toast('Falhou: ' + (r.error || 'erro'), 'error');
+      sel.value = '';
+      sel.disabled = false;
+    }
+  } catch (e) {
+    _toast(e.message, 'error');
+    sel.value = '';
+    sel.disabled = false;
+  }
+}
+
+async function trEscalate(saleId, btn) {
+  if (!confirm(`Escalar sale #${saleId} pra Morgana via Z-API?`)) return;
+  btn.disabled = true;
+  btn.textContent = '⏳ enviando…';
+  try {
+    const r = await _api(`/operacional/api/triagem/${saleId}/escalate-morgana`, { method: 'POST' });
+    if (r.ok) {
+      _toast(`✓ Morgana notificada (sale #${saleId} · ${r.blocker})`);
+      btn.textContent = '✓ escalado';
+      btn.style.background = '#22c55e';
+      btn.style.color = '#000';
+      btn.style.borderColor = '#22c55e';
+    } else {
+      const err = (r.zapi && r.zapi.error) || r.error || 'erro desconhecido';
+      _toast('Falhou: ' + err, 'error');
+      btn.disabled = false;
+      btn.textContent = '🚨 Escalar Morgana';
+    }
+  } catch (e) {
+    _toast(e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = '🚨 Escalar Morgana';
+  }
+}
+
+trRefresh();
+setInterval(trRefresh, 60000);
+</script>

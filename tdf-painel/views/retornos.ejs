@@ -1,0 +1,375 @@
+<% const activePage = 'retornos'; const pageTitle = 'Retornos & Follow-ups'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+  .ret-wrap { padding: 16px 24px; }
+  .ret-summary {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px; margin-bottom: 18px;
+  }
+  .ret-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .ret-card .lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+  .ret-card .val { font-size: 22px; font-weight: 800; margin-top: 4px; color: var(--text); }
+  .ret-card.danger .val { color: #f85149; }
+  .ret-card.warn .val { color: #f0c040; }
+  .ret-card.ok .val { color: #3fb950; }
+
+  .ret-actions { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+  .ret-btn-primary {
+    background: #1f6feb; border: none; color:#fff; padding: 8px 14px;
+    border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px;
+  }
+  .ret-btn-primary:hover { background: #2779f8; }
+  .ret-btn-secondary {
+    background: transparent; border: 1px solid var(--border); color: var(--text);
+    padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;
+  }
+  .ret-btn-secondary:hover { background: var(--border); }
+
+  .ret-kanban {
+    display: grid; grid-template-columns: repeat(6, minmax(240px, 1fr));
+    gap: 12px; overflow-x: auto; padding-bottom: 16px;
+  }
+  .ret-col {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    min-height: 200px; display: flex; flex-direction: column;
+  }
+  .ret-col-h {
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+    font-weight: 700; font-size: 13px; display: flex; justify-content: space-between;
+  }
+  .ret-col-h .count { color: var(--text-muted); font-weight: 600; }
+  .ret-col-body { padding: 8px; display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow-y: auto; }
+
+  .fu-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid #1f6feb;
+    border-radius: 8px; padding: 10px 12px; font-size: 12px;
+  }
+  .fu-card.atrasado { border-left-color: #f85149; }
+  .fu-card.hoje { border-left-color: #f0c040; }
+  .fu-card.amanha { border-left-color: #58a6ff; }
+  .fu-card.enviado { border-left-color: #3fb950; opacity: .85; }
+  .fu-card .name { font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .fu-card .meta { color: var(--text-muted); font-size: 11px; line-height: 1.5; }
+  .fu-card .reason { color: var(--text); margin-top: 5px; font-size: 12px; }
+  .fu-card .tpl-badge {
+    display: inline-block; background: rgba(31,111,235,.12); color: #58a6ff;
+    padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 4px;
+  }
+  .fu-card .actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .fu-card .actions button {
+    background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+    padding: 3px 8px; border-radius: 4px; font-size: 10px; cursor: pointer;
+  }
+  .fu-card .actions button:hover { color: var(--text); border-color: #58a6ff; }
+  .fu-card .actions .danger:hover { color: #f85149; border-color: #f85149; }
+  .fu-card .actions .ok:hover { color: #3fb950; border-color: #3fb950; }
+
+  /* Modal */
+  .fu-modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 9000;
+    display: none; align-items: flex-start; justify-content: center; padding-top: 60px;
+  }
+  .fu-modal-bg.show { display: flex; }
+  .fu-modal {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    width: 100%; max-width: 540px; padding: 22px; color: var(--text);
+  }
+  .fu-modal h2 { margin: 0 0 14px 0; font-size: 17px; }
+  .fu-modal label {
+    display: block; margin-top: 12px; font-size: 12px; color: var(--text-muted); font-weight: 600;
+  }
+  .fu-modal input, .fu-modal select, .fu-modal textarea {
+    width: 100%; margin-top: 5px; padding: 8px 10px; font-size: 13px;
+    background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 5px;
+  }
+  .fu-modal .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .fu-modal .footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+  .fu-modal .footer button { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 700; }
+  .fu-modal .footer .cancel { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .fu-modal .footer .save { background: #1f6feb; color:#fff; }
+  .fu-modal .err { color: #f85149; font-size: 12px; margin-top: 10px; }
+
+  .fu-quick {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 5px;
+  }
+  .fu-quick button {
+    background: var(--border); color: var(--text); border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;
+  }
+  .fu-quick button:hover { border-color: #58a6ff; color: var(--text); }
+
+  .empty { text-align: center; color: #6e7681; padding: 30px 10px; font-size: 12px; }
+</style>
+
+<div class="ret-wrap">
+
+  <div class="ret-actions">
+    <button class="ret-btn-primary" onclick="abrirAgendar()">➕ Agendar retorno</button>
+    <button class="ret-btn-secondary" onclick="carregar()">🔄 Atualizar</button>
+    <span style="color:var(--text-muted);font-size:12px;margin-left:auto">
+      Atualizado em <span id="ret-last-refresh">—</span>
+    </span>
+  </div>
+
+  <div class="ret-summary" id="ret-summary"></div>
+
+  <div class="ret-kanban" id="ret-kanban">
+    <div class="empty">carregando…</div>
+  </div>
+</div>
+
+<!-- ===== MODAL AGENDAR ===== -->
+<div class="fu-modal-bg" id="fu-modal-bg">
+  <div class="fu-modal">
+    <h2 id="fu-modal-title">Agendar retorno</h2>
+    <input type="hidden" id="fu-edit-id" value="">
+
+    <label>Cliente</label>
+    <input type="text" id="fu-cliente" placeholder="Maria Silva" required>
+
+    <div class="row">
+      <div>
+        <label>Telefone (WhatsApp)</label>
+        <input type="text" id="fu-fone" placeholder="55 11 99999-9999">
+      </div>
+      <div>
+        <label>Zoho Contact ID (opcional)</label>
+        <input type="text" id="fu-zoho-contact" placeholder="6311862...">
+      </div>
+    </div>
+
+    <label>Quando retornar</label>
+    <div class="fu-quick">
+      <button onclick="setQuick(1)">+1 dia</button>
+      <button onclick="setQuick(2)">+2 dias</button>
+      <button onclick="setQuick(3)">+3 dias</button>
+      <button onclick="setQuick(7)">+1 semana</button>
+      <button onclick="setQuick(15)">+15 dias</button>
+      <button onclick="setQuick(30)">+1 mês</button>
+    </div>
+    <input type="datetime-local" id="fu-when" style="margin-top:8px">
+
+    <label>Motivo</label>
+    <select id="fu-reason"></select>
+
+    <label>Observação (livre)</label>
+    <textarea id="fu-obs" rows="2" placeholder="ex: cliente pediu pra retornar quarta após 14h"></textarea>
+
+    <label>Template WhatsApp (vazio = só lembrete, não dispara)</label>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="text" id="fu-tpl" placeholder="ia_refil_vencido" style="flex:1">
+      <button type="button" class="ret-btn-secondary" onclick="sugerirTpl()" style="white-space:nowrap">🤖 Sugerir</button>
+    </div>
+    <small style="color:var(--text-muted);font-size:11px">Deve começar com <code>ia_</code> (regra de automação).</small>
+
+    <div class="err" id="fu-err" style="display:none"></div>
+
+    <div class="footer">
+      <button class="cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="save" onclick="salvar()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const fmtTime = (iso) => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+};
+const fmtNow = () => new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+
+let REASONS = [];
+let OUTCOMES = [];
+
+async function carregarReasons() {
+  try {
+    const r = await fetch('/api/follow-ups/reasons').then(x => x.json());
+    REASONS = r.reasons || [];
+    OUTCOMES = r.outcomes || [];
+    const sel = document.getElementById('fu-reason');
+    sel.innerHTML = REASONS.map(r => `<option value="${r.code}">${r.label}</option>`).join('');
+  } catch (e) { console.error('reasons', e); }
+}
+
+async function carregarSummary() {
+  try {
+    const s = await fetch('/api/follow-ups/summary').then(x => x.json());
+    const cards = [
+      { lbl: 'Hoje', val: s.hoje, cls: s.hoje > 0 ? 'warn' : '' },
+      { lbl: 'Atrasados', val: s.atrasados, cls: s.atrasados > 0 ? 'danger' : '' },
+      { lbl: 'Pendentes (total)', val: s.pending_total, cls: '' },
+      { lbl: 'Enviados últimas 24h', val: s.enviados_24h, cls: '' },
+      { lbl: 'Compraram nos últimos 7d', val: s.compraram_7d, cls: 'ok' },
+    ];
+    document.getElementById('ret-summary').innerHTML = cards.map(c =>
+      `<div class="ret-card ${c.cls}"><div class="lbl">${c.lbl}</div><div class="val">${c.val}</div></div>`
+    ).join('');
+  } catch (e) { console.error('summary', e); }
+}
+
+async function carregarKanban() {
+  try {
+    const k = await fetch('/api/follow-ups/kanban').then(x => x.json());
+    const root = document.getElementById('ret-kanban');
+    root.innerHTML = (k.columns || []).map(col => {
+      const items = (col.items || []).map(it => renderCard(it, col.key)).join('');
+      const body = items || '<div class="empty">vazio</div>';
+      return `
+        <div class="ret-col">
+          <div class="ret-col-h">${col.label}<span class="count">${col.count}</span></div>
+          <div class="ret-col-body">${body}</div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    console.error('kanban', e);
+    document.getElementById('ret-kanban').innerHTML = `<div class="empty" style="color:#f85149">erro: ${e.message}</div>`;
+  }
+}
+
+function renderCard(it, bucket) {
+  const name = (it.customer_name || '?').slice(0, 32);
+  const tpl = it.template_wati ? `<span class="tpl-badge">📨 ${it.template_wati}</span>` : '';
+  const motivo = it.reason || it.reason_code;
+  return `
+    <div class="fu-card ${bucket}">
+      <div class="name">${escapeHtml(name)}</div>
+      <div class="meta">📞 ${it.customer_phone} · ${fmtTime(it.scheduled_at)} · ${it.scheduled_by}</div>
+      <div class="reason">${escapeHtml(motivo)}</div>
+      ${tpl}
+      <div class="actions">
+        <button onclick="snooze(${it.id}, 1)">+1d</button>
+        <button onclick="snooze(${it.id}, 2)">+2d</button>
+        <button onclick="snooze(${it.id}, 7)">+1s</button>
+        <button class="ok" onclick="doneAsk(${it.id})">✓ Concluir</button>
+        <button class="danger" onclick="cancelar(${it.id})">✕ Cancelar</button>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+async function snooze(id, days) {
+  try {
+    await fetch(`/api/follow-ups/${id}/snooze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ days })
+    }).then(r => r.json());
+    await carregar();
+  } catch (e) { alert('Falha: ' + e.message); }
+}
+
+async function cancelar(id) {
+  if (!confirm('Cancelar esse follow-up?')) return;
+  try {
+    await fetch(`/api/follow-ups/${id}/cancel`, { method: 'POST' }).then(r => r.json());
+    await carregar();
+  } catch (e) { alert('Falha: ' + e.message); }
+}
+
+async function doneAsk(id) {
+  const outcome = prompt('Outcome? (' + OUTCOMES.join(' | ') + ')', 'comprou');
+  if (!outcome) return;
+  const notes = prompt('Observação (opcional)', '');
+  try {
+    await fetch(`/api/follow-ups/${id}/done`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ outcome, outcome_notes: notes || undefined })
+    }).then(r => r.json());
+    await carregar();
+  } catch (e) { alert('Falha: ' + e.message); }
+}
+
+function abrirAgendar(prefill = {}) {
+  document.getElementById('fu-edit-id').value = '';
+  document.getElementById('fu-modal-title').textContent = 'Agendar retorno';
+  document.getElementById('fu-cliente').value = prefill.customer_name || '';
+  document.getElementById('fu-fone').value = prefill.customer_phone || '';
+  document.getElementById('fu-zoho-contact').value = prefill.zoho_contact_id || '';
+  document.getElementById('fu-obs').value = '';
+  document.getElementById('fu-tpl').value = '';
+  document.getElementById('fu-err').style.display = 'none';
+  setQuick(2);
+  document.getElementById('fu-modal-bg').classList.add('show');
+}
+
+function fecharModal() {
+  document.getElementById('fu-modal-bg').classList.remove('show');
+}
+
+function setQuick(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  d.setHours(14, 0, 0, 0); // 14:00 default
+  // datetime-local precisa YYYY-MM-DDTHH:mm sem timezone
+  const pad = n => String(n).padStart(2, '0');
+  const v = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  document.getElementById('fu-when').value = v;
+}
+
+async function sugerirTpl() {
+  const phone = document.getElementById('fu-fone').value.trim();
+  const reasonCode = document.getElementById('fu-reason').value;
+  const obs = document.getElementById('fu-obs').value;
+  if (!phone || !reasonCode) { alert('preenche telefone e motivo primeiro'); return; }
+  try {
+    const r = await fetch('/api/follow-ups/suggest-template', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customer_phone: phone, reason_code: reasonCode, extra_context: obs })
+    }).then(x => x.json());
+    document.getElementById('fu-tpl').value = r.template || '';
+    alert(`Sugestão (${r.used_ia ? 'IA' : 'heurística'}): ${r.template}\nMotivo: ${r.reason || ''}`);
+  } catch (e) { alert('Falha sugestão: ' + e.message); }
+}
+
+async function salvar() {
+  const body = {
+    customer_name: document.getElementById('fu-cliente').value.trim(),
+    customer_phone: document.getElementById('fu-fone').value.trim(),
+    zoho_contact_id: document.getElementById('fu-zoho-contact').value.trim() || undefined,
+    scheduled_at: new Date(document.getElementById('fu-when').value).toISOString(),
+    reason_code: document.getElementById('fu-reason').value,
+    reason: document.getElementById('fu-obs').value.trim() || undefined,
+    template_wati: document.getElementById('fu-tpl').value.trim() || undefined,
+  };
+  if (!body.customer_name || !body.customer_phone || !body.scheduled_at) {
+    showErr('preencha cliente, telefone e quando retornar');
+    return;
+  }
+  try {
+    const r = await fetch('/api/follow-ups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (!r.ok) { showErr(data.error || data.detail || 'falha'); return; }
+    fecharModal();
+    await carregar();
+  } catch (e) { showErr(e.message); }
+}
+
+function showErr(msg) {
+  const el = document.getElementById('fu-err');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+}
+
+async function carregar() {
+  await Promise.all([carregarSummary(), carregarKanban()]);
+  document.getElementById('ret-last-refresh').textContent = fmtNow();
+}
+
+carregarReasons().then(carregar);
+setInterval(carregar, 60000); // refresh 60s
+</script>

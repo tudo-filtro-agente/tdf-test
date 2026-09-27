@@ -1,0 +1,316 @@
+<% const activePage = 'coins'; const pageTitle = 'TDF Coins'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<div class="page-header">
+  <h1 style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:28px;">&#129689;</span> TDF Coins
+  </h1>
+</div>
+
+<div class="container">
+  <% if (user.role === 'admin') { %>
+  <!-- ADMIN: seletor de closer -->
+  <div style="background:linear-gradient(135deg,#1a0e2a,#2d1525);border:2px solid #F0C040;border-radius:14px;padding:16px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <span style="font-size:22px">👤</span>
+    <div>
+      <div style="font-size:11px;color:#F0C040;text-transform:uppercase;font-weight:800;letter-spacing:.5px">Modo Gestor</div>
+      <div style="font-size:12px;color:var(--text-muted)">Selecione um closer pra ver os coins dele</div>
+    </div>
+    <select id="coins-closer-sel" onchange="trocarCloser(this.value)" style="margin-left:auto;background:var(--bg-hover);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14px;font-weight:700;min-width:240px">
+      <option value="">— Meu próprio painel —</option>
+    </select>
+  </div>
+  <% } %>
+
+  <div id="coins-loading" style="text-align:center;padding:40px;color:var(--text-muted);">Carregando...</div>
+  <div id="coins-content" style="display:none;">
+    <div id="coins-wallet" style="margin-bottom:24px;"></div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:18px">
+      <button class="coins-tab active" data-tab="loja" onclick="coinsTab('loja')" style="padding:10px 18px;background:none;border:none;color:#F0C040;font-size:13px;font-weight:700;cursor:pointer;border-bottom:3px solid #F0C040">🛒 Loja</button>
+      <button class="coins-tab" data-tab="calc" onclick="coinsTab('calc')" style="padding:10px 18px;background:none;border:none;color:var(--text-muted);font-size:13px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent">🧮 Calculadora</button>
+      <button class="coins-tab" data-tab="regras" onclick="coinsTab('regras')" style="padding:10px 18px;background:none;border:none;color:var(--text-muted);font-size:13px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent">📜 Regras</button>
+      <button class="coins-tab" data-tab="hist" onclick="coinsTab('hist')" style="padding:10px 18px;background:none;border:none;color:var(--text-muted);font-size:13px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent">📜 Histórico</button>
+    </div>
+
+    <div id="pane-loja" class="coins-pane">
+      <div id="coins-store" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
+    </div>
+
+    <div id="pane-calc" class="coins-pane" style="display:none">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px">
+        <h2 style="color:#F0C040;font-size:1.1rem;margin:0 0 14px">🧮 Calculadora de Coins</h2>
+        <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px">Simule quantos coins você ganha com uma venda específica.</p>
+
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;display:block;margin-bottom:4px">Valor da venda (R$)</label>
+          <input type="number" id="calc-valor" oninput="calcular()" placeholder="Ex: 4500" style="width:100%;padding:12px;background:var(--bg-hover);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:16px">
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px" id="calc-faixa-info"></div>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;margin-bottom:6px">Bônus especiais (marque o que se aplica)</div>
+          <div id="calc-bonus" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:6px"></div>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;margin-bottom:6px">Filtro de entrada (escolha um)</div>
+          <div id="calc-filtro" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;margin-bottom:6px">Bebedouro (escolha um)</div>
+          <div id="calc-bebedouro" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+
+        <div style="background:linear-gradient(135deg,#2d2513,#1a1a2e);border:2px solid #F0C040;border-radius:14px;padding:20px;text-align:center">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:800">Total dessa venda</div>
+          <div style="font-size:3rem;color:#F0C040;font-weight:800;line-height:1.1" id="calc-total">🪙 0</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:6px" id="calc-detail"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="pane-regras" class="coins-pane" style="display:none">
+      <div id="coins-regras-content"></div>
+    </div>
+
+    <div id="pane-hist" class="coins-pane" style="display:none">
+      <div id="coins-history" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function redeemItem(itemId, itemName, cost) {
+  if (!confirm(`Resgatar ${itemName} por ${cost} coins? Seus coins serao descontados.`)) return;
+  try {
+    const res = await fetch('/cockpit/coins/redeem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemId })
+    });
+    const r = await res.json();
+    if (r.success) {
+      alert(`Resgate solicitado! ${r.item} (-${r.cost} coins). Saldo restante: ${r.remaining} coins. Paulo foi notificado para aprovar.`);
+      location.reload();
+    } else {
+      alert('Erro: ' + (r.error || 'falha no resgate'));
+    }
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+// Estado: closer atual sendo visualizado (admin pode trocar)
+const _params = new URLSearchParams(location.search);
+let _closerAtual = _params.get('closer') || '';
+
+function coinsTab(name){
+  document.querySelectorAll('.coins-tab').forEach(t => {
+    if (t.dataset.tab === name) {
+      t.style.color = '#F0C040';
+      t.style.borderBottomColor = '#F0C040';
+    } else {
+      t.style.color = '#888';
+      t.style.borderBottomColor = 'transparent';
+    }
+  });
+  document.querySelectorAll('.coins-pane').forEach(p => p.style.display = 'none');
+  document.getElementById('pane-'+name).style.display = '';
+  if (name === 'regras' && !_REGRAS_LOADED) loadRegras();
+  if (name === 'calc' && !_CALC_LOADED) loadCalc();
+}
+
+function trocarCloser(username){
+  if (username) location.search = '?closer=' + encodeURIComponent(username);
+  else location.search = '';
+}
+
+// Popular dropdown de closer (admin only)
+async function loadClosersList(){
+  const sel = document.getElementById('coins-closer-sel');
+  if (!sel) return;
+  try{
+    const res = await fetch('/cockpit/coins/ranking');
+    const d = await res.json();
+    if (d.error) return;
+    sel.innerHTML = '<option value="">— Meu próprio painel —</option>' +
+      d.closers.map(c => `<option value="${c.username}" ${c.username===_closerAtual?'selected':''}>${c.name} (${c.team||''})</option>`).join('');
+  }catch(_){}
+}
+loadClosersList();
+
+// === CALCULADORA ===
+let _CALC_LOADED = false;
+let _CALC_DATA = null;
+async function loadCalc(){
+  if (_CALC_LOADED) return;
+  try{
+    const res = await fetch('/cockpit/coins/regras');
+    _CALC_DATA = await res.json();
+    // Render bonus checkboxes
+    document.getElementById('calc-bonus').innerHTML = _CALC_DATA.bonusEspeciais.map(b =>
+      `<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:#1a1a1a;border:1px solid #333;border-radius:6px;cursor:pointer;font-size:12px"><input type="checkbox" class="calc-cb" data-id="${b.id}" data-coins="${b.coins}" onchange="calcular()"> ${b.label} <strong style="margin-left:auto;color:#F0C040">+${b.coins}</strong></label>`
+    ).join('');
+    document.getElementById('calc-filtro').innerHTML =
+      `<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:#1a1a1a;border:1px solid #333;border-radius:6px;cursor:pointer;font-size:12px"><input type="radio" name="calc-filtro" value="" data-coins="0" onchange="calcular()" checked> Nenhum</label>` +
+      _CALC_DATA.bonusFiltro.map(b =>
+        `<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:#1a1a1a;border:1px solid #333;border-radius:6px;cursor:pointer;font-size:12px"><input type="radio" name="calc-filtro" value="${b.id}" data-coins="${b.coins}" onchange="calcular()"> ${b.label} <strong style="color:#F0C040;margin-left:auto">+${b.coins}</strong></label>`
+      ).join('');
+    document.getElementById('calc-bebedouro').innerHTML =
+      `<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:#1a1a1a;border:1px solid #333;border-radius:6px;cursor:pointer;font-size:12px"><input type="radio" name="calc-beb" value="" data-coins="0" onchange="calcular()" checked> Nenhum</label>` +
+      _CALC_DATA.bonusBebedouro.map(b =>
+        `<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:#1a1a1a;border:1px solid #333;border-radius:6px;cursor:pointer;font-size:12px"><input type="radio" name="calc-beb" value="${b.id}" data-coins="${b.coins}" onchange="calcular()"> ${b.label} <strong style="color:#F0C040;margin-left:auto">+${b.coins}</strong></label>`
+      ).join('');
+    _CALC_LOADED = true;
+    calcular();
+  }catch(e){ console.error(e); }
+}
+
+function calcular(){
+  if (!_CALC_DATA) return;
+  const valor = parseFloat(document.getElementById('calc-valor').value) || 0;
+  const faixa = _CALC_DATA.faixasVenda.find(f => valor >= f.de && valor <= f.ate) || { coins: 0 };
+  const partes = [];
+  let total = 0;
+
+  // Base por valor
+  if (valor > 0) {
+    total += faixa.coins;
+    partes.push(`Base venda R$ ${valor.toFixed(0)} → +${faixa.coins}`);
+    document.getElementById('calc-faixa-info').textContent = `Faixa: R$ ${faixa.de} a R$ ${faixa.ate} = ${faixa.coins} coins base`;
+  } else {
+    document.getElementById('calc-faixa-info').textContent = 'Digite o valor da venda pra ver a faixa';
+  }
+
+  // Bônus especiais (checkboxes)
+  document.querySelectorAll('.calc-cb:checked').forEach(cb => {
+    const c = parseInt(cb.dataset.coins);
+    total += c;
+    partes.push(`${cb.parentElement.textContent.trim().replace(/\s+\+\d+$/,'')} → +${c}`);
+  });
+  // Filtro
+  const fSel = document.querySelector('input[name="calc-filtro"]:checked');
+  if (fSel && fSel.value) {
+    const c = parseInt(fSel.dataset.coins);
+    total += c;
+    partes.push(`${fSel.parentElement.textContent.trim().replace(/\s+\+\d+$/,'')} → +${c}`);
+  }
+  // Bebedouro
+  const bSel = document.querySelector('input[name="calc-beb"]:checked');
+  if (bSel && bSel.value) {
+    const c = parseInt(bSel.dataset.coins);
+    total += c;
+    partes.push(`${bSel.parentElement.textContent.trim().replace(/\s+\+\d+$/,'')} → +${c}`);
+  }
+
+  document.getElementById('calc-total').textContent = '🪙 ' + total;
+  document.getElementById('calc-detail').innerHTML = partes.length ? partes.join(' • ') : 'Preencha os dados pra calcular';
+}
+
+// === REGRAS ===
+let _REGRAS_LOADED = false;
+async function loadRegras(){
+  if (_REGRAS_LOADED) return;
+  try{
+    const res = await fetch('/cockpit/coins/regras');
+    const d = await res.json();
+    const tabela = (titulo, items) => `
+      <div style="background:#161B22;border:1px solid #30363D;border-radius:12px;padding:16px;margin-bottom:14px">
+        <h3 style="color:#F0C040;font-size:13px;margin:0 0 12px;text-transform:uppercase;letter-spacing:.5px">${titulo}</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          ${items.map(i => `<tr><td style="padding:6px 4px;border-bottom:1px solid #21262D;color:#ddd">${i.label||i.faixa||i.id}</td><td style="padding:6px 4px;border-bottom:1px solid #21262D;text-align:right;color:#F0C040;font-weight:700">+${i.coins}</td></tr>`).join('')}
+        </table>
+      </div>`;
+    const faixas = d.faixasVenda.map(f => ({
+      faixa: f.de === 0 ? `Até R$ ${f.ate.toFixed(0)}` : f.ate > 999999 ? `R$ ${f.de.toFixed(0)}+` : `R$ ${f.de.toFixed(0)} a R$ ${f.ate.toFixed(0)}`,
+      coins: f.coins,
+    }));
+    const bonzao = d.bonusOutros.find(x => x.id === 'bonzao_semana')?.coins || 200;
+    const rei = d.bonusOutros.find(x => x.id === 'rei_mes')?.coins || 500;
+    document.getElementById('coins-regras-content').innerHTML =
+      `<div style="background:#2d1215;border:1px solid #ef4444;border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px">
+        ⏳ <strong>Coins expiram em ${d.expiracao}.</strong> Use ou perca!
+      </div>` +
+      `<div style="background:linear-gradient(135deg,#1a0e2a,#2d2513);border:2px solid #F0C040;border-radius:14px;padding:18px;margin-bottom:18px">
+        <h3 style="color:#F0C040;font-size:14px;margin:0 0 12px;text-transform:uppercase;letter-spacing:.5px">👑 Conquistas TOP</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="background:#0d0820;border:1px solid #F0C040;border-radius:10px;padding:14px;text-align:center">
+            <div style="font-size:32px;margin-bottom:6px">👑</div>
+            <div style="color:#F0C040;font-weight:800;font-size:14px">Bonzão da Semana</div>
+            <div style="color:#fff;font-size:24px;font-weight:800;margin-top:4px">🪙 ${bonzao}</div>
+            <div style="color:#aaa;font-size:11px;margin-top:4px">Lider semanal de vendas + faturamento</div>
+          </div>
+          <div style="background:#0d0820;border:2px solid #c084fc;border-radius:10px;padding:14px;text-align:center">
+            <div style="font-size:32px;margin-bottom:6px">🤴</div>
+            <div style="color:#c084fc;font-weight:800;font-size:14px">Rei do Mês</div>
+            <div style="color:#fff;font-size:24px;font-weight:800;margin-top:4px">🪙 ${rei}</div>
+            <div style="color:#aaa;font-size:11px;margin-top:4px">Score composto: fat + conv + processo + velocidade + disciplina</div>
+          </div>
+        </div>
+        <p style="color:#888;font-size:11px;margin:12px 0 0;font-style:italic;text-align:center">Creditados automaticamente quando você está no topo do ranking semanal/mensal</p>
+      </div>` +
+      tabela('💰 Coins por valor da venda (base)', faixas) +
+      tabela('⭐ Bônus especiais', d.bonusEspeciais) +
+      tabela('💧 Filtros American Filter', d.bonusFiltro) +
+      tabela('🚰 Bebedouros', d.bonusBebedouro) +
+      tabela('🏆 Conquistas e atividade', d.bonusOutros);
+    _REGRAS_LOADED = true;
+  }catch(e){ console.error(e); }
+}
+
+(async () => {
+  try {
+    const url = _closerAtual ? '/cockpit/coins?closer=' + encodeURIComponent(_closerAtual) : '/cockpit/coins';
+    const res = await fetch(url);
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    document.getElementById('coins-loading').style.display = 'none';
+    document.getElementById('coins-content').style.display = 'block';
+
+    // Wallet
+    document.getElementById('coins-wallet').innerHTML = `
+      <div style="background:linear-gradient(135deg,#2d2513,#1a1a2e);border:2px solid #F0C040;border-radius:20px;padding:28px;text-align:center;">
+        <div style="font-size:14px;color:#8B949E;text-transform:uppercase;letter-spacing:2px;">Saldo Disponivel</div>
+        <div style="font-size:3.5rem;font-weight:800;color:#F0C040;margin:8px 0;">&#129689; ${d.totalCoins}</div>
+        <div style="font-size:13px;color:#8B949E;">Ganhos: ${d.totalEarned} | Gastos: ${d.totalSpent}</div>
+        <div style="margin-top:10px;background:#2d1215;border:1px solid #ef4444;border-radius:10px;padding:10px;">
+          <div style="font-size:12px;color:#f87171;font-weight:700;">&#9200; Coins expiram a cada 12 meses!</div>
+          <div style="font-size:11px;color:#8B949E;margin-top:4px;">Seus coins vencem em <span style="color:#F0C040;font-weight:700;">${d.expiracaoLabel || '?'}</span>. Use antes de perder!</div>
+          <div style="font-size:11px;color:#ef4444;margin-top:2px;">${d.diasParaExpirar || 0} dias restantes pra usar seus coins</div>
+        </div>
+        ${d.redemptions && d.redemptions.length > 0 ? '<div style="margin-top:12px;font-size:12px;color:#8B949E;">Ultimos resgates: '+d.redemptions.map(r => '<span style="color:#F0C040;">'+r.itemName+' (-'+r.cost+')</span>').join(' | ')+'</div>' : ''}
+      </div>
+    `;
+
+    // Store
+    const catColors = {dinheiro:'#22c55e',lifestyle:'#06b6d4',tech:'#A371F7',beneficio:'#F0C040',elite:'#ef4444'};
+    document.getElementById('coins-store').innerHTML = d.store.map(item => {
+      const canBuy = d.totalCoins >= item.custo;
+      const catColor = catColors[item.cat] || '#8B949E';
+      return `<div style="background:#161B22;border:1px solid ${canBuy?catColor:'#30363D'};border-radius:14px;padding:18px;text-align:center;${canBuy?'':'opacity:0.5;'}">
+        <div style="font-size:36px;margin-bottom:8px;">${item.icon}</div>
+        <div style="font-size:15px;font-weight:700;color:#E6EDF3;">${item.nome}</div>
+        <div style="font-size:12px;color:#8B949E;margin:4px 0 10px;">${item.desc}</div>
+        <div style="font-size:18px;font-weight:800;color:#F0C040;">&#129689; ${item.custo}</div>
+        ${canBuy?'<button onclick="redeemItem(\''+item.id+'\',\''+item.nome+'\','+item.custo+')" style="margin-top:8px;background:#F0C040;color:#000;border:none;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">Resgatar</button>':'<div style="font-size:11px;color:#ef4444;margin-top:8px;">Faltam '+(item.custo-d.totalCoins)+' coins</div>'}
+      </div>`;
+    }).join('');
+
+    // History
+    const typeIcons = {venda:'&#128176;',bonus:'&#11088;',meta:'&#127942;'};
+    document.getElementById('coins-history').innerHTML = d.history.length === 0
+      ? '<div style="color:#8B949E;">Nenhuma transacao ainda</div>'
+      : d.history.map(h =>
+        `<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #21262D;font-size:13px;">
+          <span>${typeIcons[h.type]||'&#129689;'}</span>
+          <span style="flex:1;color:#E6EDF3;">${h.reason}</span>
+          <span style="color:#F0C040;font-weight:700;">+${h.coins}</span>
+        </div>`
+      ).join('');
+  } catch(e) {
+    document.getElementById('coins-loading').textContent = 'Erro: ' + e.message;
+  }
+})();
+</script>
+</div></body></html>

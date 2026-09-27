@@ -1,0 +1,458 @@
+<% const activePage = 'home'; const pageTitle = 'Home'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<% if (typeof prazoTreino !== 'undefined' && prazoTreino) { %>
+<!-- ===== COUNTDOWN DE TREINAMENTO (168h) — alvos: Catia, Larissa, Gabrielly ===== -->
+<div id="prazoBanner" data-deadline="<%= prazoTreino.deadlineISO %>" data-atrasado="<%= prazoTreino.atrasado ? '1':'0' %>" data-cert="<%= prazoTreino.certificado ? '1':'0' %>"
+  style="margin:0 0 14px;border-radius:14px;padding:14px 16px;background:linear-gradient(100deg,#2a0a0a,#3a1030);border:1px solid <%= prazoTreino.atrasado ? '#ef4444aa':'#3FB95066' %>;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+  <div style="font-size:1.8rem">⏳</div>
+  <div style="flex:1;min-width:220px">
+    <div style="color:var(--text);font-weight:800;font-size:1rem"><%= prazoTreino.certificado ? '✅ Treinamento concluído!' : 'Prazo do treinamento de '+prazoTreino.academia.nome %></div>
+    <div style="color:#c9d4de;font-size:.83rem;margin-top:2px">
+      <% if (prazoTreino.certificado) { %>Parabéns, <%= prazoTreino.nome %> — você já está certificada. 🎉
+      <% } else { %>Você tem <b>168 horas</b> para concluir e tirar o certificado. Progresso: <b><%= prazoTreino.concluidos %>/<%= prazoTreino.total %></b> (<%= prazoTreino.pct %>%).<% } %>
+    </div>
+  </div>
+  <% if (!prazoTreino.certificado) { %>
+  <div id="prazoClock" style="font-variant-numeric:tabular-nums;font-weight:900;font-size:1.35rem;color:#ffd0d0;background:#0b0410;border:1px solid #ef444455;border-radius:10px;padding:8px 12px;white-space:nowrap">--d --:--:--</div>
+  <a href="<%= prazoTreino.academia.url %>" style="background:#ef4444;color:#fff;font-weight:800;text-decoration:none;padding:10px 16px;border-radius:10px;white-space:nowrap">▶ Acelerar agora</a>
+  <% } %>
+</div>
+<% } %>
+
+<div class="page-header">
+  <h1>
+    <%
+      const hour = new Date().getHours();
+      let greeting = 'Bom dia';
+      if (hour >= 12 && hour < 18) greeting = 'Boa tarde';
+      else if (hour >= 18) greeting = 'Boa noite';
+    %>
+    <%= greeting %>, <%= user.name %>!
+  </h1>
+  <p class="subtitle">Tudo de Filtro &mdash; Portal TDF</p>
+</div>
+
+<div class="container">
+
+  <!-- MURAL DE NOVIDADES (atualizações recentes da plataforma) -->
+  <div id="mural-novidades" style="background:linear-gradient(135deg,#1a0f2e 0%,#2a1a4e 100%);border:2px solid #c084fc;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 4px 24px rgba(192,132,252,.15)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <span style="font-size:24px;">🚀</span>
+      <h2 style="font-size:1.3rem;color:#c084fc;margin:0;">Novidades do Portal</h2>
+      <span style="background:#ef4444;color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:10px;animation:novPulse 2s infinite">RECÉM-LANÇADO</span>
+      <% if (user.role === 'admin') { %>
+      <span style="margin-left:auto;display:flex;gap:8px">
+        <button onclick="agendarNovidades(this)" style="background:#1e3a5f;color:#7cb9f5;border:1px solid #5ba3f5;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer">📅 Agendar Z-API amanhã 7h</button>
+        <button onclick="dispararNovidades(this)" style="background:#2d1215;color:#f87171;border:1px solid #ef4444;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer">🚀 Disparar agora</button>
+      </span>
+      <% } %>
+    </div>
+    <p style="color:#a78bfa;font-size:13px;margin:0 0 16px;font-style:italic">Tudo o que entrou no Portal nos últimos dias — leia e use.</p>
+
+    <div id="mural-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div id="mural-status" style="font-size:11px;color:var(--text-muted);margin-top:12px;font-style:italic"></div>
+  </div>
+  <style>@keyframes novPulse{0%,100%{opacity:1}50%{opacity:.5}}</style>
+  <script>
+  (async function loadMural(){
+    try{
+      const res = await fetch('/cockpit/novidades');
+      const d = await res.json();
+      const isAdmin = '<%= user.role %>' === 'admin';
+      document.getElementById('mural-list').innerHTML = (d.novidades||[])
+        .filter(n => !n.admin_only || isAdmin)
+        .map(n => `
+        <details style="background:#0d0820;border:1px solid #4c1d95;border-radius:10px;padding:10px 14px">
+          <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px">
+            <span style="font-size:16px">${n.icon}</span>
+            <strong style="color:#fff;font-size:13px;flex:1">${n.titulo}</strong>
+            ${n.link ? `<a href="${n.link}" onclick="event.stopPropagation()" style="background:linear-gradient(135deg,#7c3aed,#a371f7);color:#fff;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:800;text-decoration:none;white-space:nowrap">${n.link_label || 'Abrir →'}</a>` : ''}
+            <span style="color:#a78bfa;font-size:12px">▾</span>
+          </summary>
+          <div style="color:#bbb;font-size:12px;line-height:1.5;margin-top:8px">${n.texto}</div>
+        </details>
+      `).join('');
+      const s = d.state;
+      if (s) {
+        let txt = '';
+        if (s.agendadoPara) {
+          const dt = new Date(s.agendadoPara);
+          txt = `📅 Agendado pra ${dt.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})}` + (s.scheduledBy?` por ${s.scheduledBy}`:'');
+        }
+        if (s.ultimoEnvio) {
+          const dt = new Date(s.ultimoEnvio);
+          txt += (txt?' • ':'') + `✅ Último envio: ${dt.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})}` + (s.sentTo?.length?` (${s.sentTo.length} closers)`:'');
+        }
+        document.getElementById('mural-status').textContent = txt;
+      }
+    }catch(e){ console.error(e); }
+  })();
+
+  async function agendarNovidades(btn){
+    if (!confirm('Agendar disparo dos avisos via Z-API pra TODOS os closers amanhã às 7h BRT?')) return;
+    btn.disabled = true; btn.textContent = 'Agendando...';
+    try{
+      const res = await fetch('/gestao/novidades/agendar', { method:'POST' });
+      const r = await res.json();
+      if (r.error) { alert('Erro: '+r.error); }
+      else { alert('✅ Agendado! Disparo automático amanhã às 7h BRT.'); location.reload(); }
+    }catch(e){ alert('Erro: '+e.message); }
+    finally{ btn.disabled = false; btn.textContent = '📅 Agendar Z-API amanhã 7h'; }
+  }
+  async function dispararNovidades(btn){
+    if (!confirm('Disparar AGORA pros closers? (rate limit 12s entre cada)')) return;
+    btn.disabled = true; btn.textContent = 'Disparando...';
+    try{
+      const res = await fetch('/gestao/novidades/disparar', { method:'POST' });
+      const r = await res.json();
+      if (r.error) alert('Erro: '+r.error);
+      else alert('🚀 Disparando em background. Vai levar alguns minutos. Você será notificado no seu Z-API ao final.');
+    }catch(e){ alert('Erro: '+e.message); }
+    finally{ btn.disabled = false; btn.textContent = '🚀 Disparar agora'; }
+  }
+  </script>
+
+  <!-- QUADRO DE NOVIDADES (anteriores) — recolhido por padrão -->
+  <details style="background:linear-gradient(135deg,var(--bg-card) 0%,var(--bg-card-hover) 100%);border:1px solid var(--border);border-radius:16px;padding:16px 24px;margin-bottom:28px;">
+    <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:20px;">📢</span>
+      <h2 style="font-size:1.05rem;color:#00AAFF;margin:0;flex:1;">Novidades anteriores</h2>
+      <span style="color:var(--text-muted);font-size:12px;">mostrar ▾</span>
+    </summary>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
+
+      <!-- Novidade - Meu Painel + Diretor IA -->
+      <a href="/cockpit" style="display:flex;align-items:flex-start;gap:12px;background:var(--bg);border:1px solid #c084fc;border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--text);transition:border-color 0.2s;">
+        <span style="font-size:20px;margin-top:2px;">&#129504;</span>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:#c084fc;">NOVO: Meu Painel + Diretor IA (Coach Pessoal)</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Agora voce tem um painel individual com suas vendas, meta, leads priorizados (Diamante primeiro) e botoes diretos pra Ligar/WhatsApp/CRM. Alem disso, uma IA analisa seu pipeline e gera diagnostico + plano de ataque diario personalizado. Acesse pelo menu "Meu Painel".</div>
+          <div style="font-size:0.75rem;color:#484F58;margin-top:6px;">28/Abr/2026 • Menu → Meu Painel</div>
+        </div>
+      </a>
+
+      <!-- Novidade - Valvulas Runxin -->
+      <a href="/produtos" onclick="setTimeout(()=>{document.querySelector('[data-tab=\'11\']')?.click()},500)" style="display:flex;align-items:flex-start;gap:12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--text);transition:border-color 0.2s;">
+        <span style="font-size:20px;margin-top:2px;">&#9881;&#65039;</span>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:#58A6FF;">NOVO: Catalogo Valvulas Runxin</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Adicionamos o catalogo completo de valvulas Runxin automaticas e manuais em Produtos. 13 modelos automaticos + 11 manuais com vazao, aplicacao e comparativo.</div>
+          <div style="font-size:0.75rem;color:#484F58;margin-top:6px;">28/Abr/2026 • Produtos → Valvulas Runxin</div>
+        </div>
+      </a>
+
+      <!-- Novidade - Regra Sem Contato -->
+      <a href="/playbook" style="display:flex;align-items:flex-start;gap:12px;background:var(--bg);border:1px solid #F85149;border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--text);transition:border-color 0.2s;">
+        <span style="font-size:20px;margin-top:2px;">&#9888;&#65039;</span>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:#F85149;">IMPORTANTE: Nova Regra "Sem Contato"</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Agora o sistema monitora quando voce fecha como "Sem contato". Se fechar antes do prazo minimo (varia por tier do lead), o deal VOLTA SOZINHO e voce recebe tarefa. Diamante = 5 dias + 15 tentativas. Bronze = 2 dias + 6 tentativas. Veja os detalhes no Playbook > Regras de Perda.</div>
+          <div style="font-size:0.75rem;color:#484F58;margin-top:6px;">28/Abr/2026 • Automatico a cada 30 minutos</div>
+        </div>
+      </a>
+
+      <!-- Novidade - Score Leads -->
+      <a href="/playbook" style="display:flex;align-items:flex-start;gap:12px;background:var(--bg);border:1px solid #1F6FEB;border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--text);transition:border-color 0.2s;">
+        <span style="font-size:20px;margin-top:2px;">&#127919;</span>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:#58A6FF;">Score de Leads + Distribuicao Inteligente</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Todo lead recebe score automatico de 0-100 por IA. Diamante vai pros melhores closers, Pedra e automatico. Veja como funciona no Playbook > Score & Leads.</div>
+          <div style="font-size:0.75rem;color:#484F58;margin-top:6px;">08/Abr/2026 • Automatico</div>
+        </div>
+      </a>
+
+      <!-- Novidade - Simulador IA -->
+      <a href="https://closy-app-production.up.railway.app" target="_blank" style="display:flex;align-items:flex-start;gap:12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--text);transition:border-color 0.2s;">
+        <span style="font-size:20px;margin-top:2px;">🎮</span>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:#A371F7;">NOVO: Simulador de Vendas com IA</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Treine suas habilidades de vendas contra um cliente simulado por IA. 5 cenários disponíveis: Qualificação, Objeção de Preço, Cliente Desconfiado e mais. Acesse pelo Closy.</div>
+          <div style="font-size:0.75rem;color:#484F58;margin-top:6px;">22/Abr/2026 • Acesse: closy-app-production.up.railway.app</div>
+        </div>
+      </a>
+
+      <!-- Novidade - Alertas WhatsApp -->
+      <a href="https://closy-app-production.up.railway.app" target="_blank" style="display:flex;align-items:flex-start;gap:12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--text);transition:border-color 0.2s;">
+        <span style="font-size:20px;margin-top:2px;">📱</span>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:#2EA043;">NOVO: Alertas no WhatsApp</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Agora você recebe o score e feedback de cada ligação direto no seu WhatsApp, automaticamente.</div>
+          <div style="font-size:0.75rem;color:#484F58;margin-top:6px;">22/Abr/2026 • Automático após cada análise</div>
+        </div>
+      </a>
+
+      <!-- Novidade - Top Ligações -->
+      <a href="https://closy-app-production.up.railway.app" target="_blank" style="display:flex;align-items:flex-start;gap:12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--text);transition:border-color 0.2s;">
+        <span style="font-size:20px;margin-top:2px;">🏆</span>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:#F0C040;">NOVO: Top Ligações da Semana</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Veja as 3 melhores ligações do time e aprenda com quem está mandando bem.</div>
+          <div style="font-size:0.75rem;color:#484F58;margin-top:6px;">22/Abr/2026 • Acesse: closy-app-production.up.railway.app</div>
+        </div>
+      </a>
+
+      <!-- Novidade 0 - Closy -->
+      <a href="https://closy-app-production.up.railway.app" target="_blank" style="display:flex;align-items:flex-start;gap:12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--text);transition:border-color 0.2s;">
+        <span style="font-size:20px;margin-top:2px;">📊</span>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:#A371F7;">NOVO: Closy - IA de Análise de Ligações</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Todas as suas ligações agora são analisadas por IA. Acesse o Closy para ver seu score, pontos fortes e o que melhorar em cada call. Score de 0 a 100 + feedback personalizado.</div>
+          <div style="font-size:0.75rem;color:#484F58;margin-top:6px;">15/Abr/2026 • Acesse: closy-app-production.up.railway.app</div>
+        </div>
+      </a>
+
+      <!-- Novidade 1 -->
+      <a href="/playbook" onclick="setTimeout(()=>{document.querySelector('[data-tab=\\'11\\']')?.click()},500)" style="display:flex;align-items:flex-start;gap:12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--text);transition:border-color 0.2s;">
+        <span style="font-size:20px;margin-top:2px;">🔧</span>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:#F0C040;">Instalação Bonificada R$ 590</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Novo módulo no Playbook! Aprenda a posicionar a instalação como arma de fechamento. Roleplays, frases prontas e regras de uso.</div>
+          <div style="font-size:0.75rem;color:#484F58;margin-top:6px;">14/Abr/2026 • Playbook → Instalação R$590</div>
+        </div>
+      </a>
+
+      <!-- Novidade 2 -->
+      <a href="/playbook" onclick="setTimeout(()=>{document.querySelector('[data-tab=\\'7\\']')?.click()},500)" style="display:flex;align-items:flex-start;gap:12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--text);transition:border-color 0.2s;">
+        <span style="font-size:20px;margin-top:2px;">🎯</span>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:#3399FF;">Scripts SDR + Closer por Produto</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Scripts completos de qualificação e fechamento para Filtro de Entrada, Iron Free, Scale Stop e Bebedouro. Com SPIN, objeções e WhatsApp templates.</div>
+          <div style="font-size:0.75rem;color:#484F58;margin-top:6px;">07/Abr/2026 • Playbook → Scripts SDR / Scripts Closer</div>
+        </div>
+      </a>
+
+      <!-- Novidade 3 -->
+      <a href="/ia" style="display:flex;align-items:flex-start;gap:12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--text);transition:border-color 0.2s;">
+        <span style="font-size:20px;margin-top:2px;">🤖</span>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:#2EA043;">IA Consulta — Coach de Vendas</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">A IA agora funciona como coach! Ela pergunta o contexto antes de responder e dá scripts específicos por produto. Use o botão 💬 em qualquer página.</div>
+          <div style="font-size:0.75rem;color:#484F58;margin-top:6px;">07/Abr/2026 • Clique no 💬 no canto inferior direito</div>
+        </div>
+      </a>
+
+      <!-- Novidade 4 -->
+      <a href="/onboarding" style="display:flex;align-items:flex-start;gap:12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--text);transition:border-color 0.2s;">
+        <span style="font-size:20px;margin-top:2px;">💧</span>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:var(--text);">Módulos Água de Poço + Condomínio</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Treinamento completo sobre Iron Free vs Scale Stop (NUNCA confundir!) e como vender filtro pra condomínios (ticket médio R$5.932).</div>
+          <div style="font-size:0.75rem;color:#484F58;margin-top:6px;">07/Abr/2026 • Onboarding → Módulos 10 e 11</div>
+        </div>
+      </a>
+
+    </div>
+  </details>
+
+  <!-- ===== PROPOSTAS POR CATEGORIA ===== -->
+  <div style="margin:0 auto 26px;max-width:1100px;padding:0 20px">
+    <h2 style="color:var(--text);font-size:14px;text-transform:uppercase;letter-spacing:.5px;margin:0 0 12px;font-weight:800">📊 Propostas do mês <span id="hp-loading" style="font-weight:400;text-transform:none;color:var(--text-muted);font-size:11px">· carregando...</span></h2>
+    <div id="hp-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px"></div>
+  </div>
+  <script>
+  (async function(){
+    try {
+      const r = await fetch('/home/propostas-categoria');
+      const d = await r.json();
+      if (d.error) throw new Error(d.error);
+      const cards = document.getElementById('hp-cards');
+      const lbls = {
+        filtro_entrada: { l:'Filtro de Entrada', i:'💧', c:'#3b82f6' },
+        bebedouro:      { l:'Bebedouro',         i:'🚰', c:'#22c55e' },
+        purificador:    { l:'Purificador',       i:'🥤', c:'#f59e0b' },
+        outros:         { l:'Outros',            i:'📦', c:'#a371f7' },
+      };
+      const fmt = v => v >= 1000 ? 'R$ '+(v/1000).toFixed(1).replace('.',',')+'k' : 'R$ '+Math.round(v);
+      cards.innerHTML = ['filtro_entrada','bebedouro','purificador','outros'].map(k => {
+        const lab = lbls[k];
+        const h = d.stats.hoje[k]; const m = d.stats.mes[k];
+        return `<div style="background:#0D1117;border:1px solid #30363D;border-left:4px solid ${lab.c};border-radius:10px;padding:14px 16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="font-size:18px">${lab.i}</span>
+            <span style="color:#E6EDF3;font-weight:800;font-size:13px;flex:1">${lab.l}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="color:#666;font-size:9px;text-transform:uppercase;letter-spacing:.4px;font-weight:700">Hoje</div>
+              <div style="color:${lab.c};font-weight:800;font-size:16px;margin-top:2px">${fmt(h.valor)}</div>
+              <div style="color:#888;font-size:10px;margin-top:1px">${h.count} proposta${h.count!==1?'s':''}</div>
+            </div>
+            <div>
+              <div style="color:#666;font-size:9px;text-transform:uppercase;letter-spacing:.4px;font-weight:700">Mês</div>
+              <div style="color:${lab.c};font-weight:800;font-size:16px;margin-top:2px">${fmt(m.valor)}</div>
+              <div style="color:#888;font-size:10px;margin-top:1px">${m.count} proposta${m.count!==1?'s':''}</div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+      document.getElementById('hp-loading').style.display = 'none';
+    } catch(e) {
+      document.getElementById('hp-loading').textContent = '· erro: ' + e.message;
+    }
+  })();
+  </script>
+
+  <!-- ===== ATALHOS POR FINALIDADE ===== -->
+  <h2 style="color:var(--text);font-size:14px;text-transform:uppercase;letter-spacing:.5px;margin:6px 0 12px;font-weight:800">🚀 Trabalho do dia</h2>
+  <div class="home-grid" style="margin-bottom:26px">
+    <a href="/cockpit" class="home-card">
+      <span class="card-icon">&#129504;</span>
+      <h3>Meu Painel</h3>
+      <p>Suas vendas, meta, leads priorizados e o plano de ataque do dia gerado pela IA.</p>
+    </a>
+
+    <a href="/scripts" class="home-card">
+      <span class="card-icon">&#128222;</span>
+      <h3>Scripts &amp; Modelos</h3>
+      <p>Roteiros de ligacao extraidos de chamadas reais que fecharam: passo a passo com as falas e checklist.</p>
+    </a>
+
+    <a href="/ia" class="home-card">
+      <span class="card-icon">&#129302;</span>
+      <h3>IA Consulta</h3>
+      <p>Tire duvidas sobre produtos, precos, scripts e processos em tempo real.</p>
+    </a>
+  </div>
+
+  <h2 style="color:var(--text);font-size:14px;text-transform:uppercase;letter-spacing:.5px;margin:0 0 12px;font-weight:800">🎓 Escola TDF</h2>
+  <div class="home-grid" style="margin-bottom:26px">
+    <a href="/treinamento" class="home-card">
+      <span class="card-icon">&#127891;</span>
+      <h3>Treinamentos</h3>
+      <p>Academias por produto (Poco, Filtro de Entrada, Bebedouros, Tecnicas de Vendas) com prova e certificado.</p>
+    </a>
+
+    <a href="/onboarding" class="home-card">
+      <span class="card-icon">&#128218;</span>
+      <h3>Onboarding</h3>
+      <p>Treinamento completo com 11 modulos, quizzes e certificado de conclusao.</p>
+    </a>
+
+    <a href="/playbook" class="home-card">
+      <span class="card-icon">&#128214;</span>
+      <h3>Playbook</h3>
+      <p>Scripts de vendas, tecnicas de fechamento, objecoes e cadencias.</p>
+    </a>
+  </div>
+
+  <h2 style="color:var(--text);font-size:14px;text-transform:uppercase;letter-spacing:.5px;margin:0 0 12px;font-weight:800">📚 Consulta rapida</h2>
+  <div class="home-grid" style="margin-bottom:26px">
+    <a href="/produtos" class="home-card">
+      <span class="card-icon">&#128230;</span>
+      <h3>Produtos</h3>
+      <p>Catalogo completo: filtros, Iron Free, Scale Stop, bebedouros e mais.</p>
+    </a>
+
+    <a href="/treinamento/biblioteca" class="home-card">
+      <span class="card-icon">&#128193;</span>
+      <h3>Biblioteca</h3>
+      <p>Fichas tecnicas, catalogos, fotos e videos oficiais de cada produto pra enviar ao cliente.</p>
+    </a>
+
+    <a href="/instalacoes" class="home-card">
+      <span class="card-icon">&#128247;</span>
+      <h3>Fotos de Instalacao</h3>
+      <p>Galeria real por modelo pra mostrar ao cliente como fica instalado. Baixe e envie.</p>
+    </a>
+  </div>
+
+  <h2 style="color:var(--text);font-size:14px;text-transform:uppercase;letter-spacing:.5px;margin:0 0 12px;font-weight:800">📊 Resultados &amp; Gestao</h2>
+  <div class="home-grid">
+    <a href="/resultados" class="home-card">
+      <span class="card-icon">&#128202;</span>
+      <h3>Central de Resultados</h3>
+      <p>O record diario: raio-x de ontem, acumulado vs meta por departamento, planos e videos.</p>
+    </a>
+
+    <% if (user.role === 'admin') { %>
+    <a href="/processos" class="home-card">
+      <span class="card-icon">&#128216;</span>
+      <h3>Documentacao do Processo</h3>
+      <p>Visao do gestor: regras oficiais, robos de guarda, cadencias, campanhas e changelog.</p>
+    </a>
+
+    <a href="/analytics-sdr" class="home-card">
+      <span class="card-icon">&#128225;</span>
+      <h3>Analytics SDR</h3>
+      <p>Funil da pre-venda por pessoa: discagens, conectadas, leads ligados e quantos avancaram.</p>
+    </a>
+    <% } %>
+  </div>
+</div>
+
+<% if (typeof prazoTreino !== 'undefined' && prazoTreino && !prazoTreino.certificado) { %>
+<!-- ===== POPUP PRAZO (168h) — urgência para closers atrasados ===== -->
+<div id="prazoPop" data-nome="<%= prazoTreino.nome %>" style="display:none;position:fixed;inset:0;z-index:100000;background:rgba(10,0,0,.85);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:18px">
+  <div style="max-width:440px;width:100%;background:linear-gradient(160deg,#2a0808,var(--bg) 65%);border:1px solid #ef4444aa;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.7);overflow:hidden;animation:tdfPopIn .25s ease">
+    <div style="background:linear-gradient(90deg,#b91c1c,#ef4444);padding:9px 16px;text-align:center;color:#fff;font-weight:900;letter-spacing:1px">🚨 PRAZO CORRENDO 🚨</div>
+    <div style="padding:20px;text-align:center">
+      <div style="font-size:2.2rem">⏰</div>
+      <h2 style="margin:8px 0;color:var(--text);font-size:1.3rem">Acelera, <%= prazoTreino.nome %>!</h2>
+      <p style="color:#c9d4de;font-size:.92rem;line-height:1.5;margin:0 0 12px">Você tem <b>168 horas</b> para concluir o treinamento de <b><%= prazoTreino.academia.nome %></b> e tirar o certificado. O relógio já está correndo:</p>
+      <div id="prazoPopClock" style="font-variant-numeric:tabular-nums;font-weight:900;font-size:2rem;color:#ff6b6b;margin:8px 0 4px">--d --:--:--</div>
+      <div style="color:#8899AA;font-size:.8rem;margin-bottom:14px">Progresso atual: <b style="color:#c9d4de"><%= prazoTreino.concluidos %>/<%= prazoTreino.total %> módulos (<%= prazoTreino.pct %>%)</b></div>
+      <a href="<%= prazoTreino.academia.url %>" onclick="tdfFecharPrazo()" style="display:block;background:#ef4444;color:#fff;font-weight:800;text-decoration:none;padding:13px 16px;border-radius:11px;margin-bottom:8px">▶ Continuar treinamento agora</a>
+      <button onclick="tdfFecharPrazo()" style="background:transparent;border:1px solid #3a2a2a;color:#8899AA;border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer;font-family:inherit">Depois (o relógio continua correndo)</button>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<script>
+(function(){
+  var el=document.getElementById('prazoBanner'); if(!el) return;
+  var dl=new Date(el.dataset.deadline).getTime();
+  function fmt(ms){ if(ms<=0) return 'PRAZO ENCERRADO'; var s=Math.floor(ms/1000); var d=Math.floor(s/86400); s%=86400; var h=Math.floor(s/3600); s%=3600; var m=Math.floor(s/60); s%=60; function p(n){return String(n).padStart(2,'0');} return d+'d '+p(h)+':'+p(m)+':'+p(s); }
+  var c1=document.getElementById('prazoClock'), c2=document.getElementById('prazoPopClock');
+  function tick(){ var r=dl-Date.now(); var t=fmt(r); if(c1)c1.textContent=t; if(c2)c2.textContent=t; if(r<=0){ if(c1){c1.style.color='#ff6b6b';} if(c2){c2.style.color='#ff6b6b';} } }
+  tick(); setInterval(tick,1000);
+  // popup 1x por dia enquanto atrasado e antes do prazo
+  var pop=document.getElementById('prazoPop');
+  if(pop && el.dataset.atrasado==='1' && (dl-Date.now())>0){
+    var hoje=new Date().toISOString().slice(0,10); var K='tdf_prazo_pop_'+hoje;
+    try{ if(!localStorage.getItem(K)){ pop.style.display='flex'; } }catch(e){ pop.style.display='flex'; }
+    window.tdfFecharPrazo=function(){ try{localStorage.setItem(K,'1');}catch(e){} pop.style.display='none'; };
+    pop.addEventListener('click',function(e){ if(e.target===pop) tdfFecharPrazo(); });
+  }
+})();
+</script>
+
+<!-- ===== POPUP NOVIDADE: Playbook Prático do Closer ===== -->
+<div id="tdfNovidadePop" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(3,6,12,.82);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:18px">
+  <div style="max-width:460px;width:100%;background:linear-gradient(160deg,#12081f 0%,var(--bg) 60%);border:1px solid #c084fc66;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.6);overflow:hidden;animation:tdfPopIn .25s ease">
+    <div style="background:linear-gradient(90deg,#ef4444,#c084fc);padding:9px 16px;display:flex;align-items:center;gap:8px">
+      <span style="background:#0b0410;color:#fff;font-weight:900;font-size:11px;letter-spacing:1px;padding:3px 9px;border-radius:20px">🚨 URGENTE</span>
+      <span style="color:var(--text);font-weight:800;font-size:.92rem">Boas notícias para os TDF lovers 💛</span>
+    </div>
+    <div style="padding:20px 20px 8px">
+      <div style="font-size:2.2rem;margin-bottom:6px">🎯</div>
+      <h2 style="margin:0 0 8px;color:var(--text);font-size:1.3rem;line-height:1.25">Chegou o <span style="color:#c084fc">Playbook Prático do Closer</span></h2>
+      <p style="color:#c9d4de;font-size:.92rem;line-height:1.55;margin:0 0 10px">Você que já mandou bem no treinamento de bebedouros: agora tem a versão <strong>mão na massa</strong> — o passo a passo do atendimento real.</p>
+      <ul style="color:#aab6c2;font-size:.86rem;line-height:1.5;margin:0 0 12px;padding-left:18px">
+        <li>Fluxo de 18 etapas com exemplo <strong>bom × ruim</strong></li>
+        <li>Scripts diretos: abertura, objeções, fechamento e upsell</li>
+        <li><strong>Cartões de bolso</strong> pra consultar no celular durante a ligação</li>
+        <li>Nova <strong>prova prática</strong> — vale pro certificado</li>
+      </ul>
+    </div>
+    <div style="padding:0 20px 20px;display:flex;gap:8px;flex-wrap:wrap">
+      <a href="/treinamento/bebedouros/playbook" onclick="tdfFecharPop()" style="flex:1;min-width:150px;text-align:center;background:#c084fc;color:#1a0a2e;font-weight:800;text-decoration:none;padding:12px 16px;border-radius:10px">🎯 Abrir o Playbook</a>
+      <button onclick="tdfFecharPop()" style="background:transparent;border:1px solid #2a3a4d;color:#8899AA;border-radius:10px;padding:12px 16px;font-weight:600;cursor:pointer;font-family:inherit">Depois</button>
+    </div>
+  </div>
+</div>
+<style>@keyframes tdfPopIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}</style>
+<script>
+(function(){
+  var KEY='tdf_popup_playbook_v1';
+  try{ if(!localStorage.getItem(KEY)){ var el=document.getElementById('tdfNovidadePop'); if(el){ el.style.display='flex'; } } }catch(e){}
+  window.tdfFecharPop=function(){ try{localStorage.setItem(KEY,'1');}catch(e){} var el=document.getElementById('tdfNovidadePop'); if(el) el.style.display='none'; };
+  var ov=document.getElementById('tdfNovidadePop');
+  if(ov) ov.addEventListener('click',function(e){ if(e.target===ov) tdfFecharPop(); });
+})();
+</script>
+
+</body>
+</html>

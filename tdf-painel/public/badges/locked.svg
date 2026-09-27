@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="lk_bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#1c1917"/>
+      <stop offset="100%" stop-color="#0c0a09"/>
+    </radialGradient>
+    <linearGradient id="lk_border" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#57534e"/>
+      <stop offset="30%" stop-color="#292524"/>
+      <stop offset="50%" stop-color="#78716c"/>
+      <stop offset="70%" stop-color="#292524"/>
+      <stop offset="100%" stop-color="#57534e"/>
+    </linearGradient>
+    <linearGradient id="lk_border2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#44403c"/>
+      <stop offset="50%" stop-color="#a8a29e"/>
+      <stop offset="100%" stop-color="#44403c"/>
+    </linearGradient>
+    <linearGradient id="lk_icon" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#78716c"/>
+      <stop offset="50%" stop-color="#57534e"/>
+      <stop offset="100%" stop-color="#44403c"/>
+    </linearGradient>
+    <linearGradient id="lk_body" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#57534e"/>
+      <stop offset="50%" stop-color="#44403c"/>
+      <stop offset="100%" stop-color="#292524"/>
+    </linearGradient>
+    <linearGradient id="lk_shine" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.08"/>
+      <stop offset="50%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="lk_shadow">
+      <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <!-- No outer glow for locked state -->
+  <circle cx="60" cy="60" r="54" fill="url(#lk_border)" opacity="0.6"/>
+  <circle cx="60" cy="60" r="53" fill="url(#lk_border2)" opacity="0.2"/>
+  <circle cx="60" cy="60" r="50" fill="url(#lk_bg)"/>
+  <circle cx="60" cy="60" r="46" fill="none" stroke="#292524" stroke-width="1" opacity="0.5"/>
+  <g filter="url(#lk_shadow)" opacity="0.7">
+    <!-- Padlock shackle -->
+    <path d="M 48 54 L 48 46 C 48 38, 52 32, 60 32 C 68 32, 72 38, 72 46 L 72 54" fill="none" stroke="url(#lk_icon)" stroke-width="4" stroke-linecap="round"/>
+    <!-- Padlock body -->
+    <rect x="42" y="54" width="36" height="30" rx="4" fill="url(#lk_body)" stroke="#57534e" stroke-width="1"/>
+    <!-- Keyhole -->
+    <circle cx="60" cy="66" r="5" fill="#1c1917" stroke="#44403c" stroke-width="0.5"/>
+    <rect x="58" y="68" width="4" height="8" rx="1" fill="#1c1917"/>
+    <!-- Lock body highlight -->
+    <rect x="44" y="56" width="12" height="2" rx="1" fill="#57534e" opacity="0.3"/>
+  </g>
+  <!-- Diagonal scratch lines for "unavailable" feel -->
+  <g stroke="#44403c" stroke-width="0.5" opacity="0.15">
+    <line x1="30" y1="90" x2="90" y2="30"/>
+    <line x1="35" y1="90" x2="90" y2="35"/>
+    <line x1="25" y1="90" x2="90" y2="25"/>
+  </g>
+  <ellipse cx="60" cy="38" rx="30" ry="22" fill="url(#lk_shine)"/>
+</svg>

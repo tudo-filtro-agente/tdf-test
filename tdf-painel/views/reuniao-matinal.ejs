@@ -1,0 +1,630 @@
+<% const activePage = 'gestao'; const pageTitle = 'Reunião Matinal — Dossiê do Time'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.rm-wrap{max-width:1400px;margin:0 auto;padding:24px;color:var(--text)}
+.rm-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #a371f7;border-radius:14px;padding:18px;margin-bottom:18px}
+.rm-header h1{font-size:20px;background:linear-gradient(135deg,#fff,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent;margin:0}
+.rm-controls{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.rm-btn{background:#a371f7;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:800;cursor:pointer}
+.rm-btn:hover{background:#7c5cff}
+.rm-btn:disabled{opacity:.5;cursor:wait}
+.rm-btn-success{background:#10b981;color:#000}
+.rm-btn-warn{background:#f59e0b;color:#000}
+.rm-card{background:#161725;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.rm-card.saudavel{border-left:4px solid #10b981}
+.rm-card.atencao{border-left:4px solid #f59e0b}
+.rm-card.critico{border-left:4px solid #ef4444}
+.rm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.rm-stat{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.rm-stat .v{color:var(--text);font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.rm-stat .k{color:#9ca3af;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+.rm-stat .delta{font-size:10px;font-weight:700;margin-top:2px}
+.rm-section{margin-top:14px}
+.rm-section h4{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin:0 0 8px;color:#9ca3af}
+.rm-list-item{background:rgba(255,255,255,.02);border-left:3px solid var(--c, #888);border-radius:5px;padding:7px 10px;margin-bottom:4px;font-size:12px;color:var(--text);line-height:1.4}
+.rm-tab-bar{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);overflow-x:auto;padding-bottom:0}
+.rm-tab{background:transparent;color:#9ca3af;border:none;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.rm-tab.active{color:#c084fc;border-bottom-color:#a371f7}
+.rm-veredito{font-size:14px;font-weight:700;line-height:1.4;padding:10px 14px;border-radius:8px;margin-bottom:14px}
+.rm-veredito.saudavel{background:rgba(16,185,129,.1);color:#10b981;border:1px solid #10b981}
+.rm-veredito.atencao{background:rgba(245,158,11,.1);color:#f59e0b;border:1px solid #f59e0b}
+.rm-veredito.critico{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid #ef4444}
+.rm-closer-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(163,113,247,.1);color:#c084fc;padding:4px 10px;border-radius:14px;font-size:11px;font-weight:700;border:1px solid rgba(163,113,247,.3)}
+</style>
+
+<div class="rm-wrap">
+  <div class="rm-header">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:28px">☕</span>
+      <h1>Reunião Matinal — Dossiê IA</h1>
+    </div>
+    <p style="color:#9ca3af;font-size:12px;margin:6px 0 0;line-height:1.5">
+      <strong style="color:#fbbf24">⚠️ Live agent DIRETO E DURO</strong> (Diretor Comercial · Opus) analisa GoTo + WATI + Zoho de cada closer.
+      Sem floreio: cobra performance com nome, número e prazo.
+      Mostra <strong style="color:#ef4444">pontos críticos</strong>, <strong style="color:#f59e0b">atenção</strong>, <strong style="color:#10b981">ações com prazo</strong> e tópicos de coaching.
+    </p>
+    <div class="rm-controls">
+      <button class="rm-btn" onclick="rmRodarTudo()" id="rm-btn-tudo">⚡ Gerar Dossiê do Time TODO</button>
+      <span style="color:var(--text-muted);font-size:11px">|</span>
+      <select id="rm-closer-sel" style="background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:6px;padding:7px 10px;font-size:12px">
+        <option value="">— Closer individual —</option>
+        <% closers.forEach(c => { %>
+          <option value="<%= c.username %>"><%= c.name %><%= c.team ? ' · '+c.team : '' %></option>
+        <% }) %>
+      </select>
+      <button class="rm-btn" onclick="rmRodarUm()" id="rm-btn-um" style="background:#1f6feb">📋 Dossiê Individual</button>
+      <button class="rm-btn rm-btn-success" onclick="rmAbrirEmailModal()" id="rm-btn-email" style="display:none">📧 Enviar por email</button>
+      <button class="rm-btn" onclick="rmAbrirHistorico()" style="background:#1f1f2e;color:#a371f7;border:1px solid #a371f7">📚 Histórico</button>
+      <span id="rm-status" style="color:#9ca3af;font-size:11px;margin-left:auto"></span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="rm-tab-bar">
+    <button class="rm-tab active" id="rm-tab-resumo" onclick="rmAba('resumo')">📊 Resumo do Time</button>
+    <button class="rm-tab" id="rm-tab-individual" onclick="rmAba('individual')">👤 Dossiê Individual</button>
+    <button class="rm-tab" id="rm-tab-rankings" onclick="rmAba('rankings')">🏆 Rankings</button>
+  </div>
+
+  <div id="rm-pane-resumo">
+    <div id="rm-resumo-time" style="text-align:center;color:var(--text-muted);padding:30px;font-size:13px">Clique em "⚡ Gerar Dossiê do Time TODO" pra rodar análise completa.</div>
+  </div>
+  <div id="rm-pane-individual" style="display:none">
+    <div id="rm-individual-content" style="text-align:center;color:var(--text-muted);padding:30px;font-size:13px">Selecione um closer + click em "📋 Dossiê Individual".</div>
+  </div>
+  <div id="rm-pane-rankings" style="display:none">
+    <div id="rm-rankings-content" style="text-align:center;color:var(--text-muted);padding:30px;font-size:13px">Disponível após gerar dossiê do time.</div>
+  </div>
+</div>
+
+<script>
+let _RM_DOSSIES = [];
+let _RM_RESUMO = null;
+
+function rmAba(nome){
+  ['resumo','individual','rankings'].forEach(n => {
+    const tab = document.getElementById('rm-tab-'+n);
+    const pane = document.getElementById('rm-pane-'+n);
+    if (tab) tab.classList.toggle('active', n === nome);
+    if (pane) pane.style.display = n === nome ? '' : 'none';
+  });
+}
+
+function rmFmtR(v){ if (v==null) return '—'; return 'R$ '+Math.round(v).toLocaleString('pt-BR'); }
+function rmFmtN(v){ if (v==null) return '—'; return Number(v).toLocaleString('pt-BR'); }
+
+async function rmRodarUm(){
+  const closer = document.getElementById('rm-closer-sel').value;
+  if (!closer) { alert('Selecione um closer'); return; }
+  const btn = document.getElementById('rm-btn-um');
+  const status = document.getElementById('rm-status');
+  btn.disabled = true;
+  status.textContent = '⏳ Buscando dados Zoho + GoTo...';
+  document.getElementById('rm-individual-content').innerHTML = '<div style="text-align:center;padding:40px;color:#888">⏳ Carregando dossiê...</div>';
+  rmAba('individual');
+  try {
+    const r1 = await fetch('/gestao/reuniao-matinal/dados?closer='+encodeURIComponent(closer));
+    const dados = await r1.json();
+    if (dados.error) throw new Error(dados.error);
+    status.textContent = '🤖 Diretor IA analisando... (15-30s)';
+    const r2 = await fetch('/gestao/reuniao-matinal/sintese-ia', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ dados }),
+    });
+    const sintese = await r2.json();
+    if (sintese.error) throw new Error(sintese.error);
+    rmRenderIndividual(dados, sintese);
+    status.textContent = '✅ Pronto · '+new Date().toLocaleTimeString('pt-BR');
+  } catch(e) {
+    document.getElementById('rm-individual-content').innerHTML = `<div style="background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:8px;padding:14px;color:#fca5a5">❌ ${e.message}</div>`;
+    status.textContent = '❌ Erro';
+  } finally { btn.disabled = false; }
+}
+
+// === RENDER AÇÕES com tooltip + botões + leads vinculados ===
+const RM_TIPO_ICON = {
+  ligar: '📞', pausar_campanha: '⏸', treinar: '🎓', enviar_proposta: '📨',
+  reunir: '🤝', reabrir_lead: '🔄', revisar_pipeline: '🪜', follow_up: '⏰', outro: '⚡',
+};
+function rmRenderAcoes(acoes, dados){
+  // Mapa nome → top3_risco/perdidos pra resolver lead reference
+  const todosLeads = [...(dados?.top3_risco||[]), ...(dados?.perdidos_amostra||[])];
+  function findLead(nome){
+    if (!nome) return null;
+    const n = String(nome).toLowerCase();
+    return todosLeads.find(l => (l.nome||'').toLowerCase().includes(n) || n.includes((l.nome||'').toLowerCase().slice(0,8)));
+  }
+  return acoes.map((a, idx) => {
+    // Compat: se for string velha, vira objeto
+    const obj = typeof a === 'string' ? { acao: a, tipo: 'outro', leads_referenciados: [], tooltip: '', prazo: '' } : a;
+    const ico = RM_TIPO_ICON[obj.tipo] || '⚡';
+    const leads = (obj.leads_referenciados || []).map(n => ({ nome: n, deal: findLead(n) })).filter(x => x.nome);
+    const hasMultiLeads = leads.length > 1;
+    const tooltip = obj.tooltip ? obj.tooltip.replace(/"/g,'&quot;') : 'Detalhe não fornecido';
+    const idAcao = 'acao-' + (dados?.crmOwner||'x').replace(/\s/g,'_') + '-' + idx;
+    const detalhesBtn = leads.length > 0
+      ? `<button onclick="rmAcaoExpandir('${idAcao}')" style="background:rgba(34,197,94,.15);color:#22c55e;border:1px solid #22c55e;border-radius:5px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer">👁️ Ver ${leads.length} lead${leads.length>1?'s':''}</button>`
+      : '';
+    const acaoColetivaBtn = hasMultiLeads
+      ? `<button onclick="rmAbrirAcaoColetiva('${idAcao}')" title="Abre página com cada lead pra atender 1 por 1" style="background:linear-gradient(135deg,#a371f7,#7c3aed);color:#fff;border:none;border-radius:5px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer">📋 Plano de ação coletivo</button>`
+      : '';
+    // Stash dados pra acção coletiva
+    window['_RM_ACAO_'+idAcao] = { acao: obj, leads, dados };
+    const leadCards = leads.map(l => {
+      const dealId = l.deal?.dealId;
+      const valor = l.deal?.valor || 0;
+      const tier = l.deal?.tier || '';
+      return `
+        <div style="background:rgba(255,255,255,.03);border:1px solid #30363D;border-radius:6px;padding:8px;margin-top:5px;font-size:11px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <strong style="color:#fff;flex:1">${l.nome}</strong>
+          ${tier ? '<span style="background:rgba(251,191,36,.15);color:#fbbf24;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700">'+tier+'</span>' : ''}
+          ${valor > 0 ? '<span style="color:#22c55e">R$ '+Math.round(valor).toLocaleString('pt-BR')+'</span>' : ''}
+          ${dealId ? `<a href="/manutencao#${dealId}" target="_blank" title="Abrir drawer do cliente" style="background:#1a0e2a;color:#c084fc;text-decoration:none;border:1px solid #a371f7;border-radius:3px;padding:2px 8px;font-size:9px;font-weight:700">📂 Drawer</a>` : ''}
+          ${dealId ? `<a href="https://crmplus.zoho.com/tudodefiltro3711/index.do/cxapp/crm/org856385701/tab/Potentials/${dealId}" target="_blank" title="Abrir no Zoho CRM" style="background:rgba(31,111,235,.1);color:#5ba3f5;text-decoration:none;border:1px solid #1f6feb;border-radius:3px;padding:2px 8px;font-size:9px;font-weight:700">🌐 Zoho</a>` : ''}
+        </div>
+      `;
+    }).join('');
+    return `
+      <div class="rm-list-item" style="--c:#22c55e;display:block">
+        <div style="display:flex;align-items:start;gap:8px;flex-wrap:wrap">
+          <span style="font-size:18px">${ico}</span>
+          <div style="flex:1;min-width:200px">
+            <div style="color:#fff;font-weight:700;font-size:12.5px;line-height:1.4" title="${tooltip}" data-tooltip="${tooltip}">${obj.acao || ''}</div>
+            ${obj.prazo ? '<div style="color:#fbbf24;font-size:10px;font-weight:700;margin-top:2px">⏱️ '+obj.prazo+'</div>' : ''}
+          </div>
+          <button onmouseover="rmMostrarTooltip(this)" onmouseout="rmEsconderTooltip()" data-tip="${tooltip}" title="Hover pra ver o que essa ação faz e por quê" style="background:rgba(167,113,247,.1);color:#c084fc;border:1px solid #a371f7;border-radius:5px;padding:4px 10px;font-size:10px;font-weight:700;cursor:help">💡 ${obj.tipo||'ação'}</button>
+          ${detalhesBtn}
+          ${acaoColetivaBtn}
+        </div>
+        <div id="${idAcao}-leads" style="display:none;margin-top:8px">${leadCards}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function rmMostrarTooltip(el){
+  const tip = el.getAttribute('data-tip') || '';
+  if (!tip) return;
+  let div = document.getElementById('rm-tooltip-fly');
+  if (!div) {
+    div = document.createElement('div');
+    div.id = 'rm-tooltip-fly';
+    div.style.cssText = 'position:fixed;z-index:10000;background:#0a0a0a;border:1px solid #a371f7;color:#e5e7eb;font-size:11px;padding:8px 12px;border-radius:6px;max-width:340px;box-shadow:0 4px 16px rgba(0,0,0,.6);pointer-events:none;line-height:1.5';
+    document.body.appendChild(div);
+  }
+  div.textContent = tip;
+  const r = el.getBoundingClientRect();
+  div.style.left = Math.min(window.innerWidth-360, r.left) + 'px';
+  div.style.top = (r.bottom + 6) + 'px';
+}
+function rmEsconderTooltip(){
+  const div = document.getElementById('rm-tooltip-fly');
+  if (div) div.remove();
+}
+
+function rmAcaoExpandir(idAcao){
+  const el = document.getElementById(idAcao+'-leads');
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function rmAbrirAcaoColetiva(idAcao){
+  const data = window['_RM_ACAO_'+idAcao];
+  if (!data) { alert('Dados da ação não encontrados'); return; }
+  // Se temos dealIds, criar mini cobrança visual sem precisar de task no backend
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2500;display:flex;align-items:center;justify-content:center;padding:20px';
+  const leads = data.leads;
+  let leadsHtml = leads.map((l, i) => {
+    const dealId = l.deal?.dealId;
+    return `
+      <div style="background:#161725;border:1px solid #30363D;border-left:4px solid #22c55e;border-radius:8px;padding:12px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+          <span style="background:#1a0e2a;color:#c084fc;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">${i+1}</span>
+          <strong style="color:#fff;flex:1">${l.nome}</strong>
+          ${l.deal?.tier ? '<span style="background:rgba(251,191,36,.15);color:#fbbf24;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700">'+l.deal.tier+'</span>' : ''}
+          ${l.deal?.valor > 0 ? '<span style="color:#22c55e;font-weight:700">R$ '+Math.round(l.deal.valor).toLocaleString('pt-BR')+'</span>' : ''}
+        </div>
+        <div style="color:#aaa;font-size:11px;margin-bottom:6px">${data.acao.acao || ''}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${dealId ? `<a href="/manutencao#${dealId}" target="_blank" style="background:#1a0e2a;color:#c084fc;text-decoration:none;border:1px solid #a371f7;border-radius:5px;padding:5px 12px;font-size:11px;font-weight:700">📂 Drawer</a>` : ''}
+          ${dealId ? `<a href="https://crmplus.zoho.com/tudodefiltro3711/index.do/cxapp/crm/org856385701/tab/Potentials/${dealId}" target="_blank" style="background:rgba(31,111,235,.1);color:#5ba3f5;text-decoration:none;border:1px solid #1f6feb;border-radius:5px;padding:5px 12px;font-size:11px;font-weight:700">🌐 Abrir no Zoho</a>` : ''}
+          ${dealId ? `<button onclick="rmCoTratado(this)" style="margin-left:auto;background:rgba(34,197,94,.1);color:#22c55e;border:1px solid #22c55e;border-radius:5px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">✓ Marcar feito</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+  overlay.innerHTML = `
+    <div style="background:#0d1117;border:2px solid #a371f7;border-radius:12px;padding:20px;max-width:760px;width:100%;max-height:90vh;overflow-y:auto;color:#fff">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:24px">📋</span>
+        <h3 style="margin:0;color:#c084fc;font-size:16px;flex:1">Plano de Ação Coletivo · ${leads.length} leads</h3>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="background:transparent;border:1px solid #444;color:#888;border-radius:5px;padding:5px 12px;cursor:pointer;font-size:12px">✕</button>
+      </div>
+      <div style="background:rgba(34,197,94,.06);border:1px solid #22c55e;border-radius:8px;padding:12px;margin-bottom:14px">
+        <div style="color:#22c55e;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">⚡ AÇÃO</div>
+        <div style="color:#fff;font-size:13px;font-weight:700">${data.acao.acao||''}</div>
+        ${data.acao.prazo ? '<div style="color:#fbbf24;font-size:11px;margin-top:4px">⏱️ '+data.acao.prazo+'</div>' : ''}
+        ${data.acao.tooltip ? '<div style="color:#aaa;font-size:11px;margin-top:6px;line-height:1.5">'+data.acao.tooltip+'</div>' : ''}
+      </div>
+      <h4 style="color:#9ca3af;font-size:11px;text-transform:uppercase;font-weight:800;letter-spacing:.4px;margin:0 0 10px">Leads pra atender (1 por 1)</h4>
+      ${leadsHtml || '<div style="color:#888;text-align:center;padding:20px">Sem leads vinculados — execute conforme descrição da ação.</div>'}
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+function rmCoTratado(btn){
+  btn.style.background = '#22c55e';
+  btn.style.color = '#000';
+  btn.textContent = '✅ Feito';
+  btn.disabled = true;
+}
+
+function rmRenderIndividual(d, s){
+  const cls = s.classificacao || 'atencao';
+  let html = `
+    <div class="rm-card ${cls}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <span class="rm-closer-pill">👤 ${d.closer}</span>
+        <span style="color:#666;font-size:11px">${d.crmOwner}</span>
+      </div>
+      <div class="rm-veredito ${cls}">${s.veredito_curto || ''}</div>
+
+      <div class="rm-grid" style="margin-bottom:14px">
+        <div class="rm-stat"><div class="v" style="color:#fbbf24">${d.ontem.calls.outbound||0}</div><div class="k">Outbound ontem</div></div>
+        <div class="rm-stat"><div class="v" style="color:#fff">${d.ontem.vendas||0}</div><div class="k">Vendas ontem</div></div>
+        <div class="rm-stat"><div class="v" style="color:#10b981">${rmFmtR(d.ontem.receita)}</div><div class="k">Faturamento ontem</div></div>
+        <div class="rm-stat"><div class="v" style="color:#fbbf24">${d.semana.calls.outbound||0}</div><div class="k">Outbound 7d</div></div>
+        <div class="rm-stat"><div class="v" style="color:#fff">${d.semana.vendas||0}</div><div class="k">Vendas 7d</div></div>
+        <div class="rm-stat"><div class="v" style="color:#10b981">${rmFmtR(d.semana.receita)}</div><div class="k">Receita 7d</div></div>
+        <div class="rm-stat"><div class="v" style="color:#fff">${d.mes.vendas||0}</div><div class="k">Vendas mês</div></div>
+        <div class="rm-stat"><div class="v" style="color:#10b981">${rmFmtR(d.mes.receita)}</div><div class="k">Receita mês ${d.mes.delta_pct != null ? '<div class="delta" style="color:'+(d.mes.delta_pct>=0?'#10b981':'#ef4444')+'">'+(d.mes.delta_pct>=0?'+':'')+d.mes.delta_pct+'% vs mês ant.</div>' : ''}</div></div>
+      </div>
+
+      ${s.pontos_criticos?.length ? `<div class="rm-section"><h4 style="color:#ef4444">🔴 PONTOS CRÍTICOS</h4>${s.pontos_criticos.map(p => '<div class="rm-list-item" style="--c:#ef4444">'+p+'</div>').join('')}</div>` : ''}
+      ${s.pontos_atencao?.length ? `<div class="rm-section"><h4 style="color:#f59e0b">🟡 PONTOS DE ATENÇÃO</h4>${s.pontos_atencao.map(p => '<div class="rm-list-item" style="--c:#f59e0b">'+p+'</div>').join('')}</div>` : ''}
+      ${s.gaps_identificados?.length ? `<div class="rm-section"><h4 style="color:#a371f7">⚠️ GAPS</h4>${s.gaps_identificados.map(p => '<div class="rm-list-item" style="--c:#a371f7">'+p+'</div>').join('')}</div>` : ''}
+      ${s.acoes_recomendadas?.length ? `<div class="rm-section"><h4 style="color:#22c55e">✅ AÇÕES RECOMENDADAS</h4>${rmRenderAcoes(s.acoes_recomendadas, d)}</div>` : ''}
+      ${s.destaques_positivos?.length ? `<div class="rm-section"><h4 style="color:#10b981">🌟 DESTAQUES</h4>${s.destaques_positivos.map(p => '<div class="rm-list-item" style="--c:#10b981">'+p+'</div>').join('')}</div>` : ''}
+      ${s.topico_coaching ? `<div class="rm-section"><h4>🎯 TÓPICO DE COACHING</h4><div class="rm-list-item" style="--c:#3b82f6">${s.topico_coaching}</div></div>` : ''}
+      ${s.comparacao_time ? `<div class="rm-section"><h4>📊 vs TIME</h4><div class="rm-list-item" style="--c:#9ca3af;font-style:italic">${s.comparacao_time}</div></div>` : ''}
+    </div>
+
+    <!-- Dados brutos -->
+    <details style="margin-top:14px;background:#0d0d18;border:1px solid #30363D;border-radius:10px;padding:14px">
+      <summary style="cursor:pointer;color:#9ca3af;font-size:12px;font-weight:700">▸ Ver dados brutos (snapshot)</summary>
+      <div style="margin-top:12px">
+        ${d.gaps?.length ? `<h4 style="font-size:11px;color:#f59e0b;text-transform:uppercase;font-weight:800;margin-bottom:6px">Gaps detectados (regras)</h4>` + d.gaps.map(g => '<div class="rm-list-item" style="--c:#f59e0b">'+g.msg+'</div>').join('') : ''}
+        ${d.top3_risco?.length ? `<h4 style="font-size:11px;color:#ef4444;text-transform:uppercase;font-weight:800;margin:14px 0 6px">Top 3 deals em risco</h4>` + d.top3_risco.map(d => '<div class="rm-list-item" style="--c:#ef4444"><strong>'+d.nome+'</strong> · '+(d.tier||'?')+' · '+rmFmtR(d.valor)+' · '+d.horas_parado+'h parado · '+d.stage+'</div>').join('') : ''}
+        ${d.perdidos_amostra?.length ? `<h4 style="font-size:11px;color:#9ca3af;text-transform:uppercase;font-weight:800;margin:14px 0 6px">Perdidos recentes (motivos)</h4>` + d.perdidos_amostra.map(p => '<div class="rm-list-item" style="--c:#9ca3af">'+p.nome+' · '+rmFmtR(p.valor)+' · <em>'+(p.motivo||'?')+'</em></div>').join('') : ''}
+      </div>
+    </details>
+  `;
+  document.getElementById('rm-individual-content').innerHTML = html;
+}
+
+async function rmRodarTudo(){
+  const closers = Array.from(document.getElementById('rm-closer-sel').options).filter(o => o.value).map(o => o.value);
+  const btn = document.getElementById('rm-btn-tudo');
+  const status = document.getElementById('rm-status');
+  btn.disabled = true;
+  _RM_DOSSIES = [];
+  rmAba('resumo');
+  const erros = [];
+  document.getElementById('rm-resumo-time').innerHTML = '<div style="text-align:center;padding:30px;color:#888">⏳ Buscando dados de '+closers.length+' closers... (1-3min)<br><div id="rm-erros-log" style="margin-top:14px;text-align:left;font-size:11px;color:#ef4444;max-width:600px;margin:14px auto 0"></div></div>';
+  function logErro(msg){ erros.push(msg); const el = document.getElementById('rm-erros-log'); if (el) el.innerHTML = erros.map(e => '⚠️ '+e).join('<br>'); }
+  // Busca dados em paralelo (chunks de 3 pra não sobrecarregar)
+  for (let i = 0; i < closers.length; i += 3) {
+    const chunk = closers.slice(i, i+3);
+    status.textContent = `⏳ ${i+chunk.length}/${closers.length} closers · dados...`;
+    const results = await Promise.all(chunk.map(async (cl) => {
+      try {
+        const r = await fetch('/gestao/reuniao-matinal/dados?closer='+encodeURIComponent(cl));
+        const d = await r.json();
+        if (d.error) { logErro(`${cl}: ${d.error}`); return null; }
+        return d;
+      } catch(e) { logErro(`${cl}: ${e.message}`); return null; }
+    }));
+    _RM_DOSSIES.push(...results.filter(Boolean));
+  }
+  if (!_RM_DOSSIES.length) {
+    document.getElementById('rm-resumo-time').innerHTML = `
+      <div style="background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:10px;padding:18px;text-align:left">
+        <h3 style="color:#ef4444;margin:0 0 8px;font-size:14px">❌ Nenhum dossiê pôde ser gerado</h3>
+        <div style="color:#fca5a5;font-size:12px;margin-bottom:8px">Tentei ${closers.length} closers mas todos falharam. Erros:</div>
+        <div style="color:#fca5a5;font-size:11px;font-family:monospace;background:#0a0a0a;padding:10px;border-radius:5px">
+          ${erros.map(e => '⚠️ '+e).join('<br>') || '(sem erros logados — endpoint pode ter retornado vazio)'}
+        </div>
+      </div>
+    `;
+    btn.disabled = false;
+    status.textContent = '❌ Falhou pra '+closers.length+' closers';
+    return;
+  }
+  // Agora roda IA pra cada (chunks de 4)
+  status.textContent = '🤖 IA analisando dossiês individuais...';
+  const sinteses = [];
+  for (let i = 0; i < _RM_DOSSIES.length; i += 4) {
+    const chunk = _RM_DOSSIES.slice(i, i+4);
+    status.textContent = `🤖 ${i+chunk.length}/${_RM_DOSSIES.length} closers · IA...`;
+    const results = await Promise.all(chunk.map(async (dados) => {
+      try {
+        const r = await fetch('/gestao/reuniao-matinal/sintese-ia', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ dados }),
+        });
+        const s = await r.json();
+        if (s.error) { logErro(`IA ${dados.closer}: ${s.error}`); return null; }
+        return { dados, sintese: s };
+      } catch(e) { logErro(`IA ${dados.closer}: ${e.message}`); return null; }
+    }));
+    sinteses.push(...results.filter(Boolean));
+  }
+  if (!sinteses.length) {
+    document.getElementById('rm-resumo-time').innerHTML = `
+      <div style="background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:10px;padding:18px">
+        <h3 style="color:#ef4444;margin:0 0 8px;font-size:14px">❌ IA não retornou nenhuma análise</h3>
+        <div style="color:#fca5a5;font-size:12px;margin-bottom:8px">${_RM_DOSSIES.length} dossiês carregados, mas todas as ${_RM_DOSSIES.length} chamadas IA falharam:</div>
+        <div style="color:#fca5a5;font-size:11px;font-family:monospace;background:#0a0a0a;padding:10px;border-radius:5px;max-height:240px;overflow-y:auto">
+          ${erros.map(e => '⚠️ '+e).join('<br>') || '(verifique ANTHROPIC_API_KEY)'}
+        </div>
+        <div style="color:#fbbf24;font-size:11px;margin-top:8px">💡 Verifique se ANTHROPIC_API_KEY está configurada no Railway.</div>
+      </div>
+    `;
+    btn.disabled = false;
+    status.textContent = '❌ IA falhou';
+    return;
+  }
+  // Agora pega resumo do time
+  status.textContent = '🤖 Resumo executivo do time...';
+  try {
+    const r = await fetch('/gestao/reuniao-matinal/resumo-time', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ dossies: sinteses.map(x => ({ closer: x.dados.closer, ...x.sintese })) }),
+    });
+    _RM_RESUMO = await r.json();
+    if (_RM_RESUMO.error) logErro('Resumo time: '+_RM_RESUMO.error);
+  } catch(e) { _RM_RESUMO = null; logErro('Resumo time: '+e.message); }
+  // Renderiza tudo
+  rmRenderResumo(sinteses);
+  rmRenderRankings(sinteses);
+  window._RM_SINTESES = sinteses;
+  document.getElementById('rm-btn-email').style.display = 'inline-block';
+  let msg = `✅ ${sinteses.length}/${closers.length} closers analisados`;
+  if (erros.length) msg += ` · ${erros.length} erro(s)`;
+  status.textContent = msg + ' · ' + new Date().toLocaleTimeString('pt-BR');
+  btn.disabled = false;
+  // Auto-salvar no histórico
+  try {
+    const r = await fetch('/gestao/reuniao-matinal/salvar-historico', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        resumo: _RM_RESUMO,
+        sinteses: sinteses.map(x => ({ dados: x.dados, sintese: x.sintese })),
+      }),
+    });
+    const d = await r.json();
+    if (!d.error) status.textContent += ' · 💾 Salvo no histórico';
+  } catch(_){}
+}
+
+// === HISTÓRICO ===
+async function rmAbrirHistorico(){
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2500;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `
+    <div style="background:#161725;border:2px solid #a371f7;border-radius:12px;padding:20px;max-width:900px;width:100%;max-height:90vh;overflow-y:auto;color:#fff">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <span style="font-size:22px">📚</span>
+        <h3 style="margin:0;color:#c084fc;font-size:16px;flex:1">Histórico de Dossiês</h3>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="background:transparent;border:1px solid #444;color:#888;border-radius:5px;padding:5px 12px;cursor:pointer;font-size:12px">✕ Fechar</button>
+      </div>
+      <div id="rm-hist-content"><div style="text-align:center;padding:30px;color:#888">⏳ Carregando...</div></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  try {
+    const r = await fetch('/gestao/reuniao-matinal/historico');
+    const d = await r.json();
+    if (d.error) { document.getElementById('rm-hist-content').innerHTML = `<div style="color:#ef4444">${d.error}</div>`; return; }
+    if (!d.historico?.length) {
+      document.getElementById('rm-hist-content').innerHTML = '<div style="text-align:center;color:#888;padding:30px">Nenhum dossiê salvo ainda. Gere um e ele será salvo automaticamente.</div>';
+      return;
+    }
+    let html = `<div style="color:#9ca3af;font-size:11px;margin-bottom:12px">${d.total} dossiês salvos (mais recentes primeiro):</div>`;
+    d.historico.forEach(h => {
+      const dt = new Date(h.geradoEm).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'});
+      html += `
+        <div onclick="rmAbrirDossieHist('${h.id}')" style="background:#0d0d18;border:1px solid #30363D;border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='#a371f7'" onmouseout="this.style.borderColor='#30363D'">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+            <strong style="color:#c084fc;font-size:13px">${dt}</strong>
+            <span style="color:#9ca3af;font-size:11px">por ${h.geradoPor || '?'}</span>
+            <span style="margin-left:auto;color:#fff;font-weight:700;font-size:12px">${h.total_closers} closers</span>
+          </div>
+          <div style="display:flex;gap:10px;font-size:10px;color:#aaa;margin-bottom:6px">
+            <span style="color:#ef4444">🔴 ${h.criticos} críticos</span>
+            <span style="color:#fbbf24">🟡 ${h.atencao} atenção</span>
+            <span style="color:#22c55e">🟢 ${h.saudaveis} saudáveis</span>
+          </div>
+          ${h.resumo_executivo ? `<div style="color:#aaa;font-size:11px;line-height:1.5">${h.resumo_executivo.slice(0,250)}${h.resumo_executivo.length > 250 ? '...' : ''}</div>` : ''}
+        </div>
+      `;
+    });
+    document.getElementById('rm-hist-content').innerHTML = html;
+  } catch(e) {
+    document.getElementById('rm-hist-content').innerHTML = `<div style="color:#ef4444">${e.message}</div>`;
+  }
+}
+
+async function rmAbrirDossieHist(id){
+  try {
+    const r = await fetch('/gestao/reuniao-matinal/historico/'+encodeURIComponent(id));
+    const d = await r.json();
+    if (d.error) { alert(d.error); return; }
+    // Reconstrói _RM_SINTESES no formato esperado pelo render
+    const sinteses = (d.sinteses || []).map(s => ({
+      dados: {
+        closer: s.closer,
+        crmOwner: s.crmOwner,
+        ontem: { calls: { outbound: s.kpis?.ontem_calls_outbound||0 }, vendas: s.kpis?.ontem_vendas||0, receita: s.kpis?.ontem_receita||0 },
+        semana: { calls: { outbound: s.kpis?.semana_calls_outbound||0 }, answer_rate: s.kpis?.semana_answer_rate, vendas: s.kpis?.semana_vendas||0, receita: s.kpis?.semana_receita||0 },
+        mes: { vendas: s.kpis?.mes_vendas||0, receita: s.kpis?.mes_receita||0, delta_pct: s.kpis?.mes_delta_pct },
+      },
+      sintese: {
+        classificacao: s.classificacao,
+        veredito_curto: s.veredito_curto,
+        pontos_criticos: s.pontos_criticos,
+        pontos_atencao: s.pontos_atencao,
+        gaps_identificados: s.gaps_identificados,
+        acoes_recomendadas: s.acoes_recomendadas,
+        destaques_positivos: s.destaques_positivos,
+        topico_coaching: s.topico_coaching,
+        comparacao_time: s.comparacao_time,
+      },
+    }));
+    _RM_RESUMO = d.resumo;
+    _RM_SINTESES = sinteses;
+    window._RM_SINTESES = sinteses;
+    rmAba('resumo');
+    rmRenderResumo(sinteses);
+    rmRenderRankings(sinteses);
+    document.getElementById('rm-btn-email').style.display = 'inline-block';
+    document.getElementById('rm-status').textContent = '📚 Visualizando histórico de ' + new Date(d.geradoEm).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'});
+    // Fecha modal
+    document.querySelector('div[style*="z-index:2500"]')?.remove();
+  } catch(e) { alert(e.message); }
+}
+
+// === MODAL EMAIL ===
+function rmAbrirEmailModal(){
+  if (!window._RM_SINTESES?.length) { alert('Gere o dossiê do time primeiro'); return; }
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2500;display:flex;align-items:center;justify-content:center;padding:20px';
+  const lastDest = localStorage.getItem('rm_email_dest') || 'paulo@tudodefiltro.com.br';
+  modal.innerHTML = `
+    <div style="background:#161725;border:1px solid #a371f7;border-radius:12px;padding:20px;max-width:560px;width:100%;color:#fff">
+      <h3 style="margin:0 0 6px;color:#c084fc;font-size:16px">📧 Enviar Dossiê por Email</h3>
+      <p style="color:#9ca3af;font-size:12px;margin:0 0 14px">Email enviado pelo <strong>informativo@tudodefiltro.com.br</strong></p>
+      <label style="font-size:10px;color:#9ca3af;text-transform:uppercase;font-weight:700;display:block;margin-bottom:4px">Destinatários (separados por vírgula)</label>
+      <textarea id="rm-email-dest" rows="3" style="width:100%;background:#0a0a0f;border:1px solid #30363D;color:#fff;border-radius:6px;padding:8px 10px;font-size:12px;resize:vertical;font-family:inherit">${lastDest}</textarea>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <button onclick="rmEmailAdd('paulo@tudodefiltro.com.br')" style="background:#1f1f2e;color:#c084fc;border:1px solid #30363D;border-radius:5px;padding:5px 10px;font-size:10px;cursor:pointer">+ Paulo</button>
+        <button onclick="rmEmailAdd('luis@tudodefiltro.com.br')" style="background:#1f1f2e;color:#c084fc;border:1px solid #30363D;border-radius:5px;padding:5px 10px;font-size:10px;cursor:pointer">+ Luis</button>
+        <button onclick="rmEmailAdd('marketing@tudodefiltro.com.br')" style="background:#1f1f2e;color:#c084fc;border:1px solid #30363D;border-radius:5px;padding:5px 10px;font-size:10px;cursor:pointer">+ Marketing</button>
+        <button onclick="rmEmailAdd('informativo@tudodefiltro.com.br')" style="background:#1f1f2e;color:#c084fc;border:1px solid #30363D;border-radius:5px;padding:5px 10px;font-size:10px;cursor:pointer">+ Informativo</button>
+      </div>
+      <div style="margin-top:14px;background:rgba(245,158,11,.06);border:1px solid #f59e0b44;border-radius:6px;padding:10px;font-size:11px;color:#9ca3af">
+        💡 Email inclui resumo executivo + dossiê de cada closer (vereditos, pontos críticos, ações). Pronto pra reunião matinal.
+      </div>
+      <div id="rm-email-status" style="font-size:11px;color:#9ca3af;margin-top:8px;min-height:14px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="background:transparent;border:1px solid #30363D;color:#9ca3af;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:12px">Cancelar</button>
+        <button onclick="rmEnviarEmail(this)" style="background:linear-gradient(135deg,#10b981,#059669);color:#000;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;font-weight:800;font-size:12px">📤 Enviar agora</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+function rmEmailAdd(email){
+  const ta = document.getElementById('rm-email-dest');
+  const atual = ta.value.split(',').map(s => s.trim()).filter(Boolean);
+  if (!atual.includes(email)) atual.push(email);
+  ta.value = atual.join(', ');
+}
+async function rmEnviarEmail(btn){
+  const dest = document.getElementById('rm-email-dest').value;
+  const lista = dest.split(',').map(s => s.trim()).filter(s => /\S+@\S+\.\S+/.test(s));
+  if (!lista.length) { alert('Digite ao menos 1 email válido'); return; }
+  localStorage.setItem('rm_email_dest', dest);
+  const status = document.getElementById('rm-email-status');
+  btn.disabled = true; btn.textContent = '⏳ Enviando...';
+  status.textContent = '';
+  try {
+    const r = await fetch('/gestao/reuniao-matinal/enviar-email', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        destinatarios: lista,
+        resumo: window._RM_RESUMO,
+        sinteses: (window._RM_SINTESES||[]).map(x => ({ dados: x.dados, sintese: x.sintese })),
+      }),
+    });
+    const d = await r.json();
+    if (d.error) { status.style.color = '#ef4444'; status.textContent = '❌ '+d.error; btn.disabled = false; btn.textContent = '📤 Enviar agora'; return; }
+    if (d.queued) {
+      status.style.color = '#f59e0b';
+      status.textContent = '⚠️ SMTP indisponível ('+(d.motivo||'')+'). Email enfileirado pra envio pelo cron.';
+    } else {
+      status.style.color = '#10b981';
+      status.textContent = '✅ Enviado! Message ID: '+(d.messageId||'').slice(0,40);
+    }
+    btn.textContent = '✅ Enviado';
+    setTimeout(() => btn.closest('div[style*=fixed]').remove(), 2500);
+  } catch(e) {
+    status.style.color = '#ef4444';
+    status.textContent = '❌ '+e.message;
+    btn.disabled = false; btn.textContent = '📤 Enviar agora';
+  }
+}
+
+function rmRenderResumo(sinteses){
+  const r = _RM_RESUMO;
+  let html = '';
+  if (r && !r.error) {
+    html += `
+      <div class="rm-card" style="border:2px solid #a371f7;background:linear-gradient(135deg,rgba(163,113,247,.06),rgba(13,17,23,.5))">
+        <h3 style="color:#c084fc;font-size:14px;margin:0 0 10px">📊 Resumo Executivo do Time</h3>
+        <div style="font-size:13px;line-height:1.6;color:#e5e7eb">${r.resumo_executivo||''}</div>
+        ${r.padroes_recorrentes?.length ? `<div class="rm-section"><h4 style="color:#a371f7">🔄 Padrões recorrentes (afetam vários closers)</h4>${r.padroes_recorrentes.map(p => '<div class="rm-list-item" style="--c:#a371f7">'+p+'</div>').join('')}</div>` : ''}
+        ${r.topicos_coaching_grupo?.length ? `<div class="rm-section"><h4 style="color:#3b82f6">🎯 Coaching em grupo (na reunião)</h4>${r.topicos_coaching_grupo.map(p => '<div class="rm-list-item" style="--c:#3b82f6">'+p+'</div>').join('')}</div>` : ''}
+        ${r.decisoes_imediatas?.length ? `<div class="rm-section"><h4 style="color:#ef4444">⚡ Decisões imediatas pro gestor</h4>${r.decisoes_imediatas.map(p => '<div class="rm-list-item" style="--c:#ef4444">'+p+'</div>').join('')}</div>` : ''}
+        ${r.celebracoes?.length ? `<div class="rm-section"><h4 style="color:#10b981">🎉 Celebrar publicamente</h4>${r.celebracoes.map(p => '<div class="rm-list-item" style="--c:#10b981">'+p+'</div>').join('')}</div>` : ''}
+      </div>
+    `;
+  }
+  // Cards individuais resumidos
+  html += '<h3 style="margin:18px 0 10px;color:#9ca3af;font-size:13px;text-transform:uppercase;font-weight:700;letter-spacing:.4px">Veredito por closer</h3>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px">';
+  sinteses.forEach(({dados, sintese}) => {
+    const cls = sintese.classificacao || 'atencao';
+    html += `
+      <div class="rm-card ${cls}" style="cursor:pointer" onclick="document.getElementById('rm-closer-sel').value='${(_MT_USERS||{})[dados.crmOwner]||''}';rmRodarUm()">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span class="rm-closer-pill">👤 ${dados.closer}</span>
+          <span class="rm-veredito ${cls}" style="margin:0;padding:3px 8px;font-size:10px">${cls.toUpperCase()}</span>
+        </div>
+        <div style="color:#e5e7eb;font-size:12px;line-height:1.4;margin-bottom:8px">${sintese.veredito_curto||''}</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;font-size:10px;color:#9ca3af">
+          <div>📞 ${dados.semana.calls.outbound||0}/7d</div>
+          <div>🏆 ${dados.semana.vendas||0} vendas</div>
+          <div>💰 ${rmFmtR(dados.semana.receita)}</div>
+        </div>
+      </div>
+    `;
+  });
+  html += '</div>';
+  document.getElementById('rm-resumo-time').innerHTML = html;
+}
+
+function rmRenderRankings(sinteses){
+  const ordCalls = [...sinteses].sort((a,b) => (b.dados.semana.calls.outbound||0) - (a.dados.semana.calls.outbound||0));
+  const ordVendas = [...sinteses].sort((a,b) => (b.dados.semana.vendas||0) - (a.dados.semana.vendas||0));
+  const ordReceita = [...sinteses].sort((a,b) => (b.dados.semana.receita||0) - (a.dados.semana.receita||0));
+  function row(s, val, cor){ return `<div class="rm-list-item" style="--c:${cor};display:flex;align-items:center;gap:8px"><strong style="flex:1">${s.dados.closer}</strong><span style="color:${cor};font-weight:800">${val}</span></div>`; }
+  document.getElementById('rm-rankings-content').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+      <div class="rm-card">
+        <h3 style="font-size:13px;color:#fbbf24;margin:0 0 10px">📞 Mais ligações outbound (7d)</h3>
+        ${ordCalls.slice(0,10).map(s => row(s, s.dados.semana.calls.outbound||0, '#fbbf24')).join('')}
+      </div>
+      <div class="rm-card">
+        <h3 style="font-size:13px;color:#10b981;margin:0 0 10px">🏆 Mais vendas (7d)</h3>
+        ${ordVendas.slice(0,10).map(s => row(s, s.dados.semana.vendas||0, '#10b981')).join('')}
+      </div>
+      <div class="rm-card">
+        <h3 style="font-size:13px;color:#22c55e;margin:0 0 10px">💰 Mais faturamento (7d)</h3>
+        ${ordReceita.slice(0,10).map(s => row(s, rmFmtR(s.dados.semana.receita), '#22c55e')).join('')}
+      </div>
+    </div>
+  `;
+}
+</script>

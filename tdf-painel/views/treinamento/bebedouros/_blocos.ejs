@@ -1,0 +1,47 @@
+<%
+// Renderiza um array de blocos. Espera variável local `blocos`.
+(blocos||[]).forEach(function(b){
+  if(b.tipo==='texto'){ %><p><%- b.html %></p><%
+  } else if(b.tipo==='titulo'){ %><div class="tb-h2"><%= b.texto %></div><%
+  } else if(b.tipo==='callout'){ %>
+    <div class="tb-callout <%= b.variante||'info' %>">
+      <% if(b.titulo){ %><div class="ct"><%= b.variante==='alerta'?'⚠️':(b.variante==='perigo'?'⛔':(b.variante==='sucesso'?'✅':'ℹ️')) %> <%= b.titulo %></div><% } %>
+      <div><%- b.html %></div>
+    </div><%
+  } else if(b.tipo==='card'){ %>
+    <div class="tb-mini" style="margin:14px 0"><div class="mt"><%= b.icon||'' %> <%= b.titulo %></div><div class="md"><%- b.html %></div></div><%
+  } else if(b.tipo==='cards'){ %>
+    <div class="tb-cards"><% (b.itens||[]).forEach(function(it){ %>
+      <div class="tb-mini"><div class="mt"><%= it.icon||'' %> <%= it.titulo %></div><div class="md"><%- it.html %></div></div>
+    <% }) %></div><%
+  } else if(b.tipo==='script'){ %>
+    <div class="tb-script">
+      <button class="tb-copy" onclick="TB.copy(this, this.parentNode.querySelector('.sf').innerText)">copiar</button>
+      <% if(b.contexto){ %><div class="sc"><%= b.contexto %></div><% } %>
+      <div class="sf">“<%- b.fala %>”</div>
+    </div><%
+  } else if(b.tipo==='dodont'){ %>
+    <div class="tb-dd">
+      <div class="col do"><h4>✅ Faça / pode falar</h4><ul><% (b.fazer||[]).forEach(function(x){ %><li><%- x %></li><% }) %></ul></div>
+      <div class="col dont"><h4>⛔ Evite / não prometa</h4><ul><% (b.evitar||[]).forEach(function(x){ %><li><%- x %></li><% }) %></ul></div>
+    </div><%
+  } else if(b.tipo==='checklist'){ %>
+    <% if(b.titulo){ %><div class="tb-h2"><%= b.titulo %></div><% } %>
+    <div style="display:flex;flex-direction:column;gap:6px;margin:12px 0">
+      <% (b.itens||[]).forEach(function(x){ %><label style="display:flex;gap:9px;align-items:flex-start;background:#0b1220;border:1px solid #1f2b3a;border-radius:8px;padding:9px 12px;color:#c9d4de;font-size:.9rem;cursor:pointer"><input type="checkbox" style="margin-top:3px"> <span><%- x %></span></label><% }) %>
+    </div><%
+  } else if(b.tipo==='tabela'){ %>
+    <div style="overflow-x:auto"><table class="tb-table"><thead><tr><% (b.head||[]).forEach(function(h){ %><th><%= h %></th><% }) %></tr></thead>
+    <tbody><% (b.rows||[]).forEach(function(r){ %><tr><% r.forEach(function(c){ %><td><%- c %></td><% }) %></tr><% }) %></tbody></table></div><%
+  } else if(b.tipo==='perguntas'){ %>
+    <% if(b.titulo){ %><div class="tb-h2"><%= b.titulo %></div><% } %>
+    <ul class="tb-qlist"><% (b.itens||[]).forEach(function(x){ %><li><span><%- x %></span></li><% }) %></ul><%
+  } else if(b.tipo==='exemplo'){ %>
+    <div class="tb-dialog">
+      <div class="bubble cli"><div class="who">Cliente</div><%- b.cliente %></div>
+      <div class="bubble clo"><div class="who">Closer</div><%- b.closer %></div>
+    </div><%
+  } else if(b.tipo==='componente'){ %>
+    <%- include('_componentes', { ref: b.ref, PRODUTOS, COMPONENTES_COMUNS, REGRAS_TORNEIRA, BEBEDOUROS, UPSELL_REFIL, brl, ANATOMIA }) %><%
+  }
+}); %>

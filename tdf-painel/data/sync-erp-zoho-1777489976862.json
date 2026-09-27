@@ -1,0 +1,134 @@
+{
+  "stats": {
+    "erpTotal": 6038,
+    "processados": 30,
+    "semMatchZoho": 0,
+    "matched": 0,
+    "jaTinhamProduto": 0,
+    "atualizados": 0,
+    "falhas": 30,
+    "porCategoria": {}
+  },
+  "log": [
+    {
+      "phone": "26105158",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "31224097",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "32046766",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "32078490",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "33023130",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "33088533",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "33227438",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "34116168",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "36248500",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "38766000",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "38825951",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39095248",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39135811",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39171657",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39210968",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39216373",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39217679",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39219136",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39221688",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39225881",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39228304",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39234254",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39234325",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39310471",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39310517",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39313226",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39316834",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39318825",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39332832",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    },
+    {
+      "phone": "39366779",
+      "erro": "zoho 400: {\"code\":\"INVALID_QUERY\",\"details\":{\"reason\":\"invalid operator found\",\"api_name\":\"Telefone_contato\",\"operator\":\"contains\"},\"message\":\"Invalid query formed\",\"status\":\"error\"}\n"
+    }
+  ]
+}

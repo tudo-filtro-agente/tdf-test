@@ -1,0 +1,3463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= typeof pageTitle !== 'undefined' ? pageTitle + ' - ' : '' %>Portal TDF</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon-180.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0066CC">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TDF">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<script>
+// === TEMA DIA/NOITE — aplica ANTES do primeiro paint (sem flash). Padrão: escuro.
+try { if (localStorage.getItem('tdf-theme') === 'light') document.documentElement.setAttribute('data-theme', 'light'); } catch(_) {}
+window.tdfTemaToggle = function(){
+  var root = document.documentElement;
+  var eraLight = root.getAttribute('data-theme') === 'light';
+  if (eraLight) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', 'light');
+  try { localStorage.setItem('tdf-theme', eraLight ? 'dark' : 'light'); } catch(_) {}
+  window.tdfTemaAtualizarBtn && tdfTemaAtualizarBtn();
+};
+window.tdfTemaAtualizarBtn = function(){
+  var b = document.getElementById('tdf-tema-btn');
+  if (!b) return;
+  var light = document.documentElement.getAttribute('data-theme') === 'light';
+  b.textContent = light ? '☀️' : '🌙';
+  b.title = light ? 'Tema: dia (clique pra noite)' : 'Tema: noite (clique pra dia)';
+};
+document.addEventListener('DOMContentLoaded', function(){ tdfTemaAtualizarBtn(); });
+</script>
+<link rel="stylesheet" href="/style.css?v=20260713-tema">
+<script src="/cliente-drawer.js?v=20260502-1" defer></script>
+<script>
+window.TDF_ROLE = '<%= (user && user.role) || "" %>';
+// === PREFERÊNCIA DE NOTIFICAÇÕES ===
+// Modos: 'icon' (default — minimizado, só ícone com badge) | 'right' (popups direita) | 'left' (popups esquerda)
+// Default mudado pra 'icon' em 05/Mai/2026 — popups eram intrusivos (Paulo pediu minimizar).
+window.tdfNotifSide = (function(){
+  const KEY = 'tdf_notif_side';
+  function get(){ return localStorage.getItem(KEY) || 'icon'; }
+  function set(v){ localStorage.setItem(KEY, v); aplicar(v); }
+  function aplicar(v){
+    const root = document.documentElement;
+    if (v === 'left') {
+      root.style.setProperty('--tdf-notif-x', 'left');
+      root.style.setProperty('--tdf-notif-x-px', '20px');
+      root.style.setProperty('--tdf-notif-x-px-r', 'auto');
+      document.body.classList.remove('tdf-notif-icon-mode');
+      document.body.classList.add('tdf-notif-left');
+    } else if (v === 'right') {
+      root.style.setProperty('--tdf-notif-x', 'right');
+      document.body.classList.remove('tdf-notif-icon-mode', 'tdf-notif-left');
+    } else {
+      // 'icon' (default)
+      root.style.setProperty('--tdf-notif-x', 'right');
+      document.body.classList.add('tdf-notif-icon-mode');
+      document.body.classList.remove('tdf-notif-left');
+      criarFloatingNotifIcon();
+    }
+    // Atualiza botão do menu
+    const btn = document.getElementById('tdf-notif-side-btn');
+    if (btn) btn.textContent = '🔔 Notif: ' + (v === 'left' ? '←' : v === 'icon' ? '·' : '→');
+  }
+  function criarFloatingNotifIcon(){
+    // Revendedor é externo: nada de notificação de WhatsApp de lead.
+    if (window.TDF_ROLE === 'revendedor') return;
+    if (document.getElementById('tdf-floating-notif-icon')) return;
+    const btn = document.createElement('button');
+    btn.id = 'tdf-floating-notif-icon';
+    btn.title = 'Notificações WhatsApp — click pra abrir lista';
+    btn.style.cssText = 'position:fixed;bottom:80px;right:18px;z-index:9999;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:2px solid #fff;border-radius:50%;width:54px;height:54px;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-weight:800;transition:all .15s';
+    btn.innerHTML = '💬<span id="tdf-floating-notif-count" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;min-width:20px;height:20px;border-radius:10px;padding:0 5px;display:none;align-items:center;justify-content:center;border:2px solid #0a0a0a">0</span>';
+    btn.onclick = () => { window.tdfNotifAbrirPainel?.(); };
+    document.body.appendChild(btn);
+    // Painel deslizante de notificações
+    if (!document.getElementById('tdf-notif-painel')) {
+      const painel = document.createElement('div');
+      painel.id = 'tdf-notif-painel';
+      painel.style.cssText = 'position:fixed;bottom:140px;right:18px;width:340px;max-width:calc(100vw - 36px);max-height:480px;background:#0a0a0a;border:1px solid #25D366;border-radius:12px;box-shadow:0 12px 40px rgba(37,211,102,.3);z-index:9999;display:none;flex-direction:column;overflow:hidden';
+      painel.innerHTML = `
+        <div style="padding:12px 14px;border-bottom:1px solid #1a1a1a;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#0f3a1a,#22c55e22)">
+          <span style="font-size:18px">💬</span>
+          <div style="flex:1;color:#fff;font-weight:800;font-size:13px">Notificações WhatsApp</div>
+          <button id="tdf-notif-marcar-todas" style="background:transparent;border:none;color:#aaa;font-size:10px;cursor:pointer" title="Marcar todas como lidas">✓ Limpar</button>
+          <button onclick="window.tdfNotifAbrirPainel(false)" style="background:transparent;border:none;color:#888;font-size:18px;cursor:pointer">×</button>
+        </div>
+        <div id="tdf-notif-lista" style="flex:1;overflow-y:auto;padding:8px"></div>
+        <div style="padding:8px 14px;border-top:1px solid #1a1a1a;background:#0d0d0d;display:flex;justify-content:space-between;align-items:center">
+          <a href="/inbox" style="color:#25D366;font-size:11px;font-weight:700;text-decoration:none">→ Abrir Inbox completo</a>
+          <span id="tdf-notif-painel-info" style="color:#666;font-size:10px"></span>
+        </div>
+      `;
+      document.body.appendChild(painel);
+      document.getElementById('tdf-notif-marcar-todas').onclick = () => {
+        window.tdfNotifLimparTodas?.();
+      };
+    }
+  }
+  document.addEventListener('DOMContentLoaded', () => aplicar(get()));
+  return { get, set, aplicar };
+})();
+function tdfNotifTrocarLado(btn){
+  const atual = window.tdfNotifSide.get();
+  // Cycle: icon → right → left → icon
+  const proximo = atual === 'icon' ? 'right' : atual === 'right' ? 'left' : 'icon';
+  window.tdfNotifSide.set(proximo);
+}
+
+// Helper global pra copiar telefone (usado no CRM Closy, leads parados, etc)
+// Se o user passar string formato BR ('5512991234567'), formata pra '+55 12 99123-4567' antes de copiar.
+window.copyTel = async function(tel, btn) {
+  const limpo = String(tel || '').replace(/\D/g, '');
+  if (!limpo) return;
+  try {
+    await navigator.clipboard.writeText(limpo);
+    if (btn) {
+      const orig = btn.textContent;
+      const origStyle = btn.style.cssText;
+      btn.textContent = '✓';
+      btn.style.background = '#22c55e';
+      btn.style.color = '#000';
+      btn.style.borderColor = '#22c55e';
+      setTimeout(() => { btn.textContent = orig; btn.style.cssText = origStyle; }, 1200);
+    }
+  } catch(e) {
+    // Fallback pra browsers antigos
+    const ta = document.createElement('textarea');
+    ta.value = limpo; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); if (btn) { btn.textContent = '✓'; setTimeout(() => btn.textContent = '📋', 1200); } }
+    catch(_){ alert('Erro: ' + e.message); }
+    document.body.removeChild(ta);
+  }
+};
+
+// Helper global pra copiar qualquer texto (ID de deal, código, etc) com feedback visual
+window.copyText = async function(text, srcEl, label) {
+  const value = String(text || '').trim();
+  if (!value) return;
+  try { await navigator.clipboard.writeText(value); }
+  catch(e) {
+    const ta = document.createElement('textarea');
+    ta.value = value; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch(_){}
+    document.body.removeChild(ta);
+  }
+  // Toast curto no canto
+  const toast = document.createElement('div');
+  toast.textContent = '✓ Copiado: ' + (label || (value.length > 30 ? value.slice(0,30)+'…' : value));
+  toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#10b981;color:#000;font-weight:700;padding:8px 16px;border-radius:6px;z-index:99999;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.4);animation:tdfFadeOut .25s ease 1.5s forwards';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 1800);
+  // Pisca o elemento clicado
+  if (srcEl) {
+    const orig = srcEl.style.background;
+    srcEl.style.background = 'rgba(16,185,129,.3)';
+    setTimeout(() => srcEl.style.background = orig, 400);
+  }
+};
+// CSS pro fade do toast
+(function(){
+  if (document.getElementById('tdf-copytext-style')) return;
+  const st = document.createElement('style'); st.id = 'tdf-copytext-style';
+  st.textContent = '@keyframes tdfFadeOut{from{opacity:1}to{opacity:0;transform:translate(-50%,10px)}}';
+  document.head.appendChild(st);
+})();
+
+// Buffer de notificações pendentes (modo ícone)
+window._TDF_NOTIFS_PENDENTES = [];
+window.tdfNotifAdd = function(n){
+  // Adiciona ao buffer (deduplica por dealId, mantém última msg)
+  const buf = window._TDF_NOTIFS_PENDENTES;
+  const idx = buf.findIndex(x => x.dealId === n.dealId);
+  if (idx >= 0) {
+    buf[idx] = { ...buf[idx], ...n, count: (buf[idx].count||1) + 1 };
+  } else {
+    buf.push({ ...n, count: 1, addedAt: Date.now() });
+  }
+  // Mantém só últimas 30
+  if (buf.length > 30) buf.splice(0, buf.length - 30);
+  tdfNotifAtualizarBadge();
+  tdfNotifRenderPainel();
+};
+window.tdfNotifAtualizarBadge = function(){
+  const cnt = (window._TDF_NOTIFS_PENDENTES || []).reduce((s, n) => s + (n.count || 1), 0);
+  const el = document.getElementById('tdf-floating-notif-count');
+  if (el) {
+    if (cnt > 0) {
+      el.textContent = cnt > 99 ? '99+' : cnt;
+      el.style.display = 'flex';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+};
+window.tdfNotifAbrirPainel = function(forceState){
+  const p = document.getElementById('tdf-notif-painel');
+  if (!p) return;
+  const aberto = p.style.display === 'flex';
+  const novoEstado = forceState !== undefined ? forceState : !aberto;
+  p.style.display = novoEstado ? 'flex' : 'none';
+  if (novoEstado) tdfNotifRenderPainel();
+};
+window.tdfNotifLimparTodas = function(){
+  window._TDF_NOTIFS_PENDENTES = [];
+  tdfNotifAtualizarBadge();
+  tdfNotifRenderPainel();
+};
+window.tdfNotifRemover = function(dealId){
+  window._TDF_NOTIFS_PENDENTES = (window._TDF_NOTIFS_PENDENTES || []).filter(n => n.dealId !== dealId);
+  tdfNotifAtualizarBadge();
+  tdfNotifRenderPainel();
+};
+window.tdfNotifRenderPainel = function(){
+  const list = document.getElementById('tdf-notif-lista');
+  const info = document.getElementById('tdf-notif-painel-info');
+  if (!list) return;
+  const buf = (window._TDF_NOTIFS_PENDENTES || []).slice().sort((a,b) => (b.ts||b.addedAt||0) - (a.ts||a.addedAt||0));
+  if (info) info.textContent = buf.length ? `${buf.length} conversa${buf.length>1?'s':''}` : '';
+  if (!buf.length) {
+    list.innerHTML = '<div style="color:#666;text-align:center;padding:30px;font-size:12px">Sem notificações pendentes ✓</div>';
+    return;
+  }
+  list.innerHTML = buf.map(n => {
+    const fmt = (ts) => { const d = new Date(ts); return d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
+    const canal = n.canal === 'zapi' ? '⚡ Z-API' : '📱 WATI';
+    const cor = n.canal === 'zapi' ? '#7cb9f5' : '#22c55e';
+    const corpo = (n.text || '').replace(/</g,'&lt;').slice(0, 80);
+    const nomeEsc = (n.nome || n.phone || '').replace(/'/g,"\\'");
+    return `<div onclick="window.abrirChat&&abrirChat('${n.dealId}','${n.phone}','${nomeEsc}','${n.canal||'wati'}');tdfNotifRemover('${n.dealId}');tdfNotifAbrirPainel(false);" style="background:#161616;border-left:3px solid ${cor};border-radius:6px;padding:10px;margin-bottom:6px;cursor:pointer;transition:background .15s">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+        <span style="background:${cor}22;color:${cor};font-size:9px;font-weight:800;padding:1px 6px;border-radius:3px">${canal}</span>
+        <span style="flex:1;font-weight:800;color:#fff;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.nome || n.phone}</span>
+        <span style="color:#888;font-size:10px">${fmt(n.ts || n.addedAt)}</span>
+        ${n.count > 1 ? `<span style="background:#ef4444;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:8px">+${n.count}</span>` : ''}
+        <button onclick="event.stopPropagation();tdfNotifRemover('${n.dealId}')" style="background:transparent;border:none;color:#666;cursor:pointer;font-size:14px;padding:0 2px">×</button>
+      </div>
+      <div style="color:#aaa;font-size:11px;line-height:1.3">${corpo}</div>
+    </div>`;
+  }).join('');
+};
+</script>
+<style>
+/* Quando 'left' ativo, flipa lado das notificações principais */
+body.tdf-notif-left .tdf-notif-stack { right: auto !important; left: 18px !important; }
+body.tdf-notif-left .tdf-fab-cluster { right: auto !important; left: 18px !important; align-items: flex-start !important; }
+body.tdf-notif-left .tdf-chat-bar { right: auto !important; left: 18px !important; }
+body.tdf-notif-left .tk-toast-task { right: auto !important; left: 24px !important; }
+/* Modo ícone: esconde popups grandes e mostra só o ícone flutuante */
+body.tdf-notif-icon-mode .tdf-notif-stack { display: none !important; }
+body.tdf-notif-icon-mode .tk-toast-task { right: 80px !important; bottom: 80px !important; max-width: 280px; transform: scale(.85); transform-origin: bottom right }
+</style>
+<script>
+// === POPUP NOTIFICAÇÃO DE TAREFAS (global em todas páginas) ===
+(function(){
+  const SHOWN_KEY = 'tdf_tarefas_alertadas_v1';
+  function getShown(){ try { return JSON.parse(sessionStorage.getItem(SHOWN_KEY) || '[]'); } catch(_){ return []; } }
+  function setShown(arr){ try { sessionStorage.setItem(SHOWN_KEY, JSON.stringify(arr.slice(-100))); } catch(_){} }
+  async function check(){
+    try {
+      const r = await fetch('/tarefas/minhas', { credentials: 'same-origin' });
+      if (!r.ok) return;
+      const d = await r.json();
+      const lista = Array.isArray(d.tarefas) ? d.tarefas : (Array.isArray(d) ? d : []);
+      const agora = Date.now();
+      const shown = getShown();
+      for (const t of lista) {
+        if (t.status !== 'aberta') continue;
+        const ts = new Date(t.dataHora).getTime();
+        const lembreteMs = (parseInt(t.lembreteMin)||5) * 60000;
+        if (agora >= (ts - lembreteMs) && agora <= (ts + 5*60000) && !shown.includes(t.id)) {
+          mostrarPopupTarefa(t);
+          shown.push(t.id);
+          setShown(shown);
+        }
+      }
+    } catch(_){}
+  }
+  function mostrarPopupTarefa(t){
+    try { window.tdfSons?.tocar(); } catch(_){}
+    if (window.Notification && Notification.permission === 'granted') {
+      try {
+        const n = new Notification('📋 ' + t.titulo, {
+          body: (t.dealNome ? t.dealNome + ' · ' : '') + 'Vence em ' + Math.round((new Date(t.dataHora).getTime() - Date.now())/60000) + 'min',
+          tag: 'tarefa-' + t.id,
+          requireInteraction: true,
+        });
+        n.onclick = () => { window.focus(); if (t.dealId) location.href = '/manutencao#'+t.dealId; n.close(); };
+      } catch(_){}
+    }
+    const pop = document.createElement('div');
+    const lado = (window.tdfNotifSide?.get && window.tdfNotifSide.get()) || 'right';
+    const posStyle = lado === 'left' ? 'left:20px' : 'right:20px';
+    pop.style.cssText = `position:fixed;bottom:20px;${posStyle};background:linear-gradient(135deg,#0d1117,#1a0e2a);border:2px solid #fbbf24;border-radius:12px;padding:14px 16px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:9999;max-width:380px;color:#fff;animation:tdfTarefaIn .3s ease-out`;
+    pop.innerHTML = `
+      <div style="display:flex;align-items:start;gap:10px">
+        <span style="font-size:24px">⏰</span>
+        <div style="flex:1">
+          <div style="color:#fbbf24;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">TAREFA AGORA</div>
+          <div style="font-weight:800;font-size:13px;margin-bottom:4px">${(t.titulo||'').replace(/</g,'&lt;')}</div>
+          ${t.dealNome ? '<div style="color:#aaa;font-size:11px">Cliente: '+(t.dealNome||'').replace(/</g,'&lt;')+'</div>' : ''}
+          ${t.atribuidos_nomes && t.atribuidos_nomes.length > 1 ? '<div style="color:#a371f7;font-size:10px;margin-top:2px">👥 '+t.atribuidos_nomes.join(', ')+'</div>' : ''}
+          ${t.observacao ? '<div style="color:#888;font-size:10px;margin-top:4px;font-style:italic">'+(t.observacao||'').replace(/</g,'&lt;')+'</div>' : ''}
+          <div style="color:#666;font-size:10px;margin-top:4px">${new Date(t.dataHora).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        ${t.dealId ? '<a href="/manutencao#'+t.dealId+'" style="flex:1;background:#1f6feb;color:#fff;text-decoration:none;text-align:center;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:700">📂 Ver cliente</a>' : ''}
+        <button onclick="tdfTarefaConcluir('${t.id}', this.parentElement.parentElement)" style="flex:1;background:#22c55e;color:#000;border:none;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer">✓ Concluir</button>
+        <button onclick="tdfTarefaAdiar('${t.id}', this.parentElement.parentElement)" style="background:#fbbf24;color:#000;border:none;border-radius:5px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer">+15min</button>
+        <button onclick="this.parentElement.parentElement.remove()" style="background:transparent;color:#888;border:1px solid #444;border-radius:5px;padding:6px 10px;font-size:11px;cursor:pointer">✕</button>
+      </div>
+    `;
+    document.body.appendChild(pop);
+    setTimeout(() => { if (pop.parentElement) pop.remove(); }, 90000);
+  }
+  window.tdfTarefaConcluir = async function(id, el) {
+    try { await fetch('/tarefas/'+id+'/concluir', { method:'POST' }); if (el) el.remove(); } catch(_){}
+  };
+  window.tdfTarefaAdiar = async function(id, el) {
+    try {
+      await fetch('/tarefas/'+id+'/adiar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ minutos: 15 }) });
+      if (el) el.remove();
+      try { const arr = JSON.parse(sessionStorage.getItem('tdf_tarefas_alertadas_v1')||'[]'); sessionStorage.setItem('tdf_tarefas_alertadas_v1', JSON.stringify(arr.filter(x => x !== id))); } catch(_){}
+    } catch(_){}
+  };
+  const cssNode = document.createElement('style');
+  cssNode.textContent = '@keyframes tdfTarefaIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }';
+  document.head.appendChild(cssNode);
+  setTimeout(() => { check(); setInterval(check, 30000); }, 5000);
+  document.addEventListener('click', () => {
+    if (window.Notification && Notification.permission === 'default') Notification.requestPermission().catch(()=>{});
+  }, { once: true });
+})();
+</script>
+<style>
+/* Override absoluto pro dropdown abrir, no caso de CSS antigo cacheado */
+.nav-drop.open .nav-drop-menu { display: block !important; opacity: 1 !important; visibility: visible !important; }
+.nav-drop-btn { pointer-events: auto !important; cursor: pointer !important; }
+</style>
+<script>
+// FIX dropdowns nav — função global + auto-bind via attribute observer
+window.navDropToggle = function(btn, e) {
+  if (e) { try { e.preventDefault(); e.stopPropagation(); } catch(_){} }
+  // Remove qualquer popup anterior
+  var prev = document.getElementById('__navPopup');
+  if (prev) {
+    var btnPrev = prev.dataset.btnRef;
+    prev.remove();
+    if (btnPrev === btn.textContent.trim()) return; // re-click no mesmo = só fecha
+  }
+  var drop = btn && btn.parentElement;
+  if (!drop || !drop.classList.contains('nav-drop')) return;
+  var menuOriginal = drop.querySelector('.nav-drop-menu');
+  if (!menuOriginal) return;
+  // Cria popup novo direto no body (bypass total de CSS antigo)
+  var rect = btn.getBoundingClientRect();
+  var popup = document.createElement('div');
+  popup.id = '__navPopup';
+  popup.dataset.btnRef = btn.textContent.trim();
+  popup.style.cssText = [
+    'position:fixed',
+    'top:' + (rect.bottom + 4) + 'px',
+    'left:' + rect.left + 'px',
+    'background:#0d1117',
+    'border:1px solid #30363d',
+    'border-radius:8px',
+    'min-width:240px',
+    'padding:6px',
+    'z-index:99999',
+    'box-shadow:0 12px 32px rgba(0,0,0,.6)',
+    'display:block',
+  ].join(';');
+  // Copia os links do menu original
+  var links = menuOriginal.querySelectorAll('a');
+  for (var i = 0; i < links.length; i++) {
+    var a = links[i];
+    var clone = document.createElement('a');
+    clone.href = a.getAttribute('href') || '#';
+    clone.innerHTML = a.innerHTML;
+    clone.target = a.getAttribute('target') || '';
+    clone.style.cssText = 'display:block;padding:9px 14px;color:' + (a.style.color || '#c9d1d9') + ';text-decoration:none;font-size:13px;border-radius:5px;white-space:nowrap';
+    clone.addEventListener('mouseenter', function(){ this.style.background = '#161b22'; this.style.color = '#fff'; });
+    clone.addEventListener('mouseleave', function(){ this.style.background = ''; });
+    // Se tinha onclick inline, copia
+    var oc = a.getAttribute('onclick');
+    if (oc) clone.setAttribute('onclick', oc + ';document.getElementById("__navPopup")?.remove();');
+    else clone.addEventListener('click', function(){ var p = document.getElementById('__navPopup'); if (p) p.remove(); });
+    popup.appendChild(clone);
+  }
+  document.body.appendChild(popup);
+};
+
+// Bind programmático — APENAS UM método de click pra evitar double-toggle.
+// (versão anterior tinha addEventListener + onclick property → ambos disparavam,
+//  toggle abria e fechava no mesmo click → banner "FECHADO" sempre)
+function _navBindAll(){
+  var btns = document.querySelectorAll('.nav-drop-btn');
+  for (var i = 0; i < btns.length; i++) {
+    var btn = btns[i];
+    if (btn.__navBound) continue;
+    btn.__navBound = true;
+    // Único listener click (cobre mouse + touch via Atlas)
+    btn.addEventListener('click', function(e){ window.navDropToggle(this, e); });
+    // Acessibilidade: Enter/Space também abre
+    btn.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.navDropToggle(this, e); }
+    });
+  }
+}
+
+// Tenta múltiplas vezes (caso DOM ainda não esteja pronto)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _navBindAll);
+} else {
+  _navBindAll();
+}
+setTimeout(_navBindAll, 100);
+setTimeout(_navBindAll, 500);
+setTimeout(_navBindAll, 2000);
+
+// Click fora fecha popup do nav
+document.addEventListener('click', function(e){
+  try {
+    if (e.target.closest && (e.target.closest('.nav-drop-btn') || e.target.closest('#__navPopup'))) return;
+    var p = document.getElementById('__navPopup');
+    if (p) p.remove();
+    var abertos = document.querySelectorAll('.nav-drop.open');
+    for (var i = 0; i < abertos.length; i++) abertos[i].classList.remove('open');
+  } catch(_){}
+});
+</script>
+
+<script>window.IS_ADMIN = '<%= user.role %>' === 'admin';</script>
+<script src="/admin-deal-override.js"></script>
+</head>
+<body class="tdf-app-shell"><%- include('sidebar', { user: user, activePage: (typeof activePage !== 'undefined' ? activePage : '') }) %><div class="tdf-app-main">
+<% if (typeof perfilCompleto !== 'undefined' && perfilCompleto === false && user.role !== 'admin') { %>
+<div style="background:linear-gradient(90deg,#f59e0b,#d97706);color:#000;padding:9px 16px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700">
+  <span>⚠️ Complete seu cadastro pra liberar conquistas, ranking e painel TV.</span>
+  <a href="/perfil-completar" style="background:#000;color:#fff;padding:4px 12px;border-radius:5px;text-decoration:none;font-size:12px;font-weight:800">📝 Completar agora</a>
+  <span style="margin-left:auto;font-size:11px;opacity:.7">leva ~3 min</span>
+</div>
+<% } %>
+
+<!-- nav horizontal antigo substituido pela sidebar (views/sidebar.ejs) incluida no <body> -->
+
+<!-- META BAR -->
+<% if (user.role === 'admin') { %>
+<!-- ADMIN META-BAR: 3 canais clicáveis -->
+<style>
+.mb-admin{background:linear-gradient(90deg,var(--bg),var(--bg-card));border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:#ddd}
+.mb-canal{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;min-width:200px}
+.mb-canal:hover{border-color:#5ba3f5;background:var(--bg-hover)}
+.mb-canal .ic{font-size:16px}
+.mb-canal .lbl{color:var(--text-muted);font-size:10px;text-transform:uppercase;font-weight:700;letter-spacing:.4px}
+.mb-canal .vals{display:flex;gap:8px;align-items:baseline;flex-wrap:nowrap}
+.mb-canal .v-hoje{color:#22c55e;font-weight:800;font-size:14px}
+.mb-canal .v-mes{color:var(--text);font-weight:700;font-size:13px}
+.mb-canal .v-meta{font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px}
+.mb-canal .v-meta.green{background:rgba(34,197,94,.18);color:#4ade80}
+.mb-canal .v-meta.yellow{background:rgba(234,179,8,.18);color:#fbbf24}
+.mb-canal .v-meta.red{background:rgba(239,68,68,.18);color:#f87171}
+.mb-total{margin-left:auto;display:flex;align-items:center;gap:10px;padding:6px 12px;background:rgba(91,163,245,.08);border:1px solid #1e3a5f;border-radius:8px}
+.mb-total .lbl{font-size:10px;color:#7cb9f5;text-transform:uppercase;font-weight:800;letter-spacing:.5px}
+.mb-total .v{font-size:14px;color:var(--text);font-weight:800}
+
+/* Modal vendas */
+.mb-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;overflow-y:auto;padding:30px 20px;display:none}
+.mb-modal-bg.open{display:block}
+.mb-modal{max-width:920px;margin:30px auto;background:var(--bg-card);border:2px solid #5ba3f5;border-radius:14px;padding:24px 28px;color:var(--text)}
+.mb-modal h2{margin:0 0 4px;color:var(--text);font-size:20px}
+.mb-modal .sub{color:var(--text-muted);font-size:12px;margin-bottom:18px}
+.mb-modal .summary{display:flex;gap:14px;margin-bottom:16px;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px}
+.mb-modal .summary > div{flex:1;text-align:center}
+.mb-modal .summary .l{font-size:10px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.4px}
+.mb-modal .summary .n{font-size:18px;color:var(--text);font-weight:800;margin-top:2px}
+.mb-modal table{width:100%;border-collapse:collapse;font-size:13px}
+.mb-modal th{text-align:left;padding:8px 10px;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);font-weight:700;background:var(--bg-card)}
+.mb-modal td{padding:9px 10px;border-bottom:1px solid var(--border)}
+.mb-modal tr:hover td{background:var(--bg-hover)}
+.mb-modal a{color:#5ba3f5;text-decoration:none}
+.mb-modal a:hover{text-decoration:underline}
+.mb-modal .close-x{position:absolute;top:14px;right:18px;background:none;border:none;color:var(--text-muted);font-size:24px;cursor:pointer}
+.mb-modal .close-x:hover{color:var(--text)}
+</style>
+
+<div class="mb-admin" id="mb-admin">
+  <div class="mb-canal" onclick="mbAbrirCanal('bebedouro')">
+    <span class="ic">🚰</span>
+    <div>
+      <div class="lbl">Bebedouro</div>
+      <div class="vals">
+        <span class="v-hoje" id="mb-beb-hoje">--</span>
+        <span style="color:#444">/</span>
+        <span class="v-mes" id="mb-beb-mes">--</span>
+        <span class="v-meta" id="mb-beb-meta">--</span>
+      </div>
+    </div>
+  </div>
+  <div class="mb-canal" onclick="mbAbrirCanal('filtro')">
+    <span class="ic">💧</span>
+    <div>
+      <div class="lbl">Filtros de Entrada</div>
+      <div class="vals">
+        <span class="v-hoje" id="mb-fil-hoje">--</span>
+        <span style="color:#444">/</span>
+        <span class="v-mes" id="mb-fil-mes">--</span>
+        <span class="v-meta" id="mb-fil-meta">--</span>
+      </div>
+    </div>
+  </div>
+  <div class="mb-canal" onclick="mbAbrirCanal('loja')">
+    <span class="ic">🏪</span>
+    <div>
+      <div class="lbl">Loja Física</div>
+      <div class="vals">
+        <span class="v-hoje" id="mb-loja-hoje">--</span>
+        <span style="color:#444">/</span>
+        <span class="v-mes" id="mb-loja-mes">--</span>
+        <span class="v-meta" id="mb-loja-meta">--</span>
+      </div>
+    </div>
+  </div>
+  <div class="mb-canal" onclick="mbAbrirCanal('refil')">
+    <span class="ic">🔧</span>
+    <div>
+      <div class="lbl">Refil Online</div>
+      <div class="vals">
+        <span class="v-hoje" id="mb-refil-hoje">--</span>
+        <span style="color:#444">/</span>
+        <span class="v-mes" id="mb-refil-mes">--</span>
+        <span class="v-meta" id="mb-refil-meta">--</span>
+      </div>
+    </div>
+  </div>
+  <div class="mb-total">
+    <span class="lbl">🏆 Total Mês</span>
+    <span class="v" id="mb-total-mes">--</span>
+    <span class="v-meta" id="mb-total-meta" style="font-size:11px;padding:2px 6px;border-radius:4px">--</span>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;padding:4px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;font-family:'SF Mono',Menlo,monospace;line-height:1.2">
+    <span id="mb-clock" style="font-size:15px;font-weight:800;color:#5ba3f5">--:--:--</span>
+    <span id="mb-date" style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px">-- BRT</span>
+  </div>
+</div>
+
+<!-- Modal de vendas detalhadas -->
+<div class="mb-modal-bg" id="mb-modal-bg" onclick="if(event.target===this)mbFechar()">
+  <div class="mb-modal" style="position:relative">
+    <button class="close-x" onclick="mbFechar()">×</button>
+    <h2 id="mb-modal-titulo">Vendas</h2>
+    <div class="sub" id="mb-modal-sub"></div>
+    <div class="summary" id="mb-modal-summary"></div>
+    <div style="overflow-x:auto"><table id="mb-modal-tabela">
+      <thead><tr><th>Data</th><th>Vendedor</th><th>Cliente</th><th>Produto</th><th>Valor</th><th>CRM</th></tr></thead>
+      <tbody id="mb-modal-tbody"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<script>
+let _MB_DATA = null;
+async function mbLoad(){
+  try{
+    const res = await fetch('/gestao/meta-bar');
+    if (!res.ok) return;
+    const d = await res.json();
+    if (d.error) return;
+    _MB_DATA = d;
+    mbRender();
+  }catch(e){ console.error('meta-bar:', e); }
+}
+function mbFmt(v){ return 'R$ ' + (Math.round(v||0)/1000).toFixed(1) + 'k'; }
+function mbMetaCls(p){ return p>=80?'green':p>=50?'yellow':'red'; }
+
+function mbRender(){
+  if (!_MB_DATA) return;
+  const c = _MB_DATA.canais;
+  const t = _MB_DATA.total;
+
+  document.getElementById('mb-beb-hoje').textContent = mbFmt(c.bebedouro.hoje);
+  document.getElementById('mb-beb-mes').textContent = mbFmt(c.bebedouro.mes);
+  const bMeta = document.getElementById('mb-beb-meta');
+  bMeta.textContent = c.bebedouro.pctMeta+'%'; bMeta.className = 'v-meta '+mbMetaCls(c.bebedouro.pctMeta);
+
+  document.getElementById('mb-fil-hoje').textContent = mbFmt(c.filtro.hoje);
+  document.getElementById('mb-fil-mes').textContent = mbFmt(c.filtro.mes);
+  const fMeta = document.getElementById('mb-fil-meta');
+  fMeta.textContent = c.filtro.pctMeta+'%'; fMeta.className = 'v-meta '+mbMetaCls(c.filtro.pctMeta);
+
+  document.getElementById('mb-loja-hoje').textContent = mbFmt(c.loja.hoje);
+  document.getElementById('mb-loja-mes').textContent = mbFmt(c.loja.mes);
+  const lMeta = document.getElementById('mb-loja-meta');
+  lMeta.textContent = c.loja.pctMeta+'%'; lMeta.className = 'v-meta '+mbMetaCls(c.loja.pctMeta);
+
+  if (c.refil) {
+    document.getElementById('mb-refil-hoje').textContent = mbFmt(c.refil.hoje);
+    document.getElementById('mb-refil-mes').textContent = mbFmt(c.refil.mes);
+    const rMeta = document.getElementById('mb-refil-meta');
+    rMeta.textContent = c.refil.pctMeta+'%'; rMeta.className = 'v-meta '+mbMetaCls(c.refil.pctMeta);
+  }
+
+  document.getElementById('mb-total-mes').textContent = mbFmt(t.mes);
+  const tMeta = document.getElementById('mb-total-meta');
+  tMeta.textContent = t.pctMeta+'%'; tMeta.className = 'v-meta '+mbMetaCls(t.pctMeta);
+}
+
+function mbAbrirCanal(canal){
+  if (!_MB_DATA) return;
+  const c = _MB_DATA.canais[canal];
+  if (!c) return;
+  document.getElementById('mb-modal-titulo').textContent = `${c.icon} ${c.label} — Vendas do Mês`;
+  document.getElementById('mb-modal-sub').textContent = `${c.deals.length} venda(s) no mês • Meta R$ ${(c.meta/1000).toFixed(0)}k`;
+
+  document.getElementById('mb-modal-summary').innerHTML = `
+    <div><div class="l">Hoje</div><div class="n" style="color:#22c55e">${mbFmt(c.hoje)}</div><div style="font-size:10px;color:#888">${c.hojeQtd} venda(s)</div></div>
+    <div><div class="l">Mês</div><div class="n">${mbFmt(c.mes)}</div><div style="font-size:10px;color:#888">${c.mesQtd} venda(s)</div></div>
+    <div><div class="l">Meta</div><div class="n" style="color:#5ba3f5">${mbFmt(c.meta)}</div></div>
+    <div><div class="l">% Meta</div><div class="n" style="color:${c.pctMeta>=80?'#22c55e':c.pctMeta>=50?'#eab308':'#ef4444'}">${c.pctMeta}%</div></div>
+    <div><div class="l">Ticket Médio</div><div class="n">${mbFmt(c.mesQtd>0?c.mes/c.mesQtd:0)}</div></div>
+  `;
+
+  // Agrega por vendedor (sub-resumo)
+  const porVend = {};
+  for (const d of c.deals) {
+    if (!porVend[d.owner]) porVend[d.owner] = { qtd:0, total:0 };
+    porVend[d.owner].qtd++;
+    porVend[d.owner].total += d.amount;
+  }
+  const vRows = Object.entries(porVend).sort((a,b)=>b[1].total-a[1].total)
+    .map(([n,v]) => `<span style="display:inline-block;background:#161616;border:1px solid #222;border-radius:6px;padding:4px 10px;margin:2px 4px 2px 0;font-size:11px"><strong>${n}</strong>: ${v.qtd}× = ${mbFmt(v.total)}</span>`).join('');
+  if (vRows) document.getElementById('mb-modal-summary').insertAdjacentHTML('afterend',
+    `<div style="margin-bottom:14px;padding:10px;background:#161616;border:1px solid #222;border-radius:8px"><div style="font-size:10px;color:#888;text-transform:uppercase;font-weight:700;margin-bottom:4px">Por Vendedor</div>${vRows}</div>`
+  );
+
+  document.getElementById('mb-modal-tbody').innerHTML = c.deals.map(d => `
+    <tr id="mb-row-${d.id}">
+      <td style="color:#888;font-size:11px">${d.data}</td>
+      <td style="font-weight:600">${d.owner}</td>
+      <td>${d.name}</td>
+      <td style="color:#aaa;font-size:11px" class="mb-prod-cell" data-deal="${d.id}">
+        <span style="color:#666;font-style:italic">carregando produtos...</span>
+      </td>
+      <td style="font-weight:700;color:#fff">R$ ${(d.amount||0).toLocaleString('pt-BR')}</td>
+      <td>${d.crmLink?`<a href="${d.crmLink}" target="_blank">Abrir</a>`:'-'}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('mb-modal-bg').classList.add('open');
+
+  // Carrega produtos REAIS via Quotes/Quoted_Items em background
+  const dealIds = c.deals.map(d => d.id).filter(Boolean);
+  if (dealIds.length) carregarProdutosDeals(dealIds);
+}
+
+async function carregarProdutosDeals(dealIds){
+  // Quebra em batches de 30 por requisição
+  for (let i = 0; i < dealIds.length; i += 30) {
+    const lote = dealIds.slice(i, i+30);
+    try {
+      const res = await fetch('/gestao/deal-products', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ dealIds: lote })
+      });
+      const d = await res.json();
+      if (d.error) continue;
+      for (const id of Object.keys(d.products||{})) {
+        const cell = document.querySelector(`.mb-prod-cell[data-deal="${id}"]`);
+        if (!cell) continue;
+        const items = d.products[id] || [];
+        if (!items.length) {
+          cell.innerHTML = '<span style="color:#444">—</span>';
+          continue;
+        }
+        // Mostra até 2 produtos + tooltip com todos
+        const top = items.slice(0, 2).map(it => `${it.nome}${it.qtd>1?` (${it.qtd}x)`:''}`).join(' • ');
+        const todos = items.map(it => `${it.qtd}x ${it.nome} — R$ ${(it.valor||0).toLocaleString('pt-BR')}`).join('\n');
+        const extra = items.length > 2 ? ` <span style="color:#5ba3f5;font-weight:600">+${items.length-2}</span>` : '';
+        cell.innerHTML = `<span title="${todos.replace(/"/g,'&quot;')}" style="cursor:help">${top}${extra}</span>`;
+      }
+    } catch(e) { console.warn('produtos:', e); }
+  }
+}
+
+function mbFechar(){
+  document.getElementById('mb-modal-bg').classList.remove('open');
+  // Remove o sub-resumo "Por Vendedor" se existir (foi inserido dinamicamente)
+  document.querySelectorAll('.mb-modal > div[style*="Por Vendedor"]').forEach(el => el.remove());
+}
+
+mbLoad();
+setInterval(mbLoad, 60*1000); // refresh 60s
+
+// Relógio BRT
+function tickClockBR(){
+  const opts = { timeZone:'America/Sao_Paulo', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false };
+  const dateOpts = { timeZone:'America/Sao_Paulo', weekday:'short', day:'2-digit', month:'2-digit' };
+  const t = new Intl.DateTimeFormat('pt-BR', opts).format(new Date());
+  const d = new Intl.DateTimeFormat('pt-BR', dateOpts).format(new Date());
+  const c = document.getElementById('mb-clock'); if (c) c.textContent = t;
+  const dt = document.getElementById('mb-date'); if (dt) dt.textContent = d + ' • BRT';
+}
+setInterval(tickClockBR, 1000); tickClockBR();
+</script>
+<% } else if (user.role === 'closer') { %>
+<style>
+.cb-bar{background:linear-gradient(90deg,var(--bg),var(--bg-card));border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:#ddd}
+.cb-pill{display:flex;align-items:center;gap:6px;padding:5px 11px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px}
+.cb-pill .lbl{font-size:9px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.4px}
+.cb-pill .val{color:var(--text);font-weight:800;font-size:14px}
+.cb-pill.green{border-color:#22c55e}.cb-pill.green .val{color:#4ade80}
+.cb-pill.red{border-color:#ef4444}.cb-pill.red .val{color:#f87171}
+.cb-pill.yellow{border-color:#eab308}.cb-pill.yellow .val{color:#fbbf24}
+.cb-pill.blue{border-color:#5ba3f5}.cb-pill.blue .val{color:#7cb9f5}
+.cb-pill .sub{font-size:10px;color:var(--text-muted)}
+.cb-bar2{padding:8px 16px;background:var(--bg-card);border-bottom:1px solid var(--border);font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.cb-progress{height:4px;background:#222;border-radius:2px;overflow:hidden;flex:1;min-width:120px;max-width:300px}
+.cb-progress .fill{height:100%;border-radius:2px;transition:width 1s}
+</style>
+<div class="cb-bar">
+  <div class="cb-pill green"><span class="lbl">📅 Hoje</span><span class="val" id="cb-hoje">--</span><span class="sub" id="cb-hoje-qtd"></span></div>
+  <div class="cb-pill blue"><span class="lbl">📊 Mês</span><span class="val" id="cb-mes">--</span><span class="sub" id="cb-mes-qtd"></span></div>
+  <div class="cb-pill"><span class="lbl">🎯 Meta</span><span class="val" id="cb-meta" style="color:#F0C040">--</span></div>
+  <div class="cb-pill red"><span class="lbl">⚠️ Falta</span><span class="val" id="cb-gap">--</span></div>
+  <div class="cb-pill yellow"><span class="lbl">⚡ Necessário/dia</span><span class="val" id="cb-necdia">--</span></div>
+  <div class="cb-pill" id="cb-proj-pill"><span class="lbl">📈 Projeção</span><span class="val" id="cb-proj">--</span><span class="sub" id="cb-proj-pct"></span></div>
+  <div class="cb-pill" id="cb-risco-pill" style="margin-left:auto"><span class="lbl">Status</span><span class="val" id="cb-risco">--</span></div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;padding:4px 10px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;font-family:'SF Mono',Menlo,monospace;line-height:1.2">
+    <span id="cb-clock" style="font-size:14px;font-weight:800;color:#5ba3f5">--:--:--</span>
+    <span id="cb-date" style="font-size:9px;color:var(--text-muted);text-transform:uppercase">-- BRT</span>
+  </div>
+</div>
+<div class="cb-bar2">
+  <span>📊 <span id="cb-pct" style="color:var(--text);font-weight:700">--%</span> da meta</span>
+  <div class="cb-progress"><div class="fill" id="cb-bar-fill" style="width:0%"></div></div>
+  <span id="cb-dias-info" style="margin-left:auto"></span>
+</div>
+<script>
+async function cbLoad(){
+  try{
+    const res = await fetch('/cockpit/meta-bar');
+    const d = await res.json();
+    if (d.error) return;
+    const fmt = v => 'R$ ' + (Math.round(v||0)/1000).toFixed(1) + 'k';
+    document.getElementById('cb-hoje').textContent = fmt(d.hoje.fat);
+    document.getElementById('cb-hoje-qtd').textContent = d.hoje.vendas + ' venda(s)';
+    document.getElementById('cb-mes').textContent = fmt(d.mes.fat);
+    document.getElementById('cb-mes-qtd').textContent = d.mes.vendas + ' venda(s)';
+    document.getElementById('cb-meta').textContent = fmt(d.meta);
+    document.getElementById('cb-gap').textContent = fmt(d.gap);
+    document.getElementById('cb-necdia').textContent = fmt(d.necessarioDia);
+    document.getElementById('cb-proj').textContent = fmt(d.projecao);
+    document.getElementById('cb-proj-pct').textContent = d.projPct + '%';
+    document.getElementById('cb-pct').textContent = d.pctMeta + '%';
+    document.getElementById('cb-dias-info').textContent = `Dia ${d.diasPassados} • ${d.diasRestantes} dia(s) restante(s) • ritmo atual ${fmt(d.ritmoDia)}/dia`;
+
+    // Cores baseadas em risco
+    const proj = document.getElementById('cb-proj-pill');
+    const risco = document.getElementById('cb-risco-pill');
+    const r = document.getElementById('cb-risco');
+    proj.classList.remove('green','yellow','red');
+    risco.classList.remove('green','yellow','red');
+    if (d.risco === 'no_caminho') {
+      proj.classList.add('green'); risco.classList.add('green');
+      r.textContent = '✓ NO CAMINHO';
+    } else if (d.risco === 'atencao') {
+      proj.classList.add('yellow'); risco.classList.add('yellow');
+      r.textContent = '! ATENÇÃO';
+    } else {
+      proj.classList.add('red'); risco.classList.add('red');
+      r.textContent = '⚠ RISCO';
+    }
+    const cor = d.pctMeta >= 80 ? '#22c55e' : d.pctMeta >= 50 ? '#eab308' : '#ef4444';
+    document.getElementById('cb-pct').style.color = cor;
+    const fill = document.getElementById('cb-bar-fill');
+    fill.style.width = Math.min(d.pctMeta, 100) + '%';
+    fill.style.background = cor;
+  }catch(e){ console.error('cbLoad:', e); }
+}
+cbLoad();
+setInterval(cbLoad, 60000);
+
+// Relógio BRT (closer)
+function tickClockCB(){
+  const opts = { timeZone:'America/Sao_Paulo', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false };
+  const dateOpts = { timeZone:'America/Sao_Paulo', weekday:'short', day:'2-digit', month:'2-digit' };
+  const t = new Intl.DateTimeFormat('pt-BR', opts).format(new Date());
+  const d = new Intl.DateTimeFormat('pt-BR', dateOpts).format(new Date());
+  const c = document.getElementById('cb-clock'); if (c) c.textContent = t;
+  const dt = document.getElementById('cb-date'); if (dt) dt.textContent = d + ' • BRT';
+}
+setInterval(tickClockCB, 1000); tickClockCB();
+</script>
+<% } %>
+
+<!-- IA Chat Widget (all pages) — nunca para revendedor: consulta a base interna -->
+<% if (user.role !== 'revendedor') { %>
+<div id="chat-widget-btn" onclick="toggleChatWidget()" title="IA Consulta">💬</div>
+
+<div id="chat-widget" style="display:none;">
+  <div class="cw-header">
+    <span>🤖 IA Consulta</span>
+    <span class="cw-close" onclick="toggleChatWidget()">✕</span>
+  </div>
+  <div class="cw-messages" id="cw-messages">
+    <div class="cw-msg cw-ai">Oi, <%= user.name %>! Sou a IA da Tudo de Filtro. Me pergunta qualquer coisa sobre produtos, vendas, técnicas... estou aqui pra ajudar! 😊</div>
+  </div>
+  <div class="cw-input">
+    <input type="text" id="cw-input" placeholder="Digite sua dúvida..." onkeydown="if(event.key==='Enter')sendChatWidget()">
+    <button onclick="sendChatWidget()">→</button>
+  </div>
+</div>
+<% } %>
+
+<style>
+#chat-widget-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0066CC, #00AAFF);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,102,204,0.4);
+  z-index: 9999;
+  transition: transform 0.2s, box-shadow 0.2s;
+  animation: pulse-btn 2s infinite;
+}
+#chat-widget-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 30px rgba(0,102,204,0.6);
+}
+@keyframes pulse-btn {
+  0%, 100% { box-shadow: 0 4px 20px rgba(0,102,204,0.4); }
+  50% { box-shadow: 0 4px 30px rgba(0,170,255,0.6); }
+}
+#chat-widget {
+  position: fixed;
+  bottom: 96px;
+  right: 24px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  height: 500px;
+  max-height: calc(100vh - 140px);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  z-index: 9999;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+.cw-header {
+  background: linear-gradient(135deg, #0066CC, #00AAFF);
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 15px;
+  color:#fff;
+}
+.cw-close {
+  cursor: pointer;
+  font-size: 20px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.cw-close:hover { background: rgba(255,255,255,0.2); }
+.cw-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cw-msg {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+.cw-user {
+  align-self: flex-end;
+  background: #0066CC;
+  color:#fff;
+  border-bottom-right-radius: 4px;
+}
+.cw-ai {
+  align-self: flex-start;
+  background: var(--border);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+.cw-typing {
+  align-self: flex-start;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.cw-typing::after {
+  content: '...';
+  animation: dots 1.5s steps(4, end) infinite;
+}
+@keyframes dots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60%, 100% { content: '...'; }
+}
+.cw-input {
+  display: flex;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+.cw-input input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  padding: 14px 16px;
+  font-size: 14px;
+  outline: none;
+}
+.cw-input input::placeholder { color: #484F58; }
+.cw-input button {
+  background: #0066CC;
+  color:#fff;
+  border: none;
+  padding: 0 20px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.cw-input button:hover { background: #00AAFF; }
+@media (max-width: 480px) {
+  #chat-widget {
+    bottom: 0;
+    right: 0;
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  #chat-widget-btn { bottom: 16px; right: 16px; width: 52px; height: 52px; font-size: 24px; }
+}
+</style>
+
+<script>
+let cwOpen = false;
+let cwHistory = [];
+
+function toggleChatWidget() {
+  cwOpen = !cwOpen;
+  document.getElementById('chat-widget').style.display = cwOpen ? 'flex' : 'none';
+  if (cwOpen) document.getElementById('cw-input').focus();
+}
+
+async function sendChatWidget() {
+  const input = document.getElementById('cw-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const container = document.getElementById('cw-messages');
+
+  // Add user message
+  const userDiv = document.createElement('div');
+  userDiv.className = 'cw-msg cw-user';
+  userDiv.textContent = msg;
+  container.appendChild(userDiv);
+
+  // Add typing indicator
+  const typing = document.createElement('div');
+  typing.className = 'cw-typing';
+  typing.textContent = 'Pensando';
+  container.appendChild(typing);
+  container.scrollTop = container.scrollHeight;
+
+  cwHistory.push({ role: 'user', content: msg });
+
+  try {
+    const res = await fetch('/ia/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, history: cwHistory.slice(-10) })
+    });
+    const data = await res.json();
+    typing.remove();
+
+    const aiDiv = document.createElement('div');
+    aiDiv.className = 'cw-msg cw-ai';
+    aiDiv.textContent = data.response || 'Desculpe, tive um problema. Tenta de novo!';
+    container.appendChild(aiDiv);
+
+    cwHistory.push({ role: 'assistant', content: data.response || '' });
+  } catch (e) {
+    typing.remove();
+    const errDiv = document.createElement('div');
+    errDiv.className = 'cw-msg cw-ai';
+    errDiv.textContent = 'Erro de conexão. Tenta de novo!';
+    container.appendChild(errDiv);
+  }
+
+  container.scrollTop = container.scrollHeight;
+}
+</script>
+
+<script>
+  // Anti-copy protection
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'F12' ||
+        (e.ctrlKey && ['c','a','u','s','p'].includes(e.key.toLowerCase())) ||
+        e.key === 'PrintScreen') {
+      e.preventDefault();
+    }
+  });
+  document.addEventListener('dragstart', e => {
+    // permite drag em elementos explicitamente marcados (kanban, sortable etc.)
+    const t = e.target;
+    if (t && t.nodeType === 1) {
+      if (t.getAttribute && t.getAttribute('draggable') === 'true') return;
+      if (t.closest && t.closest('[draggable="true"]')) return;
+    }
+    e.preventDefault();
+  });
+
+  // ============= SOM DE NOTIFICAÇÃO (ICQ "uh-oh", MSN "ding", nudge) =============
+  // Gerados via Web Audio API — não precisa de arquivo mp3.
+  // IMPORTANTE: navegadores bloqueiam AudioContext até o user interagir com a página.
+  // Por isso, no primeiro click/keydown, "destravamos" o contexto.
+  window.tdfSons = (function(){
+    const KEY_MUTE = 'tdf_som_mute_v1';
+    const KEY_TIPO = 'tdf_som_tipo_v1';
+    let _ctx = null;
+    let _unlocked = false;
+    function ctx() {
+      if (_ctx) return _ctx;
+      try { _ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(_){}
+      return _ctx;
+    }
+    // Desbloqueia AudioContext no 1º gesto do usuário (click, key, touch)
+    function unlock() {
+      if (_unlocked) return;
+      const c = ctx();
+      if (!c) return;
+      try {
+        if (c.state === 'suspended') c.resume();
+        // Toca um buffer SILENCIOSO pra "ativar" o contexto definitivamente
+        const buf = c.createBuffer(1, 1, 22050);
+        const src = c.createBufferSource();
+        src.buffer = buf;
+        src.connect(c.destination);
+        src.start(0);
+        _unlocked = true;
+        console.log('[tdfSons] AudioContext desbloqueado');
+      } catch(e) { console.warn('[tdfSons] unlock:', e.message); }
+    }
+    document.addEventListener('click', unlock, { once: false, passive: true });
+    document.addEventListener('keydown', unlock, { once: false, passive: true });
+    document.addEventListener('touchstart', unlock, { once: false, passive: true });
+    function tone(c, freq, start, dur, type, vol) {
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.frequency.value = freq;
+      osc.type = type || 'sine';
+      const t0 = c.currentTime + start;
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(vol || 0.15, t0 + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(gain); gain.connect(c.destination);
+      osc.start(t0); osc.stop(t0 + dur + 0.01);
+    }
+    // Tone com pitch slide (portamento) e envelope ataque-decay customizado
+    function toneSlide(c, freqStart, freqEnd, start, dur, type, vol, attackPct) {
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = type || 'sine';
+      const t0 = c.currentTime + start;
+      osc.frequency.setValueAtTime(freqStart, t0);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20, freqEnd), t0 + dur);
+      const att = (attackPct ?? 0.08) * dur;
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(vol || 0.15, t0 + att);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(gain); gain.connect(c.destination);
+      osc.start(t0); osc.stop(t0 + dur + 0.01);
+    }
+    // Bell-like tone: harmônicos múltiplos com decays diferentes (mais autêntico que sine sozinho)
+    function bell(c, fund, start, dur, vol) {
+      const harm = [
+        { mult: 1.0, vol: 1.0,  decay: 1.0 },
+        { mult: 2.0, vol: 0.5,  decay: 0.7 },
+        { mult: 3.0, vol: 0.25, decay: 0.5 },
+        { mult: 4.2, vol: 0.15, decay: 0.4 },
+      ];
+      harm.forEach(h => {
+        const osc = c.createOscillator();
+        const g = c.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = fund * h.mult;
+        const t0 = c.currentTime + start;
+        const d = dur * h.decay;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime((vol || 0.15) * h.vol, t0 + 0.003);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+        osc.connect(g); g.connect(c.destination);
+        osc.start(t0); osc.stop(t0 + d + 0.01);
+      });
+    }
+    return {
+      isMute(){ return localStorage.getItem(KEY_MUTE) === '1'; },
+      setMute(v){ localStorage.setItem(KEY_MUTE, v?'1':'0'); },
+      getTipo(){ return localStorage.getItem(KEY_TIPO) || 'icq'; },
+      setTipo(t){ localStorage.setItem(KEY_TIPO, t); },
+      tocar(forcaTipo){
+        if (this.isMute()) { console.log('[tdfSons] não tocou: muted'); return; }
+        const c = ctx();
+        if (!c) { console.warn('[tdfSons] não tocou: sem AudioContext'); return; }
+        if (c.state === 'suspended') {
+          console.log('[tdfSons] ctx suspended, tentando resume...');
+          c.resume().then(() => {
+            console.log('[tdfSons] resume OK, tocando');
+            this._tocarReal(forcaTipo);
+          }).catch(e => console.warn('[tdfSons] resume falhou (precisa interação do user):', e.message));
+          return;
+        }
+        this._tocarReal(forcaTipo);
+      },
+      _tocarReal(forcaTipo){
+        const c = ctx();
+        if (!c) { console.warn('[tdfSons] _tocarReal: sem ctx'); return; }
+        if (c.state !== 'running') { console.warn('[tdfSons] _tocarReal: ctx state =', c.state); return; }
+        console.log('[tdfSons] tocando:', forcaTipo || this.getTipo());
+        const t = forcaTipo || this.getTipo();
+        if (t === 'icq') {
+          // ICQ "Uh-oh!" — 2 sílabas vocais com portamento descendente.
+          // Sílaba "uh!": sawtooth filtrado parecendo formante vocal, glide 480→340Hz
+          // Sílaba "oh!": glide 380→260Hz, mais grave e mais longa
+          toneSlide(c, 480, 340, 0,    0.16, 'sawtooth', 0.16, 0.04);
+          toneSlide(c, 720, 510, 0,    0.16, 'sawtooth', 0.05, 0.04); // 2º harmônico (formante F2)
+          toneSlide(c, 380, 260, 0.20, 0.26, 'sawtooth', 0.18, 0.05);
+          toneSlide(c, 570, 390, 0.20, 0.26, 'sawtooth', 0.06, 0.05);
+        } else if (t === 'msn' || t === 'msn_msg') {
+          // MSN Messenger "Nova mensagem" — 2 dings rápidos tipo sino
+          // Reproduz a sensação ding-ding clássica do MSN incoming
+          bell(c, 1568, 0,    0.35, 0.18); // G6
+          bell(c, 1175, 0.10, 0.40, 0.20); // D6 (5ª descendente)
+        } else if (t === 'msn_login') {
+          // MSN login/online — 4 notas ascendentes "ba-da-bi-da" estilo "porta abrindo"
+          bell(c, 784, 0,    0.18, 0.16); // G5
+          bell(c, 988, 0.10, 0.18, 0.16); // B5
+          bell(c, 1175,0.20, 0.18, 0.16); // D6
+          bell(c, 1568,0.30, 0.32, 0.20); // G6
+        } else if (t === 'nudge') {
+          // MSN nudge — vibração rítmica grave (3 pulsos mais densos)
+          tone(c, 180, 0,    0.09, 'sawtooth', 0.22);
+          tone(c, 220, 0.005,0.09, 'square',   0.10);
+          tone(c, 180, 0.12, 0.09, 'sawtooth', 0.22);
+          tone(c, 220, 0.125,0.09, 'square',   0.10);
+          tone(c, 180, 0.24, 0.09, 'sawtooth', 0.22);
+          tone(c, 220, 0.245,0.09, 'square',   0.10);
+        } else if (t === 'sino') {
+          // Sino suave (campainha) — usa bell helper
+          bell(c, 1318, 0,    0.55, 0.16);
+        } else if (t === 'pop') {
+          tone(c, 1200, 0, 0.05, 'sine', 0.18);
+        }
+      },
+    };
+  })();
+
+  // ============= CHAT FLUTUANTE (mini-janelas empilhadas tipo Messenger) =============
+  // window.abrirChat(dealId, phone, nome) — abre uma janela 320×460 no canto inferior
+  // Múltiplas janelas empilham horizontalmente (até 3). Botão ↗ vai pra inbox full.
+  (function(){
+    const css = `
+      .tdf-chat-bar{position:fixed;bottom:0;right:380px;z-index:9998;display:flex;gap:6px;align-items:flex-end}
+      .tdf-chat-win{width:320px;height:460px;background:#0d0d0d;border:1px solid #444;border-bottom:none;border-radius:10px 10px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -4px 24px rgba(0,0,0,.5);font-size:12px;color:#fff;font-family:inherit}
+      .tdf-chat-win.min{height:38px;cursor:pointer}
+      .tdf-chat-h{display:flex;align-items:center;gap:8px;padding:9px 12px;background:linear-gradient(135deg,#0f3a1a,#22c55e22);border-bottom:1px solid #25D366}
+      .tdf-chat-h .ico{font-size:14px}
+      .tdf-chat-h .nome{flex:1;font-weight:700;color:#fff;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .tdf-chat-h .canal{font-size:9px;background:#22c55e;color:#000;font-weight:800;padding:1px 6px;border-radius:8px;text-transform:uppercase}
+      .tdf-chat-h .b{background:transparent;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:2px 6px;line-height:1;border-radius:4px}
+      .tdf-chat-h .b:hover{background:#222;color:#fff}
+      .tdf-chat-msgs{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:#0a0a0a}
+      .tdf-chat-msg{max-width:80%;padding:7px 10px;border-radius:10px;font-size:12px;line-height:1.35;word-break:break-word}
+      .tdf-chat-msg.lead{background:#1f2937;border:1px solid #374151;align-self:flex-start;border-bottom-left-radius:3px;color:#f3f4f6}
+      .tdf-chat-msg.sistema{align-self:center;max-width:90%;background:rgba(91,163,245,.06);border:1px dashed #1f6feb55;color:#7cb9f5;font-style:italic;font-size:10px;text-align:center;padding:4px 10px;border-radius:10px}
+      .tdf-chat-msg.nos{background:linear-gradient(135deg,#0d3a1a,#22c55e22);border:1px solid #22c55e;align-self:flex-end;border-bottom-right-radius:2px;color:#dcfce7}
+      .tdf-chat-msg .ts{font-size:9px;color:#666;margin-top:3px}
+      .tdf-chat-empty{text-align:center;color:#666;font-size:11px;padding:20px}
+      .tdf-chat-loading{text-align:center;color:#888;font-size:11px;padding:20px}
+      .tdf-chat-input{display:flex;gap:6px;padding:8px;border-top:1px solid #222;background:#0f0f0f}
+      .tdf-chat-input textarea{flex:1;resize:none;background:#161616;border:1px solid #333;color:#fff;border-radius:6px;padding:6px 8px;font-size:11px;font-family:inherit;min-height:34px;max-height:80px}
+      .tdf-chat-input button{padding:0 10px;background:#22c55e;color:#000;border:none;border-radius:6px;font-weight:800;font-size:11px;cursor:pointer}
+      .tdf-chat-input button:disabled{opacity:.5;cursor:not-allowed}
+      .tdf-chat-warn{padding:6px 10px;background:rgba(251,191,36,.1);border-bottom:1px solid #fbbf24;color:#fbbf24;font-size:10px;text-align:center}
+    `;
+    const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+    const bar = document.createElement('div'); bar.className = 'tdf-chat-bar'; bar.id = 'tdf-chat-bar'; document.body.appendChild(bar);
+
+    const _chats = {}; // dealId → DOM element
+    const MAX_CHATS = 3;
+
+    function fmtHora(ts){
+      const d = new Date(typeof ts === 'number' && ts < 1e12 ? ts * 1000 : ts);
+      return isNaN(d) ? '' : d.toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});
+    }
+
+    async function safeJson(url, opts) {
+      try {
+        const r = await fetch(url, opts);
+        const ct = r.headers.get('content-type') || '';
+        if (!ct.includes('json')) return { error: r.status === 401 ? 'Sessão expirada (F5)' : 'Erro '+r.status };
+        return await r.json();
+      } catch(e) { return { error: e.message }; }
+    }
+
+    async function carregarMensagens(win, phone, todas, canalOverride){
+      const msgsEl = win.querySelector('.tdf-chat-msgs');
+      const canal = canalOverride || (win.dataset.canalEnvio || 'wati');
+      // guarda o phone no win pra usar quando trocar canal
+      if (phone) win.dataset.phone = phone;
+      msgsEl.innerHTML = '<div class="tdf-chat-loading">Carregando'+(todas?' histórico completo':'')+' ('+canal.toUpperCase()+')...</div>';
+      const d = await safeJson('/inbox/mensagens?phone=' + encodeURIComponent(phone) + (todas?'&todas=1':'') + '&canal=' + canal);
+      if (d.error) { msgsEl.innerHTML = '<div class="tdf-chat-empty" style="color:#f87171">'+d.error+'</div>'; return; }
+      const msgs = d.mensagens || [];
+      if (!msgs.length) { msgsEl.innerHTML = '<div class="tdf-chat-empty">Sem histórico ainda</div>'; return; }
+      const btnMais = (!todas && d.completo) ? '<div style="text-align:center;padding:8px"><button onclick="window._carregarTodasMsgs(this,\''+phone+'\')" style="background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:10px;cursor:pointer;font-weight:700">⬆️ Carregar histórico completo</button></div>' : '';
+      msgsEl.innerHTML = btnMais + msgs.map(m => {
+        const cls = m.isSystem ? 'sistema' : (m.owner ? 'nos' : 'lead');
+        return `
+        <div class="tdf-chat-msg ${cls}">
+          ${(m.texto||'').replace(/</g,'&lt;').replace(/\n/g,'<br>')}
+          <div class="ts">${fmtHora(m.timestamp)}${m.owner&&(m.operatorName||m.templateName)?' · '+(m.operatorName||'📨 '+m.templateName):''}</div>
+        </div>`;
+      }).join('');
+      msgsEl.scrollTop = msgsEl.scrollHeight;
+    }
+    // Helper global pro botão "Carregar todas" do chat flutuante
+    window._carregarTodasMsgs = (btn, phone) => {
+      const win = btn.closest('.tdf-chat-win');
+      if (win) carregarMensagens(win, phone, true);
+    };
+
+    function getCanalAtivo(win){ return win.dataset.canalEnvio || 'wati'; }
+    function setCanalAtivo(win, canal){
+      const previo = win.dataset.canalEnvio || 'wati';
+      win.dataset.canalEnvio = canal;
+      const btnW = win.querySelector('[data-canal="wati"]');
+      const btnZ = win.querySelector('[data-canal="zapi"]');
+      if (btnW) { btnW.style.background = canal==='wati' ? '#22c55e' : '#1a1a1a'; btnW.style.color = canal==='wati' ? '#000' : '#aaa'; }
+      if (btnZ) { btnZ.style.background = canal==='zapi' ? '#1f6feb' : '#1a1a1a'; btnZ.style.color = canal==='zapi' ? '#fff' : '#aaa'; }
+      const ta = win.querySelector('textarea');
+      if (ta) ta.placeholder = canal === 'zapi' ? 'Z-API · sem janela 24h... (Enter envia)' : 'WATI · janela 24h... (Enter envia)';
+      // Recarrega histórico do novo canal
+      if (previo !== canal) {
+        const phone = win.dataset.phone;
+        if (phone) carregarMensagens(win, phone, false, canal);
+      }
+    }
+
+    async function enviarMsg(win, phone){
+      const ta = win.querySelector('textarea');
+      const txt = ta.value.trim();
+      if (!txt) return;
+      const canal = getCanalAtivo(win);
+      const btn = win.querySelector('.tdf-chat-send-main');
+      btn.disabled = true; btn.textContent = '...';
+      const endpoint = canal === 'zapi' ? '/inbox/zapi-enviar' : '/inbox/responder';
+      const body = canal === 'zapi' ? { phone, text: txt } : { phone, text: txt };
+      const d = await safeJson(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      btn.disabled = false; btn.textContent = '➤';
+      if (d.error) {
+        if (canal === 'wati') {
+          if (confirm('❌ WATI falhou: ' + d.error + '\n\n💡 Tentar enviar via Z-API (sem janela 24h)?')) {
+            setCanalAtivo(win, 'zapi');
+            return enviarMsg(win, phone);
+          }
+        } else {
+          alert('❌ Z-API falhou: ' + d.error);
+        }
+        return;
+      }
+      ta.value = '';
+      await carregarMensagens(win, phone);
+    }
+
+    async function enviarArquivo(win, phone, file){
+      if (!file) return;
+      if (file.size > 8*1024*1024) { alert('Arquivo muito grande (max 8MB)'); return; }
+      const canal = getCanalAtivo(win);
+      const indicator = win.querySelector('.tdf-chat-warn');
+      indicator.style.display = 'block';
+      indicator.textContent = `⏳ Enviando ${file.name} via ${canal.toUpperCase()}...`;
+      indicator.style.background = 'rgba(91,163,245,.1)';
+      indicator.style.borderBottomColor = '#1f6feb';
+      indicator.style.color = '#7cb9f5';
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const dataUrl = reader.result;
+        const endpoint = canal === 'zapi' ? '/inbox/zapi-anexar' : '/inbox/anexar';
+        const d = await safeJson(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ phone, dataUrl, filename: file.name }) });
+        if (d.error) {
+          indicator.textContent = '❌ ' + d.error;
+          indicator.style.color = '#f87171';
+          indicator.style.background = 'rgba(239,68,68,.1)';
+          indicator.style.borderBottomColor = '#ef4444';
+          setTimeout(() => { indicator.style.display = 'none'; }, 5000);
+          return;
+        }
+        indicator.style.display = 'none';
+        await carregarMensagens(win, phone);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function gravarAudio(win, phone){
+      const canal = getCanalAtivo(win);
+      const indicator = win.querySelector('.tdf-chat-warn');
+      const recBtn = win.querySelector('[data-act="audio"]');
+      // Toggle: se já gravando, para e envia
+      if (win._mediaRec) {
+        win._mediaRec.stop();
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' :
+                     MediaRecorder.isTypeSupported('audio/ogg;codecs=opus') ? 'audio/ogg;codecs=opus' : 'audio/webm';
+        const rec = new MediaRecorder(stream, { mimeType: mime });
+        const chunks = [];
+        rec.ondataavailable = e => chunks.push(e.data);
+        const startedAt = Date.now();
+        rec.onstop = async () => {
+          stream.getTracks().forEach(t => t.stop());
+          win._mediaRec = null;
+          recBtn.style.background = '';
+          recBtn.textContent = '🎙️';
+          const dur = Math.round((Date.now() - startedAt)/1000);
+          if (dur < 1) { indicator.style.display = 'none'; return; }
+          const blob = new Blob(chunks, { type: mime });
+          const reader = new FileReader();
+          reader.onload = async () => {
+            indicator.textContent = `⏳ Enviando áudio (${dur}s) via ${canal.toUpperCase()}...`;
+            const endpoint = canal === 'zapi' ? '/inbox/zapi-anexar' : '/inbox/anexar';
+            const d = await safeJson(endpoint, {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ phone, dataUrl: reader.result, filename: 'audio.ogg', tipo: 'audio' }),
+            });
+            if (d.error) {
+              indicator.textContent = '❌ ' + d.error;
+              indicator.style.color = '#f87171';
+              setTimeout(() => { indicator.style.display = 'none'; }, 5000);
+              return;
+            }
+            indicator.style.display = 'none';
+            await carregarMensagens(win, phone);
+          };
+          reader.readAsDataURL(blob);
+        };
+        rec.start();
+        win._mediaRec = rec;
+        recBtn.style.background = '#dc2626';
+        recBtn.textContent = '⏹️';
+        indicator.style.display = 'block';
+        indicator.textContent = '🔴 Gravando... clica novamente pra parar';
+        indicator.style.background = 'rgba(220,38,38,.1)';
+        indicator.style.borderBottomColor = '#dc2626';
+        indicator.style.color = '#f87171';
+      } catch(e) {
+        alert('Erro ao acessar microfone: ' + e.message);
+      }
+    }
+
+    // Cache global de templates (compartilhado entre instâncias do chat)
+    let _TPL_CACHE = null;
+    let _TPL_CACHE_AT = 0;
+
+    async function abrirTemplates(win, phone){
+      const ia = win.querySelector('.tdf-chat-ia');
+      ia.style.display = 'block';
+      // Cache de 5min — evita refetch toda hora que abre
+      if (!_TPL_CACHE || Date.now() - _TPL_CACHE_AT > 5*60000) {
+        ia.innerHTML = '<div style="color:#22c55e;font-size:11px;padding:6px">📨 Carregando templates WATI...</div>';
+        const d = await safeJson('/inbox/templates');
+        if (d.error || !Array.isArray(d.templates) || !d.templates.length) {
+          ia.innerHTML = '<div style="color:#f87171;font-size:11px;padding:6px">'+(d.error || 'Sem templates aprovados')+'</div>';
+          return;
+        }
+        _TPL_CACHE = d.templates;
+        _TPL_CACHE_AT = Date.now();
+      }
+      win.dataset.tplOpen = '1';
+      _renderTplPicker(win, phone, '');
+    }
+
+    function _renderTplPicker(win, phone, query){
+      const ia = win.querySelector('.tdf-chat-ia');
+      const q = (query || '').toLowerCase().trim();
+      const filtrados = _TPL_CACHE.filter(t => {
+        if (!q) return true;
+        const nome = (t.elementName || t.name || '').toLowerCase();
+        const corpo = (t.body || t.bodyOriginal || '').toLowerCase();
+        return nome.includes(q) || corpo.includes(q);
+      });
+
+      const dealId = win.dataset.dealId;
+      const opts = filtrados.slice(0, 50).map(t => {
+        const nome = t.elementName || t.name || '?';
+        const body = (t.body || t.bodyOriginal || '').replace(/'/g,"\\'").replace(/\n/g,' ').slice(0, 120);
+        return `<div onclick="window._enviarTpl('${dealId}','${phone}','${nome}')" style="background:#0f3a1a;border:1px solid #22c55e;border-radius:5px;padding:6px 8px;margin-bottom:3px;font-size:10px;color:#dcfce7;cursor:pointer">
+          <strong style="color:#22c55e">${nome}</strong><br>
+          <span style="color:#aaa;font-size:9px">${body}</span>
+        </div>`;
+      }).join('');
+      const total = _TPL_CACHE.length;
+      const visiveis = filtrados.length;
+      ia.innerHTML = `
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <span style="color:#22c55e;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px">📨 ${visiveis === total ? `${total} templates` : `${visiveis}/${total}`}</span>
+          <button onclick="this.closest('.tdf-chat-ia').style.display='none'" style="margin-left:auto;background:transparent;border:none;color:#666;cursor:pointer;font-size:14px;padding:0 4px">×</button>
+        </div>
+        <div style="position:relative;margin-bottom:6px">
+          <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#666;font-size:11px;pointer-events:none">🔍</span>
+          <input type="text" id="tpl-search-${dealId}" placeholder="Buscar template (nome ou texto)..." value="${(q||'').replace(/"/g,'&quot;')}"
+            style="width:100%;padding:6px 8px 6px 26px;background:#0a0a0a;border:1px solid #22c55e44;border-radius:5px;color:#fff;font-size:11px;outline:none;font-family:inherit"
+            oninput="window._tplFiltro('${dealId}','${phone}',this.value)" autofocus>
+        </div>
+        ${filtrados.length === 0
+          ? '<div style="color:#666;text-align:center;padding:14px;font-size:11px">Nenhum template combina com "<strong style=\"color:#fbbf24\">'+q.replace(/</g,'&lt;')+'</strong>"</div>'
+          : '<div style="max-height:280px;overflow-y:auto">'+opts+'</div>'
+        }
+      `;
+      // Refoca o input após re-render (mantém digitação fluida)
+      const input = document.getElementById('tpl-search-'+dealId);
+      if (input && q) {
+        input.focus();
+        input.setSelectionRange(q.length, q.length);
+      }
+    }
+
+    // Helper global pra filtrar conforme digita
+    window._tplFiltro = (dealId, phone, valor) => {
+      const w = _chats[dealId]; if (!w) return;
+      _renderTplPicker(w, phone, valor);
+    };
+
+    window._enviarTpl = async (dealId, phone, templateName) => {
+      const w = _chats[dealId]; if (!w) return;
+      // Detecta parâmetros {{N}} no body do template e prompta
+      const tpl = (_TPL_CACHE || []).find(t => (t.elementName||t.name) === templateName);
+      let params = [];
+      if (tpl) {
+        const body = tpl.body || tpl.bodyOriginal || '';
+        const matches = body.match(/\{\{\d+\}\}/g) || [];
+        if (matches.length) {
+          for (let i = 1; i <= matches.length; i++) {
+            const v = prompt(`Parâmetro {{${i}}} do template "${templateName}":`, '');
+            if (v === null) return; // cancelou
+            params.push(v);
+          }
+        }
+      }
+      const ia = w.querySelector('.tdf-chat-ia');
+      ia.innerHTML = '<div style="color:#22c55e;font-size:11px;padding:6px">📤 Enviando template '+templateName+'...</div>';
+      const d = await safeJson('/inbox/template', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ phone, templateName, params })});
+      if (d.error) { ia.innerHTML = '<div style="color:#f87171;font-size:10px;padding:6px">'+d.error+'</div>'; return; }
+      ia.style.display = 'none';
+      await carregarMensagens(w, phone);
+    };
+
+    function fechar(dealId){
+      const w = _chats[dealId];
+      if (w) { w.remove(); delete _chats[dealId]; }
+    }
+
+    function minimizar(dealId){
+      const w = _chats[dealId];
+      if (!w) return;
+      w.classList.toggle('min');
+    }
+
+    function expandir(dealId, phone){
+      window.location.href = '/inbox#phone=' + encodeURIComponent(phone);
+    }
+
+    window.abrirChat = function(dealId, phone, nome, canal){
+      // Já aberto? só foca/destaca
+      if (_chats[dealId]) {
+        _chats[dealId].classList.remove('min');
+        _chats[dealId].querySelector('textarea')?.focus();
+        return;
+      }
+      // Limita a MAX_CHATS — fecha o mais antigo se exceder
+      const ids = Object.keys(_chats);
+      while (ids.length >= MAX_CHATS) {
+        fechar(ids.shift());
+      }
+      const w = document.createElement('div');
+      w.className = 'tdf-chat-win';
+      w.dataset.dealId = dealId;
+      // Canal de origem (vindo da inbox: WATI ou Z-API). Default = WATI se não veio.
+      const canalOrigem = canal === 'zapi' ? 'zapi' : 'wati';
+      // Canal de envio default = mesmo da origem (espelha a conversa)
+      w.dataset.canalEnvio = canalOrigem;
+      const canalOrigemLabel = canalOrigem === 'zapi' ? 'Z-API' : 'WATI';
+      const canalOrigemColor = canalOrigem === 'zapi' ? '#1f6feb' : '#22c55e';
+      w.innerHTML = `
+        <div class="tdf-chat-h" style="border-bottom-color:${canalOrigemColor}">
+          <span class="ico">💬</span>
+          <span class="nome" title="${nome||phone}">${nome||phone}</span>
+          <span class="canal" style="background:${canalOrigemColor};color:${canalOrigem==='zapi'?'#fff':'#000'}">${canalOrigemLabel}</span>
+          <button class="b" data-act="expandir" title="Abrir em tela cheia">↗</button>
+          <button class="b" data-act="min" title="Minimizar">—</button>
+          <button class="b" data-act="fechar" title="Fechar">×</button>
+        </div>
+        <!-- Toggle WATI/Z-API -->
+        <div style="display:flex;gap:4px;padding:6px 10px;background:#080808;border-bottom:1px solid #1a1a1a;align-items:center">
+          <span style="font-size:9px;color:#666;font-weight:700;text-transform:uppercase;margin-right:4px">Enviar via</span>
+          <button data-canal="wati" style="background:#22c55e;color:#000;border:none;border-radius:4px;padding:3px 9px;font-size:10px;font-weight:800;cursor:pointer" title="WATI (oficial Meta) — só na janela 24h">📱 WATI</button>
+          <button data-canal="zapi" style="background:#1a1a1a;color:#aaa;border:none;border-radius:4px;padding:3px 9px;font-size:10px;font-weight:800;cursor:pointer" title="Z-API (seu WhatsApp pessoal) — sem janela 24h">⚡ Z-API</button>
+        </div>
+        <div class="tdf-chat-warn" style="display:none"></div>
+        <div class="tdf-chat-msgs"></div>
+        <div class="tdf-chat-ia" style="display:none;padding:6px 8px;border-top:1px solid #2a2a2a;background:#0f0820;max-height:160px;overflow-y:auto"></div>
+        <!-- Botões de mídia/template -->
+        <div style="display:flex;gap:3px;padding:6px 8px;background:#0f0f0f;border-top:1px solid #222;flex-wrap:wrap">
+          <button data-act="audio" title="Gravar áudio (click pra começar/parar)" style="background:#0f0f0f;border:1px solid #333;color:#aaa;border-radius:5px;padding:4px 8px;font-size:13px;cursor:pointer">🎙️</button>
+          <button data-act="anexar" title="Enviar arquivo/imagem (max 8MB)" style="background:#0f0f0f;border:1px solid #333;color:#aaa;border-radius:5px;padding:4px 8px;font-size:13px;cursor:pointer">📎</button>
+          <button data-act="template" title="Enviar template aprovado (WATI)" style="background:#0f0f0f;border:1px solid #333;color:#aaa;border-radius:5px;padding:4px 8px;font-size:13px;cursor:pointer">📨</button>
+          <input type="file" data-act="file-input" style="display:none" accept="image/*,application/pdf,audio/*,video/*,.doc,.docx,.xlsx,.csv">
+          <span style="flex:1"></span>
+          <button data-act="diretor" style="font-size:10px;padding:3px 8px;background:#dc2626;color:#fff;border:none;border-radius:5px;cursor:pointer" title="🎙️ Diretor de Vendas IA">🎯</button>
+          <button data-act="ia" style="font-size:10px;padding:3px 8px;background:#7c3aed;color:#fff;border:none;border-radius:5px;cursor:pointer" title="IA: sugerir 3 respostas">🤖</button>
+          <button data-act="resumo" style="font-size:10px;padding:3px 8px;background:#1f6feb;color:#fff;border:none;border-radius:5px;cursor:pointer" title="IA: resumir conversa">📝</button>
+          <button data-act="nubia" style="font-size:10px;padding:3px 8px;background:#a371f7;color:#fff;border:none;border-radius:5px;cursor:pointer" title="🤖 Iniciar conversa Núbia neste lead (dispara template + addContact)">✨ Núbia</button>
+        </div>
+        <div class="tdf-chat-input">
+          <textarea placeholder="Digite... (Enter envia)" rows="1"></textarea>
+          <button class="tdf-chat-send-main">➤</button>
+        </div>
+      `;
+      // Aplica estado inicial do toggle de canal
+      setTimeout(() => setCanalAtivo(w, canalOrigem), 0);
+      // Header: clica no minimizado pra restaurar
+      w.querySelector('.tdf-chat-h').addEventListener('click', e => {
+        if (w.classList.contains('min') && !e.target.matches('button')) {
+          w.classList.remove('min');
+        }
+      });
+      // Botões header
+      w.querySelector('[data-act="fechar"]').addEventListener('click', e => { e.stopPropagation(); fechar(dealId); });
+      w.querySelector('[data-act="min"]').addEventListener('click', e => { e.stopPropagation(); minimizar(dealId); });
+      w.querySelector('[data-act="expandir"]').addEventListener('click', e => { e.stopPropagation(); expandir(dealId, phone); });
+      // Input
+      const ta = w.querySelector('textarea');
+      ta.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMsg(w, phone); }
+      });
+      // Botão enviar
+      w.querySelector('.tdf-chat-send-main').addEventListener('click', () => enviarMsg(w, phone));
+      // Toggle canal WATI/Z-API
+      w.querySelector('[data-canal="wati"]').addEventListener('click', () => setCanalAtivo(w, 'wati'));
+      w.querySelector('[data-canal="zapi"]').addEventListener('click', () => setCanalAtivo(w, 'zapi'));
+      // Botão Áudio (gravar/parar)
+      w.querySelector('[data-act="audio"]').addEventListener('click', () => gravarAudio(w, phone));
+      // Botão Anexar
+      const fileInput = w.querySelector('[data-act="file-input"]');
+      w.querySelector('[data-act="anexar"]').addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', e => { if (e.target.files[0]) enviarArquivo(w, phone, e.target.files[0]); e.target.value = ''; });
+      // Botão Template
+      w.querySelector('[data-act="template"]').addEventListener('click', () => abrirTemplates(w, phone));
+      // Botão DIRETOR DE VENDAS IA — análise completa + msg pronta
+      w.querySelector('[data-act="diretor"]').addEventListener('click', async () => {
+        const ia = w.querySelector('.tdf-chat-ia');
+        ia.style.display = 'block';
+        ia.innerHTML = '<div style="color:#dc2626;font-size:11px;padding:6px">🎙️ Diretor analisando...</div>';
+        const r = await safeJson('/inbox/diretor-vendas', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ phone, dealId }) });
+        if (r.error) { ia.innerHTML = '<div style="color:#f87171;font-size:10px;padding:6px">'+r.error+'</div>'; return; }
+        const msg = (r.mensagemSugerida || '').replace(/'/g,"\\'").replace(/\n/g,' ');
+        const estrategiaHtml = Array.isArray(r.estrategia)
+          ? r.estrategia.map(e => '<li style="margin-bottom:2px">'+e.replace(/</g,'&lt;')+'</li>').join('')
+          : (r.estrategia || '').replace(/</g,'&lt;');
+        ia.innerHTML = `
+          <div style="background:#1a0a0a;border:1px solid #dc2626;border-radius:6px;padding:8px;font-size:10px">
+            <div style="color:#dc2626;font-weight:800;font-size:9px;text-transform:uppercase;margin-bottom:3px">🎙️ Diretor de Vendas</div>
+            <div style="color:#fbbf24;font-size:10px;margin-bottom:4px"><strong>📍 Diagnóstico:</strong> ${(r.diagnostico||'').replace(/</g,'&lt;')}</div>
+            <div style="color:#a371f7;font-size:10px;margin-bottom:6px"><strong>🎯 Estratégia:</strong> <ul style="margin:2px 0 0 14px;padding:0">${estrategiaHtml}</ul></div>
+            <div style="background:#0a0a0a;border:1px dashed #dc2626;border-radius:5px;padding:6px;color:#fff;cursor:pointer" onclick="this.closest('.tdf-chat-win').querySelector('textarea').value='${msg}';this.closest('.tdf-chat-ia').style.display='none'" title="Click pra usar essa mensagem">
+              <strong style="color:#22c55e;font-size:9px">💬 MENSAGEM PRONTA · click pra usar:</strong><br>
+              ${(r.mensagemSugerida||'').replace(/</g,'&lt;')}
+            </div>
+          </div>
+        `;
+      });
+      // Botão IA sugerir
+      w.querySelector('[data-act="ia"]').addEventListener('click', async () => {
+        const ia = w.querySelector('.tdf-chat-ia');
+        ia.style.display = 'block';
+        ia.innerHTML = '<div style="color:#a371f7;font-size:11px">🤖 Pensando...</div>';
+        const r = await safeJson('/inbox/ia-sugerir', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ phone, dealId }) });
+        if (r.error) { ia.innerHTML = '<div style="color:#f87171;font-size:10px">'+r.error+'</div>'; return; }
+        if (!r.sugestoes?.length) { ia.innerHTML = '<div style="color:#666;font-size:10px">Sem sugestões</div>'; return; }
+        ia.innerHTML = '<div style="color:#a371f7;font-size:9px;font-weight:700;margin-bottom:4px">💡 SUGESTÕES IA · clica pra usar</div>'
+          + r.sugestoes.map(s => `<div style="background:#1a1030;border:1px solid #4c1d95;border-radius:5px;padding:6px 8px;margin-bottom:3px;font-size:11px;color:#ddd;cursor:pointer" onclick="this.closest('.tdf-chat-win').querySelector('textarea').value='${s.replace(/'/g,"\\'").replace(/\n/g,' ')}';this.closest('.tdf-chat-ia').style.display='none'">${s.replace(/</g,'&lt;')}</div>`).join('');
+      });
+      // Botão resumir
+      w.querySelector('[data-act="resumo"]').addEventListener('click', async (e) => {
+        if (!confirm('Gerar resumo IA da conversa e salvar nas notas do Closy?')) return;
+        const btn = e.currentTarget;
+        btn.disabled = true; btn.textContent = '⏳';
+        const r = await safeJson('/inbox/ia-resumir', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ phone, dealId }) });
+        btn.disabled = false; btn.textContent = '📝';
+        if (r.error) { alert('❌ '+r.error); return; }
+        alert('✅ Resumo salvo nas notas do cliente:\n\n'+r.resumo);
+      });
+      // Botão Núbia: dispara /webhook/new-deal (addContact + sendTemplate)
+      w.querySelector('[data-act="nubia"]').addEventListener('click', async (e) => {
+        if (!confirm('🤖 Iniciar conversa da Núbia com este lead?\n\nVai disparar template "Primeiro contato" + iniciar atendimento automatizado.')) return;
+        const btn = e.currentTarget;
+        btn.disabled = true; const orig = btn.textContent; btn.textContent = '⏳';
+        const r = await safeJson('/cockpit/nubia-meu-lead', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ dealId }) });
+        btn.disabled = false; btn.textContent = orig;
+        if (r.error) { alert('❌ '+r.error); return; }
+        if (r.ok) {
+          alert('✅ Núbia disparada!\nLead: '+(r.deal||'?')+'\nMensagens enviadas: '+(r.sent||0));
+          // Recarrega histórico pra mostrar a mensagem nova
+          setTimeout(() => carregarMensagens(w, phone), 1500);
+        } else {
+          alert('⚠️ Núbia não conseguiu enviar.\nDetalhe: '+JSON.stringify(r));
+        }
+      });
+      bar.appendChild(w);
+      _chats[dealId] = w;
+      // Carrega histórico
+      carregarMensagens(w, phone);
+      // Marca como visto
+      fetch('/manutencao/wati-inbox/' + encodeURIComponent(dealId) + '/visto', { method:'POST' }).catch(()=>{});
+      ta.focus();
+    };
+  })();
+
+  // ============= TAREFAS + LEMBRETES POPUP =============
+  (function(){
+    const KEY_LIDOS = 'tdf_tarefa_dispensados_v1';
+    const lidos = JSON.parse(localStorage.getItem(KEY_LIDOS) || '{}');
+    Object.keys(lidos).forEach(k => { if (Date.now() - lidos[k] > 24*3600000) delete lidos[k]; });
+    const css = `
+      .tdf-tk-popup{position:fixed;top:80px;right:20px;width:340px;background:#0d1f3a;border:2px solid #3b82f6;border-radius:12px;padding:14px 16px;color:#fff;box-shadow:0 12px 40px rgba(59,130,246,.5);z-index:9990;font-size:13px;animation:tkSlide .3s ease}
+      .tdf-tk-popup.urgente{border-color:#ef4444;box-shadow:0 12px 40px rgba(239,68,68,.5);animation:tkPulse 1.4s infinite}
+      .tdf-tk-popup .head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+      .tdf-tk-popup .head .ico{font-size:18px}
+      .tdf-tk-popup .head .lbl{flex:1;color:#7cb9f5;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+      .tdf-tk-popup .head .x{background:transparent;border:none;color:#666;cursor:pointer;font-size:16px;padding:0 4px}
+      .tdf-tk-popup .titulo{color:#fff;font-weight:800;font-size:14px;margin-bottom:3px}
+      .tdf-tk-popup .meta{color:#aaa;font-size:11px;margin-bottom:6px}
+      .tdf-tk-popup .obs{color:#ddd;font-size:11px;font-style:italic;margin-bottom:8px}
+      .tdf-tk-popup .acoes{display:flex;gap:6px;flex-wrap:wrap}
+      .tdf-tk-popup button.act{flex:1;padding:7px 10px;border-radius:5px;font-weight:700;cursor:pointer;font-size:11px;border:none}
+      .tdf-tk-popup button.ok{background:#22c55e;color:#000}
+      .tdf-tk-popup button.adiar{background:#f97316;color:#fff}
+      .tdf-tk-popup button.fechar{background:#222;color:#aaa;border:1px solid #444}
+      @keyframes tkSlide{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+      @keyframes tkPulse{0%,100%{box-shadow:0 12px 40px rgba(239,68,68,.5)}50%{box-shadow:0 12px 40px rgba(239,68,68,.9),0 0 0 8px rgba(239,68,68,.2)}}
+    `;
+    const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+
+    function showLembrete(t) {
+      if (lidos[t.id]) return;
+      // Não mostra duplicado
+      if (document.querySelector('.tdf-tk-popup[data-id="'+t.id+'"]')) return;
+      const el = document.createElement('div');
+      el.className = 'tdf-tk-popup';
+      el.dataset.id = t.id;
+      const dataLocal = new Date(t.dataHora).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});
+      const minutosFalta = Math.round((new Date(t.dataHora).getTime() - Date.now()) / 60000);
+      const urgente = minutosFalta <= 0;
+      if (urgente) el.classList.add('urgente');
+      el.innerHTML = `
+        <div class="head">
+          <span class="ico">${urgente?'🔥':'📋'}</span>
+          <span class="lbl">${urgente?'Tarefa AGORA':'Lembrete · em '+minutosFalta+'min'}</span>
+          <button class="x" onclick="window._tkDispensar('${t.id}')">×</button>
+        </div>
+        <div class="titulo">${(t.titulo||'').replace(/</g,'&lt;')}</div>
+        <div class="meta">📅 ${dataLocal}${t.dealNome?' · 👤 '+t.dealNome.replace(/</g,'&lt;'):''}</div>
+        ${t.observacao?`<div class="obs">${t.observacao.replace(/</g,'&lt;')}</div>`:''}
+        <div class="acoes">
+          <button class="act ok" onclick="window._tkConcluir('${t.id}')">✅ Feito</button>
+          <button class="act adiar" onclick="window._tkAdiar('${t.id}',15)">+15min</button>
+          <button class="act fechar" onclick="window._tkDispensar('${t.id}')">Depois</button>
+        </div>
+      `;
+      document.body.appendChild(el);
+      // Toca som de notificação
+      try { window.tdfSons?.tocar(); } catch(_){}
+    }
+
+    window._tkDispensar = id => {
+      lidos[id] = Date.now();
+      localStorage.setItem(KEY_LIDOS, JSON.stringify(lidos));
+      document.querySelector('.tdf-tk-popup[data-id="'+id+'"]')?.remove();
+    };
+    window._tkConcluir = async id => {
+      try {
+        const r = await fetch('/tarefas/'+id+'/concluir', { method:'POST' });
+        if (r.ok) { window._tkDispensar(id); }
+      } catch(_){}
+    };
+    window._tkAdiar = async (id, min) => {
+      try {
+        const r = await fetch('/tarefas/'+id+'/adiar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ minutos: min }) });
+        if (r.ok) { window._tkDispensar(id); }
+      } catch(_){}
+    };
+
+    async function poll() {
+      try {
+        const r = await fetch('/tarefas/lembretes');
+        if (!r.ok) return;
+        const ct = r.headers.get('content-type')||'';
+        if (!ct.includes('json')) return;
+        const d = await r.json();
+        (d.lembretes || []).forEach(showLembrete);
+      } catch(_){}
+    }
+    poll();
+    setInterval(poll, 30000); // 30s
+  })();
+
+  // ============= NOTIFICAÇÃO FLUTUANTE (cliente respondeu WATI/Z-API) =============
+  // Closer só vê notificações da carteira dele · admin vê tudo
+  (function(){
+    const KEY_LIDAS = 'tdf_notif_lidas_v1';
+    // _lastTs: pega mensagens só MAIS NOVAS que o último poll (evita re-mostrar)
+    // No primeiro carregamento, vira o now() — não mostra histórico antigo
+    let _lastTs = Date.now() - 5 * 60 * 1000; // pega últimos 5min do boot
+    let _lidas = JSON.parse(localStorage.getItem(KEY_LIDAS) || '{}');
+    // Limpa lidas com mais de 6h (antes era 24h — usuário fica vendo notif "morta")
+    const cutoff = Date.now() - 6 * 3600000;
+    Object.keys(_lidas).forEach(k => { if (_lidas[k] < cutoff) delete _lidas[k]; });
+
+    const css = `
+      .tdf-notif-stack{position:fixed;bottom:200px;right:18px;z-index:9999;display:flex;flex-direction:column-reverse;gap:8px;max-width:320px;pointer-events:none}
+      .tdf-notif{
+        background:linear-gradient(135deg,#0f1419,#0d1117);
+        border:1px solid rgba(0,168,132,.35);
+        border-left:3px solid #00a884;
+        border-radius:10px;padding:10px 30px 10px 12px;color:#e6edf3;
+        box-shadow:0 8px 28px rgba(0,0,0,.55), 0 0 0 1px rgba(0,168,132,.08);
+        font-size:12px;animation:tdfSlideIn .25s cubic-bezier(.16,1,.3,1);
+        pointer-events:auto;cursor:pointer;position:relative;
+        backdrop-filter:blur(12px);
+        transition:transform .15s ease, border-color .15s, box-shadow .15s;
+      }
+      .tdf-notif:hover{border-color:#00a884;transform:translateX(-3px);box-shadow:0 10px 32px rgba(0,168,132,.18), 0 0 0 1px rgba(0,168,132,.18)}
+      .tdf-notif .head{display:inline-flex;align-items:center;gap:5px;margin-bottom:3px;font-weight:700;font-size:9.5px;color:#4ade80;text-transform:uppercase;letter-spacing:.5px}
+      .tdf-notif .nome{color:#fff;font-weight:700;font-size:13px;margin-bottom:3px;letter-spacing:-.1px;line-height:1.3}
+      .tdf-notif .body{color:#cbd5db;font-size:11.5px;line-height:1.4;font-style:italic}
+      .tdf-notif .meta{color:#8a9099;font-size:10px;margin-top:6px;display:flex;gap:5px;align-items:center;flex-wrap:wrap;line-height:1.4;font-variant-numeric:tabular-nums}
+      .tdf-notif .meta strong{color:#4ade80;font-weight:700;background:rgba(74,222,128,.1);padding:1px 6px;border-radius:8px;font-size:9.5px;letter-spacing:.2px}
+      .tdf-notif .x{position:absolute;top:5px;right:6px;color:#5b6068;cursor:pointer;font-size:14px;font-weight:700;line-height:1;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:5px;transition:all .12s}
+      .tdf-notif .x:hover{color:#fff;background:rgba(255,255,255,.08)}
+      @keyframes tdfSlideIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+      @media(max-width:640px){.tdf-notif-stack{right:10px;bottom:170px;max-width:calc(100vw - 20px)}}
+    `;
+    const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+    const stack = document.createElement('div'); stack.className = 'tdf-notif-stack'; document.body.appendChild(stack);
+
+    function ts2hm(ts){ const d = new Date(ts); return d.toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}); }
+
+    const MAX_NOTIFS = 2;
+    function showNotif(n){
+      if (_lidas[n.dealId]) return;
+      // Sempre alimenta o buffer/painel mínimo (modo ícone)
+      window.tdfNotifAdd?.(n);
+      // Se modo ícone, NÃO mostra popup grande — só ícone+badge é suficiente
+      if (window.tdfNotifSide?.get() === 'icon') return;
+      // Se já existe notif desse dealId no stack, ATUALIZA em vez de criar nova
+      const existente = stack.querySelector(`.tdf-notif[data-deal-id="${n.dealId}"]`);
+      const corpo = `"${(n.text||'').slice(0,90)}${(n.text||'').length>90?'…':''}"`;
+      if (existente) {
+        const counter = parseInt(existente.dataset.count || '1', 10) + 1;
+        existente.dataset.count = String(counter);
+        existente.querySelector('.body').innerHTML = corpo;
+        existente.querySelector('.meta').innerHTML = `📞 ${n.phone} · ${ts2hm(n.ts)}${n.operadora?' · 👤 '+n.operadora:''} · <strong style="color:#22c55e">+${counter} msgs</strong>`;
+        // reset auto-remove
+        clearTimeout(existente._removeTimer);
+        existente._removeTimer = setTimeout(() => existente.remove(), 12000);
+        return;
+      }
+      // Limita a MAX_NOTIFS — se já tem 2, remove a mais antiga
+      const existentes = stack.querySelectorAll('.tdf-notif');
+      if (existentes.length >= MAX_NOTIFS) {
+        existentes[0].remove(); // o mais antigo (column-reverse, índice 0 = primeiro a entrar)
+      }
+      const el = document.createElement('div');
+      el.className = 'tdf-notif';
+      el.dataset.dealId = n.dealId;
+      el.dataset.count = '1';
+      el.innerHTML = `
+        <span class="x" onclick="event.stopPropagation();this.parentElement.remove();">×</span>
+        <div class="head">💬 ${n.canal === 'zapi' ? 'Z-API' : 'WATI'} · CLIENTE RESPONDEU</div>
+        <div class="nome">${n.nome || n.phone}</div>
+        <div class="body">${corpo}</div>
+        <div class="meta">📞 ${n.phone} · ${ts2hm(n.ts)}${n.operadora?' · 👤 '+n.operadora:''}</div>
+      `;
+      el.addEventListener('click', () => {
+        _lidas[n.dealId] = Date.now();
+        localStorage.setItem(KEY_LIDAS, JSON.stringify(_lidas));
+        if (window.abrirChat) {
+          window.abrirChat(n.dealId, n.phone, n.nome, n.canal);
+          el.remove();
+        } else {
+          window.location.href = '/inbox#phone=' + encodeURIComponent(n.phone);
+        }
+      });
+      stack.appendChild(el);
+      el._removeTimer = setTimeout(() => el.remove(), 12000);
+    }
+
+    async function poll(){
+      try {
+        const r = await fetch('/inbox/notifs/poll?since=' + _lastTs);
+        if (!r.ok) return;
+        const ct = r.headers.get('content-type') || '';
+        if (!ct.includes('json')) return;
+        const d = await r.json();
+        if (d.serverTs) _lastTs = d.serverTs;
+        // Filtra notificações com TTL — só msgs dos últimos 60min
+        const ttlCutoff = Date.now() - 60 * 60 * 1000;
+        const recentes = (d.notifs || []).filter(n => (n.ts || 0) > ttlCutoff);
+        recentes.forEach(showNotif);
+      } catch(_){}
+    }
+    poll();
+    setInterval(poll, 15000); // 15s (era 25s)
+
+    // === SSE: notificações em REAL-TIME (não esperar polling 15s) ===
+    function _initNotifSSE(){
+      let evtSrc;
+      try { evtSrc = new EventSource('/inbox/stream'); }
+      catch(e) { return; }
+      evtSrc.addEventListener('nova_mensagem', e => {
+        try {
+          const d = JSON.parse(e.data);
+          if (!d.text || !d.dealId) return;
+          // Cria notif instantaneamente sem esperar poll
+          showNotif({
+            dealId: d.dealId,
+            phone: d.phone || '',
+            nome: '',
+            text: d.text,
+            ts: d.ts || Date.now(),
+            canal: d.canal || 'wati',
+          });
+        } catch(_){}
+      });
+      // 🎉 NOVA VENDA — som de caixa registradora + toast (estilo Shopify)
+      evtSrc.addEventListener('venda-fechada', e => {
+        try {
+          const d = JSON.parse(e.data);
+          window.tdfKaChing?.(d);
+        } catch(_){}
+      });
+      evtSrc.onerror = () => {
+        try { evtSrc.close(); } catch(_){}
+        setTimeout(_initNotifSSE, 5000);
+      };
+    }
+    _initNotifSSE();
+  })();
+
+// ====== 🎉 KA-CHING: som + toast estilo Shopify quando sai venda ======
+(function(){
+  let _kachingMuted = localStorage.getItem('tdf_kaching_muted') === '1';
+  let _kachingCtx = null;
+  function getCtx(){
+    if (!_kachingCtx) {
+      try { _kachingCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(_){}
+    }
+    return _kachingCtx;
+  }
+  // Sintetiza um "ka-ching" de caixa registradora — bell tom + secundário + percussão de moedas
+  function tocarKaching(){
+    if (_kachingMuted) return;
+    const ctx = getCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    const t0 = ctx.currentTime;
+    // 1) "Ka" — clique grave (tom curto baixo)
+    const ka = ctx.createOscillator();
+    const kaG = ctx.createGain();
+    ka.frequency.value = 380;
+    ka.type = 'square';
+    kaG.gain.setValueAtTime(.0001, t0);
+    kaG.gain.exponentialRampToValueAtTime(.25, t0 + 0.005);
+    kaG.gain.exponentialRampToValueAtTime(.0001, t0 + 0.08);
+    ka.connect(kaG); kaG.connect(ctx.destination);
+    ka.start(t0); ka.stop(t0 + 0.1);
+    // 2) "Ching" — sino agudo (mistura de senos com decay)
+    const freqs = [1318.5, 1567.98, 1975.53, 2349.32]; // E6, G6, B6, D7
+    freqs.forEach((freq, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      const start = t0 + 0.06 + i * 0.005;
+      g.gain.setValueAtTime(.0001, start);
+      g.gain.exponentialRampToValueAtTime(.18 / (i + 1), start + 0.01);
+      g.gain.exponentialRampToValueAtTime(.0001, start + 1.4);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(start); o.stop(start + 1.5);
+    });
+    // 3) "Ting" — armônico bem agudo (caixa metálica)
+    const ting = ctx.createOscillator();
+    const tingG = ctx.createGain();
+    ting.type = 'triangle';
+    ting.frequency.value = 3200;
+    tingG.gain.setValueAtTime(.0001, t0 + 0.12);
+    tingG.gain.exponentialRampToValueAtTime(.1, t0 + 0.13);
+    tingG.gain.exponentialRampToValueAtTime(.0001, t0 + 0.5);
+    ting.connect(tingG); tingG.connect(ctx.destination);
+    ting.start(t0 + 0.12); ting.stop(t0 + 0.55);
+    // 4) Moedas: ruído branco curto modulado
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2);
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    const noiseG = ctx.createGain();
+    noiseG.gain.value = .04;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.value = 4000;
+    noise.connect(filter); filter.connect(noiseG); noiseG.connect(ctx.destination);
+    noise.start(t0 + 0.18);
+  }
+  function fmtR(v){ return 'R$ ' + Math.round(v||0).toLocaleString('pt-BR'); }
+  function mostrarToast(d){
+    // Toast central grande estilo Shopify celebration
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);background:linear-gradient(135deg,#10b981,#22c55e);color:#fff;padding:16px 28px;border-radius:14px;font-weight:800;font-size:15px;z-index:99999;box-shadow:0 12px 40px rgba(34,197,94,.5);opacity:0;transition:all .4s cubic-bezier(.16,1,.3,1);display:flex;align-items:center;gap:14px;font-family:inherit;border:2px solid rgba(255,255,255,.2);max-width:90vw';
+    el.innerHTML = `
+      <div style="font-size:36px;animation:tdfRingShake .6s ease 2">💰</div>
+      <div style="text-align:left;line-height:1.3">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;opacity:.85">🎉 Nova venda · TDF</div>
+        <div style="font-size:18px;font-weight:900;margin-top:2px">${fmtR(d.amount)}</div>
+        <div style="font-size:12px;font-weight:600;opacity:.9;margin-top:1px">${(d.nome||'?').slice(0,40)}${d.owner?' · '+d.owner:''}</div>
+      </div>
+    `;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => {
+      el.style.opacity = '1';
+      el.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    setTimeout(() => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateX(-50%) translateY(-20px)';
+      setTimeout(() => el.remove(), 500);
+    }, 5000);
+  }
+  // === 🏆 TEMA DA VITÓRIA — Senna (sintetizado) — toca quando venda > R$ 10k ===
+  // Inspirado em "Tema da Vitória" de Eduardo Souto Neto (sintetizado, não o original)
+  // Sequência de notas reconhecível: brass fanfare ascendente + sustain orquestral
+  function tocarTemaVitoria(){
+    if (_kachingMuted) return;
+    const ctx = getCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    const t0 = ctx.currentTime;
+
+    // Master gain pra controlar volume geral
+    const master = ctx.createGain();
+    master.gain.value = 0.45;
+    master.connect(ctx.destination);
+
+    // Reverb leve pra dar ambiência orquestral
+    const conv = ctx.createConvolver();
+    const rDur = 1.2;
+    const rBuf = ctx.createBuffer(2, ctx.sampleRate * rDur, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = rBuf.getChannelData(ch);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 3) * 0.3;
+      }
+    }
+    conv.buffer = rBuf;
+    const wet = ctx.createGain(); wet.gain.value = 0.3;
+    conv.connect(wet); wet.connect(master);
+
+    // Helper: nota de "brass" (sawtooth + filter + envelope)
+    function brass(freq, start, dur, vol = 0.5) {
+      const o1 = ctx.createOscillator();
+      const o2 = ctx.createOscillator(); // detune leve pra encorpar
+      o1.type = 'sawtooth'; o2.type = 'sawtooth';
+      o1.frequency.value = freq;
+      o2.frequency.value = freq * 1.005;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(800, start);
+      filter.frequency.exponentialRampToValueAtTime(3500, start + 0.05);
+      filter.frequency.exponentialRampToValueAtTime(2200, start + dur);
+      filter.Q.value = 2;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(vol, start + 0.04);
+      g.gain.setValueAtTime(vol, start + dur - 0.1);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      o1.connect(filter); o2.connect(filter);
+      filter.connect(g); g.connect(master); g.connect(conv);
+      o1.start(start); o2.start(start);
+      o1.stop(start + dur + 0.1); o2.stop(start + dur + 0.1);
+    }
+    // Helper: nota de "string" (sine longa)
+    function string(freq, start, dur, vol = 0.18) {
+      const o = ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.linearRampToValueAtTime(vol, start + 0.4);
+      g.gain.setValueAtTime(vol, start + dur - 0.5);
+      g.gain.linearRampToValueAtTime(0.0001, start + dur);
+      o.connect(g); g.connect(master); g.connect(conv);
+      o.start(start); o.stop(start + dur + 0.1);
+    }
+    // Timpani hit (forte impacto inicial)
+    function timpani(start) {
+      const o = ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(80, start);
+      o.frequency.exponentialRampToValueAtTime(40, start + 0.5);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.7, start);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + 0.6);
+      o.connect(g); g.connect(master);
+      o.start(start); o.stop(start + 0.7);
+    }
+
+    // Notas (Hz): C5=523.25 D5=587.33 E5=659.25 F5=698.46 G5=783.99 A5=880 Bb5=932.33 C6=1046.5 D6=1174.66 E6=1318.51 F6=1396.91 G6=1567.98
+    // Acordes em fundo: C maior (C, E, G) e F maior (F, A, C)
+    const C4=261.63, E4=329.63, G4=392, C5=523.25, E5=659.25, G5=783.99, A5=880, C6=1046.5, E6=1318.51, G6=1567.98;
+    const F4=349.23, A4=440, F5=698.46, A5b=466.16, B4=493.88, D5=587.33, F5_=698.46;
+
+    // === FRASE 1: Impacto + brass ascendente (0-2s) ===
+    timpani(t0);
+    timpani(t0 + 0.3);
+    brass(C5, t0 + 0.0, 0.4, 0.5);
+    brass(E5, t0 + 0.4, 0.4, 0.5);
+    brass(G5, t0 + 0.8, 0.4, 0.5);
+    brass(C6, t0 + 1.2, 0.7, 0.6);
+    // Strings sustentam acorde C
+    string(C4, t0 + 0.0, 2.0, 0.15);
+    string(E4, t0 + 0.0, 2.0, 0.15);
+    string(G4, t0 + 0.0, 2.0, 0.18);
+
+    // === FRASE 2: Pico triunfal (2-4.5s) ===
+    timpani(t0 + 2.0);
+    brass(E5, t0 + 2.0, 0.3, 0.5);
+    brass(G5, t0 + 2.3, 0.3, 0.5);
+    brass(C6, t0 + 2.6, 0.4, 0.55);
+    brass(E6, t0 + 3.0, 0.6, 0.6);
+    brass(G6, t0 + 3.6, 0.9, 0.65);
+    string(C5, t0 + 2.0, 2.5, 0.18);
+    string(E5, t0 + 2.0, 2.5, 0.18);
+    string(G5, t0 + 2.0, 2.5, 0.2);
+
+    // === FRASE 3: Resolução (4.5-7s) — desce e prepara o final ===
+    timpani(t0 + 4.5);
+    brass(F5_, t0 + 4.5, 0.5, 0.55);
+    brass(A5, t0 + 5.0, 0.5, 0.55);
+    brass(C6, t0 + 5.5, 0.7, 0.6);
+    string(F4, t0 + 4.5, 2.5, 0.18);
+    string(A4, t0 + 4.5, 2.5, 0.18);
+    string(C5, t0 + 4.5, 2.5, 0.2);
+
+    // === FRASE 4: Final glorioso (7-10s) — acorde maior cheio sustentado ===
+    timpani(t0 + 7.0);
+    timpani(t0 + 7.4);
+    brass(C6, t0 + 7.0, 2.8, 0.7);
+    brass(E6, t0 + 7.0, 2.8, 0.6);
+    brass(G6, t0 + 7.0, 2.8, 0.55);
+    string(C4, t0 + 7.0, 3.0, 0.2);
+    string(E4, t0 + 7.0, 3.0, 0.2);
+    string(G4, t0 + 7.0, 3.0, 0.22);
+    string(C5, t0 + 7.0, 3.0, 0.22);
+    // Cymbal hit no clímax (ruído branco filtrado)
+    const cymbalBuf = ctx.createBuffer(1, ctx.sampleRate * 1.5, ctx.sampleRate);
+    const cd = cymbalBuf.getChannelData(0);
+    for (let i = 0; i < cd.length; i++) cd[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / cd.length, 1.5);
+    const cs = ctx.createBufferSource();
+    cs.buffer = cymbalBuf;
+    const cf = ctx.createBiquadFilter();
+    cf.type = 'highpass'; cf.frequency.value = 5000;
+    const cg = ctx.createGain();
+    cg.gain.setValueAtTime(0.18, t0 + 7.0);
+    cg.gain.exponentialRampToValueAtTime(0.0001, t0 + 8.5);
+    cs.connect(cf); cf.connect(cg); cg.connect(master);
+    cs.start(t0 + 7.0);
+  }
+
+  function mostrarToastVitoria(d){
+    // Overlay GIGANTE no centro pra venda grande
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.5);background:linear-gradient(135deg,#fbbf24,#f59e0b,#dc2626);color:#fff;padding:30px 50px;border-radius:20px;font-weight:900;z-index:99999;box-shadow:0 20px 80px rgba(220,38,38,.7),0 0 0 4px rgba(255,255,255,.1);opacity:0;transition:all .6s cubic-bezier(.16,1,.3,1);text-align:center;font-family:inherit;border:3px solid #fff;max-width:90vw';
+    el.innerHTML = `
+      <div style="font-size:64px;animation:tdfTrofeu 1s infinite alternate;line-height:1">🏆</div>
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;margin-top:8px;opacity:.95">🏎️ Venda Bandeirada</div>
+      <div style="font-size:42px;font-weight:900;margin-top:6px;text-shadow:0 4px 12px rgba(0,0,0,.4)">${fmtR(d.amount)}</div>
+      <div style="font-size:16px;font-weight:700;margin-top:6px;opacity:.95">${(d.nome||'?').slice(0,50)}</div>
+      ${d.owner ? `<div style="font-size:14px;font-weight:700;margin-top:4px;opacity:.85">por ${d.owner}</div>` : ''}
+      <div style="font-size:10px;font-weight:700;margin-top:14px;opacity:.7;letter-spacing:1px">🇧🇷 NA BRASIL VOLTA POR CIMA 🇧🇷</div>
+    `;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => {
+      el.style.opacity = '1';
+      el.style.transform = 'translate(-50%,-50%) scale(1)';
+    });
+    // Confetti rápido
+    for (let i = 0; i < 40; i++) {
+      const c = document.createElement('div');
+      const cores = ['#fbbf24','#22c55e','#1f6feb','#dc2626','#fff'];
+      c.style.cssText = `position:fixed;top:50%;left:50%;width:10px;height:14px;background:${cores[i%cores.length]};z-index:99998;pointer-events:none;border-radius:2px`;
+      document.body.appendChild(c);
+      const angle = Math.random() * Math.PI * 2;
+      const vel = 200 + Math.random() * 300;
+      const dx = Math.cos(angle) * vel;
+      const dy = Math.sin(angle) * vel - 100;
+      c.animate([
+        { transform: 'translate(-50%,-50%) rotate(0)', opacity: 1 },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(${Math.random()*720-360}deg)`, opacity: 0 },
+      ], { duration: 2500 + Math.random() * 1500, easing: 'cubic-bezier(.2,.6,.4,1)' });
+      setTimeout(() => c.remove(), 4500);
+    }
+    setTimeout(() => {
+      el.style.opacity = '0';
+      el.style.transform = 'translate(-50%,-50%) scale(.85)';
+      setTimeout(() => el.remove(), 600);
+    }, 10500);
+  }
+
+  // Anti-duplicação (caso SSE entregue 2x ou refresh dispare de novo)
+  const _seen = new Set();
+  window.tdfKaChing = function(d){
+    if (!d || !d.id) return;
+    if (_seen.has(d.id)) return;
+    _seen.add(d.id);
+    // Limpa set após 1h pra não vazar memória
+    setTimeout(() => _seen.delete(d.id), 60*60*1000);
+    const valor = parseFloat(d.amount) || 0;
+    if (valor >= 10000) {
+      // 🏆 VENDA GIGANTE — Tema da Vitória 10s + overlay especial
+      tocarTemaVitoria();
+      mostrarToastVitoria(d);
+    } else {
+      // Venda normal — ka-ching curto
+      tocarKaching();
+      mostrarToast(d);
+    }
+    // Notificação sistema (se permitida)
+    try {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        new Notification(valor >= 10000 ? '🏆 VENDA BANDEIRADA' : '🎉 Nova venda TDF', {
+          body: `${fmtR(d.amount)} · ${(d.nome||'?').slice(0,40)}${d.owner?' · '+d.owner:''}`,
+          icon: '/icon-192.png',
+          tag: 'venda-' + d.id,
+        });
+      }
+    } catch(_){}
+  };
+  // Helper pra mute/teste
+  window.tdfKaChingMute = function(){ _kachingMuted = !_kachingMuted; localStorage.setItem('tdf_kaching_muted', _kachingMuted ? '1' : '0'); console.log('Ka-ching mute:', _kachingMuted); };
+  window.tdfKaChingTeste = function(){ window.tdfKaChing({ id: 'teste'+Date.now(), nome: 'Cliente Teste', amount: 4990, owner: 'Você' }); };
+  window.tdfTemaVitoriaTeste = function(){ window.tdfKaChing({ id: 'tv'+Date.now(), nome: 'Cliente VIP', amount: 18500, owner: 'Você' }); };
+})();
+</script>
+<style>
+@keyframes tdfRingShake { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-15deg)} 75%{transform:rotate(15deg)} }
+@keyframes tdfTrofeu { from{transform:scale(1) rotate(-5deg)} to{transform:scale(1.15) rotate(5deg)} }
+</style>
+
+<!-- ====== FOOTER DISCRETO COM LOGO ====== -->
+<style>
+.tdf-footer{
+  position:fixed; bottom:6px; left:6px; z-index:30;
+  display:flex; align-items:center; gap:6px;
+  padding:4px 10px; border-radius:20px;
+  background:rgba(13,17,23,.7); backdrop-filter:blur(8px);
+  border:1px solid rgba(48,54,61,.5);
+  opacity:.55; transition:opacity .2s;
+  pointer-events:none;
+}
+.tdf-footer:hover{ opacity:1 }
+.tdf-footer img{ height:18px; width:auto; display:block; opacity:.85 }
+.tdf-footer span{ font-size:10px; color:var(--text-muted); font-weight:600; letter-spacing:.3px }
+@media(max-width:600px){ .tdf-footer{ display:none } }
+</style>
+<div class="tdf-footer">
+  <img src="/logo-white-small.png" alt="TDF" />
+  <span>© <%= new Date().getFullYear() %> Tudo de Filtro</span>
+</div>
+
+<!-- ============= QUADRO DE TAREFAS GLOBAL ============= -->
+<% if (user.role === 'closer' || user.role === 'admin') { %>
+<style>
+/* === FAB CLUSTER: stack vertical no canto inferior direito === */
+.tdf-fab-cluster{position:fixed;bottom:20px;right:18px;z-index:90;display:flex;flex-direction:column-reverse;gap:10px;align-items:flex-end;pointer-events:none}
+.tdf-fab-cluster > *{pointer-events:auto}
+
+.tk-fab{position:relative;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;border:none;border-radius:50px;padding:8px 14px;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(239,68,68,.4),0 0 0 1px rgba(255,255,255,.04);display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.3px;transition:all .18s cubic-bezier(.16,1,.3,1);font-family:inherit}
+.tk-fab:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(239,68,68,.55),0 0 0 1px rgba(255,255,255,.06)}
+.tk-fab .badge{background:#fff;color:#ef4444;border-radius:11px;padding:1px 7px;font-size:11px;font-weight:800;min-width:20px;text-align:center;line-height:1.4}
+.tk-fab .b-vencidas{background:#fff;color:#ef4444;border-radius:9px;padding:1px 6px;font-size:10px;font-weight:800;min-width:18px;text-align:center;line-height:1.4;display:inline-flex;align-items:center;gap:2px}
+.tk-fab .b-avencer{background:rgba(255,255,255,.2);color:var(--text);border-radius:9px;padding:1px 6px;font-size:10px;font-weight:800;min-width:18px;text-align:center;line-height:1.4;display:inline-flex;align-items:center;gap:2px}
+.tk-fab.calm{background:linear-gradient(135deg,#1e3a5f,#2a4a6f);box-shadow:0 6px 18px rgba(0,0,0,.4),0 0 0 1px rgba(91,163,245,.12)}
+.tk-fab.calm:hover{box-shadow:0 10px 24px rgba(0,0,0,.55),0 0 0 1px rgba(91,163,245,.25)}
+.tk-fab.calm .badge{color:#1e3a5f;background:#cbd5db}
+.tk-fab.calm .b-vencidas{background:#cbd5db;color:#1e3a5f}
+.tk-fab.calm .b-avencer{background:rgba(203,213,219,.3);color:#cbd5db}
+.tk-fab.pulse{animation:tkPulse 1.5s infinite}
+/* Botões mini de áudio (mute/test) — stack horizontal compacto */
+.tdf-fab-mini-row{display:flex;gap:6px;align-items:center}
+.tdf-fab-mini{background:var(--bg-hover);color:#cbd5db;border:1px solid var(--border);border-radius:50%;width:34px;height:34px;font-size:13px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.4);display:inline-flex;align-items:center;justify-content:center;transition:all .15s;font-family:inherit}
+.tdf-fab-mini:hover{background:#222;border-color:#3a3a3a;color:#fff;transform:translateY(-1px)}
+@keyframes tkPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.6)}50%{box-shadow:0 0 0 12px rgba(239,68,68,0)}}
+
+.tk-drawer{position:fixed;top:60px;right:-380px;width:340px;max-width:calc(100vw - 20px);max-height:calc(100vh - 80px);background:var(--bg-card);border:1px solid var(--border);border-radius:12px;z-index:200;transition:right .3s,top .3s;overflow-y:auto;color:var(--text);font-size:12px;box-shadow:0 12px 40px rgba(0,0,0,.7)}
+.tk-drawer.open{right:14px}
+.tk-drawer header{position:sticky;top:0;background:linear-gradient(135deg,#1a0a0a,#2a0e0e);border-bottom:1px solid #ef4444;border-radius:12px 12px 0 0;padding:10px 14px;display:flex;align-items:center;gap:8px;z-index:1}
+.tk-drawer header h2{margin:0;font-size:13px;font-weight:800;color:var(--text);flex:1}
+.tk-drawer .close-x{background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px}
+.tk-drawer .close-x:hover{color:var(--text);background:rgba(255,255,255,.06)}
+.tk-empty{padding:60px 20px;text-align:center;color:var(--text-muted)}
+.tk-empty.good{color:#4ade80}
+.tk-stats{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border)}
+.tk-stats > div{flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:6px;text-align:center}
+.tk-stats > div .n{font-size:16px;font-weight:800}
+.tk-stats > div .l{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+.tk-list{padding:8px 14px}
+.tk-item{background:#151515;border-left:3px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;transition:all .2s}
+.tk-item.crit{border-left-color:#ef4444;background:linear-gradient(90deg,rgba(239,68,68,.08),#151515)}
+.tk-item.alta{border-left-color:#f97316}
+.tk-item.media{border-left-color:#eab308}
+.tk-item.baixa{border-left-color:#22c55e}
+.tk-item.done{opacity:.5;border-left-color:#22c55e;background:linear-gradient(90deg,rgba(34,197,94,.06),#151515)}
+.tk-item .ttl{font-size:13px;font-weight:800;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.tk-item .ttl .ic{font-size:16px}
+.tk-item .meta{font-size:11px;color:var(--text-muted);margin-bottom:6px}
+.tk-item .body{font-size:12px;color:var(--text);line-height:1.5;white-space:pre-wrap;margin-bottom:10px;max-height:120px;overflow:hidden;position:relative}
+.tk-item .body.expanded{max-height:none}
+.tk-item .body-toggle{font-size:11px;color:#5ba3f5;cursor:pointer;text-decoration:underline;background:none;border:none;padding:0;margin-bottom:8px}
+.tk-item .acts{display:flex;gap:6px;flex-wrap:wrap}
+.tk-item button.done-btn{background:#22c55e;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:800;cursor:pointer;text-transform:uppercase}
+.tk-item button.done-btn:hover{background:#16a34a}
+.tk-item button.done-btn:disabled{opacity:.6;cursor:default}
+.tk-item .feedback{margin-top:6px;padding:8px;background:#0d2818;border-radius:6px;color:#4ade80;font-size:11px;font-weight:700}
+.tk-toast-task{position:fixed;bottom:24px;right:24px;background:var(--bg-hover);border:1px solid #22c55e;color:#4ade80;padding:14px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:300;animation:tkSlide .3s}
+.tk-toast-task.err{border-color:#ef4444;color:#f87171}
+@keyframes tkSlide{from{transform:translateX(50px);opacity:0}to{transform:translateX(0);opacity:1}}
+</style>
+
+<div class="tdf-fab-cluster" id="tdf-fab-cluster">
+  <!-- ordem visual de baixo pra cima (column-reverse): -->
+  <!-- 1) áudio mini (linha horizontal) -->
+  <div class="tdf-fab-mini-row" aria-label="Controles de som">
+    <button id="tk-test" class="tdf-fab-mini" onclick="tkYabadabadooo()" title="Testar som Yabadabadooo" aria-label="Testar som">🎵</button>
+    <button id="tk-mute" class="tdf-fab-mini" onclick="tkToggleMute()" title="Silenciar yabadabadoo" aria-label="Silenciar">🔊</button>
+  </div>
+  <!-- 2) Tarefas -->
+  <button class="tk-fab calm" id="tk-fab" onclick="tkToggle()" aria-label="Abrir tarefas" title="Vencidas + A vencer">
+    📋
+    <span class="b-vencidas" id="tk-c-vencidas" title="Vencidas — atrasadas" style="display:none">🔴 <span id="tk-c-vencidas-n">0</span></span>
+    <span class="b-avencer" id="tk-c-avencer" title="A vencer (próximas 24h)" style="display:none">🟡 <span id="tk-c-avencer-n">0</span></span>
+    <span class="badge" id="tk-count" style="display:none">0</span>
+  </button>
+  <!-- 3) Diretor IA (mais acima) -->
+  <button id="dir-fab" class="tk-fab" onclick="dirPopupToggle()" title="Diretor IA — análise ao vivo" aria-label="Abrir Diretor IA" style="background:linear-gradient(135deg,#7c3aed,#a371f7);box-shadow:0 6px 20px rgba(167,113,247,.45),0 0 0 1px rgba(255,255,255,.04)">🎙️ Diretor IA <span id="dir-badge" class="badge" style="color:#7c3aed;display:none">!</span></button>
+</div>
+
+<!-- Overlay de mensagem crítica -->
+<div id="tk-critical-overlay" style="display:none"></div>
+
+<!-- POPUP DO DIRETOR IA — pro-ativo -->
+<div id="dir-popup" style="display:none;position:fixed;top:80px;right:20px;width:420px;max-width:calc(100vw - 40px);background:linear-gradient(135deg,#1a0f2e,#2d1525);border:2px solid #a371f7;border-radius:14px;padding:0;z-index:200;box-shadow:0 12px 40px rgba(167,113,247,.4);overflow:hidden">
+  <div id="dir-popup-header" style="background:linear-gradient(90deg,#4c1d95,#7c3aed);padding:14px 18px;display:flex;align-items:center;gap:10px;cursor:move;user-select:none" title="Arraste pra mover">
+    <span style="font-size:24px">🎙️</span>
+    <div style="flex:1">
+      <div style="color:var(--text);font-weight:800;font-size:14px">Diretor IA</div>
+      <div style="color:#e9d5ff;font-size:11px" id="dir-popup-status">analisando operação...</div>
+    </div>
+    <button onclick="dirPopupMinimizar()" title="Minimizar pro cantinho" style="background:rgba(0,0,0,.3);border:none;color:var(--text);font-size:16px;cursor:pointer;width:28px;height:28px;border-radius:50%;line-height:1">—</button>
+    <button onclick="dirPopupClose()" title="Fechar" style="background:rgba(0,0,0,.3);border:none;color:var(--text);font-size:16px;cursor:pointer;width:28px;height:28px;border-radius:50%;line-height:1">×</button>
+  </div>
+  <div id="dir-popup-body" style="padding:14px 18px;max-height:60vh;overflow-y:auto;background:#0d0820"></div>
+  <div id="dir-leads-time" style="border-top:1px solid #4c1d95;background:#0d0820"></div>
+  <div style="background:#0d0820;border-top:1px solid #4c1d95;padding:10px 14px;display:flex;gap:8px;justify-content:space-between;align-items:center;font-size:11px">
+    <span id="dir-popup-foot" style="color:var(--text-muted);flex:1">atualiza a cada 60s</span>
+    <button onclick="dirRefresh(this)" title="Atualizar agora" style="background:#222;color:#ddd;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">🔄 Atualizar</button>
+    <button id="dir-notif-btn" onclick="dirAtivarNotif()" style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">🔔 Notif</button>
+  </div>
+</div>
+<script>
+// === Diretor IA: drag pelo header + minimizar (vira só FAB) + salva posição ===
+(function(){
+  function setup(){
+    const popup = document.getElementById('dir-popup');
+    const header = document.getElementById('dir-popup-header');
+    if (!popup || !header) return;
+    // Restaura posição salva
+    try {
+      const saved = JSON.parse(localStorage.getItem('tdf-dir-pos') || 'null');
+      if (saved && typeof saved.left === 'number') {
+        popup.style.left = saved.left + 'px';
+        popup.style.top = saved.top + 'px';
+        popup.style.right = 'auto';
+      }
+    } catch(_){}
+    let drag = null;
+    header.addEventListener('mousedown', e => {
+      if (e.target.tagName === 'BUTTON') return;
+      const r = popup.getBoundingClientRect();
+      drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', e => {
+      if (!drag) return;
+      const left = Math.max(4, Math.min(window.innerWidth - 100, e.clientX - drag.dx));
+      const top = Math.max(4, Math.min(window.innerHeight - 60, e.clientY - drag.dy));
+      popup.style.left = left + 'px';
+      popup.style.top = top + 'px';
+      popup.style.right = 'auto';
+    });
+    document.addEventListener('mouseup', () => {
+      if (!drag) return;
+      const r = popup.getBoundingClientRect();
+      try { localStorage.setItem('tdf-dir-pos', JSON.stringify({ left: r.left, top: r.top })); } catch(_){}
+      drag = null;
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup);
+  else setup();
+  // Função global pra minimizar
+  window.dirPopupMinimizar = function(){
+    document.getElementById('dir-popup').style.display = 'none';
+    // FAB fica como ele é; o badge sinaliza que tem alerta novo
+  };
+})();
+</script>
+<style>
+@keyframes dirPulse{0%,100%{box-shadow:0 4px 16px rgba(239,68,68,.6)}50%{box-shadow:0 0 0 14px rgba(239,68,68,0),0 4px 16px rgba(239,68,68,.6)}}
+#dir-fab.alerta{background:linear-gradient(135deg,#ef4444,#f97316) !important;animation:dirPulse 1.4s infinite}
+#dir-fab.alerta #dir-badge{display:inline-block !important;color:#ef4444}
+@keyframes dirSlideIn{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}}
+#dir-popup{animation:dirSlideIn .3s ease}
+</style>
+
+<div class="tk-drawer" id="tk-drawer">
+  <header>
+    <h2>🎙️ Live Director + 📋 Tarefas</h2>
+    <button class="close-x" onclick="tkMinimize()" title="Minimizar — fecha a janela mas mantém o FAB visível pulsando" style="background:#1e3a5f;border-radius:6px;padding:0 10px;font-size:18px;color:#5ba3f5">− Minimizar</button>
+    <button class="close-x" onclick="tkToggle()" title="Fechar drawer">×</button>
+  </header>
+
+  <!-- Live Director -->
+  <div id="tk-director" style="padding:14px 18px;border-bottom:1px solid #2a1a1a;background:linear-gradient(180deg,rgba(167,113,247,.05),transparent)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span style="font-size:11px;color:#c084fc;font-weight:800;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px">
+        <span style="width:8px;height:8px;background:#c084fc;border-radius:50%;animation:tkLive 1.5s infinite"></span>
+        DIRETOR IA — AO VIVO
+      </span>
+      <span style="font-size:10px;color:var(--text-muted)" id="tk-director-ts"></span>
+      <button onclick="tkToggleDirector()" id="tk-director-toggle" title="Esconder/mostrar Live Director" style="margin-left:auto;background:var(--bg-hover);color:var(--text-muted);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:10px;cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Esconder</button>
+    </div>
+    <div id="tk-director-msgs"><div style="color:var(--text-muted);font-size:12px">Analisando situação...</div></div>
+  </div>
+
+  <div class="tk-stats">
+    <div><div class="n" id="tk-pend" style="color:#ef4444">0</div><div class="l">Pendentes</div></div>
+    <div><div class="n" id="tk-done" style="color:#22c55e">0</div><div class="l">Concluídas</div></div>
+    <div><div class="n" id="tk-tot" style="color:#5ba3f5">0</div><div class="l">Total 48h</div></div>
+  </div>
+  <div class="tk-list" id="tk-list"><div class="tk-empty">Carregando...</div></div>
+</div>
+
+<style>
+@keyframes tkLive{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
+.tk-msg{padding:10px 12px;background:var(--bg-card);border-left:3px solid var(--border);border-radius:6px;margin-bottom:6px;font-size:12px;line-height:1.5}
+.tk-msg.critico{border-left-color:#ef4444;background:linear-gradient(90deg,rgba(239,68,68,.1),var(--bg-card))}
+.tk-msg.urgente{border-left-color:#f97316;background:linear-gradient(90deg,rgba(249,115,22,.08),var(--bg-card))}
+.tk-msg.media{border-left-color:#eab308}
+.tk-msg.info{border-left-color:#5ba3f5}
+.tk-msg.positivo{border-left-color:#22c55e;background:linear-gradient(90deg,rgba(34,197,94,.08),var(--bg-card))}
+.tk-msg.manual{border-left-width:4px;border-left-color:#c084fc;background:linear-gradient(90deg,rgba(192,132,252,.1),var(--bg-card))}
+.tk-msg.manual.critico{border-left-color:#ef4444;background:linear-gradient(90deg,rgba(239,68,68,.18),var(--bg-card))}
+.tk-msg-row{display:flex;gap:10px}
+.tk-msg .ic{font-size:18px;line-height:1.2}
+.tk-msg .ttl{color:var(--text);font-weight:800;font-size:12px;margin-bottom:2px}
+.tk-msg .txt{color:#bbb;font-size:11px}
+.tk-msg .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tk-msg .btn-act{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:5px;font-size:10px;font-weight:700;text-decoration:none;border:1px solid;cursor:pointer;background:transparent}
+.tk-msg .btn-act.crm{color:#5ba3f5;border-color:#5ba3f5}
+.tk-msg .btn-act.wati{color:#25D366;border-color:#25D366}
+.tk-msg .btn-act.dismiss{color:var(--text-muted);border-color:#444}
+.tk-msg .btn-act:hover{background:rgba(255,255,255,.06)}
+.tk-msg .meta-sender{font-size:10px;color:var(--text-muted);margin-top:4px;font-style:italic}
+.tk-drawer.minimized{right:-380px}
+.tk-list{padding:6px 10px}
+.tk-item{padding:8px 10px;margin-bottom:6px;border-radius:6px}
+.tk-item .ttl{font-size:12px;margin-bottom:2px}
+.tk-item .meta{font-size:10px;margin-bottom:4px}
+.tk-item .body{font-size:11px;max-height:60px;line-height:1.35}
+.tk-item .acts{gap:4px}
+.tk-item button.done-btn{padding:4px 10px;font-size:10px}
+.tk-fab.live-burst{animation:liveBurst .6s ease}
+@keyframes liveBurst{0%{transform:scale(1)}50%{transform:scale(1.25);box-shadow:0 0 30px rgba(239,68,68,.9)}100%{transform:scale(1)}}
+
+/* ============= SHAKE DA TELA (mensagem crítica) ============= */
+@keyframes tcShake{
+  0%,100%{transform:translate3d(0,0,0)}
+  10%{transform:translate3d(-12px,2px,0)}
+  20%{transform:translate3d(10px,-3px,0)}
+  30%{transform:translate3d(-8px,4px,0)}
+  40%{transform:translate3d(7px,-2px,0)}
+  50%{transform:translate3d(-6px,3px,0)}
+  60%{transform:translate3d(5px,-1px,0)}
+  70%{transform:translate3d(-4px,2px,0)}
+  80%{transform:translate3d(3px,-1px,0)}
+  90%{transform:translate3d(-2px,1px,0)}
+}
+body.tk-shake{animation:tcShake .8s cubic-bezier(.36,.07,.19,.97) both}
+
+/* Banner overlay crítico */
+.tk-overlay{position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#7f1d1d,#dc2626);color:#fff;padding:16px 22px;z-index:400;box-shadow:0 6px 24px rgba(239,68,68,.6);border-bottom:3px solid #fff;display:flex;align-items:center;gap:14px;animation:tkSlideDown .3s}
+@keyframes tkSlideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+.tk-overlay .ico{font-size:28px;flex-shrink:0}
+.tk-overlay .body{flex:1;min-width:0}
+.tk-overlay .ttl{font-weight:900;font-size:15px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.tk-overlay .txt{font-size:13px;line-height:1.4}
+.tk-overlay .sender{font-size:10px;opacity:.85;margin-top:4px}
+.tk-overlay .acts{display:flex;gap:8px;flex-shrink:0}
+.tk-overlay button{background:#fff;color:#dc2626;border:none;border-radius:6px;padding:8px 14px;font-weight:800;font-size:12px;cursor:pointer;text-transform:uppercase;letter-spacing:.3px}
+.tk-overlay button:hover{background:#fee2e2}
+.tk-overlay a.crm-btn{background:rgba(255,255,255,.2);color:var(--text);border:1px solid #fff;border-radius:6px;padding:8px 14px;font-weight:800;font-size:12px;text-decoration:none;text-transform:uppercase;letter-spacing:.3px}
+</style>
+<script>
+let _TK_DATA = { tasks: [] };
+let _TK_LAST_IDS = new Set();
+let _TK_MUTED = (localStorage.getItem('tk-muted') === '1');
+let _TK_AUDIO_CTX = null;
+
+// === YABADABADOOOOO sintetizado via Web Audio ===
+function tkInitAudio(){
+  if (_TK_AUDIO_CTX) return _TK_AUDIO_CTX;
+  try {
+    _TK_AUDIO_CTX = new (window.AudioContext || window.webkitAudioContext)();
+  } catch(e) { console.warn('Web Audio não disponível'); }
+  return _TK_AUDIO_CTX;
+}
+
+// Pré-carrega o sample real do Yabba Dabba Doo (voz do Fred Flintstone)
+let _TK_YABA_AUDIO = null;
+function tkLoadYaba(){
+  if (_TK_YABA_AUDIO) return _TK_YABA_AUDIO;
+  try {
+    _TK_YABA_AUDIO = new Audio('/sfx/yabadabadoo.mp3');
+    _TK_YABA_AUDIO.preload = 'auto';
+    _TK_YABA_AUDIO.volume = 0.85;
+  } catch(e) {}
+  return _TK_YABA_AUDIO;
+}
+
+function tkYabadabadooo(){
+  if (_TK_MUTED) return;
+  const a = tkLoadYaba();
+  if (a) {
+    try {
+      a.currentTime = 0;
+      a.play().catch(err => console.warn('Audio play falhou:', err.message));
+    } catch(e) { console.warn(e); }
+  }
+  // Burst visual no FAB
+  const fab = document.getElementById('tk-fab');
+  if (fab) {
+    fab.classList.add('live-burst');
+    setTimeout(()=>fab.classList.remove('live-burst'), 700);
+  }
+}
+
+function tkToggleMute(){
+  _TK_MUTED = !_TK_MUTED;
+  localStorage.setItem('tk-muted', _TK_MUTED ? '1' : '0');
+  document.getElementById('tk-mute').textContent = _TK_MUTED ? '🔇' : '🔊';
+  if (!_TK_MUTED) tkYabadabadooo(); // toca uma vez pra confirmar
+}
+
+function tkToggle(){
+  const d = document.getElementById('tk-drawer');
+  d.classList.remove('minimized');
+  d.classList.toggle('open');
+}
+
+function tkMinimize(){
+  document.getElementById('tk-drawer').classList.remove('open');
+}
+
+function tkToggleDirector(){
+  const d = document.getElementById('tk-director-msgs');
+  const ts = document.getElementById('tk-director-ts');
+  const btn = document.getElementById('tk-director-toggle');
+  const escondido = d.style.display === 'none';
+  if (escondido) {
+    d.style.display = '';
+    if (ts) ts.style.display = '';
+    btn.textContent = 'Esconder';
+    localStorage.setItem('tk-director-hidden', '0');
+  } else {
+    d.style.display = 'none';
+    if (ts) ts.style.display = 'none';
+    btn.textContent = 'Mostrar';
+    localStorage.setItem('tk-director-hidden', '1');
+  }
+}
+// Restaura estado do toggle
+if (localStorage.getItem('tk-director-hidden') === '1') {
+  setTimeout(() => {
+    const d = document.getElementById('tk-director-msgs');
+    const ts = document.getElementById('tk-director-ts');
+    const btn = document.getElementById('tk-director-toggle');
+    if (d) d.style.display = 'none';
+    if (ts) ts.style.display = 'none';
+    if (btn) btn.textContent = 'Mostrar';
+  }, 100);
+}
+
+function tkToast(msg, isErr){
+  const t = document.createElement('div');
+  t.className = 'tk-toast-task' + (isErr?' err':'');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 4000);
+}
+
+async function tkLoad(){
+  try{
+    const [r1, r2, r3] = await Promise.all([
+      fetch('/cockpit/tarefas').then(r => r.json()).catch(() => ({tasks:[]})),
+      fetch('/cockpit/director-live').then(r => r.json()).catch(() => ({messages:[]})),
+      fetch('/tarefas/minhas').then(r => r.json()).catch(() => ({tarefas:[]})),
+    ]);
+    _TK_DATA = r1.error ? { tasks:[] } : r1;
+    // Mescla tarefas agendadas (manuais — distribuição em massa) com alertas sistema
+    _TK_DATA.userTasks = (r3.tarefas || []).filter(t => t.status === 'aberta');
+    tkRender();
+    tkRenderDirector(r2);
+    tkDetectNew();
+  }catch(e){ console.error('Tasks load:', e); }
+}
+
+let _TK_LAST_MSG_IDS = new Set();
+let _TK_LAST_MANUAL_IDS = new Set();
+
+function tkRenderDirector(d){
+  const cont = document.getElementById('tk-director-msgs');
+  const ts = document.getElementById('tk-director-ts');
+  if (ts) ts.textContent = 'atualizado ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const msgs = (d?.messages) || [];
+
+  // Detecta NOVAS mensagens manuais críticas e ativa shake/overlay/yabadabadoo
+  const currentManualIds = new Set();
+  let novasCriticas = [];
+  let novasImportantes = [];
+  for (const m of msgs) {
+    if (m.manual && m.msgId) {
+      currentManualIds.add(m.msgId);
+      if (!_TK_LAST_MANUAL_IDS.has(m.msgId)) {
+        if (m.intensidade === 'critico') novasCriticas.push(m);
+        else if (m.intensidade === 'importante') novasImportantes.push(m);
+      }
+    }
+  }
+  if (_TK_LAST_MANUAL_IDS.size > 0 || _TK_LAST_MSG_IDS.size > 0) {
+    if (novasCriticas.length) {
+      tkShakeScreen();
+      tkShowCriticalOverlay(novasCriticas[0]);
+      tkYabadabadooo();
+      setTimeout(tkYabadabadooo, 800); // dobra
+    } else if (novasImportantes.length) {
+      tkYabadabadooo();
+    }
+  }
+  _TK_LAST_MANUAL_IDS = currentManualIds;
+
+  if (!msgs.length) {
+    cont.innerHTML = '<div style="color:#666;font-size:12px">Tudo no controle por aqui agora.</div>';
+    return;
+  }
+  cont.innerHTML = msgs.map(m => {
+    const phoneClean = m.phone ? String(m.phone).replace(/\D/g,'') : '';
+    const watiUrl = phoneClean ? `https://live-2708.wati.io/2708/teamInbox/${phoneClean}` : null;
+    const acts = [];
+    if (m.crmLink) acts.push(`<a class="btn-act crm" href="${m.crmLink}" target="_blank">📂 Abrir CRM</a>`);
+    if (watiUrl) acts.push(`<a class="btn-act wati" href="${watiUrl}" target="_blank">💬 WATI</a>`);
+    if (m.manual && m.msgId) acts.push(`<button class="btn-act dismiss" onclick="tkDismissMsg('${m.msgId}', this)">✓ ok, entendi</button>`);
+    const senderTxt = m.manual ? `<div class="meta-sender">enviada por ${m.sender||'admin'} • ${tkAgo(m.createdAt)}</div>` : '';
+    return `<div class="tk-msg ${m.tipo||'info'} ${m.manual?'manual':''}">
+      <div class="tk-msg-row">
+        <div class="ic">${m.icon||'💬'}</div>
+        <div style="flex:1;min-width:0">
+          <div class="ttl">${m.titulo||''}</div>
+          <div class="txt">${(m.texto||'').replace(/</g,'&lt;')}</div>
+          ${senderTxt}
+        </div>
+      </div>
+      ${acts.length?`<div class="acts">${acts.join('')}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function tkAgo(ts){
+  if (!ts) return '';
+  const min = Math.round((Date.now() - ts) / 60000);
+  if (min < 1) return 'agora';
+  if (min < 60) return min + 'min atrás';
+  return Math.round(min/60) + 'h atrás';
+}
+
+function tkShakeScreen(){
+  document.body.classList.remove('tk-shake');
+  void document.body.offsetWidth; // reset animation
+  document.body.classList.add('tk-shake');
+  setTimeout(() => document.body.classList.remove('tk-shake'), 1000);
+}
+
+function tkShowCriticalOverlay(msg){
+  const o = document.getElementById('tk-critical-overlay');
+  if (!o) return;
+  const phoneClean = msg.phone ? String(msg.phone).replace(/\D/g,'') : '';
+  const watiUrl = phoneClean ? `https://live-2708.wati.io/2708/teamInbox/${phoneClean}` : null;
+  o.className = 'tk-overlay';
+  o.style.display = 'flex';
+  o.innerHTML = `
+    <div class="ico">🚨</div>
+    <div class="body">
+      <div class="ttl">${msg.titulo || 'MENSAGEM URGENTE'}</div>
+      <div class="txt">${(msg.texto||'').replace(/</g,'&lt;')}</div>
+      <div class="sender">de ${msg.sender||'Diretor'} — ${tkAgo(msg.createdAt)}</div>
+    </div>
+    <div class="acts">
+      ${msg.crmLink?`<a class="crm-btn" href="${msg.crmLink}" target="_blank">📂 Abrir CRM</a>`:''}
+      ${watiUrl?`<a class="crm-btn" href="${watiUrl}" target="_blank">💬 WATI</a>`:''}
+      <button onclick="tkDismissMsg('${msg.msgId}'); document.getElementById('tk-critical-overlay').style.display='none';">✓ Recebi</button>
+    </div>
+  `;
+}
+
+async function tkDismissMsg(msgId, btn){
+  if (btn) btn.disabled = true;
+  try {
+    await fetch('/cockpit/director-message/'+encodeURIComponent(msgId)+'/dismiss', { method:'POST' });
+    const o = document.getElementById('tk-critical-overlay');
+    if (o) o.style.display = 'none';
+    tkLoad();
+  } catch(e) { console.error(e); }
+}
+
+function tkDetectNew(){
+  // Detecta tasks novas (que não existiam no último load) e toca yabadabadoo
+  const currentIds = new Set((_TK_DATA.tasks||[]).filter(t => t.status === 'pendente').map(t => t.id));
+  if (_TK_LAST_IDS.size > 0) {
+    let newOnes = 0;
+    currentIds.forEach(id => { if (!_TK_LAST_IDS.has(id)) newOnes++; });
+    if (newOnes > 0) {
+      tkYabadabadooo();
+      tkToast('🔔 ' + newOnes + ' nova(s) tarefa(s)!');
+    }
+  }
+  _TK_LAST_IDS = currentIds;
+}
+
+function tkRender(){
+  const tasks = _TK_DATA.tasks || [];
+  const userTasks = _TK_DATA.userTasks || [];
+  const pend = tasks.filter(t => t.status === 'pendente');
+  const done = tasks.filter(t => t.status === 'concluida');
+
+  // === Conta vencidas vs a vencer (combina sistema + manuais) ===
+  const now = Date.now();
+  const em24h = now + 24*60*60*1000;
+  // Tarefas manuais (com dataHora)
+  const manuaisVencidas = userTasks.filter(t => new Date(t.dataHora).getTime() < now - 5*60000);
+  const manuaisAVencer = userTasks.filter(t => {
+    const dh = new Date(t.dataHora).getTime();
+    return dh >= now - 5*60000 && dh < em24h;
+  });
+  // Alertas sistema: priority alta/crit conta como vencido (urgência)
+  const sistemaUrgentes = pend.filter(t => t.priority === 'crit' || t.priority === 'alta');
+  const sistemaPendentes = pend.filter(t => !(t.priority === 'crit' || t.priority === 'alta'));
+  const totalVencidas = manuaisVencidas.length + sistemaUrgentes.length;
+  const totalAVencer = manuaisAVencer.length + sistemaPendentes.length;
+  const totalPend = totalVencidas + totalAVencer + (userTasks.length - manuaisVencidas.length - manuaisAVencer.length);
+
+  // === Badges no FAB ===
+  const elV = document.getElementById('tk-c-vencidas');
+  const elA = document.getElementById('tk-c-avencer');
+  const elT = document.getElementById('tk-count');
+  if (elV) {
+    if (totalVencidas > 0) {
+      elV.style.display = 'inline-flex';
+      document.getElementById('tk-c-vencidas-n').textContent = totalVencidas;
+    } else elV.style.display = 'none';
+  }
+  if (elA) {
+    if (totalAVencer > 0) {
+      elA.style.display = 'inline-flex';
+      document.getElementById('tk-c-avencer-n').textContent = totalAVencer;
+    } else elA.style.display = 'none';
+  }
+  // Badge total só aparece se tiver tarefa fora dos 2 buckets (futuras >24h)
+  const futuras = totalPend - totalVencidas - totalAVencer;
+  if (elT) {
+    if (totalVencidas === 0 && totalAVencer === 0 && totalPend > 0) {
+      elT.textContent = totalPend;
+      elT.style.display = 'inline-block';
+    } else {
+      elT.style.display = 'none';
+    }
+  }
+
+  document.getElementById('tk-pend').textContent = totalPend;
+  document.getElementById('tk-done').textContent = done.length;
+  document.getElementById('tk-tot').textContent = tasks.length + userTasks.length;
+
+  const fab = document.getElementById('tk-fab');
+  if (totalVencidas > 0) {
+    fab.classList.remove('calm');
+    fab.classList.add('pulse');
+  } else {
+    fab.classList.add('calm');
+    fab.classList.remove('pulse');
+  }
+
+  const list = document.getElementById('tk-list');
+  if (totalPend === 0 && tasks.length === 0 && userTasks.length === 0){
+    list.innerHTML = '<div class="tk-empty good">✓ Nenhuma tarefa pendente — manda bala!</div>';
+    return;
+  }
+
+  let html = '';
+
+  // === SEÇÃO 1: Tarefas agendadas (manual / distribuição em massa) ===
+  if (userTasks.length) {
+    userTasks.sort((a,b) => new Date(a.dataHora) - new Date(b.dataHora));
+    html += `<div style="padding:8px 4px 4px;color:#fbbf24;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px">📋 Tarefas Agendadas (${userTasks.length})</div>`;
+    html += userTasks.map(t => {
+      const dh = new Date(t.dataHora).getTime();
+      const min = Math.round((dh - Date.now())/60000);
+      const atrasada = min < -5;
+      const hoje = !atrasada && min < 1440;
+      const cor = atrasada ? '#ef4444' : hoje ? '#fbbf24' : '#22c55e';
+      const labelTempo = Math.abs(min) < 60 ? (min>=0?`em ${min}min`:`há ${-min}min`) : Math.abs(min) < 1440 ? (min>=0?`em ${Math.round(min/60)}h`:`há ${Math.round(-min/60)}h`) : (min>=0?`em ${Math.round(min/1440)}d`:`há ${Math.round(-min/1440)}d`);
+      const phoneClean = String(t.phone||'').replace(/\D/g,'');
+      const watiUrl = phoneClean ? `https://live-2708.wati.io/2708/teamInbox/${phoneClean}` : '';
+      const nomeEsc = (t.dealNome||'').replace(/'/g,"\\'");
+      return `<div class="tk-item" style="border-left-color:${cor}">
+        <div class="ttl">${atrasada ? '🔴' : hoje ? '🟡' : '🟢'} ${(t.titulo||'').replace(/</g,'&lt;')}</div>
+        <div class="meta">
+          ${t.dealNome ? '<strong style="color:#fff">'+t.dealNome.replace(/</g,'&lt;')+'</strong> · ' : ''}
+          ${t.phone ? '📞 '+t.phone+' · ' : ''}
+          <span style="color:${cor};font-weight:700">${labelTempo}</span>
+        </div>
+        ${t.observacao ? `<div style="color:#aaa;font-size:11px;font-style:italic;margin-bottom:6px">${t.observacao.replace(/</g,'&lt;')}</div>` : ''}
+        <div class="acts" style="gap:4px">
+          ${phoneClean ? `<a href="tel:+${phoneClean}" onclick="tkRegContato('${t.id}','${t.dealId||''}','goto')" style="background:rgba(31,111,235,.1);color:#5ba3f5;border:1px solid #1f6feb;border-radius:5px;padding:4px 8px;font-size:10px;font-weight:700;text-decoration:none">📞 Ligar</a>` : ''}
+          ${phoneClean && t.dealId ? `<button onclick="window.abrirChat&&abrirChat('${t.dealId}','${phoneClean}','${nomeEsc}');tkRegContato('${t.id}','${t.dealId}','wati');" style="background:linear-gradient(135deg,#0f3a1a,#22c55e22);color:#22c55e;border:1px solid #22c55e;border-radius:5px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer">💬 Chat</button>` : ''}
+          ${phoneClean ? `<a href="${watiUrl}" target="_blank" onclick="tkRegContato('${t.id}','${t.dealId||''}','wati')" style="background:rgba(34,197,94,.08);color:#22c55e;border:1px solid #22c55e;border-radius:5px;padding:4px 8px;font-size:10px;font-weight:700;text-decoration:none">📱 WATI</a>` : ''}
+          ${phoneClean ? `<button onclick="tkZapiQuick('${t.id}','${t.dealId||''}','${phoneClean}','${nomeEsc}')" style="background:rgba(31,111,235,.08);color:#7cb9f5;border:1px solid #1f6feb;border-radius:5px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer">⚡ Z-API</button>` : ''}
+          <button onclick="tkConcluirAgenda('${t.id}', this)" style="background:linear-gradient(135deg,#10b981,#22c55e);color:#fff;border:none;border-radius:5px;padding:4px 10px;font-size:10px;font-weight:800;cursor:pointer">✅ Concluir</button>
+          <button onclick="tkAdiarAgenda('${t.id}')" style="background:rgba(249,115,22,.1);color:#fb923c;border:1px solid #f97316;border-radius:5px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer">⏰ Adiar</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // === SEÇÃO 2: Tasks sistema (alertas automáticos) ===
+  if (tasks.length) {
+    if (userTasks.length) html += `<div style="padding:14px 4px 4px;color:#5ba3f5;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px">⚡ Alertas do Sistema (${tasks.length})</div>`;
+    html += tasks.map(t => {
+      const icons = { lead_sem_contato:'⏰', proposta_parada:'💸', baixa_atividade:'😴', diamante_parado:'💎', sem_venda:'🚨' };
+      const ic = icons[t.type] || '⚡';
+      const ageMin = Math.round((Date.now() - t.createdAt) / 60000);
+      const age = ageMin < 60 ? ageMin+'min' : Math.round(ageMin/60)+'h';
+      const cls = t.status === 'concluida' ? 'done' : (t.priority || 'media');
+      const concluiBtn = t.status === 'concluida'
+        ? `<div class="feedback">✓ Concluída ${Math.round((t.concluidoEm - t.createdAt)/60000)}min após disparo</div>`
+        : `<button class="done-btn" onclick="tkConcluir('${t.id}', this)">✓ Concluir</button>`;
+      return `<div class="tk-item ${cls}" id="tk-${t.id}">
+        <div class="ttl"><span class="ic">${ic}</span> ${t.title}</div>
+        <div class="meta">${age} atrás • ${t.source||'sistema'}</div>
+        <div class="body" id="tk-body-${t.id}">${t.body.replace(/</g,'&lt;')}</div>
+        <button class="body-toggle" onclick="tkExpandBody('${t.id}', this)">ver mensagem completa</button>
+        <div class="acts">${concluiBtn}</div>
+      </div>`;
+    }).join('');
+  }
+
+  list.innerHTML = html;
+}
+
+// === Helpers de execução de tarefas (FAB drawer + Tarefas tab CRM) ===
+async function tkRegContato(tarefaId, dealId, canal){
+  if (!dealId) return;
+  try {
+    await fetch('/manutencao/cliente/'+dealId+'/registrar-contato', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ canal, observacao: 'via tarefa (FAB)' })
+    });
+  } catch(_){}
+}
+
+async function tkConcluirAgenda(id, btn){
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+  try {
+    const r = await fetch('/tarefas/'+id+'/concluir', { method:'POST' });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); if (btn) { btn.disabled = false; btn.textContent = '✅ Concluir'; } return; }
+    tkLoad();
+  } catch(e) { alert('Erro: '+e.message); if (btn) { btn.disabled = false; btn.textContent = '✅ Concluir'; } }
+}
+
+async function tkAdiarAgenda(id){
+  const min = prompt('Adiar por quantos minutos?', '30');
+  const num = parseInt(min);
+  if (!num || num < 1) return;
+  try {
+    const r = await fetch('/tarefas/'+id+'/adiar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ minutos: num })});
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    tkLoad();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+async function tkZapiQuick(tarefaId, dealId, phone, nome){
+  const txt = prompt(`Mensagem rápida via Z-API pra ${nome||phone}:`, '');
+  if (!txt || !txt.trim()) return;
+  try {
+    const r = await fetch('/inbox/zapi-enviar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ phone, text: txt }) });
+    const d = await r.json();
+    if (d.error) { alert('Erro Z-API: '+d.error); return; }
+    if (dealId) await tkRegContato(tarefaId, dealId, 'zapi');
+    tkToast('✅ Enviado via Z-API');
+    tkLoad();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+function tkExpandBody(id, btn){
+  const b = document.getElementById('tk-body-'+id);
+  b.classList.toggle('expanded');
+  btn.textContent = b.classList.contains('expanded') ? 'ocultar' : 'ver mensagem completa';
+}
+
+async function tkConcluir(id, btn){
+  if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+  try{
+    const res = await fetch('/cockpit/tarefa/'+encodeURIComponent(id)+'/concluir', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ observacao: '' })
+    });
+    const r = await res.json();
+    if (r.error) { tkToast('Erro: '+r.error, true); if(btn){btn.disabled=false;btn.textContent='✓ Concluir';} return; }
+    tkToast('✓ Tarefa concluída — gestão notificada');
+    tkLoad();
+  }catch(e){
+    tkToast('Erro: '+e.message, true);
+    if(btn){btn.disabled=false;btn.textContent='✓ Concluir';}
+  }
+}
+
+// Mute button visual init
+if (document.getElementById('tk-mute')) {
+  document.getElementById('tk-mute').textContent = _TK_MUTED ? '🔇' : '🔊';
+}
+
+// Inicializa audio no primeiro click do usuário (browsers exigem gesture)
+document.addEventListener('click', () => tkInitAudio(), { once: true });
+
+tkLoad();
+setInterval(tkLoad, 60000); // refresh a cada 60s
+
+// ============= DIRETOR IA — FAB PRO-ATIVO + NOTIFICAÇÕES =============
+let _DIR_LAST_IDS = new Set();
+let _DIR_DATA = null;
+let _DIR_AUTO_POPUP_DONE = false;
+
+async function dirRefresh(btn){
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+  await dirLoad(true);
+  if (btn) { btn.disabled = false; btn.textContent = '🔄 Atualizar'; }
+}
+async function dirLoad(force){
+  try{
+    const res = await fetch('/cockpit/director-live' + (force ? '?nocache=1' : ''));
+    if (!res.ok) {
+      console.warn('director-live HTTP', res.status);
+      return;
+    }
+    const txt = await res.text();
+    let d;
+    try { d = JSON.parse(txt); }
+    catch (parseErr) {
+      console.warn('director-live JSON inválido:', txt.slice(0,200));
+      _DIR_DATA = { messages:[], error: 'json inválido' };
+      // Mostra estado discreto sem quebrar
+      const fab = document.getElementById('dir-fab');
+      if (fab) { fab.classList.remove('alerta'); }
+      return;
+    }
+    _DIR_DATA = d;
+    if (d.error) {
+      console.warn('director-live erro:', d.error);
+      return;
+    }
+    dirRender(d);
+  }catch(e){ console.warn('dir:', e); }
+}
+
+function dirRender(d){
+  const msgs = d?.messages || [];
+  const fab = document.getElementById('dir-fab');
+  const badge = document.getElementById('dir-badge');
+  const criticas = msgs.filter(m => m.tipo === 'critico' || m.tipo === 'urgente' || m.intensidade === 'critico');
+
+  // FAB pulsing se tem crítica
+  if (criticas.length > 0) {
+    fab.classList.add('alerta');
+    badge.textContent = criticas.length;
+  } else {
+    fab.classList.remove('alerta');
+    badge.style.display = 'none';
+  }
+
+  // Detecta mensagens NOVAS (não estavam no último refresh)
+  const currentIds = new Set();
+  let novasCriticas = [];
+  for (const m of msgs) {
+    const id = m.msgId || (m.titulo + '|' + (m.texto||'').slice(0,50));
+    currentIds.add(id);
+    if (!_DIR_LAST_IDS.has(id) && (m.tipo === 'critico' || m.tipo === 'urgente' || m.intensidade === 'critico')) {
+      novasCriticas.push(m);
+    }
+  }
+
+  // Não auto-abre — apenas pulsa FAB + badge contador. User clica pra ver detalhe.
+  if (_DIR_LAST_IDS.size > 0 && novasCriticas.length > 0) {
+    novasCriticas.forEach(m => dirNotificar(m));
+    tkYabadabadooo && tkYabadabadooo();
+  }
+  _DIR_LAST_IDS = currentIds;
+
+  // Sempre atualiza badge do FAB — mostra contagem de críticas
+  const fab = document.getElementById('dir-fab');
+  const badge = document.getElementById('dir-badge');
+  if (fab && badge) {
+    if (criticas.length > 0) {
+      fab.classList.add('alerta');
+      badge.style.display = 'inline-block';
+      badge.textContent = criticas.length > 9 ? '9+' : String(criticas.length);
+    } else {
+      fab.classList.remove('alerta');
+      badge.style.display = 'none';
+    }
+  }
+
+  // Atualiza popup se aberto
+  if (document.getElementById('dir-popup').style.display !== 'none') {
+    dirPopupRender();
+  }
+}
+
+function _esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function dirPopupRender(){
+  try {
+    const d = _DIR_DATA;
+    if (!d) return;
+    const msgs = Array.isArray(d.messages) ? d.messages : [];
+    const ts = d.generatedAt ? new Date(d.generatedAt).toLocaleTimeString('pt-BR', { timeZone:'America/Sao_Paulo', hour:'2-digit', minute:'2-digit' }) : '';
+    const status = document.getElementById('dir-popup-status');
+    if (status) status.textContent = ts ? ('analisando · atualizado '+ts) : 'analisando...';
+    const body = document.getElementById('dir-popup-body');
+    if (!body) return;
+    if (!msgs.length) {
+      body.innerHTML = '<div style="color:#888;text-align:center;padding:24px;font-size:13px">Tudo no controle por aqui agora.</div>';
+      return;
+    }
+    const sCol = { critico:'#ef4444', urgente:'#f97316', media:'#eab308', info:'#5ba3f5', positivo:'#22c55e' };
+    body.innerHTML = msgs.map((m, idx) => {
+      const cor = sCol[m.tipo] || '#a371f7';
+      const phoneClean = m.phone ? String(m.phone).replace(/\D/g,'') : '';
+      const watiUrl = phoneClean ? ('https://live-2708.wati.io/2708/teamInbox/'+phoneClean) : '';
+      const crmLink = m.crmLink ? _esc(m.crmLink) : '';
+      const acts = (crmLink || watiUrl)
+        ? '<div style="margin-top:6px;display:flex;gap:6px">'
+          + (crmLink ? '<a href="'+crmLink+'" target="_blank" style="font-size:10px;background:rgba(91,163,245,.2);color:#7cb9f5;padding:3px 8px;border-radius:4px;text-decoration:none;font-weight:700">📂 CRM</a>' : '')
+          + (watiUrl ? '<a href="'+watiUrl+'" target="_blank" style="font-size:10px;background:rgba(37,211,102,.2);color:#25D366;padding:3px 8px;border-radius:4px;text-decoration:none;font-weight:700">💬 WATI</a>' : '')
+          + '</div>'
+        : '';
+      // Lista de leads vinculados — clicável + botão de ação
+      let leadsBlock = '';
+      if (Array.isArray(m.leads) && m.leads.length) {
+        const listId = 'dir-leads-' + idx;
+        const itens = m.leads.slice(0, 30).map(l => {
+          const ph = String(l.phone||'').replace(/\D/g,'');
+          const tier = l.tier ? '<span style="color:#fbbf24;font-size:9px;font-weight:700">'+_esc(l.tier)+'</span> ' : '';
+          const owner = l.owner ? ' <span style="color:#888;font-size:10px">· '+_esc(l.owner)+'</span>' : '';
+          const amt = l.amount ? ' <span style="color:#4ade80;font-weight:700">R$ '+Math.round(l.amount).toLocaleString('pt-BR')+'</span>' : '';
+          const wb = ph ? '<a href="https://live-2708.wati.io/2708/teamInbox/'+ph+'" target="_blank" style="color:#25D366;font-size:10px;margin-left:6px;text-decoration:none">💬</a>' : '';
+          const cb = l.id ? '<a href="https://crmplus.zoho.com/tudodefiltro3711/index.do/cxapp/crm/org856385701/tab/Potentials/'+_esc(l.id)+'" target="_blank" style="color:#7cb9f5;font-size:10px;margin-left:4px;text-decoration:none">📂</a>' : '';
+          const chatBtn = ph && l.id ? '<button onclick="event.stopPropagation();window.abrirChat&&abrirChat(\''+_esc(l.id)+'\',\''+ph+'\',\''+_esc(l.nome||'')+'\')" style="background:transparent;border:none;color:#22c55e;cursor:pointer;font-size:11px;margin-left:2px">💬</button>' : '';
+          return '<div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-bottom:1px solid #1f0d2e;font-size:11px;color:#ddd">'
+            + tier + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_esc(l.nome||l.phone||'?')+amt+owner+'</span>'
+            + chatBtn + wb + cb + '</div>';
+        }).join('');
+        const acaoBtn = m.acao && m.acao.tipo === 'nubia'
+          ? '<button onclick="dirAcionarNubia(\''+_esc(m.acao.modo)+'\',this)" style="background:#7c3aed;border:none;color:#fff;padding:4px 10px;border-radius:5px;font-size:10px;cursor:pointer;font-weight:700;margin-top:4px">🤖 '+_esc(m.acao.label)+'</button>'
+          : '';
+        leadsBlock = '<details style="margin-top:6px"><summary style="cursor:pointer;color:#a371f7;font-size:10px;font-weight:700;padding:4px 0">▸ Ver '+m.leads.length+' lead(s)</summary>'
+          + '<div id="'+listId+'" style="margin-top:4px;max-height:240px;overflow-y:auto;background:rgba(0,0,0,.25);border-radius:4px">'+itens+'</div>'
+          + acaoBtn + '</details>';
+      }
+      return '<div style="background:rgba(167,113,247,.06);border-left:3px solid '+cor+';border-radius:6px;padding:10px 12px;margin-bottom:8px">'
+        + '<div style="display:flex;gap:8px;align-items:flex-start">'
+        + '<span style="font-size:18px">'+_esc(m.icon||'💬')+'</span>'
+        + '<div style="flex:1">'
+        + '<div style="color:#fff;font-weight:800;font-size:12px">'+_esc(m.titulo)+'</div>'
+        + '<div style="color:#ddd;font-size:11px;line-height:1.5;margin-top:2px">'+_esc(m.texto)+'</div>'
+        + acts
+        + leadsBlock
+        + '</div></div></div>';
+    }).join('');
+    // === BLOCO "LEADS POR CLOSER" (alterna dia/mês) ===
+    dirRenderLeadsTime();
+  } catch (err) {
+    console.error('dirPopupRender:', err);
+    const body = document.getElementById('dir-popup-body');
+    if (body) body.innerHTML = '<div style="color:#ef4444;padding:14px;text-align:center;font-size:12px">Erro ao renderizar mensagens. Recarregue a página.</div>';
+  }
+}
+
+let _DIR_LEADS_PERIODO = 'hoje';
+let _DIR_LEADS_VISAO = 'closer'; // 'closer' | 'fonte'
+function dirRenderLeadsTime(){
+  const el = document.getElementById('dir-leads-time');
+  if (!el) return;
+  const d = _DIR_DATA?.leadsPorCloser;
+  if (!d) { el.innerHTML = ''; return; }
+  const periodo = _DIR_LEADS_PERIODO;
+  const visao = _DIR_LEADS_VISAO;
+  const data = d[periodo] || {};
+  // Monta agrupamento por closer ou por fonte
+  let grupos = [];
+  if (visao === 'closer') {
+    grupos = Object.entries(data).filter(([_,c]) => c.total > 0).sort((a,b) => b[1].total - a[1].total);
+  } else {
+    // Agrupar por Lead_Source
+    const porFonte = {};
+    Object.values(data).forEach(c => {
+      c.leads.forEach(l => {
+        const f = l.source || 'Sem origem';
+        if (!porFonte[f]) porFonte[f] = { nome: f, team: 'origem', leads: [], total: 0, porEtapa: {} };
+        porFonte[f].leads.push(l);
+        porFonte[f].total++;
+        porFonte[f].porEtapa[l.stage] = (porFonte[f].porEtapa[l.stage] || 0) + 1;
+      });
+    });
+    grupos = Object.entries(porFonte).sort((a,b) => b[1].total - a[1].total);
+  }
+  el.innerHTML = `
+    <div style="padding:10px 14px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #2a1a3a;flex-wrap:wrap">
+      <strong style="color:#fff;font-size:12px">📋 Leads</strong>
+      <span style="color:#888;font-size:10px">por</span>
+      <button onclick="dirSetVisao('closer')" style="background:${visao==='closer'?'#7c3aed':'#222'};color:#fff;border:none;border-radius:5px;padding:4px 9px;font-size:10px;cursor:pointer;font-weight:700">👤 Closer</button>
+      <button onclick="dirSetVisao('fonte')" style="background:${visao==='fonte'?'#7c3aed':'#222'};color:#fff;border:none;border-radius:5px;padding:4px 9px;font-size:10px;cursor:pointer;font-weight:700">📡 Fonte</button>
+      <span style="flex:1"></span>
+      <button onclick="dirSetPeriodo('hoje')" style="background:${periodo==='hoje'?'#1f6feb':'#222'};color:#fff;border:none;border-radius:5px;padding:4px 9px;font-size:10px;cursor:pointer;font-weight:700">📅 Hoje</button>
+      <button onclick="dirSetPeriodo('mes')" style="background:${periodo==='mes'?'#1f6feb':'#222'};color:#fff;border:none;border-radius:5px;padding:4px 9px;font-size:10px;cursor:pointer;font-weight:700">🗓️ Mês</button>
+    </div>
+    <div style="max-height:50vh;overflow-y:auto;padding:8px 12px">
+      ${grupos.length === 0 ? '<div style="color:#666;text-align:center;padding:14px;font-size:11px">Nenhum lead '+(periodo==='hoje'?'hoje':'no mês')+' ainda</div>' :
+      grupos.map(([key, c]) => {
+        const etapasResumo = Object.entries(c.porEtapa).map(([s,n]) => `<span style="background:#1a0f2e;color:#a371f7;padding:2px 7px;border-radius:8px;font-size:9px;margin-right:3px">${_esc(s)} ${n}</span>`).join('');
+        const leadsHtml = c.leads.slice(0, 10).map(l => {
+          const tier = l.tier ? `<span style="color:#fbbf24;font-size:9px;font-weight:700">${_esc(l.tier)}</span> ` : '';
+          const cor = l.paradoH >= 24 ? '#ef4444' : l.paradoH >= 8 ? '#fbbf24' : '#888';
+          return `<div style="display:flex;align-items:center;gap:4px;padding:3px 5px;border-bottom:1px solid #1f0d2e;font-size:10px">
+            ${tier}
+            <span style="flex:1;color:#ddd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_esc(l.nome)}</span>
+            <span style="color:${cor};font-size:9px;min-width:36px;text-align:right">${l.paradoH<24?l.paradoH+'h':Math.round(l.paradoH/24)+'d'}</span>
+            <span style="background:#222;color:#888;padding:1px 5px;border-radius:5px;font-size:8px;text-transform:uppercase;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_esc(l.stage)}">${_esc(l.stage).slice(0,16)}</span>
+            <button onclick="dirNubiaLead('${_esc(l.id)}',this)" title="Acionar Núbia neste lead" style="background:transparent;border:1px solid #a371f7;color:#a371f7;border-radius:4px;font-size:9px;padding:2px 5px;cursor:pointer;font-weight:700">🤖</button>
+            ${l.phone ? `<button onclick="window.abrirChat&&abrirChat('${_esc(l.id)}','${_esc(l.phone)}','${_esc(l.nome)}')" title="Abrir chat" style="background:transparent;border:1px solid #22c55e;color:#22c55e;border-radius:4px;font-size:9px;padding:2px 5px;cursor:pointer">💬</button>` : ''}
+          </div>`;
+        }).join('');
+        return `<details style="margin-bottom:5px;background:rgba(167,113,247,.06);border-radius:5px;padding:6px 8px">
+          <summary style="cursor:pointer;display:flex;align-items:center;gap:6px;font-size:11px">
+            <span style="color:#fff;font-weight:700;flex:1">${_esc(c.nome)} <span style="color:#888;font-size:9px;font-weight:400">${c.team!=='origem'?'('+_esc(c.team)+')':''}</span></span>
+            <span style="background:#7c3aed;color:#fff;font-weight:800;padding:1px 7px;border-radius:8px;font-size:10px">${c.total}</span>
+          </summary>
+          <div style="margin-top:5px;padding-top:5px;border-top:1px solid #2a1a3a">
+            <div style="margin-bottom:4px">${etapasResumo}</div>
+            ${leadsHtml}
+            ${c.leads.length > 10 ? `<div style="text-align:center;color:#666;font-size:9px;padding:4px">+ ${c.leads.length-10} leads</div>` : ''}
+          </div>
+        </details>`;
+      }).join('')}
+    </div>
+  `;
+}
+function dirSetPeriodo(p){ _DIR_LEADS_PERIODO = p; dirRenderLeadsTime(); }
+function dirSetVisao(v){ _DIR_LEADS_VISAO = v; dirRenderLeadsTime(); }
+
+async function dirNubiaLead(dealId, btn){
+  if (!confirm('Acionar Núbia neste lead?')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+  try {
+    const r = await fetch('/cockpit/nubia-meu-lead', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ dealId })
+    });
+    const ct = r.headers.get('content-type')||'';
+    if (!ct.includes('json')) { alert('Erro: '+(r.status===401?'sessão expirada':'resposta inválida')); return; }
+    const d = await r.json();
+    if (d.error) alert('Erro: '+d.error);
+    else { alert('🤖 Núbia disparada!'); if (btn) btn.style.color='#22c55e'; }
+  } catch(e) { alert(e.message); }
+  if (btn) { btn.disabled = false; btn.textContent = '🤖'; }
+}
+
+// Aciona Núbia em massa nos leads do alerta atual (chamado pelos botões do diretor)
+async function dirAcionarNubia(modo, btn){
+  if (!confirm('Disparar Núbia em modo "'+modo+'" pros leads listados?')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Disparando...'; }
+  try {
+    const r = await fetch('/gestao/nubia-reengaja', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ tipo: modo }) });
+    const ct = r.headers.get('content-type') || '';
+    if (!ct.includes('json')) { alert('Erro: ' + (r.status === 401 ? 'sessão expirada' : 'resposta inválida ' + r.status)); return; }
+    const d = await r.json();
+    if (d.error) alert('Erro: '+d.error);
+    else alert('✅ Núbia disparou pra '+(d.sent||0)+' leads ('+(d.candidates||0)+' candidatos)');
+  } catch(e) { alert(e.message); }
+  if (btn) { btn.disabled = false; btn.textContent = '🤖 Acionar Núbia'; }
+}
+
+function dirPopupOpen(){
+  document.getElementById('dir-popup').style.display = 'block';
+  dirPopupRender();
+}
+function dirPopupClose(){
+  document.getElementById('dir-popup').style.display = 'none';
+}
+function dirPopupToggle(){
+  const p = document.getElementById('dir-popup');
+  if (p.style.display === 'none' || !p.style.display) dirPopupOpen();
+  else dirPopupClose();
+}
+
+// === NOTIFICAÇÕES NATIVAS ===
+async function dirAtivarNotif(){
+  if (!('Notification' in window)) { alert('Seu navegador não suporta notificações'); return; }
+  if (Notification.permission === 'granted') {
+    document.getElementById('dir-notif-btn').textContent = '🔔 Notificações ativas';
+    document.getElementById('dir-notif-btn').disabled = true;
+    new Notification('🎙️ Diretor IA', { body: 'Notificações ativadas. Vou te avisar quando algo precisar de atenção.', icon: '/icon-192.png' });
+    return;
+  }
+  const r = await Notification.requestPermission();
+  if (r === 'granted') {
+    document.getElementById('dir-notif-btn').textContent = '🔔 Ativas';
+    new Notification('🎙️ Diretor IA', { body: 'Pronto. Vou te avisar das urgências.', icon: '/icon-192.png' });
+  }
+}
+function dirNotificar(msg){
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  const titulo = (msg.icon||'🚨') + ' ' + (msg.titulo || 'Diretor IA');
+  const corpo = (msg.texto||'').slice(0, 200);
+  try {
+    const n = new Notification(titulo, {
+      body: corpo,
+      icon: '/icon-192.png',
+      badge: '/favicon.png',
+      tag: 'diretor-ia-' + (msg.msgId || msg.titulo),
+      requireInteraction: msg.tipo === 'critico' || msg.intensidade === 'critico',
+    });
+    n.onclick = () => {
+      window.focus();
+      dirPopupOpen();
+      n.close();
+    };
+  } catch(e) { console.warn('notif:', e); }
+}
+
+// Atualiza estado do botão notif na abertura
+setTimeout(() => {
+  const btn = document.getElementById('dir-notif-btn');
+  if (btn && 'Notification' in window && Notification.permission === 'granted') {
+    btn.textContent = '🔔 Notificações ativas';
+    btn.disabled = true;
+  }
+}, 100);
+
+dirLoad();
+setInterval(dirLoad, 60000);
+
+// Permite abrir via âncora #tarefas
+if (location.hash === '#tarefas') tkToggle();
+window.addEventListener('hashchange', () => { if (location.hash === '#tarefas') tkToggle(); });
+</script>
+<% } %>
+
+<!-- ============= UX #5: BADGE "atualizado há X" GLOBAL ============= -->
+<script>
+// Helper global: registra um "freshness badge" pra qualquer elemento
+// Uso: tdfFresh('id-do-elemento', () => loadDataAgain())
+//   - Mostra "Atualizado há Xs" abaixo do ts atual
+//   - Botão clicável força refresh
+//   - Auto-update do label a cada 5s
+window.tdfFresh = (function(){
+  const tracked = new Map(); // id → { lastFresh, refreshFn }
+  function fmtTs(ts){
+    const s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 5) return 'agora';
+    if (s < 60) return `há ${s}s`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `há ${m}min`;
+    const h = Math.floor(m / 60);
+    return `há ${h}h${m%60>0?(m%60)+'min':''}`;
+  }
+  function render(id){
+    const el = document.getElementById(id);
+    if (!el) return;
+    const t = tracked.get(id);
+    if (!t) return;
+    el.innerHTML = `<span style="color:#22c55e;font-size:10px">●</span> Atualizado ${fmtTs(t.lastFresh)} <span style="opacity:.5;font-size:9px">(↻)</span>`;
+  }
+  setInterval(() => {
+    for (const id of tracked.keys()) render(id);
+  }, 5000);
+  return function tdfFresh(id, refreshFn){
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.cssText = 'cursor:pointer;color:#888;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;border:1px solid #2a2a2a;background:#0d0d0d;display:inline-flex;align-items:center;gap:5px;transition:border-color .15s';
+    el.title = 'Click pra atualizar agora';
+    el.onmouseenter = () => el.style.borderColor = '#22c55e';
+    el.onmouseleave = () => el.style.borderColor = '#2a2a2a';
+    el.onclick = async () => {
+      const old = el.innerHTML;
+      el.innerHTML = '<span style="color:#7cb9f5;font-size:10px">↻</span> Atualizando...';
+      try { await refreshFn(); } catch(_){}
+      tracked.set(id, { lastFresh: Date.now(), refreshFn });
+      render(id);
+    };
+    tracked.set(id, { lastFresh: Date.now(), refreshFn });
+    render(id);
+  };
+})();
+</script>
+
+<!-- ============= COMMAND PALETTE Cmd+K (UX #6) ============= -->
+<style>
+.cmdk-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:flex-start;justify-content:center;padding-top:80px}
+.cmdk-overlay.show{display:flex}
+.cmdk-card{background:var(--bg-card);border:1px solid #1f6feb;border-radius:12px;width:560px;max-width:calc(100vw - 40px);max-height:70vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(31,111,235,.3)}
+.cmdk-input-wrap{border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:10px}
+.cmdk-input-wrap .icon{font-size:18px;color:var(--text-muted)}
+.cmdk-input{flex:1;background:transparent;border:none;color:var(--text);font-size:14px;outline:none;font-family:inherit}
+.cmdk-input::placeholder{color:#5b6068}
+.cmdk-kbd{background:var(--bg-card);border:1px solid var(--border);color:var(--text-muted);padding:2px 6px;border-radius:4px;font-size:10px;font-family:monospace}
+.cmdk-results{flex:1;overflow-y:auto;padding:6px 0}
+.cmdk-empty{padding:30px;text-align:center;color:var(--text-muted);font-size:12px}
+.cmdk-loading{padding:18px;text-align:center;color:var(--text-muted);font-size:12px}
+.cmdk-item{display:grid;grid-template-columns:24px 1fr auto;gap:10px;padding:9px 16px;cursor:pointer;align-items:center;border-left:3px solid transparent}
+.cmdk-item:hover,.cmdk-item.active{background:var(--bg-card);border-left-color:#1f6feb}
+.cmdk-item .ico{font-size:14px;text-align:center}
+.cmdk-item .nome{color:var(--text);font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmdk-item .sub{color:var(--text-muted);font-size:10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:1px}
+.cmdk-item .sub .pill{background:#1f2937;color:#9ca3af;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700}
+.cmdk-item .stage{color:#7cb9f5;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.cmdk-foot{border-top:1px solid var(--border);padding:8px 16px;color:var(--text-muted);font-size:10px;display:flex;justify-content:space-between;background:var(--bg-card)}
+</style>
+<div id="cmdk" class="cmdk-overlay" onclick="if(event.target===this)cmdkClose()">
+  <div class="cmdk-card">
+    <div class="cmdk-input-wrap">
+      <span class="icon">🔍</span>
+      <input id="cmdk-input" class="cmdk-input" placeholder="Buscar cliente por nome, telefone, cidade..." autocomplete="off">
+      <span class="cmdk-kbd">esc</span>
+    </div>
+    <div id="cmdk-results" class="cmdk-results"><div class="cmdk-empty">Digite pelo menos 2 caracteres pra buscar</div></div>
+    <div class="cmdk-foot"><span>↑↓ navegar · ↵ abrir · esc fechar</span><span><span class="cmdk-kbd">⌘K</span> ou <span class="cmdk-kbd">Ctrl+K</span></span></div>
+  </div>
+</div>
+<script>
+(function(){
+  const overlay = document.getElementById('cmdk');
+  const input = document.getElementById('cmdk-input');
+  const results = document.getElementById('cmdk-results');
+  let _cmdkResults = []; let _cmdkIdx = 0; let _cmdkAbort = null; let _cmdkDebounce = null;
+
+  window.cmdkOpen = function(){
+    overlay.classList.add('show');
+    input.value = '';
+    input.focus();
+    results.innerHTML = '<div class="cmdk-empty">Digite pelo menos 2 caracteres pra buscar</div>';
+  };
+  window.cmdkClose = function(){ overlay.classList.remove('show'); };
+
+  // Atalho global Cmd+K / Ctrl+K
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      cmdkOpen();
+      return;
+    }
+    if (overlay.classList.contains('show')) {
+      if (e.key === 'Escape') { e.preventDefault(); cmdkClose(); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); _cmdkIdx = Math.min(_cmdkResults.length-1, _cmdkIdx+1); cmdkRenderActive(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); _cmdkIdx = Math.max(0, _cmdkIdx-1); cmdkRenderActive(); }
+      else if (e.key === 'Enter' && _cmdkResults[_cmdkIdx]) {
+        e.preventDefault();
+        cmdkAbrir(_cmdkResults[_cmdkIdx]);
+      }
+    }
+  });
+
+  input.addEventListener('input', () => {
+    clearTimeout(_cmdkDebounce);
+    const q = input.value.trim();
+    if (q.length < 2) {
+      results.innerHTML = '<div class="cmdk-empty">Digite pelo menos 2 caracteres pra buscar</div>';
+      _cmdkResults = []; return;
+    }
+    _cmdkDebounce = setTimeout(() => cmdkBuscar(q), 220);
+  });
+
+  async function cmdkBuscar(q){
+    if (_cmdkAbort) _cmdkAbort.abort();
+    _cmdkAbort = new AbortController();
+    results.innerHTML = '<div class="cmdk-loading">⏳ Buscando...</div>';
+    try {
+      const r = await fetch('/api/v1/search?q=' + encodeURIComponent(q), { signal: _cmdkAbort.signal });
+      const d = await r.json();
+      _cmdkResults = d.results || []; _cmdkIdx = 0;
+      cmdkRender();
+    } catch(e) {
+      if (e.name === 'AbortError') return;
+      results.innerHTML = `<div class="cmdk-empty" style="color:#ef4444">Erro: ${e.message}</div>`;
+    }
+  }
+
+  function cmdkRender(){
+    if (!_cmdkResults.length) { results.innerHTML = '<div class="cmdk-empty">Nenhum cliente encontrado</div>'; return; }
+    const tierIco = t => t==='Diamante'?'💎':t==='Ouro'?'🥇':t==='Prata'?'🥈':t==='Bronze'?'🥉':'👤';
+    results.innerHTML = _cmdkResults.map((r, i) => `
+      <div class="cmdk-item ${i===_cmdkIdx?'active':''}" onclick="cmdkAbrirIdx(${i})" data-idx="${i}">
+        <div class="ico">${tierIco(r.tier)}</div>
+        <div>
+          <div class="nome">${(r.nome||'?').replace(/</g,'&lt;')}</div>
+          <div class="sub">
+            ${r.phone?`<span>📞 ${r.phone}</span>`:''}
+            ${r.cidade?`<span class="pill">📍 ${r.cidade}</span>`:''}
+            ${r.owner?`<span class="pill">${r.owner.split(' ')[0]}</span>`:''}
+          </div>
+        </div>
+        <div class="stage">${r.stage||''}</div>
+      </div>
+    `).join('');
+  }
+
+  function cmdkRenderActive(){
+    document.querySelectorAll('.cmdk-item').forEach(el => {
+      el.classList.toggle('active', Number(el.dataset.idx) === _cmdkIdx);
+    });
+    const active = document.querySelector('.cmdk-item.active');
+    if (active) active.scrollIntoView({ block: 'nearest' });
+  }
+
+  window.cmdkAbrirIdx = function(idx){ if (_cmdkResults[idx]) cmdkAbrir(_cmdkResults[idx]); };
+
+  function cmdkAbrir(r){
+    cmdkClose();
+    if (window.abrirChat) {
+      window.abrirChat(r.id, r.phone, r.nome, 'wati');
+    } else {
+      window.location.href = '/closy?dealId=' + encodeURIComponent(r.id);
+    }
+  }
+})();
+</script>
+
+<% if (user.role !== 'revendedor') { %>
+<!-- POPUP: Boas-vindas Augusto (RevOps) — some após dispensar (localStorage) -->
+<div id="popup-augusto" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--bg);border:1px solid #00AAFF66;border-radius:16px;max-width:640px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 10px 60px rgba(0,170,255,.25);">
+    <div style="padding:20px 24px 12px;">
+      <div style="font-size:2rem;">📢</div>
+      <h2 style="color:#00AAFF;font-size:1.25rem;margin:6px 0 2px;">Comunicado ao Time — Bem-vindo, Augusto!</h2>
+      <div style="color:var(--text-muted);font-size:.85rem;">Uma novidade importante pra todos</div>
+    </div>
+    <div style="padding:0 24px;overflow-y:auto;color:var(--text);font-size:.92rem;line-height:1.6;">
+      <p>Estamos crescendo, evoluindo nossos processos e dando mais um passo pra construir uma operação comercial cada vez mais forte. Quero apresentar oficialmente o <strong style="color:var(--text)">Augusto Mamede</strong>, que passa a integrar nosso time como responsável pela área de <strong style="color:#00AAFF">Revenue Operations (RevOps)</strong>.</p>
+      <p><strong style="color:var(--text)">O que é RevOps?</strong> De forma simples, é a área que organiza toda a operação comercial pra vendermos mais, atendermos melhor e trabalharmos com muito mais eficiência — integrando pessoas, processos e tecnologia.</p>
+      <p><strong style="color:var(--text)">Entre as responsabilidades dele:</strong> organizar e evoluir nosso CRM (Zoho) · melhorar os processos comerciais · automatizar tarefas repetitivas · estruturar dashboards e indicadores · reduzir perdas de oportunidades e leads parados · implementar automações e IA · apoiar o desenvolvimento dos times de SDR, Closer e Pós-venda.</p>
+      <p style="background:rgba(63,185,80,.10);border-left:3px solid #3FB950;border-radius:6px;padding:10px 14px;"><strong style="color:var(--green)">Importante:</strong> o Augusto não chega para fiscalizar ninguém — ele chega para <strong style="color:var(--text)">facilitar o trabalho de todos</strong>. Menos tempo em tarefa manual = mais tempo atendendo bem e vendendo.</p>
+      <p>Nos próximos dias ele vai conversar com as áreas pra entender como cada processo funciona hoje. O objetivo é <em>ouvir, aprender e identificar melhorias</em> antes de propor mudanças. Colabore: quem está na operação todo dia conhece desafios que não aparecem em relatório.</p>
+      <p style="color:var(--text-muted);font-size:.85rem;">Vamos juntos elevar o nível da nossa operação.<br><strong style="color:var(--text)">Paulo Camargo</strong> — Diretor Comercial · Tudo de Filtro</p>
+    </div>
+    <div style="padding:16px 24px 20px;display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border);">
+      <a href="mailto:augusto@tudodefiltro.com.br?subject=Sugestão de melhoria" style="flex:1;min-width:220px;text-align:center;background:#00AAFF;color:var(--bg);font-weight:800;padding:11px 16px;border-radius:10px;text-decoration:none;font-size:.9rem;">✉️ Falar com o Augusto / sugerir melhoria</a>
+      <button onclick="try{localStorage.setItem('popup-augusto-jul26','1')}catch(e){};document.getElementById('popup-augusto').style.display='none';" style="flex:0 0 auto;background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:11px 18px;border-radius:10px;cursor:pointer;font-size:.9rem;">Entendi 👍</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  try {
+    if (!localStorage.getItem('popup-augusto-jul26')) {
+      var p = document.getElementById('popup-augusto');
+      if (p) p.style.display = 'flex';
+    }
+  } catch(e){}
+})();
+</script>
+<% } %>

@@ -1,0 +1,162 @@
+<% const activePage = 'auvo'; const pageTitle = 'Auvo · Campo'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.av-wrap{max-width:1500px;margin:0 auto;padding:18px 24px 80px}
+.av-h{font-size:22px;color:var(--text);margin:0 0 4px;font-weight:800;display:flex;align-items:center;gap:10px}
+.av-sub{color:var(--text-muted);font-size:13px;margin:0 0 16px}
+.av-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:18px}
+.av-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px}
+.av-card .l{font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.4px}
+.av-card .v{font-size:24px;font-weight:800;color:var(--text);line-height:1.1;margin:4px 0 2px}
+.av-card .s{font-size:11px;color:var(--text-muted)}
+.av-card.green .v{color:#4ade80}.av-card.blue .v{color:#7cb9f5}.av-card.yellow .v{color:#fbbf24}.av-card.purple .v{color:#c084fc}
+
+.av-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.av-grid2{grid-template-columns:1fr}}
+.av-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:0;overflow:hidden}
+.av-panel h3{margin:0;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--bg-card);font-size:13px;color:var(--text);text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:8px}
+.av-panel h3 .badge{background:#222;color:#ddd;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:auto;font-weight:700}
+.av-list{max-height:540px;overflow-y:auto}
+
+.av-tec{padding:12px 16px;border-bottom:1px solid #1a1a1a;display:flex;gap:10px;align-items:center}
+.av-tec .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#5ba3f5,#1e3a5f);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px;flex-shrink:0}
+.av-tec .info{flex:1;min-width:0}
+.av-tec .nome{color:var(--text);font-weight:700;font-size:13px}
+.av-tec .meta{color:var(--text-muted);font-size:11px;margin-top:2px}
+.av-tec .pos{color:#7cb9f5;font-size:11px;font-family:monospace}
+.av-tec .status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px}
+.av-tec .status.disp{background:rgba(34,197,94,.18);color:#4ade80}
+.av-tec .status.indisp{background:rgba(239,68,68,.15);color:#f87171}
+.av-tec .status.sem-gps{background:rgba(107,114,128,.18);color:#9ca3af}
+.av-tec a.gmap{color:#22c55e;font-size:11px;text-decoration:none;font-weight:700}
+
+.av-os{padding:11px 16px;border-bottom:1px solid #1a1a1a}
+.av-os .h{display:flex;gap:8px;align-items:center;margin-bottom:4px}
+.av-os .titulo{color:var(--text);font-weight:700;font-size:12px;flex:1}
+.av-os .stat{font-size:9px;font-weight:800;padding:2px 7px;border-radius:8px;text-transform:uppercase}
+.av-os .stat.s0{background:rgba(91,163,245,.2);color:#7cb9f5}
+.av-os .stat.s1{background:rgba(234,179,8,.2);color:#fbbf24}
+.av-os .stat.s2{background:rgba(167,113,247,.2);color:#c084fc}
+.av-os .stat.s3{background:rgba(34,197,94,.2);color:#4ade80}
+.av-os .stat.s4{background:rgba(239,68,68,.2);color:#f87171}
+.av-os .stat.s5{background:rgba(107,114,128,.2);color:#9ca3af}
+.av-os .meta{color:var(--text-muted);font-size:11px}
+.av-os .endereco{color:var(--text-muted);font-size:11px;margin-top:3px;font-style:italic}
+
+.av-empty{padding:30px;text-align:center;color:var(--text-muted);font-size:13px}
+</style>
+
+<div class="av-wrap">
+  <h1 class="av-h">📍 Auvo · Equipe em Campo</h1>
+  <p class="av-sub">Painel ao vivo dos técnicos: localização GPS, OS do dia, status de cada um. Atualiza a cada 3min — botão refresh força agora.</p>
+
+  <div id="av-cards" class="av-cards">
+    <div class="av-card"><div class="l">Carregando...</div><div class="v">--</div></div>
+  </div>
+
+  <div class="av-grid2">
+    <!-- TÉCNICOS -->
+    <div class="av-panel">
+      <h3>👷 Técnicos <span class="badge" id="tec-count">0</span>
+        <button onclick="avLoad(true)" style="background:var(--bg-hover);color:var(--text-muted);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;margin-left:8px">🔄</button>
+      </h3>
+      <div class="av-list" id="av-tecnicos"><div class="av-empty">Carregando técnicos...</div></div>
+    </div>
+
+    <!-- OS DO DIA -->
+    <div class="av-panel">
+      <h3>📋 OS de Hoje <span class="badge" id="os-count">0</span></h3>
+      <div class="av-list" id="av-os"><div class="av-empty">Carregando OS...</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function avFmtTs(s){
+  if (!s) return '—';
+  const d = new Date(s.replace(' ','T'));
+  if (isNaN(d)) return s;
+  return d.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});
+}
+function initials(name){ return (name||'?').split(' ').slice(0,2).map(s => s[0]?.toUpperCase()).join(''); }
+
+async function avLoad(force){
+  try {
+    const url = '/auvo/dashboard' + (force?'?nocache=1':'');
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.error) {
+      document.getElementById('av-cards').innerHTML = `<div class="av-card" style="grid-column:1/-1;border-color:#ef4444"><div class="l" style="color:#f87171">Erro Auvo</div><div class="v" style="font-size:14px">${d.error}</div><div class="s">verifique AUVO_API_KEY/AUVO_TOKEN no Railway</div></div>`;
+      return;
+    }
+    const s = d.stats || {};
+
+    // Cards
+    const statusEntries = Object.entries(s.osPorStatus||{});
+    document.getElementById('av-cards').innerHTML = `
+      <div class="av-card blue"><div class="l">👷 Técnicos</div><div class="v">${s.tecnicosTotal||0}</div><div class="s">${s.tecnicosDisponiveis||0} disponíveis</div></div>
+      <div class="av-card purple"><div class="l">📋 OS Hoje</div><div class="v">${s.osHoje||0}</div><div class="s">total do dia</div></div>
+      ${statusEntries.map(([k,v]) => {
+        const cor = /Conclu/.test(k)?'green':/Cancel/.test(k)?'yellow':/Pausada/.test(k)?'yellow':'blue';
+        return `<div class="av-card ${cor}"><div class="l">${k}</div><div class="v">${v}</div></div>`;
+      }).join('')}
+    `;
+
+    // Técnicos
+    const users = d.users || [];
+    document.getElementById('tec-count').textContent = users.length;
+    if (!users.length) {
+      document.getElementById('av-tecnicos').innerHTML = '<div class="av-empty">Nenhum técnico cadastrado</div>';
+    } else {
+      document.getElementById('av-tecnicos').innerHTML = users.map(u => {
+        const gps = d.gpsByUser?.[u.id];
+        const statusCls = !u.disponivel ? 'indisp' : (gps?'disp':'sem-gps');
+        const statusTxt = !u.disponivel ? 'Indisp.' : (gps?'Em campo':'Sem GPS');
+        const tasksUsuario = (s.osPorTecnico||{})[u.name] || 0;
+        const gmap = gps ? `<a class="gmap" href="https://www.google.com/maps?q=${gps.lat},${gps.lng}" target="_blank">📍 Ver mapa</a>` : '';
+        return `
+          <div class="av-tec">
+            <div class="av">${initials(u.name)}</div>
+            <div class="info">
+              <div class="nome">${u.name} ${tasksUsuario>0?`<span style="font-size:10px;background:#222;color:#aaa;padding:1px 6px;border-radius:8px;margin-left:4px">${tasksUsuario} OS</span>`:''}</div>
+              <div class="meta">${u.address ? '📍 '+u.address.slice(0,40) : 'sem endereço base'}</div>
+              ${gps ? `<div class="pos">${gps.lat?.toFixed(4)}, ${gps.lng?.toFixed(4)} · 🔋${gps.battery||'?'}% · ${avFmtTs(gps.ts)}</div>` : '<div style="color:#666;font-size:10px">sem posição GPS recente</div>'}
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+              <span class="status ${statusCls}">${statusTxt}</span>
+              ${gmap}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // OS do dia
+    const tasks = d.tasks || [];
+    document.getElementById('os-count').textContent = tasks.length;
+    if (!tasks.length) {
+      document.getElementById('av-os').innerHTML = '<div class="av-empty">Sem OS pra hoje</div>';
+    } else {
+      document.getElementById('av-os').innerHTML = tasks.map(t => `
+        <div class="av-os">
+          <div class="h">
+            <span class="titulo">${t.customerDescription || '(sem cliente)'} · <span style="color:#888;font-weight:400">${t.taskTypeDescription||''}</span></span>
+            <span class="stat s${t.status}">${(d.statusLabels||{})[t.status]||'Status '+t.status}</span>
+          </div>
+          <div class="meta">👷 ${t.userToName||'?'} ${t.priority?` · prioridade ${t.priority}`:''}${t.checkInDate?` · check-in ${avFmtTs(t.checkInDate)}`:''}${t.checkOutDate?` · check-out ${avFmtTs(t.checkOutDate)}`:''}</div>
+          ${t.address ? `<div class="endereco">📍 ${t.address}</div>` : ''}
+          ${t.summary ? `<div style="color:#bbb;font-size:11px;margin-top:4px">${t.summary.slice(0,140)}</div>` : ''}
+        </div>
+      `).join('');
+    }
+  } catch(e) {
+    document.getElementById('av-cards').innerHTML = `<div class="av-card" style="grid-column:1/-1;border-color:#ef4444"><div class="l" style="color:#f87171">Erro</div><div class="v" style="font-size:14px">${e.message}</div></div>`;
+  }
+}
+
+avLoad();
+setInterval(() => avLoad(false), 3*60*1000); // 3 min
+</script>
+
+</div></body></html>

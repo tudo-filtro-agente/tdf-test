@@ -1,0 +1,184 @@
+<% const activePage = 'commit'; const pageTitle = 'Commit Semanal · Forecast'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.cs-wrap{padding:14px 22px 80px;max-width:1200px;margin:0 auto}
+.cs-h{font-size:20px;color:var(--text);margin:0 0 4px;font-weight:800}
+.cs-sub{color:var(--text-muted);font-size:12px;margin:0 0 14px}
+
+.cs-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:18px}
+.cs-stat{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.cs-stat .lbl{color:var(--text-muted);font-size:10px;text-transform:uppercase;font-weight:700;letter-spacing:.4px}
+.cs-stat .val{font-size:20px;font-weight:800;margin-top:4px}
+.cs-stat.commit{border-left:3px solid #22c55e}
+.cs-stat.commit .val{color:#22c55e}
+.cs-stat.best{border-left:3px solid #f59e0b}
+.cs-stat.best .val{color:#f59e0b}
+.cs-stat.pipe{border-left:3px solid #6b7280}
+.cs-stat.pipe .val{color:var(--text-muted)}
+.cs-stat.total .val{color:#7cb9f5}
+
+.cs-col-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+@media(max-width:900px){.cs-col-grid{grid-template-columns:1fr}}
+.cs-col{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;min-height:200px}
+.cs-col h3{margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.4px;font-weight:800}
+.cs-col.commit h3{color:#22c55e}
+.cs-col.best h3{color:#f59e0b}
+.cs-col.pipe h3{color:var(--text-muted)}
+
+.cs-deal{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:6px;font-size:11px;cursor:grab}
+.cs-deal:active{cursor:grabbing}
+.cs-deal.commit{border-left:3px solid #22c55e}
+.cs-deal.best{border-left:3px solid #f59e0b}
+.cs-deal.pipe{border-left:3px solid #6b7280}
+.cs-deal .nome{color:var(--text);font-weight:700}
+.cs-deal .meta{color:var(--text-muted);font-size:10px;margin-top:2px}
+.cs-deal .vlr{color:#22c55e;font-weight:700;float:right}
+.cs-deal .ev{margin-top:6px;font-size:10px}
+.cs-deal .ev textarea{width:100%;background:var(--bg-card);border:1px solid #1a1a1a;color:var(--text);border-radius:4px;padding:5px 7px;font-size:10px;resize:vertical;min-height:30px;font-family:inherit;margin-top:3px}
+.cs-deal .acts{margin-top:6px;display:flex;gap:4px;flex-wrap:wrap}
+.cs-deal .acts button{background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:4px;padding:3px 8px;font-size:9px;cursor:pointer;font-weight:700}
+.cs-deal .acts button.active{background:#1f6feb;color:#fff;border-color:#1f6feb}
+.cs-deal .acts button:hover{border-color:#1f6feb}
+.cs-deal .save{background:#22c55e;color:#000;border:none}
+
+.cs-empty{color:var(--text-muted);text-align:center;padding:30px;font-size:11px}
+.cs-loading{color:var(--text-muted);text-align:center;padding:40px;font-size:12px}
+</style>
+
+<div class="cs-wrap">
+  <h1 class="cs-h">📋 Commit Semanal · Forecast</h1>
+  <p class="cs-sub">Classifique seus deals da semana em <strong style="color:#22c55e">Commit</strong> (cabeça na guilhotina), <strong style="color:#f59e0b">Best Case</strong> (alta probabilidade) ou <strong style="color:var(--text-muted)">Pipeline</strong> (mais distante). Commit exige 2 evidências.</p>
+
+  <div id="cs-content"><div class="cs-loading">⏳ Carregando seus deals abertos...</div></div>
+</div>
+
+<script>
+let _CS_DEALS = []; let _CS_COMMITS = {};
+const SEMANA_ATUAL = (() => {
+  const d = new Date(); const yr = d.getFullYear();
+  const start = new Date(yr, 0, 1);
+  const wk = Math.ceil(((d - start) / 86400000 + start.getDay() + 1) / 7);
+  return `${yr}-W${String(wk).padStart(2,'0')}`;
+})();
+
+function fcMoney(v){ return v >= 1000 ? 'R$ '+(v/1000).toFixed(1).replace('.',',')+'k' : 'R$ '+Math.round(v); }
+
+async function csCarregar(){
+  const c = document.getElementById('cs-content');
+  c.innerHTML = '<div class="cs-loading">⏳ Carregando seus deals abertos...</div>';
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch('/cockpit/meus-deals-abertos'),
+      fetch('/cockpit/commit-semana?semana='+SEMANA_ATUAL),
+    ]);
+    const d1 = await r1.json(); const d2 = await r2.json();
+    if (d1.error) throw new Error(d1.error);
+    _CS_DEALS = d1.deals || [];
+    _CS_COMMITS = {};
+    for (const c of (d2.commits || [])) _CS_COMMITS[c.dealId] = c;
+    csRender();
+  } catch(e) {
+    c.innerHTML = `<div class="cs-loading" style="color:#ef4444">Erro: ${e.message}</div>`;
+  }
+}
+
+function csClassDe(dealId){ return _CS_COMMITS[dealId]?.classificacao || null; }
+
+function csRender(){
+  const c = document.getElementById('cs-content');
+  const commits = _CS_DEALS.filter(d => csClassDe(d.id) === 'commit');
+  const bests = _CS_DEALS.filter(d => csClassDe(d.id) === 'best_case');
+  const pipes = _CS_DEALS.filter(d => csClassDe(d.id) === 'pipeline');
+  const naoClass = _CS_DEALS.filter(d => !csClassDe(d.id));
+  const totalCommit = commits.reduce((s,d) => s+d.amount, 0);
+  const totalBest = bests.reduce((s,d) => s+d.amount, 0);
+  const totalPipe = pipes.reduce((s,d) => s+d.amount, 0);
+  c.innerHTML = `
+    <div class="cs-stats">
+      <div class="cs-stat commit"><div class="lbl">🎯 Commit</div><div class="val">${fcMoney(totalCommit)}</div><div style="color:#666;font-size:10px;margin-top:2px">${commits.length} deals</div></div>
+      <div class="cs-stat best"><div class="lbl">🟡 Best Case</div><div class="val">${fcMoney(totalBest)}</div><div style="color:#666;font-size:10px;margin-top:2px">${bests.length} deals</div></div>
+      <div class="cs-stat pipe"><div class="lbl">⚪ Pipeline</div><div class="val">${fcMoney(totalPipe)}</div><div style="color:#666;font-size:10px;margin-top:2px">${pipes.length} deals</div></div>
+      <div class="cs-stat total"><div class="lbl">📊 Não classificados</div><div class="val">${naoClass.length}</div></div>
+    </div>
+    <div class="cs-col-grid">
+      <div class="cs-col commit"><h3>🎯 Commit (cabeça na guilhotina)</h3>${commits.length?commits.map(d=>csCard(d,'commit')).join(''):'<div class="cs-empty">Sem commits ainda — classifique aí em baixo</div>'}</div>
+      <div class="cs-col best"><h3>🟡 Best Case</h3>${bests.length?bests.map(d=>csCard(d,'best_case')).join(''):'<div class="cs-empty">vazio</div>'}</div>
+      <div class="cs-col pipe"><h3>⚪ Pipeline</h3>${pipes.length?pipes.map(d=>csCard(d,'pipeline')).join(''):'<div class="cs-empty">vazio</div>'}</div>
+    </div>
+    ${naoClass.length ? `
+      <h3 style="color:#888;font-size:12px;text-transform:uppercase;margin-top:24px;letter-spacing:.4px">⏳ Deals não classificados (${naoClass.length})</h3>
+      <div style="background:#0d0d0d;border:1px solid #222;border-radius:10px;padding:12px">
+        ${naoClass.map(d=>csCard(d,null)).join('')}
+      </div>
+    ` : ''}
+  `;
+}
+
+function csCard(d, cls){
+  const commit = _CS_COMMITS[d.id] || {};
+  const ev1 = commit.evidencia1 || '';
+  const ev2 = commit.evidencia2 || '';
+  return `<div class="cs-deal ${cls||''}" data-id="${d.id}">
+    <span class="vlr">${fcMoney(d.amount)}</span>
+    <div class="nome">${d.nome.replace(/</g,'&lt;')}</div>
+    <div class="meta">${d.stage} · ${d.cidade||'sem cidade'} · ${d.phone||'—'}</div>
+    ${cls === 'commit' ? `
+      <div class="ev">
+        <label style="color:#888">Evidência 1: próximo passo agendado *</label>
+        <textarea id="ev1-${d.id}" placeholder="Ex: Reunião marcada 02/Mai 14h">${ev1}</textarea>
+        <label style="color:#888;margin-top:5px;display:block">Evidência 2: alinhamento com decisor *</label>
+        <textarea id="ev2-${d.id}" placeholder="Ex: João (CEO) confirmou interesse e budget">${ev2}</textarea>
+      </div>
+    ` : ''}
+    <div class="acts">
+      <button class="${cls==='commit'?'active':''}" onclick="csClassificar('${d.id}','commit')">🎯 Commit</button>
+      <button class="${cls==='best_case'?'active':''}" onclick="csClassificar('${d.id}','best_case')">🟡 Best</button>
+      <button class="${cls==='pipeline'?'active':''}" onclick="csClassificar('${d.id}','pipeline')">⚪ Pipeline</button>
+      ${cls?'<button onclick="csRemover(\''+d.id+'\')" style="margin-left:auto;border-color:#4a1a1a;color:#fca5a5">✕ remover</button>':''}
+    </div>
+  </div>`;
+}
+
+async function csClassificar(dealId, classificacao){
+  const body = { dealId, classificacao, semana: SEMANA_ATUAL };
+  if (classificacao === 'commit') {
+    const ev1El = document.getElementById('ev1-' + dealId);
+    const ev2El = document.getElementById('ev2-' + dealId);
+    body.evidencia1 = ev1El ? ev1El.value.trim() : '';
+    body.evidencia2 = ev2El ? ev2El.value.trim() : '';
+    if (!body.evidencia1 || !body.evidencia2) {
+      // Se ainda não tem evidência, primeiro classifica como best e re-renderiza pra usuário preencher
+      if (!_CS_COMMITS[dealId]) {
+        _CS_COMMITS[dealId] = { dealId, classificacao: 'commit', evidencia1: '', evidencia2: '' };
+        csRender();
+        setTimeout(() => { document.getElementById('ev1-' + dealId)?.focus(); }, 50);
+        return;
+      }
+      alert('⚠️ Commit exige 2 evidências:\n• Próximo passo agendado\n• Alinhamento com decisor');
+      return;
+    }
+  }
+  try {
+    const r = await fetch('/cockpit/commit-semana', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (d.error) { alert('❌ ' + d.error); return; }
+    _CS_COMMITS[dealId] = d.entry;
+    csRender();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+async function csRemover(dealId){
+  if (!confirm('Remover classificação?')) return;
+  try {
+    await fetch(`/cockpit/commit-semana/${dealId}?semana=${SEMANA_ATUAL}`, { method: 'DELETE' });
+    delete _CS_COMMITS[dealId];
+    csRender();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+csCarregar();
+</script>

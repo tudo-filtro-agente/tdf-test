@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="jl_bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </radialGradient>
+    <linearGradient id="jl_border" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="30%" stop-color="#475569"/>
+      <stop offset="50%" stop-color="#cbd5e1"/>
+      <stop offset="70%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="jl_border2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="50%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+    <radialGradient id="jl_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#64748b" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#64748b" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#64748b" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="jl_shield" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#cbd5e1"/>
+      <stop offset="40%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <linearGradient id="jl_check" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="jl_shine" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="jl_shadow">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#94a3b8" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <circle cx="60" cy="60" r="56" fill="url(#jl_glow)"/>
+  <circle cx="60" cy="60" r="54" fill="url(#jl_border)" opacity="0.8"/>
+  <circle cx="60" cy="60" r="53" fill="url(#jl_border2)" opacity="0.3"/>
+  <circle cx="60" cy="60" r="50" fill="url(#jl_bg)"/>
+  <circle cx="60" cy="60" r="46" fill="none" stroke="#334155" stroke-width="1" opacity="0.6"/>
+  <g filter="url(#jl_shadow)">
+    <!-- Shield -->
+    <path d="M 60 30 L 84 42 L 84 60 C 84 76, 72 88, 60 92 C 48 88, 36 76, 36 60 L 36 42 Z" fill="url(#jl_shield)" stroke="#cbd5e1" stroke-width="1" opacity="0.9"/>
+    <!-- Shield inner face -->
+    <path d="M 60 36 L 78 46 L 78 60 C 78 72, 69 82, 60 86 C 51 82, 42 72, 42 60 L 42 46 Z" fill="#1e293b" stroke="#475569" stroke-width="0.5" opacity="0.8"/>
+    <!-- Checkmark -->
+    <polyline points="48,60 56,70 74,48" fill="none" stroke="url(#jl_check)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Shield shine -->
+    <path d="M 60 36 L 78 46 L 78 54 C 70 48, 60 46, 48 50 L 42 46 Z" fill="white" opacity="0.06"/>
+  </g>
+  <ellipse cx="60" cy="38" rx="30" ry="22" fill="url(#jl_shine)"/>
+</svg>

@@ -1,0 +1,441 @@
+<% const activePage = 'manutencao'; const pageTitle = 'Forecast de Manutenção'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.fc-wrap{padding:14px 22px 80px;max-width:1500px;margin:0 auto}
+.fc-h{font-size:20px;color:var(--text);margin:0 0 4px;font-weight:800}
+.fc-sub{color:var(--text-muted);font-size:12px;margin:0 0 14px}
+.fc-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 14px}
+.fc-bar label{color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+.fc-bar select,.fc-bar input{background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px}
+
+.fc-totais{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:18px}
+.fc-tot{background:linear-gradient(135deg,var(--bg-card),var(--bg-card));border:1px solid var(--border);border-radius:10px;padding:14px}
+.fc-tot .lbl{color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;margin-bottom:6px}
+.fc-tot .val{color:#22c55e;font-size:22px;font-weight:800}
+.fc-tot.warn .val{color:#f97316}
+.fc-tot.danger .val{color:#ef4444}
+.fc-tot .sub{color:var(--text-muted);font-size:10px;margin-top:3px}
+
+.fc-meses{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+.fc-mes{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:0;overflow:hidden}
+.fc-mes-head{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg-card);display:flex;align-items:center;gap:10px}
+.fc-mes-head .nome{flex:1;color:var(--text);font-weight:800;font-size:13px;text-transform:capitalize}
+.fc-mes-head .vlr{color:#22c55e;font-weight:800;font-size:14px}
+.fc-mes-head .cnt{background:#222;color:#ddd;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700}
+.fc-cats{padding:8px 10px}
+.fc-cat{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:6px;display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px}
+.fc-cat:last-child{margin-bottom:0}
+.fc-cat .lbl{color:var(--text);font-size:11px;font-weight:700}
+.fc-cat .qtd{color:var(--text-muted);font-size:10px;margin-top:2px}
+.fc-cat .vlr{color:#22c55e;font-weight:800;font-size:13px;text-align:right}
+.fc-cat .meta-bar{grid-column:1/-1;height:5px;background:#222;border-radius:3px;overflow:hidden;margin-top:6px}
+.fc-cat .meta-fill{height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);transition:width .4s}
+.fc-cat .meta-fill.warn{background:linear-gradient(90deg,#f59e0b,#d97706)}
+.fc-cat .meta-fill.danger{background:linear-gradient(90deg,#ef4444,#dc2626)}
+.fc-cat .meta-info{grid-column:1/-1;color:var(--text-muted);font-size:9px;margin-top:3px;display:flex;justify-content:space-between}
+.fc-cat{cursor:pointer;transition:all .12s}
+.fc-cat:hover{border-color:#1f6feb;background:#1a1f2a}
+.fc-cat.clickable::after{content:'›';position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:18px;opacity:0;transition:opacity .15s}
+.fc-cat{position:relative}
+.fc-cat:hover.clickable::after{opacity:1;color:#1f6feb}
+.fc-cat .meta-info .pct{font-weight:800}
+.fc-cat .meta-info .pct.atingido{color:#22c55e}
+.fc-cat .meta-info .pct.parcial{color:#f59e0b}
+.fc-cat .meta-info .pct.baixo{color:#ef4444}
+.fc-resp{margin-top:3px;display:flex;flex-wrap:wrap;gap:3px}
+.fc-resp .ch{display:inline-block;background:#1f2937;color:#9ca3af;font-size:8px;font-weight:700;padding:1px 5px;border-radius:6px}
+
+.fc-vencidos{background:#1a0a0a;border:1px solid #4a1a1a;border-radius:10px;padding:14px;margin-bottom:14px}
+.fc-vencidos h3{color:#ef4444;margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.4px}
+.fc-vencidos .vals{display:flex;gap:14px;align-items:baseline}
+.fc-vencidos .vlr{color:#ef4444;font-size:18px;font-weight:800}
+
+.fc-config-btn{margin-left:auto;background:#1f6feb;border:none;color:#fff;padding:8px 14px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer}
+.fc-config-btn:hover{background:#2563eb}
+
+.fc-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;align-items:center;justify-content:center;padding:20px}
+.fc-modal.show{display:flex}
+.fc-modal-card{background:var(--bg-card);border:1px solid #1f6feb;border-radius:12px;padding:18px;max-width:760px;width:100%;max-height:90vh;overflow-y:auto;color:var(--text)}
+.fc-modal-card h2{margin:0 0 12px;font-size:16px;display:flex;align-items:center;gap:10px}
+.fc-modal-card .x{margin-left:auto;background:#222;border:1px solid var(--border);color:#ddd;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:11px}
+.fc-row{display:grid;grid-template-columns:1.4fr 1fr 1fr 1.2fr;gap:8px;align-items:center;padding:8px 6px;border-bottom:1px solid #1a1a1a;font-size:12px}
+.fc-row:last-child{border-bottom:none}
+.fc-row .lbl{color:var(--text);font-weight:700}
+.fc-row .desc{color:var(--text-muted);font-size:9px;margin-top:2px}
+.fc-row input{background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:6px 8px;font-size:12px;width:100%}
+.fc-row input:focus{outline:none;border-color:#1f6feb}
+.fc-modal-foot{margin-top:14px;display:flex;justify-content:flex-end;gap:8px}
+.fc-modal-foot button{padding:9px 16px;font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;border:none}
+.fc-modal-foot .save{background:#22c55e;color:#000}
+.fc-modal-foot .cancel{background:#222;color:#ddd;border:1px solid var(--border)}
+
+.fc-loading{padding:40px;text-align:center;color:var(--text-muted);font-size:12px}
+</style>
+
+<div class="fc-wrap">
+  <h1 class="fc-h">📊 Forecast de Manutenção</h1>
+  <p class="fc-sub">Previsão de faturamento por mês × categoria, baseado em clientes Fechado Ganho com manutenção a vencer</p>
+
+  <div class="fc-bar">
+    <label>Horizonte</label>
+    <select id="fc-meses" onchange="fcCarregar()">
+      <option value="3">3 meses</option>
+      <option value="6" selected>6 meses</option>
+      <option value="12">12 meses</option>
+      <option value="24">24 meses</option>
+    </select>
+    <button class="fc-config-btn" onclick="fcAbrirConfig()">⚙️ Configurar Preços + Metas</button>
+    <button class="fc-config-btn" onclick="fcCarregar()" style="background:#222;border:1px solid var(--border)">↻ Atualizar</button>
+  </div>
+
+  <div id="fc-content"><div class="fc-loading">⏳ Calculando forecast...</div></div>
+</div>
+
+<!-- MODAL CONFIG -->
+<div id="fc-modal" class="fc-modal">
+  <div class="fc-modal-card">
+    <h2>⚙️ Preços + Metas Mensais por Categoria <button class="x" onclick="fcFecharConfig()">✕</button></h2>
+    <p style="color:var(--text-muted);font-size:11px;margin:0 0 12px">Configure o preço médio de manutenção por categoria e a meta mensal de faturamento. Os responsáveis aparecem no card do mês.</p>
+    <div class="fc-row" style="border-bottom:2px solid var(--border);font-weight:800;color:var(--text-muted);font-size:10px;text-transform:uppercase">
+      <div>Categoria</div>
+      <div>Preço (R$)</div>
+      <div>Meta mensal (R$)</div>
+      <div>Responsáveis</div>
+    </div>
+    <div id="fc-cfg-rows"></div>
+    <div class="fc-modal-foot">
+      <button class="cancel" onclick="fcFecharConfig()">Cancelar</button>
+      <button class="save" onclick="fcSalvarConfig()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _FC = null;
+let _FC_PRECOS = null;
+let _FC_METAS = null;
+let _FC_USERS = <%- JSON.stringify(closers || []) %>;
+
+function fcMoney(v){
+  v = Number(v||0);
+  if (v >= 1000000) return 'R$ '+(v/1000000).toFixed(1).replace('.',',')+'M';
+  if (v >= 1000) return 'R$ '+Math.round(v/1000)+'k';
+  return 'R$ '+Math.round(v).toLocaleString('pt-BR');
+}
+function fcMoneyFull(v){ return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+
+async function fcCarregar(){
+  const meses = document.getElementById('fc-meses').value;
+  const c = document.getElementById('fc-content');
+  c.innerHTML = '<div class="fc-loading">⏳ Calculando forecast...</div>';
+  try {
+    const r = await fetch('/manutencao/forecast?meses=' + meses);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    _FC = d;
+    fcRender();
+  } catch(e) {
+    c.innerHTML = `<div class="fc-loading" style="color:#ef4444">Erro: ${e.message}</div>`;
+  }
+}
+
+function fcRender(){
+  const d = _FC;
+  const c = document.getElementById('fc-content');
+  const totalProj = d.totais.valorTotal;
+  const totalCli = d.totais.countTotal;
+  const venc = d.totais.valorVencidos;
+  const vencCnt = d.totais.countVencidos;
+
+  let html = '';
+  // TOTAIS topo
+  html += `<div class="fc-totais">
+    <div class="fc-tot"><div class="lbl">Faturamento previsto · ${d.mesesHorizonte} meses</div><div class="val">${fcMoney(totalProj)}</div><div class="sub">${totalCli} clientes</div></div>
+    <div class="fc-tot"><div class="lbl">Média mensal</div><div class="val">${fcMoney(totalProj/d.mesesHorizonte)}</div><div class="sub">por mês</div></div>
+    <div class="fc-tot warn"><div class="lbl">Mês corrente</div><div class="val">${fcMoney(d.buckets[0].totalValor)}</div><div class="sub">${d.buckets[0].totalCount} clientes</div></div>
+    <div class="fc-tot danger"><div class="lbl">⚠️ Manutenção vencida</div><div class="val">${fcMoney(venc)}</div><div class="sub">${vencCnt} clientes atrasados</div></div>
+  </div>`;
+
+  // VENCIDOS card
+  if (vencCnt > 0) {
+    html += `<div class="fc-vencidos">
+      <h3>⚠️ Clientes com manutenção vencida (oportunidade imediata)</h3>
+      <div class="vals">
+        <span class="vlr">${fcMoneyFull(venc)}</span>
+        <span style="color:#aaa;font-size:12px">de ${vencCnt} clientes que já passaram do prazo</span>
+      </div>
+      <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px">`;
+    for (const [cat, v] of Object.entries(d.vencidos.categorias)) {
+      html += `<span onclick="fcAbrirLeads('vencidos','${cat}','${v.label.replace(/'/g,"\\'")}')" style="background:#2d1010;border:1px solid #4a1a1a;color:#fca5a5;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='#4a1a1a'" onmouseout="this.style.background='#2d1010'">${v.label} · ${v.count} · ${fcMoney(v.valor)}</span>`;
+    }
+    html += `</div></div>`;
+  }
+
+  // MESES
+  html += `<div class="fc-meses">`;
+  for (const b of d.buckets) {
+    html += `<div class="fc-mes">
+      <div class="fc-mes-head">
+        <span class="nome">${b.label}</span>
+        <span class="cnt">${b.totalCount}</span>
+        <span class="vlr">${fcMoney(b.totalValor)}</span>
+      </div>
+      <div class="fc-cats">`;
+    const cats = Object.entries(b.categorias).sort((a,b) => b[1].valor - a[1].valor);
+    if (!cats.length) {
+      html += `<div style="color:#444;text-align:center;padding:14px;font-size:11px">— sem manutenção prevista —</div>`;
+    } else {
+      for (const [cat, v] of cats) {
+        const pct = v.atingimentoPct;
+        const atng = pct === null ? null : (pct >= 100 ? 'atingido' : (pct >= 70 ? 'parcial' : 'baixo'));
+        const fillCls = pct === null ? '' : (pct >= 100 ? '' : (pct >= 70 ? 'warn' : 'danger'));
+        html += `<div class="fc-cat clickable" onclick="fcAbrirLeads('${b.ymd}','${cat}','${v.label.replace(/'/g,"\\'")}')" title="Click pra ver os leads e ações em massa">
+          <div>
+            <div class="lbl">${v.label}</div>
+            <div class="qtd">${v.count} cliente(s) × média R$ ${Math.round(v.valor/v.count).toLocaleString('pt-BR')}</div>
+          </div>
+          <div></div>
+          <div class="vlr">${fcMoney(v.valor)}</div>
+          ${v.metaMensal > 0 ? `
+            <div class="meta-bar"><div class="meta-fill ${fillCls}" style="width:${Math.min(100, pct||0)}%"></div></div>
+            <div class="meta-info">
+              <span>Meta: ${fcMoney(v.metaMensal)}</span>
+              <span class="pct ${atng||''}">${pct||0}% atingido</span>
+            </div>
+          ` : ''}
+          ${(v.responsaveis||[]).length ? `<div class="fc-resp" style="grid-column:1/-1">${v.responsaveis.map(r => '<span class="ch">👤 '+r+'</span>').join('')}</div>` : ''}
+        </div>`;
+      }
+    }
+    html += `</div></div>`;
+  }
+  html += `</div>`;
+  c.innerHTML = html;
+}
+
+async function fcAbrirConfig(){
+  document.getElementById('fc-modal').classList.add('show');
+  try {
+    const [pR, mR] = await Promise.all([fetch('/manutencao/precos'), fetch('/manutencao/metas-categoria')]);
+    const pD = await pR.json(); const mD = await mR.json();
+    _FC_PRECOS = pD.precos; _FC_METAS = mD.metas;
+    fcRenderConfigRows();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+function fcFecharConfig(){ document.getElementById('fc-modal').classList.remove('show'); }
+
+function fcRenderConfigRows(){
+  const rows = document.getElementById('fc-cfg-rows');
+  rows.innerHTML = Object.entries(_FC_PRECOS).map(([cat, p]) => {
+    const m = _FC_METAS[cat] || { metaMensal: 0, responsaveis: [], cor: '#888' };
+    return `
+      <div class="fc-row" data-cat="${cat}">
+        <div>
+          <div class="lbl">${p.label}</div>
+          <div class="desc">vida útil: ${p.mesesVidaUtil}m · default: R$ ${p.ticketDefault}</div>
+        </div>
+        <input type="number" min="0" placeholder="${p.ticketDefault}" value="${p.precoConfigurado||''}" data-field="preco">
+        <input type="number" min="0" placeholder="0" value="${m.metaMensal||''}" data-field="meta">
+        <input type="text" placeholder="catia,larissa,fabiana" value="${(m.responsaveis||[]).join(',')}" data-field="resp">
+      </div>
+    `;
+  }).join('');
+}
+
+async function fcSalvarConfig(){
+  const rows = document.querySelectorAll('#fc-cfg-rows .fc-row');
+  const precos = {};
+  const metas = {};
+  for (const row of rows) {
+    const cat = row.dataset.cat;
+    if (!cat) continue;
+    const preco = row.querySelector('[data-field=preco]').value;
+    const meta = row.querySelector('[data-field=meta]').value;
+    const resp = row.querySelector('[data-field=resp]').value;
+    if (preco !== '' && !isNaN(Number(preco))) precos[cat] = Number(preco);
+    metas[cat] = {
+      metaMensal: Number(meta) || 0,
+      responsaveis: (resp || '').split(',').map(s => s.trim()).filter(Boolean),
+      cor: _FC_METAS[cat]?.cor || '#888',
+    };
+  }
+  // Validação local
+  if (Object.keys(precos).length === 0 && Object.keys(metas).length === 0) {
+    alert('Nada pra salvar — preencha pelo menos um preço ou meta');
+    return;
+  }
+  // Salva sequencial pra ver qual falhou
+  const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+  let errosDetalhe = [];
+  try {
+    if (Object.keys(precos).length > 0) {
+      const r1 = await fetch('/manutencao/precos', { method:'POST', headers, credentials: 'include', body: JSON.stringify({ precos }) });
+      const txt1 = await r1.text();
+      let j1 = null; try { j1 = JSON.parse(txt1); } catch(_){}
+      if (!r1.ok || j1?.error) errosDetalhe.push(`Preços: ${j1?.error || ('HTTP '+r1.status+' — '+txt1.slice(0,200))}`);
+    }
+    const r2 = await fetch('/manutencao/metas-categoria', { method:'POST', headers, credentials: 'include', body: JSON.stringify({ metas }) });
+    const txt2 = await r2.text();
+    let j2 = null; try { j2 = JSON.parse(txt2); } catch(_){}
+    if (!r2.ok || j2?.error) errosDetalhe.push(`Metas: ${j2?.error || ('HTTP '+r2.status+' — '+txt2.slice(0,200))}`);
+    if (errosDetalhe.length) {
+      alert('❌ Erros ao salvar:\n\n' + errosDetalhe.join('\n\n'));
+      return;
+    }
+    fcFecharConfig();
+    fcCarregar();
+    // Mostra confirmação visual no topo
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#22c55e;color:#000;padding:10px 20px;border-radius:8px;font-weight:800;font-size:13px;z-index:500;box-shadow:0 4px 16px rgba(34,197,94,.5)';
+    msg.textContent = '✅ Preços + metas salvos';
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 2500);
+  } catch(e) {
+    alert('Erro de rede: ' + e.message);
+  }
+}
+
+// === DRILL-DOWN: lista de leads de uma categoria/bucket + ações em massa ===
+let _FC_LEADS = []; let _FC_LEADS_SEL = new Set();
+let _FC_BUCKET = ''; let _FC_CAT = '';
+
+async function fcAbrirLeads(bucket, cat, label){
+  _FC_BUCKET = bucket; _FC_CAT = cat; _FC_LEADS_SEL = new Set();
+  const modal = document.getElementById('fc-leads-modal') || (function(){
+    const m = document.createElement('div');
+    m.id = 'fc-leads-modal';
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px';
+    m.innerHTML = `<div id="fc-leads-card" style="background:#0d0d0d;border:1px solid #1f6feb;border-radius:12px;padding:0;max-width:1100px;width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;color:#fff"></div>`;
+    document.body.appendChild(m);
+    return m;
+  })();
+  modal.style.display = 'flex';
+  document.getElementById('fc-leads-card').innerHTML = '<div style="padding:40px;color:#888;text-align:center">⏳ Carregando leads...</div>';
+
+  try {
+    const r = await fetch(`/manutencao/forecast-leads?bucket=${encodeURIComponent(bucket)}&cat=${encodeURIComponent(cat)}`);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    _FC_LEADS = d.leads || [];
+    fcRenderLeadsModal(label, d);
+  } catch(e) {
+    document.getElementById('fc-leads-card').innerHTML = `<div style="padding:40px;color:#ef4444;text-align:center">Erro: ${e.message}</div>`;
+  }
+}
+
+function fcFecharLeads(){
+  const m = document.getElementById('fc-leads-modal');
+  if (m) m.style.display = 'none';
+}
+
+function fcRenderLeadsModal(label, d){
+  const card = document.getElementById('fc-leads-card');
+  const bucketLabel = _FC_BUCKET === 'vencidos' ? '⚠️ Vencidos' : _FC_BUCKET;
+  card.innerHTML = `
+    <header style="padding:14px 20px;border-bottom:1px solid #222;background:#161616;display:flex;align-items:center;gap:14px">
+      <div style="flex:1">
+        <div style="font-size:11px;color:#888;text-transform:uppercase;font-weight:700">${bucketLabel} · ${label}</div>
+        <div style="font-size:18px;color:#fff;font-weight:800">${d.total} cliente(s) · ${fcMoney(d.valorTotal)}</div>
+      </div>
+      <button onclick="fcFecharLeads()" style="background:#222;border:1px solid #444;color:#aaa;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">✕ Fechar</button>
+    </header>
+    <div style="padding:10px 20px;background:#0d1f3a;border-bottom:1px solid #1f6feb;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="fc-sel-all" onchange="fcToggleTodos(this.checked)" style="width:auto">
+        <span style="color:#aaa;font-size:11px;font-weight:700">Selecionar todos</span>
+      </label>
+      <span id="fc-sel-count" style="color:#7cb9f5;font-size:11px;font-weight:700;margin-left:6px">0 selecionados</span>
+      <span style="flex:1"></span>
+      <button onclick="fcAcaoNubia()" id="fc-act-nubia" disabled style="background:#a371f7;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;opacity:.4">🤖 Disparar Núbia</button>
+      <button onclick="fcAcaoEtapa()" id="fc-act-etapa" disabled style="background:#1f6feb;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;opacity:.4">🪜 Mover etapa</button>
+      <button onclick="fcAcaoOwner()" id="fc-act-owner" disabled style="background:#374151;color:#fff;border:1px solid #4a5260;padding:8px 14px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;opacity:.4">👤 Atribuir owner</button>
+      <button onclick="fcAcaoContatado()" id="fc-act-cont" disabled style="background:#22c55e;color:#000;border:none;padding:8px 14px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;opacity:.4">📞 Marcar contatado</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:8px 14px">
+      ${d.leads.length === 0 ? '<div style="padding:40px;text-align:center;color:#666">Nenhum lead encontrado</div>' : d.leads.map(fcLeadRow).join('')}
+    </div>
+  `;
+}
+
+function fcLeadRow(l){
+  const venc = l.diasParaVencer < 0;
+  const vencCor = venc ? '#ef4444' : (l.diasParaVencer <= 7 ? '#fbbf24' : '#888');
+  const vencTxt = venc ? `${Math.abs(l.diasParaVencer)}d vencido` : `${l.diasParaVencer}d pra vencer`;
+  return `<div style="display:grid;grid-template-columns:30px 2fr 1fr 1.2fr 1fr 110px 60px;gap:10px;padding:10px 6px;border-bottom:1px solid #1a1a1a;align-items:center;font-size:12px">
+    <input type="checkbox" data-deal-id="${l.id}" onchange="fcToggleSel('${l.id}', this.checked)" ${_FC_LEADS_SEL.has(l.id)?'checked':''} style="width:auto">
+    <div>
+      <div style="color:#fff;font-weight:700">${l.nome}</div>
+      <div style="color:#888;font-size:10px">${l.telefone || '—'}${l.cidade?` · 📍 ${l.cidade}`:''}</div>
+    </div>
+    <div style="color:#aaa;font-size:11px">${l.produto.slice(0,30) || '—'}</div>
+    <div>
+      <div style="color:#aaa;font-size:11px">👤 ${(l.operadora||l.owner||'sem owner').split(' ')[0].split('.')[0]}</div>
+      <div style="color:#666;font-size:9px">📅 ${l.proximaTroca}</div>
+    </div>
+    <div style="color:${vencCor};font-weight:700;font-size:11px">${vencTxt}</div>
+    <div style="color:#22c55e;font-weight:800;font-size:13px;text-align:right">${fcMoney(l.preco)}</div>
+    <a href="${l.crmLink}" target="_blank" onclick="event.stopPropagation()" style="color:#7cb9f5;text-decoration:none;font-size:11px;text-align:center;padding:4px 8px;border:1px solid #1f6feb;border-radius:4px">CRM</a>
+  </div>`;
+}
+
+function fcToggleSel(id, on){
+  if (on) _FC_LEADS_SEL.add(id); else _FC_LEADS_SEL.delete(id);
+  fcAtualizarSelCount();
+}
+function fcToggleTodos(on){
+  _FC_LEADS_SEL.clear();
+  if (on) for (const l of _FC_LEADS) _FC_LEADS_SEL.add(l.id);
+  document.querySelectorAll('#fc-leads-card input[data-deal-id]').forEach(cb => cb.checked = on);
+  fcAtualizarSelCount();
+}
+function fcAtualizarSelCount(){
+  const n = _FC_LEADS_SEL.size;
+  document.getElementById('fc-sel-count').textContent = n + ' selecionado' + (n===1?'':'s');
+  ['fc-act-nubia','fc-act-etapa','fc-act-owner','fc-act-cont'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.disabled = n === 0;
+    el.style.opacity = n === 0 ? '.4' : '1';
+  });
+}
+
+async function fcExecutarAcao(action, payload, msg){
+  const dealIds = Array.from(_FC_LEADS_SEL);
+  if (!dealIds.length) return;
+  if (!confirm(`${msg}\n\n${dealIds.length} lead(s) afetado(s). Continuar?`)) return;
+  try {
+    const r = await fetch('/manutencao/forecast-leads/acao-massa', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dealIds, action, payload }),
+    });
+    const d = await r.json();
+    if (d.error) { alert('Erro: ' + d.error); return; }
+    alert(`✅ ${d.sucesso} de ${d.total} lead(s) processados`);
+    fcFecharLeads();
+    fcCarregar();
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+function fcAcaoNubia(){
+  fcExecutarAcao('nubia', { contexto: 'Manutenção próxima — reengajar via Núbia' }, '🤖 Disparar Núbia em todos os selecionados?');
+}
+function fcAcaoEtapa(){
+  const etapa = prompt('Mover pra qual etapa? (base_sem_contato | tentativa_contato | em_conversa | proposta_enviada | finalizado_ganho | finalizado_perdido)', 'em_conversa');
+  if (!etapa) return;
+  fcExecutarAcao('etapa', { etapa }, `🪜 Mover ${_FC_LEADS_SEL.size} lead(s) pra etapa "${etapa}"?`);
+}
+async function fcAcaoOwner(){
+  // Carrega lista de operadoras (já temos via _FC_USERS pegando dos closers)
+  const opcoes = (window._FC_USERS||[]).map(u => `${u.username} (${u.name})`).join('\n');
+  const operadora = prompt('Atribuir qual operadora (digite o username):\n\n' + opcoes);
+  if (!operadora) return;
+  fcExecutarAcao('owner', { operadora: operadora.trim() }, `👤 Atribuir "${operadora}" pra ${_FC_LEADS_SEL.size} lead(s)?`);
+}
+function fcAcaoContatado(){
+  fcExecutarAcao('marcar_contatado', {}, `📞 Marcar ${_FC_LEADS_SEL.size} lead(s) como contatado hoje?`);
+}
+
+window._FC_USERS = _FC_USERS;
+fcCarregar();
+</script>

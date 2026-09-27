@@ -1,0 +1,208 @@
+<% const activePage = 'admin-score-leads'; const pageTitle = 'Score de Leads — Redistribuir Leads Parados'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.lsr-wrap{max-width:1500px;margin:0 auto;padding:24px;color:var(--text)}
+.lsr-header{background:linear-gradient(135deg,#1a0e2a,var(--bg));border:2px solid #f59e0b;border-radius:12px;padding:18px;margin-bottom:14px}
+.lsr-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.lsr-tab{background:transparent;color:#9ca3af;border:none;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;text-decoration:none}
+.lsr-tab.active{color:#fbbf24;border-bottom-color:#f59e0b}
+.lsr-toolbar{display:flex;gap:10px;align-items:center;background:#161725;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px;flex-wrap:wrap}
+.lsr-btn{background:#a371f7;color:#fff;border:none;border-radius:5px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer}
+.lsr-btn.g{background:#374151}
+.lsr-owner-card{background:#161725;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;border-left:4px solid #f59e0b}
+.lsr-owner-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.lsr-owner-head .name{font-weight:800;color:var(--text);font-size:14px}
+.lsr-owner-head .badge{background:rgba(245,158,11,.2);color:#fbbf24;padding:2px 9px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase}
+.lsr-tbl{width:100%;border-collapse:collapse;font-size:11px;background:#0a0a0f;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.lsr-tbl th{background:#1a0e2a;color:#fbbf24;padding:7px 10px;text-align:left;text-transform:uppercase;font-size:10px}
+.lsr-tbl td{padding:6px 10px;border-bottom:1px solid #1a1a2a;vertical-align:top}
+.lsr-tier{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700}
+.lsr-tier.Diamante{background:rgba(6,182,212,.15);color:#06b6d4}
+.lsr-tier.Ouro{background:rgba(251,191,36,.15);color:#fbbf24}
+.lsr-tier.Prata{background:rgba(148,163,184,.15);color:#94a3b8}
+.lsr-tier.Bronze{background:rgba(180,83,9,.15);color:#b45309}
+.lsr-tier.Pedra{background:rgba(75,85,99,.15);color:#4b5563}
+.lsr-empty{background:#161725;border:1px dashed var(--border);border-radius:8px;padding:30px;text-align:center;color:#9ca3af}
+.lsr-redist-btn{background:#10b981;color:#000;border:none;border-radius:5px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer}
+.lsr-redist-btn:hover{background:#059669;color:#fff}
+.lsr-modal-back{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:none;align-items:center;justify-content:center}
+.lsr-modal-back.open{display:flex}
+.lsr-modal{background:#161725;border:2px solid #f59e0b;border-radius:14px;padding:22px;max-width:520px;width:92vw}
+.lsr-modal h3{color:#fbbf24;margin:0 0 14px;font-size:16px}
+.lsr-modal label{display:block;color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;margin:10px 0 4px}
+.lsr-modal select, .lsr-modal input{width:100%;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:6px;padding:8px 10px;font-size:12px;box-sizing:border-box}
+.lsr-modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+</style>
+
+<div class="lsr-wrap">
+  <div class="lsr-header">
+    <h1 style="color:#fbbf24;margin:0;font-size:20px">🔄 Redistribuir Leads Parados</h1>
+    <p style="color:#9ca3af;font-size:12px;margin:8px 0 0;line-height:1.5">
+      Leads em stages ativos que não tiveram atividade nas últimas <strong>3 dias úteis</strong>.
+      Você escolhe pra quem redistribuir — sistema valida que o novo owner tem permissão pro produto antes de aplicar.
+      A redistribuição grava em <code>meta.operadora</code> (local) + audit log. Não altera Owner no Zoho.
+    </p>
+  </div>
+
+  <div class="lsr-tabs">
+    <a class="lsr-tab" href="/admin/score-leads">📋 Critérios</a>
+    <a class="lsr-tab" href="/admin/score-leads/cadencia">⏱️ Cadência</a>
+    <a class="lsr-tab active" href="/admin/score-leads/redistribuir">🔄 Redistribuir</a>
+    <a class="lsr-tab" href="/admin/score-leads/atrasos">🚨 Atrasos</a>
+    <a class="lsr-tab" href="/admin/score-leads/auditoria-atividades">🛡️ Auditoria Atividades</a>
+    <a class="lsr-tab" href="/admin/score-leads/teste">🧪 Testar Lead</a>
+  </div>
+
+  <div class="lsr-toolbar">
+    <label style="color:#9ca3af;font-size:11px;font-weight:700">Dias úteis sem atividade:</label>
+    <input type="number" id="lsr-days" value="3" min="1" max="30" style="width:60px;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:6px;font-size:12px;text-align:center">
+    <button class="lsr-btn" onclick="lsrLoad()">🔍 Buscar</button>
+    <span style="flex:1"></span>
+    <span id="lsr-summary" style="color:#9ca3af;font-size:11px"></span>
+  </div>
+
+  <div id="lsr-content"><div class="lsr-empty">⏳ Carregando…</div></div>
+</div>
+
+<!-- Modal redistribuição -->
+<div class="lsr-modal-back" id="lsr-modal">
+  <div class="lsr-modal">
+    <h3>🔄 Redistribuir Lead</h3>
+    <div id="lsr-modal-deal" style="background:#0a0a0f;border:1px solid var(--border);border-radius:6px;padding:10px;color:#fff;font-size:12px;margin-bottom:10px"></div>
+    <label>Novo closer (só mostra os com permissão pro produto)</label>
+    <select id="lsr-modal-owner"></select>
+    <label>Motivo (obrigatório)</label>
+    <input id="lsr-modal-reason" placeholder="ex: parado há 5 dias, redistribui pra Italo">
+    <div class="lsr-modal-foot">
+      <button class="lsr-btn g" onclick="lsrCloseModal()">Cancelar</button>
+      <button class="lsr-btn" onclick="lsrSubmit()" style="background:#10b981;color:#000">✅ Redistribuir</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _LSR_CLOSERS = [];
+let _LSR_CURRENT_DEAL = null;
+
+const PRODUCT_TO_PERM = {
+  FILTRO_ENTRADA_AGUA_TRATADA: 'filtro_entrada',
+  FILTRO_ENTRADA_POCO: 'poco',
+  IRON_FREE: 'iron_free',
+  SCALE_STOP: 'scale_stop',
+  BEBEDOURO_INDUSTRIAL: 'bebedouro',
+  PURIFICADOR: 'purificador',
+  REFIL_MANUTENCAO: 'refil',
+};
+
+async function lsrLoadClosers(){
+  if (_LSR_CLOSERS.length) return;
+  const r = await fetch('/api/lead-score/closers').then(r=>r.json());
+  if (r.ok) _LSR_CLOSERS = r.items || [];
+}
+
+async function lsrLoad(){
+  await lsrLoadClosers();
+  const days = document.getElementById('lsr-days').value;
+  document.getElementById('lsr-content').innerHTML = '<div class="lsr-empty">⏳ Buscando no Zoho (até 30s)…</div>';
+  try {
+    const r = await fetch(`/api/lead-score/stuck-leads?days=${days}&limit=300`).then(r=>r.json());
+    if (!r.ok) { document.getElementById('lsr-content').innerHTML = `<div style="color:#ef4444">${r.error}</div>`; return; }
+    const byOwner = r.by_owner || {};
+    const ownerNames = Object.keys(byOwner).sort();
+    document.getElementById('lsr-summary').textContent = `${r.total} leads parados há ${days}+ dias · ${ownerNames.length} owners`;
+    if (!ownerNames.length) {
+      document.getElementById('lsr-content').innerHTML = `<div class="lsr-empty">✅ Nenhum lead parado encontrado.</div>`;
+      return;
+    }
+    document.getElementById('lsr-content').innerHTML = ownerNames.map(owner => `
+      <div class="lsr-owner-card">
+        <div class="lsr-owner-head">
+          <div class="name">${escapeHtml(owner)}</div>
+          <span class="badge">${byOwner[owner].length} parado${byOwner[owner].length>1?'s':''}</span>
+        </div>
+        <table class="lsr-tbl">
+          <thead><tr>
+            <th style="width:130px">Deal</th>
+            <th>Nome</th>
+            <th style="width:70px">Tier</th>
+            <th style="width:120px">Stage</th>
+            <th style="width:170px">Produto / Água</th>
+            <th style="width:100px">Última atividade</th>
+            <th style="width:100px"></th>
+          </tr></thead>
+          <tbody>
+            ${byOwner[owner].slice(0, 30).map(d => `
+              <tr>
+                <td>
+                  <code style="color:#a371f7;font-size:10px;cursor:pointer;padding:3px 6px;border-radius:3px;background:rgba(167,113,247,.08);border:1px solid rgba(167,113,247,.3)"
+                        onclick="copyText('${escapeHtml(d.id)}', this, 'Deal ID')"
+                        title="Copiar">📋 ${escapeHtml(d.id)}</code>
+                  <a href="https://crmplus.zoho.com/tudodefiltro3711/index.do/cxapp/crm/org856385701/tab/Potentials/${escapeHtml(d.id)}" target="_blank" style="margin-left:4px;color:#06b6d4;font-size:10px">↗</a>
+                </td>
+                <td style="font-size:11px">${escapeHtml(d.name||'-')}</td>
+                <td><span class="lsr-tier ${escapeHtml(d.tier||'')}">${escapeHtml(d.tier||'-')}</span></td>
+                <td style="font-size:10px;color:#9ca3af">${escapeHtml(d.stage||'-')}</td>
+                <td style="font-size:10px;color:#9ca3af">${escapeHtml(d.product||'-')}<br>${escapeHtml(d.tipo_agua||'')}</td>
+                <td style="color:#f59e0b;font-size:10px">${d.days_since_activity}d</td>
+                <td><button class="lsr-redist-btn" onclick='lsrOpenModal(${JSON.stringify(d).replace(/'/g,"&apos;")})'>🔄 Redistribuir</button></td>
+              </tr>
+            `).join('')}
+            ${byOwner[owner].length > 30 ? `<tr><td colspan="7" style="color:#9ca3af;text-align:center;padding:8px">…e mais ${byOwner[owner].length-30}</td></tr>` : ''}
+          </tbody>
+        </table>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('lsr-content').innerHTML = `<div style="color:#ef4444">${e.message}</div>`;
+  }
+}
+
+function lsrOpenModal(deal){
+  _LSR_CURRENT_DEAL = deal;
+  document.getElementById('lsr-modal-deal').innerHTML = `
+    <strong>${escapeHtml(deal.name||deal.id)}</strong><br>
+    <small style="color:#9ca3af">${escapeHtml(deal.product||'-')} · ${escapeHtml(deal.tier||'-')} · ${escapeHtml(deal.stage||'-')}</small><br>
+    <small style="color:#9ca3af">Owner atual: ?</small>
+  `;
+  // Detecta produto pra filtrar closers válidos
+  const productGuess = (deal.product || '').toUpperCase();
+  let permKey = null;
+  for (const [k, v] of Object.entries(PRODUCT_TO_PERM)) {
+    if (productGuess.includes(k.split('_')[0])) { permKey = v; break; }
+  }
+  // Fallback simples
+  if (!permKey && /bebedouro|industrial/i.test(deal.product||'')) permKey = 'bebedouro';
+  if (!permKey && /iron|ferro/i.test(deal.product||'')) permKey = 'iron_free';
+  if (!permKey && /scale/i.test(deal.product||'')) permKey = 'scale_stop';
+
+  const sel = document.getElementById('lsr-modal-owner');
+  sel.innerHTML = _LSR_CLOSERS.map(c => {
+    const hasPerm = !permKey || (c.permissoes && c.permissoes[permKey]);
+    return `<option value="${c.username}" ${hasPerm?'':'disabled'}>${escapeHtml(c.name)} · ${c.team}${hasPerm?'':' (🚫 sem perm)'}</option>`;
+  }).join('');
+  document.getElementById('lsr-modal-reason').value = '';
+  document.getElementById('lsr-modal').classList.add('open');
+}
+
+function lsrCloseModal(){ document.getElementById('lsr-modal').classList.remove('open'); }
+
+async function lsrSubmit(){
+  if (!_LSR_CURRENT_DEAL) return;
+  const newOwner = document.getElementById('lsr-modal-owner').value;
+  const reason = document.getElementById('lsr-modal-reason').value;
+  if (!reason || reason.length < 3) { alert('Motivo obrigatório (mín 3 chars)'); return; }
+  const r = await fetch(`/api/lead-score/redistribute/${_LSR_CURRENT_DEAL.id}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ new_owner: newOwner, reason })
+  }).then(r=>r.json());
+  if (!r.ok) { alert(r.error||'erro'); return; }
+  alert(`✅ Redistribuído pra ${r.new_owner.name} (${r.new_owner.team})`);
+  lsrCloseModal();
+  lsrLoad();
+}
+
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+lsrLoad();
+</script>

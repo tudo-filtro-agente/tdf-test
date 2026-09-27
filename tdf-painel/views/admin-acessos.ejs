@@ -1,0 +1,161 @@
+<% const activePage = 'admin'; const pageTitle = 'Acessos & Atividade dos Vendedores'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.al-wrap{max-width:1400px;margin:0 auto;padding:24px;color:var(--text)}
+.al-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #5ba3f5;border-radius:12px;padding:18px;margin-bottom:18px}
+.al-header h1{color:#5ba3f5;margin:0;font-size:20px}
+.al-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px}
+.al-stat{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.al-stat .v{color:var(--text);font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.al-stat .k{color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.al-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.al-tab{background:transparent;color:#9ca3af;border:none;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent}
+.al-tab.active{color:#5ba3f5;border-bottom-color:#5ba3f5}
+.al-table{width:100%;border-collapse:collapse;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:12px}
+.al-table th{background:#161725;color:#9ca3af;font-weight:700;text-transform:uppercase;font-size:10px;padding:10px;text-align:left;border-bottom:1px solid var(--border)}
+.al-table td{padding:10px;border-bottom:1px solid #1a1a1a;color:var(--text)}
+.al-table tr:hover td{background:rgba(255,255,255,.02)}
+.al-pill{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}
+.al-pill.ativo{background:rgba(34,197,94,.15);color:#22c55e}
+.al-pill.inativo{background:rgba(239,68,68,.15);color:#ef4444}
+.al-pill.role{background:rgba(167,113,247,.15);color:#c084fc}
+.al-card{background:#161725;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
+</style>
+
+<div class="al-wrap">
+  <div class="al-header">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:24px">📊</span>
+      <h1>Acessos & Atividade dos Vendedores</h1>
+      <select id="al-dias" onchange="alCarregar()" style="margin-left:auto;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:6px;padding:6px 10px;font-size:12px">
+        <option value="1">1 dia</option>
+        <option value="3">3 dias</option>
+        <option value="7" selected>7 dias</option>
+        <option value="14">14 dias</option>
+        <option value="30">30 dias</option>
+      </select>
+    </div>
+    <p style="color:var(--text-muted);font-size:12px;margin:6px 0 0">
+      Quem está logando · quem está fazendo treinamento · quem NÃO está acessando o portal.
+    </p>
+    <div id="al-stats" class="al-stats"></div>
+  </div>
+
+  <div class="al-tabs">
+    <button class="al-tab active" onclick="alAba('ativos')" id="al-tab-ativos">👥 Quem está acessando</button>
+    <button class="al-tab" onclick="alAba('inativos')" id="al-tab-inativos">😴 Quem NÃO acessou</button>
+    <button class="al-tab" onclick="alAba('treinamento')" id="al-tab-treinamento">🎓 Treinamento</button>
+    <button class="al-tab" onclick="alAba('paths')" id="al-tab-paths">🔗 Páginas mais visitadas</button>
+  </div>
+
+  <div id="al-pane-ativos"></div>
+  <div id="al-pane-inativos" style="display:none"></div>
+  <div id="al-pane-treinamento" style="display:none"></div>
+  <div id="al-pane-paths" style="display:none"></div>
+</div>
+
+<script>
+let _AL_DATA = null;
+
+async function alCarregar(){
+  const dias = document.getElementById('al-dias').value;
+  try {
+    const r = await fetch('/admin/acessos/data?dias='+dias);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    _AL_DATA = d;
+    alRender();
+  } catch(e) {
+    document.getElementById('al-pane-ativos').innerHTML = `<div style="color:#ef4444;padding:20px">${e.message}</div>`;
+  }
+}
+
+function alRender(){
+  const d = _AL_DATA;
+  // Stats
+  document.getElementById('al-stats').innerHTML = `
+    <div class="al-stat"><div class="v">${d.total_users_unicos}</div><div class="k">Usuários únicos</div></div>
+    <div class="al-stat"><div class="v" style="color:#22c55e">${d.por_usuario.filter(u => u.dias_ativos >= Math.min(3, d.janela_dias)).length}</div><div class="k">Usando regularmente</div></div>
+    <div class="al-stat"><div class="v" style="color:#ef4444">${d.nao_acessaram.length}</div><div class="k">NÃO acessaram</div></div>
+    <div class="al-stat"><div class="v">${d.total_eventos}</div><div class="k">Pageviews totais</div></div>
+    <div class="al-stat"><div class="v" style="color:#a371f7">${d.por_usuario.reduce((s,u) => s + u.treinamentos_vistos.length, 0)}</div><div class="k">Módulos treinamento abertos</div></div>
+  `;
+
+  // ATIVOS
+  let html = '<div class="al-card"><table class="al-table"><thead><tr><th>Usuário</th><th>Role/Time</th><th>Último acesso</th><th class="num">Logins</th><th class="num">Pageviews</th><th class="num">Dias ativos</th><th>Treinamentos vistos</th></tr></thead><tbody>';
+  d.por_usuario.forEach(u => {
+    const ultMin = Math.round((Date.now() - u.ultimo_acesso) / 60000);
+    const ultStr = ultMin < 60 ? ultMin+'min' : ultMin < 1440 ? Math.round(ultMin/60)+'h' : Math.round(ultMin/1440)+'d';
+    const corUlt = ultMin < 1440 ? '#22c55e' : ultMin < 4320 ? '#fbbf24' : '#ef4444';
+    const cls = u.dias_ativos >= Math.min(3, d.janela_dias) ? 'ativo' : 'inativo';
+    html += `<tr>
+      <td><strong>${u.name||u.username}</strong><div style="color:#666;font-size:10px">${u.username}</div></td>
+      <td><span class="al-pill role">${u.role||'?'}</span></td>
+      <td style="color:${corUlt}">${ultStr} atrás</td>
+      <td>${u.total_logins||0}</td>
+      <td>${u.total_pageviews||0}</td>
+      <td><span class="al-pill ${cls}">${u.dias_ativos}/${d.janela_dias} dias</span></td>
+      <td style="font-size:11px">${u.treinamentos_vistos.length} módulos: ${u.treinamentos_vistos.slice(0,5).join(', ')||'<em style="color:#666">nenhum</em>'}</td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  document.getElementById('al-pane-ativos').innerHTML = html;
+
+  // NÃO ACESSARAM
+  if (d.nao_acessaram.length === 0) {
+    document.getElementById('al-pane-inativos').innerHTML = '<div style="text-align:center;color:#22c55e;padding:30px;font-size:14px">✅ Todos os closers acessaram o portal nessa janela!</div>';
+  } else {
+    let h = '<div class="al-card"><h3 style="color:#ef4444;margin:0 0 12px">😴 ' + d.nao_acessaram.length + ' closer(s) NÃO acessaram nos últimos ' + d.janela_dias + ' dias</h3>';
+    h += '<table class="al-table"><thead><tr><th>Closer</th><th>Time</th><th>CRM Owner</th><th>Username</th></tr></thead><tbody>';
+    d.nao_acessaram.forEach(c => {
+      h += `<tr><td><strong>${c.name}</strong></td><td><span class="al-pill role">${c.team||'?'}</span></td><td style="color:#aaa">${c.crmOwner||'?'}</td><td style="color:#666;font-family:monospace">${c.username}</td></tr>`;
+    });
+    h += '</tbody></table></div>';
+    document.getElementById('al-pane-inativos').innerHTML = h;
+  }
+
+  // TREINAMENTO
+  const comTrein = d.por_usuario.filter(u => u.treinamentos_vistos.length > 0).sort((a,b) => b.treinamentos_vistos.length - a.treinamentos_vistos.length);
+  const semTrein = d.por_usuario.filter(u => u.treinamentos_vistos.length === 0);
+  let ht = '';
+  if (comTrein.length) {
+    ht += '<div class="al-card"><h3 style="color:#22c55e;margin:0 0 12px">🎓 ' + comTrein.length + ' closer(s) FAZENDO treinamento</h3>';
+    ht += '<table class="al-table"><thead><tr><th>Closer</th><th>Role</th><th class="num">Módulos vistos</th><th>Quais</th></tr></thead><tbody>';
+    comTrein.forEach(u => {
+      ht += `<tr><td><strong>${u.name}</strong></td><td>${u.role||'?'}</td><td>${u.treinamentos_vistos.length}</td><td style="color:#aaa;font-size:11px">${u.treinamentos_vistos.join(', ')}</td></tr>`;
+    });
+    ht += '</tbody></table></div>';
+  }
+  if (semTrein.length) {
+    ht += '<div class="al-card" style="border-left:4px solid #ef4444"><h3 style="color:#ef4444;margin:0 0 12px">⚠️ ' + semTrein.length + ' usuário(s) acessaram MAS não viram treinamento</h3>';
+    ht += '<table class="al-table"><thead><tr><th>Closer</th><th>Role</th><th class="num">Pageviews</th><th>Último acesso</th></tr></thead><tbody>';
+    semTrein.forEach(u => {
+      const ultMin = Math.round((Date.now() - u.ultimo_acesso) / 60000);
+      const ultStr = ultMin < 60 ? ultMin+'min' : ultMin < 1440 ? Math.round(ultMin/60)+'h' : Math.round(ultMin/1440)+'d';
+      ht += `<tr><td><strong>${u.name}</strong></td><td>${u.role||'?'}</td><td>${u.total_pageviews}</td><td>${ultStr} atrás</td></tr>`;
+    });
+    ht += '</tbody></table></div>';
+  }
+  document.getElementById('al-pane-treinamento').innerHTML = ht || '<div style="text-align:center;color:#888;padding:30px">Sem dados de treinamento ainda.</div>';
+
+  // PATHS
+  let hp = '<div class="al-card"><table class="al-table"><thead><tr><th>Página</th><th class="num">Visitas</th></tr></thead><tbody>';
+  d.top_paths.forEach(p => {
+    hp += `<tr><td style="font-family:monospace">${p.path}</td><td>${p.count}</td></tr>`;
+  });
+  hp += '</tbody></table></div>';
+  document.getElementById('al-pane-paths').innerHTML = hp;
+}
+
+function alAba(nome){
+  ['ativos','inativos','treinamento','paths'].forEach(n => {
+    const t = document.getElementById('al-tab-'+n);
+    const p = document.getElementById('al-pane-'+n);
+    if (t) t.classList.toggle('active', n === nome);
+    if (p) p.style.display = n === nome ? '' : 'none';
+  });
+}
+
+alCarregar();
+</script>

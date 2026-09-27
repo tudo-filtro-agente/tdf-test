@@ -1,0 +1,105 @@
+<%- include('../../layout', { user, activePage, pageTitle }) %>
+<%- include('_shared') %>
+<%
+  var done = prog.modulos[mod.slug] && prog.modulos[mod.slug].concluido;
+  var temComp = mod.componente;
+  var blocosTemComp = conteudo && (conteudo.blocos||[]).some(function(b){return b.tipo==='componente';});
+  var video = (conteudo && conteudo.video) || { url:'' };
+%>
+<div class="tb-wrap">
+  <a class="tb-back" href="<%= base %>">← Todos os módulos</a>
+
+  <div style="display:flex;align-items:center;gap:12px;margin:12px 0 4px">
+    <div style="font-size:2rem"><%= mod.icon %></div>
+    <div>
+      <div style="color:#5b7c99;font-size:.8rem">Módulo <%= mod.num %> de <%= MODULOS.length %> · ⏱ <%= mod.tempoMin %>min</div>
+      <h1 style="margin:2px 0;font-size:1.5rem;color:#fff"><%= mod.titulo %></h1>
+      <div><% mod.publico.forEach(function(p){ %><span class="tb-tag <%= p==='SDR'?'sdr':(p==='CLOSER'?'closer':'sup') %>"><%= p %></span> <% }) %></div>
+    </div>
+  </div>
+
+  <!-- Slot de vídeo (pronto para Higgsfield) -->
+  <% if (video && video.url) { %>
+    <video controls preload="metadata" style="width:100%;border-radius:12px;margin:14px 0;background:#000" <% if(video.thumb){ %>poster="<%= video.thumb %>"<% } %>>
+      <source src="<%= video.url %>"><% if(video.legenda){ %><track kind="captions" src="<%= video.legenda %>" srclang="pt" default><% } %>
+    </video>
+  <% } else { %>
+    <div style="background:#0b1220;border:1px dashed #2a3a4d;border-radius:12px;padding:16px;margin:14px 0;color:#5b7c99;font-size:.85rem;display:flex;align-items:center;gap:10px">🎬 <span>Espaço reservado para o vídeo deste módulo (a ser produzido no Higgsfield).</span></div>
+  <% } %>
+
+  <div class="tb-content">
+    <% if (conteudo) { %>
+      <%- include('_blocos', { blocos: conteudo.blocos, PRODUTOS, COMPONENTES_COMUNS, REGRAS_TORNEIRA, BEBEDOUROS, UPSELL_REFIL, brl, ANATOMIA }) %>
+      <% if (temComp && !blocosTemComp) { %>
+        <%- include('_componentes', { ref: mod.componente, PRODUTOS, COMPONENTES_COMUNS, REGRAS_TORNEIRA, BEBEDOUROS, UPSELL_REFIL, brl, ANATOMIA }) %>
+      <% } %>
+
+      <!-- Verificação de conhecimento -->
+      <% if (conteudo.perguntasRapidas && conteudo.perguntasRapidas.length) { %>
+        <div class="tb-h2">✔️ Verificação rápida</div>
+        <% conteudo.perguntasRapidas.forEach(function(q,qi){ %>
+          <div class="tb-quiz" data-q="<%= qi %>">
+            <div class="q"><%= qi+1 %>. <%= q.pergunta %></div>
+            <% q.opcoes.forEach(function(op,oi){ %>
+              <button class="tb-opt qr-opt" data-q="<%= qi %>" data-o="<%= oi %>" data-c="<%= q.correta %>"><%= op %></button>
+            <% }) %>
+            <div class="tb-exp" id="exp-<%= qi %>"><%- q.explicacao %></div>
+          </div>
+        <% }) %>
+      <% } %>
+
+      <!-- Exercício -->
+      <% if (conteudo.exercicio) { %>
+        <div class="tb-h2">✍️ Exercício</div>
+        <div class="tb-callout info"><div><%- conteudo.exercicio.enunciado %></div></div>
+        <textarea id="exercicio" placeholder="Escreva sua resposta aqui (fica salva no seu navegador)…" style="width:100%;min-height:90px;background:#0b1220;border:1px solid #2a3a4d;border-radius:10px;color:#dbe7f0;padding:11px;font-family:inherit"></textarea>
+        <% if (conteudo.exercicio.dica) { %><div style="color:#5b7c99;font-size:.8rem;margin-top:4px">💡 <%= conteudo.exercicio.dica %></div><% } %>
+      <% } %>
+
+      <!-- Resumo -->
+      <% if (conteudo.resumo) { %>
+        <div class="tb-h2">📌 Resumo</div>
+        <div class="tb-callout sucesso"><div><%- conteudo.resumo %></div></div>
+      <% } %>
+    <% } else { %>
+      <% if (temComp) { %>
+        <%- include('_componentes', { ref: mod.componente, PRODUTOS, COMPONENTES_COMUNS, REGRAS_TORNEIRA, BEBEDOUROS, UPSELL_REFIL, brl, ANATOMIA }) %>
+      <% } %>
+      <div class="tb-callout alerta"><div class="ct">Conteúdo em preparação</div><div>O texto completo deste módulo está sendo finalizado. As ferramentas interativas já estão ativas.</div></div>
+    <% } %>
+  </div>
+
+  <div class="tb-navrow">
+    <% if (anterior) { %><a class="tb-btn ghost" href="<%= base %>/modulo/<%= anterior.slug %>">← <%= anterior.titulo %></a><% } else { %><span></span><% } %>
+    <button class="tb-btn green" id="btnConcluir"><%= done ? '✓ Concluído — refazer' : 'Concluir módulo' %></button>
+    <% if (proximo) { %><a class="tb-btn" href="<%= base %>/modulo/<%= proximo.slug %>"><%= proximo.titulo %> →</a><% } else { %><a class="tb-btn" href="<%= base %>/prova">Ir para a prova →</a><% } %>
+  </div>
+</div>
+
+<script>
+(function(){
+  // exercício salvo em localStorage
+  var ex=document.getElementById('exercicio'); var K='tb-ex-<%= mod.slug %>';
+  if(ex){ ex.value=localStorage.getItem(K)||''; ex.addEventListener('input',()=>localStorage.setItem(K,ex.value)); }
+  // quiz rápido
+  var respostas={}; var totalQ=<%= (conteudo && conteudo.perguntasRapidas && conteudo.perguntasRapidas.length) || 0 %>;
+  document.querySelectorAll('.qr-opt').forEach(function(b){
+    b.onclick=function(){
+      var q=b.dataset.q, correta=+b.dataset.c, escolha=+b.dataset.o;
+      document.querySelectorAll('.qr-opt[data-q="'+q+'"]').forEach(x=>{x.classList.remove('ok','no');x.disabled=true;});
+      document.querySelectorAll('.qr-opt[data-q="'+q+'"]').forEach(x=>{ if(+x.dataset.o===correta)x.classList.add('ok'); });
+      if(escolha!==correta) b.classList.add('no');
+      document.getElementById('exp-'+q).classList.add('show');
+      respostas[q]=(escolha===correta);
+    };
+  });
+  document.getElementById('btnConcluir').onclick=async function(){
+    this.disabled=true; this.textContent='salvando…';
+    var quizNota; var certos=Object.values(respostas).filter(Boolean).length;
+    if(totalQ>0 && Object.keys(respostas).length>0) quizNota=Math.round(certos/totalQ*100);
+    var r=await TB.post('/api/modulo/<%= mod.slug %>/concluir', quizNota!=null?{quizNota:quizNota}:{});
+    if(r && r.ok){ <% if (proximo) { %>location.href='<%= base %>/modulo/<%= proximo.slug %>';<% } else { %>location.href='<%= base %>';<% } %> }
+    else { this.disabled=false; this.textContent='Erro — tentar de novo'; }
+  };
+})();
+</script>

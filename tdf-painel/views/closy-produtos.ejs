@@ -1,0 +1,390 @@
+<% const activePage = 'manutencao'; const pageTitle = 'Catálogo de Produtos · Closy'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.cp-wrap{padding:14px 22px 80px;max-width:1300px;margin:0 auto}
+.cp-h{font-size:20px;color:var(--text);margin:0 0 4px;font-weight:800}
+.cp-sub{color:var(--text-muted);font-size:12px;margin:0 0 14px}
+
+.cp-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 14px}
+.cp-bar input,.cp-bar select{background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px}
+.cp-bar input{flex:1;min-width:200px}
+.cp-bar .new{background:#22c55e;color:#000;border:none;padding:8px 16px;border-radius:6px;font-weight:800;font-size:11px;cursor:pointer}
+.cp-bar .new:hover{background:#16a34a}
+.cp-bar .desloc{background:#1f6feb;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:700;font-size:11px;cursor:pointer}
+.cp-bar .calc{background:#a371f7;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:700;font-size:11px;cursor:pointer}
+
+.cp-tbl{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.cp-tbl-head{display:grid;grid-template-columns:2.2fr 1.2fr 1fr 1fr 1.4fr 90px;gap:10px;padding:10px 14px;background:var(--bg-card);color:var(--text-muted);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border)}
+.cp-row{display:grid;grid-template-columns:2.2fr 1.2fr 1fr 1fr 1.4fr 90px;gap:10px;padding:10px 14px;align-items:center;border-bottom:1px solid #1a1a1a;font-size:12px}
+.cp-row:hover{background:var(--bg-card)}
+.cp-row.inativo{opacity:.5}
+.cp-row .nome{color:var(--text);font-weight:700}
+.cp-row .desc{color:var(--text-muted);font-size:10px;margin-top:2px}
+.cp-row .cat{color:var(--text-muted);font-size:11px}
+.cp-row .preco{color:#22c55e;font-weight:700}
+.cp-row .vu{color:var(--text-muted);font-size:11px}
+.cp-row .upd{color:var(--text-muted);font-size:9px}
+.cp-row .acts{display:flex;gap:5px;justify-content:flex-end}
+.cp-row .acts button{background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer}
+.cp-row .acts button:hover{border-color:#1f6feb;color:var(--text)}
+.cp-row .acts .del:hover{border-color:#ef4444;color:#ef4444}
+
+.cp-empty{padding:40px;text-align:center;color:var(--text-muted);font-size:12px}
+
+.cp-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;align-items:center;justify-content:center;padding:20px}
+.cp-modal.show{display:flex}
+.cp-card{background:var(--bg-card);border:1px solid #1f6feb;border-radius:12px;padding:18px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;color:var(--text)}
+.cp-card h2{margin:0 0 14px;font-size:15px;display:flex;align-items:center;gap:10px}
+.cp-card h2 .x{margin-left:auto;background:#222;border:1px solid var(--border);color:#ddd;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:11px}
+.cp-card label{display:block;color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;margin:10px 0 4px}
+.cp-card input,.cp-card select,.cp-card textarea{width:100%;background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 10px;font-size:12px;font-family:inherit}
+.cp-card textarea{resize:vertical;min-height:60px}
+.cp-card .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cp-foot{margin-top:14px;display:flex;justify-content:flex-end;gap:8px}
+.cp-foot button{padding:9px 16px;font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;border:none}
+.cp-foot .save{background:#22c55e;color:#000}
+.cp-foot .cancel{background:#222;color:#ddd;border:1px solid var(--border)}
+
+.cp-calc-out{margin-top:12px;background:#0d1f3a;border:1px solid #1f6feb;border-radius:8px;padding:12px;font-size:12px}
+.cp-calc-out .lin{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1a2940}
+.cp-calc-out .lin:last-child{border-bottom:none;font-weight:800;color:#22c55e;font-size:14px}
+.cp-calc-out .lbl{color:var(--text-muted)}
+.cp-calc-out .val{color:var(--text)}
+.cp-calc-out .det{color:var(--text-muted);font-size:10px;margin-top:2px}
+</style>
+
+<div class="cp-wrap">
+  <h1 class="cp-h">📦 Catálogo de Produtos · Closy</h1>
+  <p class="cp-sub">Cadastre os produtos com preço de manutenção. A regra de deslocamento usa CEP base + Haversine.</p>
+
+  <div class="cp-bar">
+    <input id="cp-search" type="text" placeholder="🔍 buscar nome/categoria/descrição" oninput="cpRender()">
+    <select id="cp-fcat" onchange="cpRender()">
+      <option value="">Todas categorias</option>
+      <option value="refil">Refil purificador</option>
+      <option value="elemento">Elemento (filtro entrada)</option>
+      <option value="bebedouro_refil">Refil bebedouro</option>
+      <option value="iron_free">Iron Free</option>
+      <option value="scale_stop">Scale Stop</option>
+      <option value="outros">Outros</option>
+    </select>
+    <button class="new" onclick="cpAbrirEditor()">+ Novo Produto</button>
+    <button class="desloc" onclick="cpAbrirImport()" style="background:#f59e0b">📥 Importar CSV</button>
+    <button class="desloc" onclick="cpAbrirRegra()">⚙️ Regra Deslocamento</button>
+    <button class="calc" onclick="cpAbrirCalc()">🧮 Calculadora</button>
+  </div>
+
+  <div class="cp-tbl">
+    <div class="cp-tbl-head">
+      <div>Produto</div>
+      <div>Categoria</div>
+      <div>Preço Manut.</div>
+      <div>Vida Útil</div>
+      <div>Última atualização</div>
+      <div></div>
+    </div>
+    <div id="cp-rows"><div class="cp-empty">⏳ Carregando...</div></div>
+  </div>
+</div>
+
+<!-- MODAL EDITOR PRODUTO -->
+<div id="cp-modal" class="cp-modal">
+  <div class="cp-card">
+    <h2 id="cp-modal-title">Novo produto <button class="x" onclick="cpFechar()">✕</button></h2>
+    <input type="hidden" id="cp-id">
+    <label>Nome *</label>
+    <input id="cp-nome" placeholder="Ex: Refil Carbon Block 9 3/4">
+    <div class="row">
+      <div>
+        <label>Categoria</label>
+        <select id="cp-categoria">
+          <option value="refil">Refil purificador</option>
+          <option value="elemento">Elemento (filtro entrada)</option>
+          <option value="bebedouro_refil">Refil bebedouro</option>
+          <option value="iron_free">Iron Free</option>
+          <option value="scale_stop">Scale Stop</option>
+          <option value="outros">Outros</option>
+        </select>
+      </div>
+      <div>
+        <label>Vida útil (meses)</label>
+        <input id="cp-vu" type="number" min="1" value="12">
+      </div>
+    </div>
+    <label>Preço de manutenção (R$) *</label>
+    <input id="cp-preco" type="number" min="0" step="0.01" placeholder="350">
+    <label>Descrição / Observações</label>
+    <textarea id="cp-desc" placeholder="Notas internas sobre o produto, regras especiais, etc."></textarea>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer">
+      <input id="cp-ativo" type="checkbox" checked style="width:auto"> <span>Ativo (aparece no select de produtos)</span>
+    </label>
+    <div class="cp-foot">
+      <button class="cancel" onclick="cpFechar()">Cancelar</button>
+      <button class="save" onclick="cpSalvar()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REGRA DESLOCAMENTO -->
+<div id="cp-regra" class="cp-modal">
+  <div class="cp-card">
+    <h2>⚙️ Regra de Deslocamento <button class="x" onclick="cpFecharRegra()">✕</button></h2>
+    <p style="color:var(--text-muted);font-size:11px;margin:0 0 12px">A distância é calculada por <strong>linha reta (Haversine)</strong> entre o CEP base e o CEP do cliente.</p>
+    <label>CEP base (loja TDF)</label>
+    <input id="cp-r-cep" placeholder="12243260">
+    <div class="row">
+      <div>
+        <label>Km grátis (até)</label>
+        <input id="cp-r-gratis" type="number" min="0" placeholder="50">
+      </div>
+      <div>
+        <label>Bloco (km)</label>
+        <input id="cp-r-bloco" type="number" min="1" placeholder="50">
+      </div>
+    </div>
+    <label>Preço por bloco (R$)</label>
+    <input id="cp-r-preco" type="number" min="0" placeholder="100">
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer">
+      <input id="cp-r-linear" type="checkbox" style="width:auto"> <span>Usar cobrança linear (R$/km direto, ignora blocos)</span>
+    </label>
+    <label>Preço por km (linear)</label>
+    <input id="cp-r-linear-pk" type="number" min="0" step="0.1" placeholder="2">
+    <div class="cp-foot">
+      <button class="cancel" onclick="cpFecharRegra()">Cancelar</button>
+      <button class="save" onclick="cpSalvarRegra()">💾 Salvar regra</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR CSV -->
+<div id="cp-import" class="cp-modal">
+  <div class="cp-card">
+    <h2>📥 Importar Produtos via CSV <button class="x" onclick="cpFecharImport()">✕</button></h2>
+    <p style="color:var(--text-muted);font-size:11px;margin:0 0 8px">Formato: <code style="color:#fbbf24">nome,categoria,precoManutencao,vidaUtilMeses,descricao</code></p>
+    <p style="color:var(--text-muted);font-size:11px;margin:0 0 8px">Categorias válidas: <code style="color:#22c55e">refil, elemento, bebedouro_refil, iron_free, scale_stop, outros</code></p>
+    <p style="color:var(--text-muted);font-size:10px;margin:0 0 12px;font-style:italic">Exemplo:<br><code style="color:var(--text-muted)">nome,categoria,precoManutencao,vidaUtilMeses,descricao<br>Refil CB 9 3/4,refil,380,6,Carbon Block padrão<br>Elemento Inox 430,elemento,1200,12,Filtro entrada premium</code></p>
+    <label>Cole o CSV abaixo</label>
+    <textarea id="cp-csv" rows="10" style="font-family:monospace;font-size:11px"></textarea>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer">
+      <input id="cp-csv-replace" type="checkbox" style="width:auto"> <span style="color:#ef4444">Substituir TODOS os produtos atuais (cuidado!) — desmarcado = adiciona aos existentes</span>
+    </label>
+    <div class="cp-foot">
+      <button class="cancel" onclick="cpFecharImport()">Cancelar</button>
+      <button class="save" onclick="cpImportar()">📥 Importar</button>
+    </div>
+    <div id="cp-import-out" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<!-- MODAL CALCULADORA -->
+<div id="cp-calc" class="cp-modal">
+  <div class="cp-card">
+    <h2>🧮 Calcular Preço de Manutenção <button class="x" onclick="cpFecharCalc()">✕</button></h2>
+    <label>CEP destino (cliente)</label>
+    <input id="cp-c-cep" placeholder="01310100" maxlength="9">
+    <label>Produto (opcional)</label>
+    <select id="cp-c-prod"><option value="">— sem produto —</option></select>
+    <div class="cp-foot" style="justify-content:flex-start;margin-top:10px">
+      <button class="save" onclick="cpCalcular()">🧮 Calcular</button>
+    </div>
+    <div id="cp-calc-out"></div>
+  </div>
+</div>
+
+<script>
+let _CP = [];
+let _CP_REGRA = null;
+
+function cpMoney(v){ return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+const CAT_LABEL = { refil:'Refil purificador', elemento:'Elemento (entrada)', bebedouro_refil:'Refil bebedouro', iron_free:'Iron Free', scale_stop:'Scale Stop', outros:'Outros' };
+
+async function cpCarregar(){
+  const r = await fetch('/closy/produtos');
+  const d = await r.json();
+  _CP = d.produtos || [];
+  cpRender();
+}
+
+function cpRender(){
+  const busca = (document.getElementById('cp-search').value || '').toLowerCase();
+  const cat = document.getElementById('cp-fcat').value;
+  const list = _CP.filter(p =>
+    (!cat || p.categoria === cat) &&
+    (!busca || (p.nome||'').toLowerCase().includes(busca) || (p.descricao||'').toLowerCase().includes(busca))
+  );
+  const rows = document.getElementById('cp-rows');
+  if (!list.length) { rows.innerHTML = '<div class="cp-empty">Nenhum produto cadastrado. Clique em <strong>+ Novo Produto</strong></div>'; return; }
+  rows.innerHTML = list.map(p => `
+    <div class="cp-row${p.ativo===false?' inativo':''}">
+      <div>
+        <div class="nome">${(p.nome||'').replace(/</g,'&lt;')}</div>
+        ${p.descricao?`<div class="desc">${p.descricao.replace(/</g,'&lt;').slice(0,80)}${p.descricao.length>80?'…':''}</div>`:''}
+      </div>
+      <div class="cat">${CAT_LABEL[p.categoria]||p.categoria}</div>
+      <div class="preco">${cpMoney(p.precoManutencao)}</div>
+      <div class="vu">${p.vidaUtilMeses||12} meses</div>
+      <div class="upd">${p.updatedBy||'?'}<br>${p.updatedAt?new Date(p.updatedAt).toLocaleDateString('pt-BR'):''}</div>
+      <div class="acts">
+        <button onclick="cpEditar('${p.id}')">✏️</button>
+        <button class="del" onclick="cpRemover('${p.id}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function cpAbrirEditor(){
+  document.getElementById('cp-id').value = '';
+  document.getElementById('cp-nome').value = '';
+  document.getElementById('cp-categoria').value = 'refil';
+  document.getElementById('cp-vu').value = '12';
+  document.getElementById('cp-preco').value = '';
+  document.getElementById('cp-desc').value = '';
+  document.getElementById('cp-ativo').checked = true;
+  document.getElementById('cp-modal-title').firstChild.textContent = 'Novo produto ';
+  document.getElementById('cp-modal').classList.add('show');
+}
+
+function cpEditar(id){
+  const p = _CP.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('cp-id').value = p.id;
+  document.getElementById('cp-nome').value = p.nome || '';
+  document.getElementById('cp-categoria').value = p.categoria || 'outros';
+  document.getElementById('cp-vu').value = p.vidaUtilMeses || 12;
+  document.getElementById('cp-preco').value = p.precoManutencao || '';
+  document.getElementById('cp-desc').value = p.descricao || '';
+  document.getElementById('cp-ativo').checked = p.ativo !== false;
+  document.getElementById('cp-modal-title').firstChild.textContent = 'Editar produto ';
+  document.getElementById('cp-modal').classList.add('show');
+}
+
+function cpFechar(){ document.getElementById('cp-modal').classList.remove('show'); }
+
+async function cpSalvar(){
+  const body = {
+    id: document.getElementById('cp-id').value || undefined,
+    nome: document.getElementById('cp-nome').value.trim(),
+    categoria: document.getElementById('cp-categoria').value,
+    vidaUtilMeses: Number(document.getElementById('cp-vu').value) || 12,
+    precoManutencao: Number(document.getElementById('cp-preco').value) || 0,
+    descricao: document.getElementById('cp-desc').value.trim(),
+    ativo: document.getElementById('cp-ativo').checked,
+  };
+  if (!body.nome) { alert('Nome obrigatório'); return; }
+  const r = await fetch('/closy/produtos', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const d = await r.json();
+  if (d.error) { alert('Erro: '+d.error); return; }
+  cpFechar();
+  cpCarregar();
+}
+
+async function cpRemover(id){
+  if (!confirm('Remover este produto?')) return;
+  const r = await fetch('/closy/produtos/'+id, { method:'DELETE' });
+  const d = await r.json();
+  if (d.error) { alert('Erro: '+d.error); return; }
+  cpCarregar();
+}
+
+// === REGRA DESLOCAMENTO ===
+async function cpAbrirRegra(){
+  const r = await fetch('/manutencao/regra-deslocamento');
+  const d = await r.json();
+  _CP_REGRA = d.regra;
+  document.getElementById('cp-r-cep').value = _CP_REGRA.cepBase || '12243260';
+  document.getElementById('cp-r-gratis').value = _CP_REGRA.kmGratis || 50;
+  document.getElementById('cp-r-bloco').value = _CP_REGRA.bloco || 50;
+  document.getElementById('cp-r-preco').value = _CP_REGRA.precoBloco || 100;
+  document.getElementById('cp-r-linear').checked = !!_CP_REGRA.linear?.ativo;
+  document.getElementById('cp-r-linear-pk').value = _CP_REGRA.linear?.precoPorKm || 2;
+  document.getElementById('cp-regra').classList.add('show');
+}
+function cpFecharRegra(){ document.getElementById('cp-regra').classList.remove('show'); }
+
+async function cpSalvarRegra(){
+  const regra = {
+    cepBase: document.getElementById('cp-r-cep').value.replace(/\D/g,''),
+    kmGratis: Number(document.getElementById('cp-r-gratis').value) || 0,
+    bloco: Number(document.getElementById('cp-r-bloco').value) || 50,
+    precoBloco: Number(document.getElementById('cp-r-preco').value) || 0,
+    linear: {
+      ativo: document.getElementById('cp-r-linear').checked,
+      precoPorKm: Number(document.getElementById('cp-r-linear-pk').value) || 0,
+    },
+  };
+  if (regra.cepBase.length !== 8) { alert('CEP base inválido (precisa 8 dígitos)'); return; }
+  const r = await fetch('/manutencao/regra-deslocamento', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ regra }) });
+  const d = await r.json();
+  if (d.error) { alert('Erro: '+d.error); return; }
+  cpFecharRegra();
+  alert('✅ Regra salva');
+}
+
+// === CALCULADORA ===
+function cpAbrirCalc(){
+  document.getElementById('cp-c-cep').value = '';
+  document.getElementById('cp-calc-out').innerHTML = '';
+  const sel = document.getElementById('cp-c-prod');
+  sel.innerHTML = '<option value="">— sem produto —</option>' + _CP.filter(p => p.ativo !== false).map(p => `<option value="${p.id}">${p.nome} · ${cpMoney(p.precoManutencao)}</option>`).join('');
+  document.getElementById('cp-calc').classList.add('show');
+}
+function cpFecharCalc(){ document.getElementById('cp-calc').classList.remove('show'); }
+
+async function cpCalcular(){
+  const cep = document.getElementById('cp-c-cep').value.replace(/\D/g,'');
+  const produtoId = document.getElementById('cp-c-prod').value;
+  const out = document.getElementById('cp-calc-out');
+  if (cep.length !== 8) { out.innerHTML = '<div style="color:#ef4444;padding:8px">CEP inválido (precisa 8 dígitos)</div>'; return; }
+  out.innerHTML = '<div style="color:#888;padding:8px">⏳ Calculando...</div>';
+  const r = await fetch('/manutencao/calcular-preco?cep='+cep+(produtoId?'&produtoId='+produtoId:''));
+  const d = await r.json();
+  if (d.error) { out.innerHTML = '<div style="color:#ef4444;padding:8px">'+d.error+'</div>'; return; }
+  out.innerHTML = `
+    <div class="cp-calc-out">
+      <div class="lin"><span class="lbl">📍 Origem (TDF)</span><span class="val">${d.origem.city}/${d.origem.state} · ${d.origem.cep}</span></div>
+      <div class="lin"><span class="lbl">🎯 Destino</span><span class="val">${d.destino.city}/${d.destino.state} · ${d.destino.cep}</span></div>
+      <div class="lin"><span class="lbl">📐 Distância (linha reta)</span><span class="val"><strong>${d.distanciaKm} km</strong></span></div>
+      ${d.produto?`<div class="lin"><span class="lbl">📦 Produto</span><span class="val">${d.produto.nome}</span></div>`:''}
+      ${d.produto?`<div class="lin"><span class="lbl">💧 Preço base produto</span><span class="val">${cpMoney(d.produto.precoManutencao)}</span></div>`:''}
+      <div class="lin"><span class="lbl">🚚 Deslocamento</span><span class="val">${cpMoney(d.deslocamento.valor)}<div class="det">${d.deslocamento.detalhe}</div></span></div>
+      <div class="lin"><span class="lbl">TOTAL</span><span class="val">${cpMoney(d.total)}</span></div>
+    </div>
+  `;
+}
+
+// === IMPORT CSV ===
+function cpAbrirImport(){
+  document.getElementById('cp-csv').value = '';
+  document.getElementById('cp-csv-replace').checked = false;
+  document.getElementById('cp-import-out').innerHTML = '';
+  document.getElementById('cp-import').classList.add('show');
+}
+function cpFecharImport(){ document.getElementById('cp-import').classList.remove('show'); }
+
+async function cpImportar(){
+  const csv = document.getElementById('cp-csv').value.trim();
+  const replace = document.getElementById('cp-csv-replace').checked;
+  if (!csv) { alert('Cole o CSV primeiro'); return; }
+  if (replace && !confirm('CUIDADO: vai REMOVER todos os produtos atuais e importar só os do CSV. Confirmar?')) return;
+  const out = document.getElementById('cp-import-out');
+  out.innerHTML = '<div style="color:#888;font-size:11px;padding:8px">⏳ Importando...</div>';
+  try {
+    const r = await fetch('/closy/produtos/importar-csv', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ csv, modo: replace ? 'replace' : 'append' }),
+    });
+    const d = await r.json();
+    if (d.error) { out.innerHTML = '<div style="color:#ef4444;font-size:11px;padding:8px">'+d.error+'</div>'; return; }
+    out.innerHTML = `<div style="background:#0d1f0d;border:1px solid #22c55e;border-radius:6px;padding:10px;font-size:11px">
+      <strong style="color:#22c55e">✅ ${d.importados} produto(s) importado(s)</strong>
+      <div style="color:#aaa;margin-top:4px">Total agora: ${d.totalAgora}</div>
+      ${d.erros && d.erros.length ? '<div style="color:#fbbf24;margin-top:6px"><strong>Avisos:</strong><br>'+d.erros.join('<br>')+'</div>' : ''}
+    </div>`;
+    cpCarregar();
+    setTimeout(cpFecharImport, 2500);
+  } catch(e) { out.innerHTML = '<div style="color:#ef4444;font-size:11px;padding:8px">Erro: '+e.message+'</div>'; }
+}
+
+cpCarregar();
+</script>

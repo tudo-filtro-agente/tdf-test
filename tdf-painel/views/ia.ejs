@@ -1,0 +1,84 @@
+<% const activePage = 'ia'; const pageTitle = 'IA Consulta'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<div class="chat-container">
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-msg assistant">Ola, <%= user.name %>! Sou o assistente de vendas da Tudo de Filtro. Pergunte sobre produtos, precos, scripts, objecoes ou qualquer duvida comercial.</div>
+  </div>
+
+  <div class="chat-input-area">
+    <textarea id="chatInput" rows="1" placeholder="Digite sua pergunta..." autofocus></textarea>
+    <button id="chatSend" onclick="sendMessage()">Enviar</button>
+  </div>
+</div>
+
+<script>
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const chatSend = document.getElementById('chatSend');
+let history = [];
+
+// Auto-resize textarea
+chatInput.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+// Enter to send (shift+enter for newline)
+chatInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+function addMessage(role, content) {
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + role;
+  div.textContent = content;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  return div;
+}
+
+async function sendMessage() {
+  const msg = chatInput.value.trim();
+  if (!msg) return;
+
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+  chatSend.disabled = true;
+
+  addMessage('user', msg);
+  history.push({ role: 'user', content: msg });
+
+  const loadingDiv = addMessage('loading', 'Pensando...');
+
+  try {
+    const res = await fetch('/ia/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, history: history.slice(0, -1) })
+    });
+
+    const data = await res.json();
+    loadingDiv.remove();
+
+    if (data.reply) {
+      addMessage('assistant', data.reply);
+      history.push({ role: 'assistant', content: data.reply });
+    } else {
+      addMessage('assistant', data.error || 'Erro ao processar. Tente novamente.');
+    }
+  } catch (err) {
+    loadingDiv.remove();
+    addMessage('assistant', 'Erro de conexao. Tente novamente.');
+  }
+
+  chatSend.disabled = false;
+  chatInput.focus();
+}
+</script>
+
+</body>
+</html>

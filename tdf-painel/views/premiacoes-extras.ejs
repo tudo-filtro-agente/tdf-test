@@ -1,0 +1,214 @@
+<% const activePage = 'gestao'; const pageTitle = 'Premiações Extras / Corridas'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.px-wrap{max-width:1200px;margin:0 auto;padding:24px;color:var(--text)}
+.px-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #fbbf24;border-radius:12px;padding:18px;margin-bottom:18px}
+.px-header h1{color:#fbbf24;margin:0;font-size:20px}
+.px-card{background:#161725;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px}
+.px-card.ativa{border-left:4px solid #22c55e}
+.px-card.inativa{border-left:4px solid #6b7280;opacity:.7}
+.px-input{width:100%;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:6px;padding:8px 10px;font-size:12px;font-family:inherit}
+.px-input:focus{outline:none;border-color:#fbbf24}
+.px-textarea{resize:vertical;min-height:60px}
+.px-label{display:block;color:#9ca3af;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.px-btn{background:#fbbf24;color:#000;border:none;border-radius:6px;padding:9px 16px;font-size:12px;font-weight:800;cursor:pointer}
+.px-btn:hover{background:#f59e0b}
+.px-btn-ia{background:linear-gradient(135deg,#a371f7,#7c3aed);color:#fff;border:none;border-radius:5px;padding:5px 10px;font-size:10px;font-weight:800;cursor:pointer;margin-left:6px}
+.px-btn-del{background:#ef4444;color:#fff}
+.px-row{display:flex;justify-content:space-between;padding:4px 0;font-size:11px;color:var(--text-muted)}
+</style>
+
+<div class="px-wrap">
+  <div class="px-header">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:24px">🏆</span>
+      <h1>Premiações Extras / Corridas</h1>
+    </div>
+    <p style="color:#9ca3af;font-size:12px;margin:6px 0 0;line-height:1.5">
+      Crie campanhas extras pro time: corridas semanais, prêmios surpresa, metas turbinadas. Cada premiação aparece pros closers no Cockpit.
+      Use o botão <strong style="color:#a371f7">🤖 IA melhora</strong> em qualquer campo de texto pra refinar.
+    </p>
+    <div style="margin-top:12px">
+      <button class="px-btn" onclick="pxNova()">+ Nova premiação</button>
+      <button class="px-btn" onclick="pxCarregar()" style="background:#1f1f2e;color:#ddd;border:1px solid var(--border)">🔄 Atualizar</button>
+    </div>
+  </div>
+
+  <div id="px-form-area"></div>
+  <div id="px-lista"></div>
+</div>
+
+<script>
+let _PX_LIST = [];
+
+async function pxCarregar(){
+  try {
+    const r = await fetch('/gestao/premiacoes-extras');
+    const d = await r.json();
+    _PX_LIST = d.todas || d.ativas || [];
+    pxRender();
+  } catch(e) { console.error(e); }
+}
+
+function pxRender(){
+  const cont = document.getElementById('px-lista');
+  if (!_PX_LIST.length) {
+    cont.innerHTML = '<div style="text-align:center;color:#888;padding:30px">Nenhuma premiação criada. Click "+ Nova premiação" pra começar.</div>';
+    return;
+  }
+  cont.innerHTML = _PX_LIST.map(p => {
+    const cls = p.ativa === false ? 'inativa' : 'ativa';
+    const periodoTxt = p.fim ? `${p.inicio} → ${p.fim}` : `desde ${p.inicio}`;
+    return `
+      <div class="px-card ${cls}" style="border-left-color:${p.cor}">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:24px">${p.icone||'🏆'}</span>
+          <strong style="color:#fff;font-size:15px;flex:1">${pxEsc(p.titulo)}</strong>
+          <button class="px-btn" onclick="pxEditar('${p.id}')" style="background:#1f6feb;color:#fff">Editar</button>
+          <button class="px-btn px-btn-del" onclick="pxDeletar('${p.id}')">Excluir</button>
+        </div>
+        ${p.descricao ? `<div style="color:#aaa;font-size:12px;line-height:1.5;margin-bottom:8px;white-space:pre-wrap">${pxEsc(p.descricao)}</div>` : ''}
+        ${p.premio ? `<div style="background:rgba(251,191,36,.08);border:1px solid #fbbf24;border-radius:6px;padding:8px 12px;margin:8px 0">🎁 <strong>Prêmio:</strong> <span style="color:#fbbf24">${pxEsc(p.premio)}</span></div>` : ''}
+        ${p.regras ? `<details style="margin-top:8px"><summary style="cursor:pointer;color:#a371f7;font-size:11px;font-weight:700">▸ Regras</summary><div style="color:#aaa;font-size:11px;margin-top:6px;white-space:pre-wrap">${pxEsc(p.regras)}</div></details>` : ''}
+        <div style="display:flex;gap:14px;margin-top:10px;flex-size:11px;color:#888;font-size:10px">
+          <span>📅 ${periodoTxt}</span>
+          <span>👥 Time: ${p.time||'todos'}</span>
+          ${p.produtoCategoria ? '<span>📦 '+p.produtoCategoria+'</span>' : ''}
+          <span>👤 ${p.criadoPor||'?'}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function pxEsc(s){ return String(s||'').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+
+function pxNova(){
+  pxAbrirForm({});
+}
+function pxEditar(id){
+  const p = _PX_LIST.find(x => x.id === id);
+  if (p) pxAbrirForm(p);
+}
+function pxAbrirForm(p){
+  const area = document.getElementById('px-form-area');
+  area.innerHTML = `
+    <div class="px-card" style="border:2px solid #fbbf24">
+      <h3 style="margin:0 0 12px;color:#fbbf24;font-size:15px">${p.id ? '✏️ Editar' : '+ Nova'} Premiação</h3>
+      <input type="hidden" id="px-id" value="${p.id||''}">
+      <div style="display:grid;grid-template-columns:1fr 100px 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <span class="px-label">Título</span>
+          <input id="px-titulo" class="px-input" value="${pxEsc(p.titulo||'')}" placeholder="Ex: Corrida Semanal Bebedouro">
+          <button class="px-btn-ia" onclick="pxIaTexto('px-titulo','titulo')">🤖 IA melhora</button>
+        </div>
+        <div>
+          <span class="px-label">Ícone</span>
+          <input id="px-icone" class="px-input" value="${pxEsc(p.icone||'🏆')}" maxlength="2">
+        </div>
+        <div>
+          <span class="px-label">Cor</span>
+          <input type="color" id="px-cor" class="px-input" value="${p.cor||'#fbbf24'}" style="height:36px;padding:2px">
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <span class="px-label">Descrição</span>
+        <textarea id="px-descricao" class="px-input px-textarea" rows="3" placeholder="Conta o que é a campanha, contexto e objetivo">${pxEsc(p.descricao||'')}</textarea>
+        <button class="px-btn-ia" onclick="pxIaTexto('px-descricao','descricao')">🤖 IA melhora descrição</button>
+      </div>
+      <div style="margin-bottom:10px">
+        <span class="px-label">🎁 Prêmio</span>
+        <input id="px-premio" class="px-input" value="${pxEsc(p.premio||'')}" placeholder="Ex: R$ 1.000 + 1 dia de folga + jantar com diretoria">
+        <button class="px-btn-ia" onclick="pxIaTexto('px-premio','premio')">🤖 IA melhora</button>
+      </div>
+      <div style="margin-bottom:10px">
+        <span class="px-label">Regras</span>
+        <textarea id="px-regras" class="px-input px-textarea" rows="3" placeholder="1. Quem fechar mais bebedouros até 30/05&#10;2. Mín 5 vendas pra contar&#10;3. Empate: maior ticket médio">${pxEsc(p.regras||'')}</textarea>
+        <button class="px-btn-ia" onclick="pxIaTexto('px-regras','regras')">🤖 IA melhora regras</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+        <div><span class="px-label">Início</span><input type="date" id="px-inicio" class="px-input" value="${p.inicio||new Date().toISOString().slice(0,10)}"></div>
+        <div><span class="px-label">Fim (opcional)</span><input type="date" id="px-fim" class="px-input" value="${p.fim||''}"></div>
+        <div><span class="px-label">Time</span><select id="px-time" class="px-input">
+          <option value="todos" ${p.time==='todos'||!p.time?'selected':''}>Todos os times</option>
+          <option value="bebedouro" ${p.time==='bebedouro'?'selected':''}>🚰 Bebedouro</option>
+          <option value="filtro" ${p.time==='filtro'?'selected':''}>💧 Filtro</option>
+          <option value="poco" ${p.time==='poco'?'selected':''}>⛏️ Poço</option>
+          <option value="loja" ${p.time==='loja'?'selected':''}>🏪 Loja</option>
+        </select></div>
+        <div><span class="px-label">Categoria produto</span><input id="px-cat" class="px-input" value="${pxEsc(p.produtoCategoria||'')}" placeholder="Opcional"></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:14px">
+        <input type="checkbox" id="px-ativa" ${p.ativa===false?'':'checked'}> Ativa (visível pros closers)
+      </label>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="px-btn" onclick="pxFecharForm()" style="background:#222;color:#aaa;border:1px solid #30363D">Cancelar</button>
+        <button class="px-btn" onclick="pxSalvar(this)">💾 Salvar</button>
+      </div>
+    </div>
+  `;
+  area.scrollIntoView({ behavior: 'smooth' });
+}
+function pxFecharForm(){ document.getElementById('px-form-area').innerHTML = ''; }
+
+async function pxIaTexto(inputId, tipo){
+  const el = document.getElementById(inputId);
+  const texto = el.value.trim();
+  if (!texto) { alert('Escreva algo primeiro pra IA melhorar'); return; }
+  const btn = event.target;
+  btn.disabled = true; const orig = btn.textContent; btn.textContent = '⏳';
+  try {
+    const ctx = `Premiação interna: título="${document.getElementById('px-titulo')?.value||''}" — time ${document.getElementById('px-time')?.value||'todos'}`;
+    const r = await fetch('/gestao/melhorar-texto-ia', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ texto, tipo, contexto: ctx }),
+    });
+    const d = await r.json();
+    if (d.error) { alert('IA falhou: '+d.error); return; }
+    if (confirm(`Aplicar versão melhorada?\n\nORIGINAL:\n${texto}\n\nMELHORADA:\n${d.melhorado}`)) {
+      el.value = d.melhorado;
+    }
+  } catch(e) { alert(e.message); }
+  finally { btn.disabled = false; btn.textContent = orig; }
+}
+
+async function pxSalvar(btn){
+  const body = {
+    id: document.getElementById('px-id').value || undefined,
+    titulo: document.getElementById('px-titulo').value,
+    descricao: document.getElementById('px-descricao').value,
+    premio: document.getElementById('px-premio').value,
+    regras: document.getElementById('px-regras').value,
+    inicio: document.getElementById('px-inicio').value,
+    fim: document.getElementById('px-fim').value || null,
+    time: document.getElementById('px-time').value,
+    produtoCategoria: document.getElementById('px-cat').value || null,
+    icone: document.getElementById('px-icone').value || '🏆',
+    cor: document.getElementById('px-cor').value,
+    ativa: document.getElementById('px-ativa').checked,
+  };
+  if (!body.titulo) { alert('Título obrigatório'); return; }
+  btn.disabled = true; btn.textContent = '⏳';
+  try {
+    const r = await fetch('/gestao/premiacoes-extras', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); btn.disabled = false; btn.textContent = '💾 Salvar'; return; }
+    pxFecharForm();
+    pxCarregar();
+  } catch(e) { alert(e.message); btn.disabled = false; btn.textContent = '💾 Salvar'; }
+}
+
+async function pxDeletar(id){
+  if (!confirm('Excluir esta premiação?')) return;
+  try {
+    await fetch('/gestao/premiacoes-extras/'+id, { method: 'DELETE' });
+    pxCarregar();
+  } catch(e) { alert(e.message); }
+}
+
+pxCarregar();
+</script>
