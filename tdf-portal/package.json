@@ -1,7 +1,7 @@
 {
   "name": "tdf-portal-teste",
-  "version": "0.1.0",
-  "description": "tdf-portal — versão TESTE, modo DRY_RUN",
+  "version": "0.2.0",
+  "description": "tdf-portal — versão TESTE, BI Financeiro Multiempresa",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -11,6 +11,8 @@
     "pg": "^8.11.5",
     "axios": "^1.6.7",
     "ejs": "^3.1.10",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "bcryptjs": "^2.4.3",
+    "cookie-session": "^2.1.0"
   }
 }
