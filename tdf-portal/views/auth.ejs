@@ -106,30 +106,30 @@
     <h1><%= title %></h1>
     <div class="sub"><%= subtitle %></div>
 
-    <% if (typeof error !== 'undefined' && error) { %>
+    <% if (error) { %>
       <div class="error"><%= error %></div>
     <% } %>
-    <% if (typeof info !== 'undefined' && info) { %>
+    <% if (info) { %>
       <div class="info"><%= info %></div>
     <% } %>
 
     <form method="POST" action="<%= action %>">
-      <% if (typeof showToken !== 'undefined' && showToken) { %>
+      <% if (showToken) { %>
         <label for="token">Token de acesso</label>
-        <input type="text" id="token" name="token" value="<%= tokenValue || '' %>" required autofocus>
+        <input type="text" id="token" name="token" value="<%= tokenValue %>" required autofocus>
       <% } %>
-      <% if (typeof showUsername !== 'undefined' && showUsername) { %>
+      <% if (showUsername) { %>
         <label for="username">Usuário</label>
         <input type="text" id="username" name="username" required autofocus autocomplete="username">
       <% } %>
-      <label for="password"><%= typeof passwordLabel !== 'undefined' ? passwordLabel : 'Senha' %></label>
+      <label for="password"><%= passwordLabel %></label>
       <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password">
 
-      <button type="submit"><%= buttonLabel || 'Entrar' %></button>
+      <button type="submit"><%= buttonLabel %></button>
     </form>
 
     <div class="footer">
-      <% if (typeof altHref !== 'undefined' && altHref) { %>
+      <% if (altHref) { %>
         <a href="<%= altHref %>"><%= altText %></a>
       <% } else { %>
         TDF Portal — uso interno

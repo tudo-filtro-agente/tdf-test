@@ -29,6 +29,23 @@ app.use(cookieParser());
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Helper: renderiza views/auth com defaults garantidos (EJS não tem typeof safety)
+function renderAuth(res, data) {
+  const defaults = {
+    title: '', subtitle: '',
+    error: '', info: '',
+    action: '/login',
+    showToken: false, showUsername: false,
+    tokenValue: '', passwordLabel: 'Senha',
+    buttonLabel: 'Entrar',
+    altHref: '', altText: '',
+  };
+  return res.status(data.status || 200).render('auth', { ...defaults, ...data });
+}
+function renderAuthErr(res, status, data) {
+  return renderAuth(res, { ...data, status });
+}
+
 // ------- Páginas -------
 // (a rota / está definida abaixo em TELAS — redireciona para /login ou /admin)
 
@@ -75,17 +92,23 @@ app.get('/primeiro-acesso', async (req, res) => {
     if (r.ok) {
       info = `Olá, ${r.username}! Defina sua nova senha (mínimo 8 caracteres).`;
     } else {
-      return res.status(400).render('auth', {
+      return renderAuthErr(res, 400, {
         title: 'Token inválido',
         subtitle: '',
         error: `Este token não pôde ser usado: ${r.reason}. Solicite um novo ao administrador.`,
         action: '/primeiro-acesso',
-        buttonLabel: 'Voltar',
+        showToken: false,
+        showUsername: false,
+        tokenValue: '',
         passwordLabel: '',
+        buttonLabel: 'Voltar',
+        altHref: '',
+        altText: '',
+        info: '',
       });
     }
   }
-  res.render('auth', {
+  renderAuth(res, {
     title: 'Primeiro acesso',
     subtitle: 'Defina sua senha para começar a usar o portal.',
     info,
@@ -104,7 +127,7 @@ app.get('/primeiro-acesso', async (req, res) => {
 app.post('/primeiro-acesso', async (req, res) => {
   const { token, password } = req.body || {};
   if (!token || !password) {
-    return res.status(400).render('auth', {
+    return renderAuthErr(res, 400, {
       title: 'Primeiro acesso',
       subtitle: '',
       error: 'Token e senha são obrigatórios.',
@@ -114,7 +137,7 @@ app.post('/primeiro-acesso', async (req, res) => {
     });
   }
   if (password.length < 8) {
-    return res.status(400).render('auth', {
+    return renderAuthErr(res, 400, {
       title: 'Primeiro acesso',
       subtitle: '',
       error: 'A senha deve ter no mínimo 8 caracteres.',
@@ -127,13 +150,19 @@ app.post('/primeiro-acesso', async (req, res) => {
   try {
     const r = await auth.consumeAccessToken(token, 'first_access');
     if (!r.ok) {
-      return res.status(400).render('auth', {
+      return renderAuthErr(res, 400, {
         title: 'Token inválido',
         subtitle: '',
         error: `Este token não pôde ser usado: ${r.reason}. Solicite um novo ao administrador.`,
         action: '/primeiro-acesso',
-        buttonLabel: 'Voltar',
+        showToken: false,
+        showUsername: false,
+        tokenValue: '',
         passwordLabel: '',
+        buttonLabel: 'Voltar',
+        altHref: '',
+        altText: '',
+        info: '',
       });
     }
     await auth.setPassword(r.user_id, password);
@@ -152,7 +181,7 @@ app.post('/primeiro-acesso', async (req, res) => {
     res.redirect('/admin');
   } catch (err) {
     console.error('[auth] first-access error', err);
-    res.status(500).render('auth', {
+    renderAuthErr(res, 500, {
       title: 'Erro',
       subtitle: '',
       error: err.message,
@@ -168,7 +197,7 @@ app.get('/login', (req, res) => {
   const sid = req.cookies?.[auth.SESSION_COOKIE];
   auth.getSession(sid).then((s) => {
     if (s) return res.redirect('/admin');
-    res.render('auth', {
+    renderAuth(res, {
       title: 'Login',
       subtitle: 'Entre com seu usuário e senha do TDF Portal.',
       action: '/login',
@@ -179,7 +208,7 @@ app.get('/login', (req, res) => {
       altHref: '/primeiro-acesso',
     });
   }).catch(() => {
-    res.render('auth', {
+    renderAuth(res, {
       title: 'Login',
       subtitle: 'Entre com seu usuário e senha do TDF Portal.',
       action: '/login',
@@ -196,7 +225,7 @@ app.get('/login', (req, res) => {
 app.post('/login', async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) {
-    return res.status(400).render('auth', {
+    return renderAuthErr(res, 400, {
       title: 'Login',
       subtitle: '',
       error: 'Usuário e senha são obrigatórios.',
@@ -209,7 +238,7 @@ app.post('/login', async (req, res) => {
     const user = await auth.findUserByUsername(username);
     if (!user || !user.is_active) {
       await auth.audit(null, username, 'login_failed', null, { reason: 'user_not_found' }, req);
-      return res.status(401).render('auth', {
+      return renderAuthErr(res, 401, {
         title: 'Login',
         subtitle: '',
         error: 'Usuário ou senha inválidos.',
@@ -221,7 +250,7 @@ app.post('/login', async (req, res) => {
     const ok = await auth.verifyPassword(user.id, password);
     if (!ok) {
       await auth.audit(user.id, username, 'login_failed', null, { reason: 'bad_password' }, req);
-      return res.status(401).render('auth', {
+      return renderAuthErr(res, 401, {
         title: 'Login',
         subtitle: '',
         error: 'Usuário ou senha inválidos.',
@@ -242,7 +271,7 @@ app.post('/login', async (req, res) => {
     res.redirect('/admin');
   } catch (err) {
     console.error('[auth] login error', err);
-    res.status(500).render('auth', {
+    renderAuthErr(res, 500, {
       title: 'Login',
       subtitle: '',
       error: err.message,
