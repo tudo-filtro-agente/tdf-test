@@ -19,6 +19,7 @@ const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 const omie = require('./lib/omie');
+const sync = require('./lib/sync');
 const opsClient = require('./lib/tdf-ops-client');
 const auth = require('./lib/auth');
 const { initAuth } = require('./lib/seed');
@@ -356,8 +357,11 @@ app.get('/api/auth/test-seed', async (req, res) => {
         }
         const emp = await auth.pool.query(`SELECT id, nome, ativo, created_at FROM empresas ORDER BY id`);
         const lastSync = await auth.pool.query(
-          `SELECT empresa_nome, tipo, status, started_at, duration_ms, total_omie, total_db
-             FROM sync_log ORDER BY started_at DESC LIMIT 10`
+          `SELECT sl.id, e.nome AS empresa, sl.started_at, sl.finished_at, sl.status,
+                  sl.registros_processados, sl.duration_ms, sl.triggered_by, sl.error_message
+             FROM sync_log sl
+             JOIN empresas e ON e.id = sl.empresa_id
+             ORDER BY sl.started_at DESC LIMIT 10`
         );
         res.json({
           ok: true,
@@ -366,6 +370,42 @@ app.get('/api/auth/test-seed', async (req, res) => {
           empresas: emp.rows,
           ultimos_syncs: lastSync.rows,
         });
+      } catch (err) {
+        res.status(500).json({ ok: false, erro: err.message });
+      }
+    });
+
+    // Dispara sync manual (autenticado). Se empresa_id fornecido, sincroniza só ela.
+    // Aceita ?empresa_id=N. Default: todas.
+    app.post('/api/bi/admin/sync', auth.requireAuth, async (req, res) => {
+      try {
+        const empresaId = req.query.empresa_id ? parseInt(req.query.empresa_id, 10) : null;
+        console.log(`[sync] manual solicitado por ${req.user.username}${empresaId ? ` (empresa=${empresaId})` : ' (todas)'}`);
+        const results = empresaId
+          ? [await sync.syncOne(empresaId, 'manual:' + req.user.username)]
+          : await sync.syncAll('manual:' + req.user.username);
+        const status = await sync.getStatus();
+        res.json({ ok: true, results, status });
+      } catch (err) {
+        console.error('[sync] erro:', err);
+        res.status(500).json({ ok: false, erro: err.message });
+      }
+    });
+
+    // Lista os últimos N syncs (autenticado)
+    app.get('/api/bi/admin/sync/log', auth.requireAuth, async (req, res) => {
+      try {
+        const limit = Math.min(parseInt(req.query.limit || '50', 10), 200);
+        const { rows } = await auth.pool.query(
+          `SELECT sl.id, sl.empresa_id, e.nome AS empresa, sl.started_at, sl.finished_at, sl.status,
+                  sl.registros_processados, sl.duration_ms, sl.triggered_by, sl.error_message
+             FROM sync_log sl
+             JOIN empresas e ON e.id = sl.empresa_id
+             ORDER BY sl.started_at DESC
+             LIMIT $1`,
+          [limit]
+        );
+        res.json({ ok: true, total: rows.length, syncs: rows });
       } catch (err) {
         res.status(500).json({ ok: false, erro: err.message });
       }

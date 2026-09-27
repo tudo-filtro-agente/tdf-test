@@ -122,10 +122,16 @@
         <span class="stage">Etapa 3</span>
       </div>
 
-      <div class="tile disabled">
+      <div class="tile" id="tile-sync">
         <h3>🔄 Sincronização OMIE → Postgres</h3>
         <p>Cron que copia dados da OMIE para o banco local a cada 30min.</p>
         <span class="stage">Etapa 2</span>
+        <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button id="btn-sync" type="button" style="padding: 6px 12px; border-radius: 6px; border: 0; background: #2563eb; color: white; cursor: pointer; font-weight: 500;">Sincronizar agora</button>
+          <button id="btn-sync-log" type="button" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer;">Ver log</button>
+          <span id="sync-status" style="font-size: 12px; color: #64748b;"></span>
+        </div>
+        <div id="sync-log" style="display: none; margin-top: 12px; padding: 10px; background: #f8fafc; border-radius: 6px; font-size: 12px; max-height: 240px; overflow-y: auto;"></div>
       </div>
 
       <% if (user.role === 'admin') { %>
@@ -153,5 +159,58 @@
       </div>
     </div>
   </main>
+
+  <script>
+    (function() {
+      const btnSync = document.getElementById('btn-sync');
+      const btnLog = document.getElementById('btn-sync-log');
+      const status = document.getElementById('sync-status');
+      const logDiv = document.getElementById('sync-log');
+      if (!btnSync) return;
+
+      btnSync.addEventListener('click', async () => {
+        btnSync.disabled = true;
+        btnSync.textContent = 'Sincronizando...';
+        status.textContent = 'buscando dados das 3 empresas...';
+        try {
+          const r = await fetch('/api/bi/admin/sync', { method: 'POST', credentials: 'same-origin' });
+          const data = await r.json();
+          if (!data.ok) throw new Error(data.erro || 'erro desconhecido');
+          const total = data.results.reduce((a, b) => a + b.total, 0);
+          status.textContent = `✅ ${data.results.length} empresas, ${total} registros`;
+          loadLog();
+        } catch (e) {
+          status.textContent = '❌ ' + e.message;
+        } finally {
+          btnSync.disabled = false;
+          btnSync.textContent = 'Sincronizar agora';
+        }
+      });
+
+      async function loadLog() {
+        try {
+          const r = await fetch('/api/bi/admin/sync/log?limit=10', { credentials: 'same-origin' });
+          const data = await r.json();
+          if (!data.ok) return;
+          logDiv.innerHTML = data.syncs.map(s => {
+            const dur = s.duration_ms ? ` (${s.duration_ms}ms)` : '';
+            const err = s.error_message ? ` — ⚠ ${s.error_message.slice(0, 80)}` : '';
+            const when = s.finished_at ? new Date(s.finished_at).toLocaleString('pt-BR') : 'em andamento';
+            return `<div><b>${s.empresa}</b>: ${s.status} · ${s.registros_processados || 0} regs${dur} · <span style="color:#64748b">${when}</span>${err}</div>`;
+          }).join('') || '<div style="color:#64748b">Nenhum sync registrado ainda.</div>';
+        } catch (e) {
+          logDiv.innerHTML = 'Erro ao carregar log: ' + e.message;
+        }
+      }
+
+      btnLog.addEventListener('click', () => {
+        const vis = logDiv.style.display !== 'none';
+        logDiv.style.display = vis ? 'none' : 'block';
+        if (!vis) loadLog();
+      });
+
+      loadLog();
+    })();
+  </script>
 </body>
 </html>
