@@ -163,6 +163,51 @@ app.get('/api/auth/me', auth.requireAuth, (req, res) => {
   res.json({ ok: true, user: req.user });
 });
 
+// Admin: regenera tokens de 1º acesso (protegido por INTERNAL_API_KEY do tdf-ops)
+app.post('/api/auth/admin/regen-tokens', async (req, res) => {
+  const internalKey = req.headers['x-internal-key'];
+  if (!internalKey || internalKey !== process.env.INTERNAL_API_KEY) {
+    return res.status(401).json({ ok: false, erro: 'unauthorized' });
+  }
+  try {
+    const usernames = (req.body?.usernames || ['marcos', 'paulo', 'financeiro']);
+    const crypto = require('crypto');
+    const out = [];
+    for (const username of usernames) {
+      // invalida tokens anteriores
+      await auth.pool.query(
+        `UPDATE access_tokens SET used_at = NOW()
+           WHERE user_id = (SELECT id FROM users WHERE username = $1)
+             AND used_at IS NULL AND purpose = 'first_access'`,
+        [username]
+      );
+      // gera novo
+      const raw = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(raw).digest('hex');
+      const ins = await auth.pool.query(
+        `INSERT INTO access_tokens (user_id, token_hash, purpose, expires_at)
+         VALUES (
+           (SELECT id FROM users WHERE username = $1),
+           $2, 'first_access', NOW() + INTERVAL '24 hours'
+         )
+         RETURNING expires_at`,
+        [username, tokenHash]
+      );
+      out.push({
+        username,
+        token: raw,
+        url: `/primeiro-acesso?token=${raw}`,
+        expires_at: ins.rows[0].expires_at,
+      });
+      await auth.audit(null, username, 'admin_regen_token', null, { by: 'internal_key' }, req).catch(() => {});
+    }
+    res.json({ ok: true, tokens: out });
+  } catch (err) {
+    console.error('[auth] admin/regen-tokens error', err);
+    res.status(500).json({ ok: false, erro: err.message });
+  }
+});
+
 // Logout
 app.post('/api/auth/logout', async (req, res) => {
   const sid = req.cookies?.[auth.SESSION_COOKIE];
