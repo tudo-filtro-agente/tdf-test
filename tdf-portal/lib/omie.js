@@ -336,18 +336,19 @@ async function listarMovimentos(empresa, params = {}) {
     console.log(`[DRY_RUN] listarMovimentos(${empresa})`);
     return mockMovimentos(empresa);
   }
-  // Extrato por conta corrente. O payload precisa de nCodCC ou cCodIntCC.
-  // A OMIE exige uma conta corrente específica — usamos o código 0 (default) ou o passado em params.
+  // Extrato por conta corrente. EXIGE nCodCC + dPeriodoInicial + dPeriodoFinal.
+  // Default: últimos 60 dias até hoje.
+  const hoje = new Date();
+  const sessentaDias = new Date(hoje.getTime() - 60 * 24 * 60 * 60 * 1000);
+  const fmt = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
   const payload = {
     call: 'ListarExtrato',
     app_key: creds(empresa).key,
     app_secret: creds(empresa).secret,
     param: [{
       nCodCC: params.nCodCC || 0,
-      cCodIntCC: params.cCodIntCC || '',
-      dPeriodoInicial: params.dPeriodoInicial || '',
-      dPeriodoFinal: params.dPeriodoFinal || '',
-      ...params,
+      dPeriodoInicial: params.dPeriodoInicial || fmt(sessentaDias),
+      dPeriodoFinal: params.dPeriodoFinal || fmt(hoje),
     }],
   };
   const res = await chamarOmie(empresa, 'financas/extrato/', payload);

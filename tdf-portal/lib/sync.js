@@ -484,6 +484,10 @@ async function syncEntity(empresa, entity, forceDryRun = false) {
   } else {
     data = await omie[entity.fn](empresa.nome);
   }
+  // movimentos usa estratégia diferente (syncMovimentos faz iteração por CC)
+  if (entity.key === 'movimentos') {
+    return await syncMovimentos(empresa);
+  }
   // listField pode ser string ou array de nomes possíveis (mock vs OMIE real)
   const fields = Array.isArray(entity.listField) ? entity.listField : [entity.listField];
   let rows = [];
@@ -496,7 +500,6 @@ async function syncEntity(empresa, entity, forceDryRun = false) {
   switch (entity.key) {
     case 'contas_pagar':     return await upsertContasPagar(empresa.id, rows);
     case 'contas_receber':   return await upsertContasReceber(empresa.id, rows);
-    case 'movimentos':       return await syncMovimentos(empresa);
     case 'contas_bancarias': return await upsertContasBancarias(empresa.id, rows);
     case 'categorias':       return await upsertCategorias(empresa.id, rows);
     case 'nf_entrada':       return await upsertNfEntrada(empresa.id, rows);
