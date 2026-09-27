@@ -56,6 +56,21 @@ async function seedUsers() {
   return tokens;
 }
 
+async function applyMigrations() {
+  const fs = require('fs');
+  const path = require('path');
+  const dbDir = path.join(__dirname, '..', 'db');
+  const files = fs.readdirSync(dbDir)
+    .filter(f => f.endsWith('.sql'))
+    .sort();
+  for (const f of files) {
+    const sql = fs.readFileSync(path.join(dbDir, f), 'utf8');
+    await pool.query(sql);
+    console.log(`[migrations] ✓ ${f}`);
+  }
+}
+
+// Compat: legado
 async function ensureSchema() {
   const fs = require('fs');
   const path = require('path');
@@ -64,9 +79,9 @@ async function ensureSchema() {
 }
 
 async function initAuth() {
-  console.log('[init] aplicando schema de autenticação...');
-  await ensureSchema();
-  console.log('[init] schema OK');
+  console.log('[init] aplicando migrations...');
+  await applyMigrations();
+  console.log('[init] migrations OK');
 
   console.log('[init] seed de usuários...');
   const tokens = await seedUsers();
@@ -82,7 +97,7 @@ async function initAuth() {
   return tokens;
 }
 
-module.exports = { initAuth, seedUsers, ensureSchema, PLACEHOLDER_USERS };
+module.exports = { initAuth, seedUsers, applyMigrations, ensureSchema, PLACEHOLDER_USERS };
 
 // CLI: `node lib/seed.js` (re-roda idempotentemente)
 if (require.main === module) {
