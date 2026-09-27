@@ -63,11 +63,18 @@ async function finishSyncLog(logId, status, totals, errorMsg = null) {
 // OMIE retorna campos com nomes diferentes dos nossos mocks.
 // Estes mappers traduzem dados REAIS da OMIE pra estrutura esperada.
 
+// Converte data OMIE (DD/MM/YYYY) → ISO (YYYY-MM-DD) ou null
+function dataOmie(s) {
+  if (!s) return null;
+  if (typeof s !== 'string') return null;
+  const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  // Já está em formato ISO ou outro, retorna como está
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  return null;
+}
+
 function mapContaPagarOmie(r) {
-  // OMIE real: { codigo_lancamento, codigo_cliente_fornecedor, nome_cliente_fornecedor,
-  //              numero_documento, numero_parcela, valor_documento, valor_pago,
-  //              data_emissao, data_vencimento, data_pagamento, status_lancamento,
-  //              categoria, observacao } (campos camelCase ou "tag" conforme SOAP/JSON)
   return {
     codigo_lancamento_omie: r.codigo_lancamento_omie || r.codigo_lancamento || r.nCodTitulo || r.nCodLancamento,
     codigo_cliente_fornecedor: r.codigo_cliente_fornecedor || r.nCodCliente || 0,
@@ -76,9 +83,9 @@ function mapContaPagarOmie(r) {
     numero_parcela: r.numero_parcela || r.cParcela || '001/001',
     valor_documento: Number(r.valor_documento || r.nValorDocumento || 0),
     valor_pago: Number(r.valor_pago || r.nValorPago || 0),
-    data_emissao: r.data_emissao || r.dDtEmissao || null,
-    data_vencimento: r.data_vencimento || r.dDtVencimento || null,
-    data_pagamento: r.data_pagamento || r.dDtPagamento || null,
+    data_emissao: dataOmie(r.data_emissao || r.dDtEmissao),
+    data_vencimento: dataOmie(r.data_vencimento || r.dDtVencimento),
+    data_pagamento: dataOmie(r.data_pagamento || r.dDtPagamento),
     status_lancamento: r.status_lancamento || r.cStatus || r.status || 'em_aberto',
     codigo_categoria: r.codigo_categoria || r.cCodCateg || null,
     observacao: r.observacao || r.cObservacao || null,
@@ -94,9 +101,9 @@ function mapContaReceberOmie(r) {
     numero_parcela: r.numero_parcela || r.cParcela || '001/001',
     valor_documento: Number(r.valor_documento || r.nValorDocumento || 0),
     valor_recebido: Number(r.valor_recebido || r.nValorRecebido || 0),
-    data_emissao: r.data_emissao || r.dDtEmissao || null,
-    data_vencimento: r.data_vencimento || r.dDtVencimento || null,
-    data_recebimento: r.data_recebimento || r.dDtRecebimento || r.dDtPagamento || null,
+    data_emissao: dataOmie(r.data_emissao || r.dDtEmissao),
+    data_vencimento: dataOmie(r.data_vencimento || r.dDtVencimento),
+    data_recebimento: dataOmie(r.data_recebimento || r.dDtRecebimento || r.dDtPagamento),
     status_lancamento: r.status_lancamento || r.cStatus || 'em_aberto',
     codigo_categoria: r.codigo_categoria || r.cCodCateg || null,
     observacao: r.observacao || r.cObservacao || null,
@@ -133,11 +140,11 @@ function mapMovimentoOmie(r) {
     codigo_movimento: d.nCodLancamento || d.codigo_movimento || d.nCodMovimento || Math.floor(Math.random() * 1e9),
     conta_bancaria: d.cDesCliente || d.conta_bancaria || '',
     tipo,
-    data_movimento: d.dDataLancamento || d.data_movimento || d.dDtEmissao || null,
+    data_movimento: dataOmie(d.dDataLancamento || d.data_movimento || d.dDtEmissao),
     valor: Number(d.nValorDocumento || d.valor || 0),
     descricao: d.cObservacao || d.descricao || d.cTipo || '',
     categoria: d.cCodCateg || d.categoria || null,
-    conciliado: (d.dDataConciliacao || '').length > 0,
+    conciliado: !!(d.dDataConciliacao),
   };
 }
 
@@ -161,8 +168,8 @@ function mapNfEntradaOmie(r) {
     codigo_nf: d.nCodLancamento || d.codigo_nf || 0,
     numero_nf: d.cNumDocFiscal || d.numero_nf || '',
     serie: d.cSerie || '',
-    data_emissao: d.dDtEmissao || d.data_emissao || null,
-    data_entrada: d.dDtPagamento || d.dDataLancamento || d.data_entrada || null,
+    data_emissao: dataOmie(d.dDtEmissao || d.data_emissao),
+    data_entrada: dataOmie(d.dDtPagamento || d.dDataLancamento || d.data_entrada),
     valor_total: Number(d.nValorDocumento || d.valor_total || 0),
     nome_fornecedor: d.cRazCliente || d.cDesCliente || d.nome_fornecedor || '',
     cnpj_fornecedor: d.cCPFCNPJCliente || d.cnpj_fornecedor || '',
