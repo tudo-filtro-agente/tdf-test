@@ -336,11 +336,19 @@ async function listarMovimentos(empresa, params = {}) {
     console.log(`[DRY_RUN] listarMovimentos(${empresa})`);
     return mockMovimentos(empresa);
   }
+  // Extrato por conta corrente. O payload precisa de nCodCC ou cCodIntCC.
+  // A OMIE exige uma conta corrente específica — usamos o código 0 (default) ou o passado em params.
   const payload = {
-    call: 'ListarMovimentos',
+    call: 'ListarExtrato',
     app_key: creds(empresa).key,
     app_secret: creds(empresa).secret,
-    param: [{ pagina: 1, registros_por_pagina: 200, ...params }],
+    param: [{
+      nCodCC: params.nCodCC || 0,
+      cCodIntCC: params.cCodIntCC || '',
+      dPeriodoInicial: params.dPeriodoInicial || '',
+      dPeriodoFinal: params.dPeriodoFinal || '',
+      ...params,
+    }],
   };
   const res = await chamarOmie(empresa, 'financas/extrato/', payload);
   return res.data;
@@ -351,11 +359,13 @@ async function listarContasBancarias(empresa, params = {}) {
     console.log(`[DRY_RUN] listarContasBancarias(${empresa})`);
     return mockContasBancarias(empresa);
   }
+  // ListarContasCorrentes aceita {codigo} como filtro opcional.
+  // Sem codigo → retorna todas.
   const payload = {
     call: 'ListarContasCorrentes',
     app_key: creds(empresa).key,
     app_secret: creds(empresa).secret,
-    param: [{ pagina: 1, registros_por_pagina: 100, ...params }],
+    param: [{ codigo: 0, ...params }],
   };
   const res = await chamarOmie(empresa, 'geral/contacorrente/', payload);
   return res.data;
@@ -388,7 +398,7 @@ async function listarNfEntrada(empresa, params = {}) {
     call: 'ListarMovimentos',
     app_key: creds(empresa).key,
     app_secret: creds(empresa).secret,
-    param: [{ pagina: 1, registros_por_pagina: 200, ...params }],
+    param: [{ nPagina: 1, nRegPorPagina: 200, ...params }],
   };
   const res = await chamarOmie(empresa, 'financas/mf/', payload);
   return res.data;
@@ -399,13 +409,16 @@ async function listarFornecedores(empresa, params = {}) {
     console.log(`[DRY_RUN] listarFornecedores(${empresa})`);
     return mockFornecedores(empresa);
   }
+  // OMIE não tem endpoint dedicado de fornecedores — usa geral/clientes/
+  // com filtro por tag (cliente_ou_fornecedor = 'F' = fornecedor).
+  // NOTA: A tag exata pode variar. Aqui listamos TODOS e filtramos client-side.
   const payload = {
-    call: 'ListarFornecedores',
+    call: 'ListarClientes',
     app_key: creds(empresa).key,
     app_secret: creds(empresa).secret,
-    param: [{ pagina: 1, registros_por_pagina: 200, ...params }],
+    param: [{ pagina: 1, registros_por_pagina: 200, apenas_importado_api: 'N', ...params }],
   };
-  const res = await chamarOmie(empresa, 'compras/fornecedor/', payload);
+  const res = await chamarOmie(empresa, 'geral/clientes/', payload);
   return res.data;
 }
 
