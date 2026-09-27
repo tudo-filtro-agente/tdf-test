@@ -453,6 +453,37 @@ app.post('/api/auth/admin/regen-tokens', async (req, res) => {
   }
 });
 
+// Admin: define senha direta (sem token) — usado pra bootstrap inicial
+app.post('/api/auth/admin/set-password', async (req, res) => {
+  const internalKey = req.headers['x-internal-key'];
+  if (!internalKey || internalKey !== process.env.INTERNAL_API_KEY) {
+    return res.status(401).json({ ok: false, erro: 'unauthorized' });
+  }
+  const { username, password } = req.body || {};
+  if (!username || !password) {
+    return res.status(400).json({ ok: false, erro: 'username e password são obrigatórios' });
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ ok: false, erro: 'senha deve ter no mínimo 8 caracteres' });
+  }
+  try {
+    const user = await auth.findUserByUsername(username);
+    if (!user) return res.status(404).json({ ok: false, erro: `usuário ${username} não existe` });
+    await auth.setPassword(user.id, password);
+    await auth.audit(null, username, 'admin_set_password', null, { by: 'internal_key' }, req).catch(() => {});
+    // também invalida tokens pendentes do user (pra não confundir)
+    await auth.pool.query(
+      `UPDATE access_tokens SET used_at = NOW()
+         WHERE user_id = $1 AND used_at IS NULL`,
+      [user.id]
+    );
+    res.json({ ok: true, username, must_reset: false });
+  } catch (err) {
+    console.error('[auth] admin/set-password error', err);
+    res.status(500).json({ ok: false, erro: err.message });
+  }
+});
+
 // Logout
 app.post('/api/auth/logout', async (req, res) => {
   const sid = req.cookies?.[auth.SESSION_COOKIE];
