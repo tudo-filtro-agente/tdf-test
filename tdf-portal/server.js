@@ -322,18 +322,56 @@ app.get('/api/auth/test-seed', async (req, res) => {
       `SELECT COUNT(*)::int AS total FROM sessions WHERE expires_at > NOW()`
     );
     res.json({
-      ok: true,
-      users_total: users.length,
-      users,
-      tokens_recentes: tokens,
-      sessions_ativas: sess[0]?.total || 0,
+          ok: true,
+          users_total: users.length,
+          users,
+          tokens_recentes: tokens,
+          sessions_ativas: sess[0]?.total || 0,
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, erro: err.message });
+      }
     });
-  } catch (err) {
-    res.status(500).json({ ok: false, erro: err.message });
-  }
-});
 
-// 1º acesso / reset — valida token e cria/autoriza troca de senha
+    // ====================================================================
+    // BI — Etapa 2 / Parte 1 (diagnóstico)
+    // ====================================================================
+
+    // Diagnóstico do schema BI: mostra tabelas e contagem de registros
+    app.get('/api/bi/status', auth.requireAuth, async (req, res) => {
+      try {
+        const tabelas = [
+          'empresas', 'clientes', 'contas_pagar', 'contas_receber',
+          'movimentos', 'contas_bancarias', 'categorias',
+          'nf_entrada', 'fornecedores', 'sync_log'
+        ];
+        const out = {};
+        for (const t of tabelas) {
+          try {
+            const r = await auth.pool.query(`SELECT COUNT(*)::int AS total FROM ${t}`);
+            out[t] = r.rows[0].total;
+          } catch (e) {
+            out[t] = `ERRO: ${e.message.slice(0, 100)}`;
+          }
+        }
+        const emp = await auth.pool.query(`SELECT id, nome, ativo, created_at FROM empresas ORDER BY id`);
+        const lastSync = await auth.pool.query(
+          `SELECT empresa_nome, tipo, status, started_at, duration_ms, total_omie, total_db
+             FROM sync_log ORDER BY started_at DESC LIMIT 10`
+        );
+        res.json({
+          ok: true,
+          user: req.user.username,
+          tabelas: out,
+          empresas: emp.rows,
+          ultimos_syncs: lastSync.rows,
+        });
+      } catch (err) {
+        res.status(500).json({ ok: false, erro: err.message });
+      }
+    });
+
+    // 1º acesso / reset — valida token e cria/autoriza troca de senha
 app.post('/api/auth/redeem-token', async (req, res) => {
   const { token, new_password } = req.body || {};
   if (!token || !new_password) {
