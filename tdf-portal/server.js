@@ -21,6 +21,7 @@ require('dotenv').config();
 const omie = require('./lib/omie');
 const sync = require('./lib/sync');
 const cron = require('./lib/cron');
+const bi = require('./lib/bi');
 const opsClient = require('./lib/tdf-ops-client');
 const auth = require('./lib/auth');
 const { initAuth } = require('./lib/seed');
@@ -457,6 +458,108 @@ app.get('/api/auth/test-seed', async (req, res) => {
         } else {
           res.status(400).json({ ok: false, erro: 'acao deve ser "start" ou "stop"' });
         }
+      } catch (err) {
+        res.status(500).json({ ok: false, erro: err.message });
+      }
+    });
+
+    // ========== ETAPA 3 — BI FINANCEIRO ==========
+    // Dashboard principal (autenticado). Lê do Postgres (cache local).
+    app.get('/bi', auth.requireAuth, async (req, res) => {
+      try {
+        const empresas = (await auth.pool.query(`SELECT id, nome FROM empresas WHERE ativo = true ORDER BY id`)).rows;
+        res.render('bi/dashboard', { user: req.user, empresas });
+      } catch (err) {
+        res.status(500).send('Erro ao carregar BI: ' + err.message);
+      }
+    });
+
+    // API: KPIs do dashboard (autenticado). Filtro: ?empresa=1,2,3
+    app.get('/api/bi/dashboard/kpis', auth.requireAuth, async (req, res) => {
+      try {
+        const empresaIds = bi.parseEmpresas(req);
+        const kpis = await bi.dashboardKpis(empresaIds);
+        const topDespesas = await bi.topCategorias('despesa', empresaIds, 5);
+        const topReceitas = await bi.topCategorias('receita', empresaIds, 5);
+        const porEmp = await bi.porEmpresa();
+        res.json({ ok: true, kpis, top_despesas: topDespesas, top_receitas: topReceitas, por_empresa: porEmp });
+      } catch (err) {
+        res.status(500).json({ ok: false, erro: err.message });
+      }
+    });
+
+    // API: listagens (autenticadas)
+    app.get('/api/bi/contas-pagar', auth.requireAuth, async (req, res) => {
+      try {
+        const empresaIds = bi.parseEmpresas(req);
+        const status = req.query.status || 'todos';
+        const limit = Math.min(parseInt(req.query.limit || '200', 10), 1000);
+        const rows = await bi.listContasPagar({ status, limit, empresa_ids: empresaIds });
+        res.json({ ok: true, total: rows.length, rows });
+      } catch (err) {
+        res.status(500).json({ ok: false, erro: err.message });
+      }
+    });
+
+    app.get('/api/bi/contas-receber', auth.requireAuth, async (req, res) => {
+      try {
+        const empresaIds = bi.parseEmpresas(req);
+        const status = req.query.status || 'todos';
+        const limit = Math.min(parseInt(req.query.limit || '200', 10), 1000);
+        const rows = await bi.listContasReceber({ status, limit, empresa_ids: empresaIds });
+        res.json({ ok: true, total: rows.length, rows });
+      } catch (err) {
+        res.status(500).json({ ok: false, erro: err.message });
+      }
+    });
+
+    app.get('/api/bi/movimentos', auth.requireAuth, async (req, res) => {
+      try {
+        const empresaIds = bi.parseEmpresas(req);
+        const limit = Math.min(parseInt(req.query.limit || '200', 10), 1000);
+        const rows = await bi.listMovimentos({ limit, empresa_ids: empresaIds });
+        res.json({ ok: true, total: rows.length, rows });
+      } catch (err) {
+        res.status(500).json({ ok: false, erro: err.message });
+      }
+    });
+
+    app.get('/api/bi/contas-bancarias', auth.requireAuth, async (req, res) => {
+      try {
+        const empresaIds = bi.parseEmpresas(req);
+        const rows = await bi.listContasBancarias(empresaIds);
+        res.json({ ok: true, total: rows.length, rows });
+      } catch (err) {
+        res.status(500).json({ ok: false, erro: err.message });
+      }
+    });
+
+    app.get('/api/bi/nf-entrada', auth.requireAuth, async (req, res) => {
+      try {
+        const empresaIds = bi.parseEmpresas(req);
+        const limit = Math.min(parseInt(req.query.limit || '200', 10), 1000);
+        const rows = await bi.listNfEntrada({ limit, empresa_ids: empresaIds });
+        res.json({ ok: true, total: rows.length, rows });
+      } catch (err) {
+        res.status(500).json({ ok: false, erro: err.message });
+      }
+    });
+
+    app.get('/api/bi/fornecedores', auth.requireAuth, async (req, res) => {
+      try {
+        const empresaIds = bi.parseEmpresas(req);
+        const rows = await bi.listFornecedores(empresaIds);
+        res.json({ ok: true, total: rows.length, rows });
+      } catch (err) {
+        res.status(500).json({ ok: false, erro: err.message });
+      }
+    });
+
+    app.get('/api/bi/categorias', auth.requireAuth, async (req, res) => {
+      try {
+        const empresaIds = bi.parseEmpresas(req);
+        const rows = await bi.listCategorias(empresaIds);
+        res.json({ ok: true, total: rows.length, rows });
       } catch (err) {
         res.status(500).json({ ok: false, erro: err.message });
       }
