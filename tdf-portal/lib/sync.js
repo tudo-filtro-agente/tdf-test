@@ -47,8 +47,9 @@ async function finishSyncLog(logId, status, totals, errorMsg = null) {
     `UPDATE sync_log
      SET finished_at = NOW(),
          status = $2,
-         registros_processados = $3,
-         error_message = $4,
+         total_omie = $3,
+         total_db = $3,
+         error_msg = $4,
          duration_ms = COALESCE(
            (EXTRACT(EPOCH FROM (NOW() - started_at)) * 1000)::int,
            0
@@ -380,7 +381,7 @@ async function getStatus() {
   }
   const { rows: lastSyncs } = await pool.query(
     `SELECT sl.id, e.nome AS empresa, sl.started_at, sl.finished_at, sl.status,
-            sl.registros_processados, sl.duration_ms, sl.triggered_by, sl.error_message
+            sl.total_db AS registros_processados, sl.duration_ms, sl.triggered_by, sl.error_msg AS error_message
        FROM sync_log sl
        JOIN empresas e ON e.id = sl.empresa_id
        ORDER BY sl.started_at DESC

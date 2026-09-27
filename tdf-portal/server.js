@@ -358,7 +358,7 @@ app.get('/api/auth/test-seed', async (req, res) => {
         const emp = await auth.pool.query(`SELECT id, nome, ativo, created_at FROM empresas ORDER BY id`);
         const lastSync = await auth.pool.query(
           `SELECT sl.id, e.nome AS empresa, sl.started_at, sl.finished_at, sl.status,
-                  sl.registros_processados, sl.duration_ms, sl.triggered_by, sl.error_message
+                  sl.total_db AS registros_processados, sl.duration_ms, sl.triggered_by, sl.error_msg AS error_message
              FROM sync_log sl
              JOIN empresas e ON e.id = sl.empresa_id
              ORDER BY sl.started_at DESC LIMIT 10`
@@ -398,7 +398,7 @@ app.get('/api/auth/test-seed', async (req, res) => {
         const limit = Math.min(parseInt(req.query.limit || '50', 10), 200);
         const { rows } = await auth.pool.query(
           `SELECT sl.id, sl.empresa_id, e.nome AS empresa, sl.started_at, sl.finished_at, sl.status,
-                  sl.registros_processados, sl.duration_ms, sl.triggered_by, sl.error_message
+                  sl.total_db AS registros_processados, sl.duration_ms, sl.triggered_by, sl.error_msg AS error_message
              FROM sync_log sl
              JOIN empresas e ON e.id = sl.empresa_id
              ORDER BY sl.started_at DESC
