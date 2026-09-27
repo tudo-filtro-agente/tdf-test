@@ -357,7 +357,7 @@ async function listarContasBancarias(empresa, params = {}) {
     app_secret: creds(empresa).secret,
     param: [{ pagina: 1, registros_por_pagina: 100, ...params }],
   };
-  const res = await chamarOmie(empresa, 'financas/contacorrente/', payload);
+  const res = await chamarOmie(empresa, 'geral/contacorrente/', payload);
   return res.data;
 }
 

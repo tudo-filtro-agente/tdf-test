@@ -128,6 +128,7 @@
         <span class="stage">Etapa 2</span>
         <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
           <button id="btn-sync" type="button" style="padding: 6px 12px; border-radius: 6px; border: 0; background: #2563eb; color: white; cursor: pointer; font-weight: 500;">Sincronizar agora</button>
+          <button id="btn-sync-mock" type="button" style="padding: 6px 12px; border-radius: 6px; border: 0; background: #f59e0b; color: white; cursor: pointer; font-weight: 500;">Sync teste (mock)</button>
           <button id="btn-sync-log" type="button" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer;">Ver log</button>
           <span id="sync-status" style="font-size: 12px; color: #64748b;"></span>
         </div>
@@ -168,12 +169,19 @@
       const logDiv = document.getElementById('sync-log');
       if (!btnSync) return;
 
-      btnSync.addEventListener('click', async () => {
-        btnSync.disabled = true;
-        btnSync.textContent = 'Sincronizando...';
-        status.textContent = 'buscando dados das 3 empresas...';
+      btnSync.addEventListener('click', () => doSync(false));
+      const btnMock = document.getElementById('btn-sync-mock');
+      if (btnMock) btnMock.addEventListener('click', () => doSync(true));
+
+      async function doSync(forceDry) {
+        const btn = forceDry ? btnMock : btnSync;
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Sincronizando...';
+        status.textContent = forceDry ? 'buscando dados MOCK...' : 'buscando dados OMIE real...';
         try {
-          const r = await fetch('/api/bi/admin/sync', { method: 'POST', credentials: 'same-origin' });
+          const url = '/api/bi/admin/sync' + (forceDry ? '?dry=1' : '');
+          const r = await fetch(url, { method: 'POST', credentials: 'same-origin' });
           const data = await r.json();
           if (!data.ok) throw new Error(data.erro || 'erro desconhecido');
           const total = data.results.reduce((a, b) => a + b.total, 0);
@@ -182,10 +190,10 @@
         } catch (e) {
           status.textContent = '❌ ' + e.message;
         } finally {
-          btnSync.disabled = false;
-          btnSync.textContent = 'Sincronizar agora';
+          btn.disabled = false;
+          btn.textContent = originalText;
         }
-      });
+      }
 
       async function loadLog() {
         try {

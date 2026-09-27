@@ -308,8 +308,25 @@ async function upsertFornecedores(empresaId, rows) {
   return count;
 }
 
-async function syncEntity(empresa, entity) {
-  const data = await omie[entity.fn](empresa.nome);
+async function syncEntity(empresa, entity, forceDryRun = false) {
+  let data;
+  if (forceDryRun && omie.DRY_RUN === false) {
+    // OMIE está em produção; o usuário pediu um sync de teste
+    // Usamos os mocks internos sem mexer na env var global
+    const mocks = {
+      contas_pagar: 'mockContasPagar',
+      contas_receber: 'mockContasReceber',
+      movimentos: 'mockMovimentos',
+      contas_bancarias: 'mockContasBancarias',
+      categorias: 'mockCategorias',
+      nf_entrada: 'mockNfEntrada',
+      fornecedores: 'mockFornecedores',
+    };
+    const mockName = mocks[entity.key];
+    data = omie[mockName] ? omie[mockName](empresa.nome) : await omie[entity.fn](empresa.nome);
+  } else {
+    data = await omie[entity.fn](empresa.nome);
+  }
   const rows = data[entity.listField] || data[entity.key] || [];
   if (!rows.length) return 0;
 
@@ -325,7 +342,7 @@ async function syncEntity(empresa, entity) {
   }
 }
 
-async function syncEmpresa(empresa, triggeredBy = 'manual') {
+async function syncEmpresa(empresa, triggeredBy = 'manual', forceDryRun = false) {
   const logId = await startSyncLog(empresa.id, triggeredBy);
   const totals = {};
   let overallStatus = 'success';
@@ -334,7 +351,7 @@ async function syncEmpresa(empresa, triggeredBy = 'manual') {
   try {
     for (const entity of ENTIDADES) {
       try {
-        const n = await syncEntity(empresa, entity);
+        const n = await syncEntity(empresa, entity, forceDryRun);
         totals[entity.key] = n;
       } catch (e) {
         console.error(`[sync] ERRO ${empresa.nome}.${entity.key}:`, e.message);
@@ -351,25 +368,25 @@ async function syncEmpresa(empresa, triggeredBy = 'manual') {
   const totalRegs = Object.values(totals).reduce((a, b) => a + b, 0);
   await finishSyncLog(logId, overallStatus, totalRegs, errorMsg);
 
-  console.log(`[sync] ${empresa.nome} → ${overallStatus} (${totalRegs} registros)`);
+  console.log(`[sync] ${empresa.nome} → ${overallStatus} (${totalRegs} registros, dry=${forceDryRun})`);
   return { empresa: empresa.nome, status: overallStatus, total: totalRegs, detalhes: totals };
 }
 
-async function syncAll(triggeredBy = 'manual') {
+async function syncAll(triggeredBy = 'manual', forceDryRun = false) {
   const empresas = await getEmpresas();
-  console.log(`[sync] INÍCIO — ${empresas.length} empresas, triggered_by=${triggeredBy}`);
+  console.log(`[sync] INÍCIO — ${empresas.length} empresas, triggered_by=${triggeredBy}, dry=${forceDryRun}`);
   const results = [];
   for (const empresa of empresas) {
-    results.push(await syncEmpresa(empresa, triggeredBy));
+    results.push(await syncEmpresa(empresa, triggeredBy, forceDryRun));
   }
   console.log(`[sync] FIM — ${results.length} empresas processadas`);
   return results;
 }
 
-async function syncOne(empresaId, triggeredBy = 'manual') {
+async function syncOne(empresaId, triggeredBy = 'manual', forceDryRun = false) {
   const { rows } = await pool.query(`SELECT id, nome FROM empresas WHERE id = $1 AND ativo = true`, [empresaId]);
   if (!rows.length) throw new Error(`Empresa ${empresaId} não encontrada ou inativa`);
-  return await syncEmpresa(rows[0], triggeredBy);
+  return await syncEmpresa(rows[0], triggeredBy, forceDryRun);
 }
 
 async function getStatus() {

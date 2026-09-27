@@ -377,13 +377,16 @@ app.get('/api/auth/test-seed', async (req, res) => {
 
     // Dispara sync manual (autenticado). Se empresa_id fornecido, sincroniza só ela.
     // Aceita ?empresa_id=N. Default: todas.
+    // Aceita ?dry=1 para forçar uso de mocks (validação visual sem tocar OMIE real).
     app.post('/api/bi/admin/sync', auth.requireAuth, async (req, res) => {
       try {
         const empresaId = req.query.empresa_id ? parseInt(req.query.empresa_id, 10) : null;
-        console.log(`[sync] manual solicitado por ${req.user.username}${empresaId ? ` (empresa=${empresaId})` : ' (todas)'}`);
+        const forceDry = req.query.dry === '1' || req.query.dry === 'true';
+        const flag = forceDry ? ' [DRY FORÇADO]' : '';
+        console.log(`[sync] manual solicitado por ${req.user.username}${empresaId ? ` (empresa=${empresaId})` : ' (todas)'}${flag}`);
         const results = empresaId
-          ? [await sync.syncOne(empresaId, 'manual:' + req.user.username)]
-          : await sync.syncAll('manual:' + req.user.username);
+          ? [await sync.syncOne(empresaId, 'manual:' + req.user.username, forceDry)]
+          : await sync.syncAll('manual:' + req.user.username, forceDry);
         const status = await sync.getStatus();
         res.json({ ok: true, results, status });
       } catch (err) {
