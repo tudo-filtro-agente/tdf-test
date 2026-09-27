@@ -152,6 +152,10 @@ function requireAuth(req, res, next) {
   const sid = req.cookies?.[SESSION_COOKIE] || req.signedCookies?.[SESSION_COOKIE];
   getSession(sid).then((session) => {
     if (!session) {
+      // Se for navegação HTML, redireciona pro login; senão, retorna 401 JSON
+      if (req.accepts('html') && !req.xhr && !req.path.startsWith('/api/')) {
+        return res.redirect('/login?next=' + encodeURIComponent(req.originalUrl));
+      }
       return res.status(401).json({ error: 'auth_required' });
     }
     req.session = session;
