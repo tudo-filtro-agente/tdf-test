@@ -30,12 +30,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // ------- Páginas -------
-
-app.get('/', async (req, res) => {
-  const env = process.env.ENVIRONMENT || 'test';
-  const dryRun = (process.env.DRY_RUN || 'true').toLowerCase() === 'true';
-  res.render('index', { env, dryRun, empresas: Object.keys(omie.EMPRESAS) });
-});
+// (a rota / está definida abaixo em TELAS — redireciona para /login ou /admin)
 
 // ------- Health -------
 
@@ -55,6 +50,226 @@ app.get('/env', (req, res) => {
     k === 'DATABASE_URL' || k === 'ENVIRONMENT' || k === 'DRY_RUN'
   );
   res.json({ variables_presentes: keys, total: keys.length });
+});
+
+// ====================================================================
+// TELAS (Parte 2) — login, primeiro-acesso, admin
+// ====================================================================
+
+// Página inicial redireciona: logado → /admin, não-logado → /login
+app.get('/', (req, res) => {
+  const sid = req.cookies?.[auth.SESSION_COOKIE];
+  auth.getSession(sid).then((s) => {
+    if (s) return res.redirect('/admin');
+    res.redirect('/login');
+  }).catch(() => res.redirect('/login'));
+});
+
+// Tela de primeiro acesso (com token na URL)
+app.get('/primeiro-acesso', async (req, res) => {
+  const token = req.query.token || '';
+  // Se já tiver token válido na URL, pré-valida
+  let info = 'Abra o link que você recebeu por e-mail ou cole aqui o token de 1º acesso.';
+  if (token) {
+    const r = await auth.consumeAccessToken(token, 'first_access').catch(() => ({ ok: false }));
+    if (r.ok) {
+      info = `Olá, ${r.username}! Defina sua nova senha (mínimo 8 caracteres).`;
+    } else {
+      return res.status(400).render('auth', {
+        title: 'Token inválido',
+        subtitle: '',
+        error: `Este token não pôde ser usado: ${r.reason}. Solicite um novo ao administrador.`,
+        action: '/primeiro-acesso',
+        buttonLabel: 'Voltar',
+        passwordLabel: '',
+      });
+    }
+  }
+  res.render('auth', {
+    title: 'Primeiro acesso',
+    subtitle: 'Defina sua senha para começar a usar o portal.',
+    info,
+    action: '/primeiro-acesso',
+    showToken: true,
+    showUsername: false,
+    tokenValue: token,
+    buttonLabel: 'Criar senha',
+    passwordLabel: 'Nova senha',
+    altText: 'Já tem uma conta?',
+    altHref: '/login',
+  });
+});
+
+// POST do primeiro acesso
+app.post('/primeiro-acesso', async (req, res) => {
+  const { token, password } = req.body || {};
+  if (!token || !password) {
+    return res.status(400).render('auth', {
+      title: 'Primeiro acesso',
+      subtitle: '',
+      error: 'Token e senha são obrigatórios.',
+      action: '/primeiro-acesso',
+      showToken: true,
+      buttonLabel: 'Criar senha',
+    });
+  }
+  if (password.length < 8) {
+    return res.status(400).render('auth', {
+      title: 'Primeiro acesso',
+      subtitle: '',
+      error: 'A senha deve ter no mínimo 8 caracteres.',
+      action: '/primeiro-acesso',
+      showToken: true,
+      tokenValue: token,
+      buttonLabel: 'Criar senha',
+    });
+  }
+  try {
+    const r = await auth.consumeAccessToken(token, 'first_access');
+    if (!r.ok) {
+      return res.status(400).render('auth', {
+        title: 'Token inválido',
+        subtitle: '',
+        error: `Este token não pôde ser usado: ${r.reason}. Solicite um novo ao administrador.`,
+        action: '/primeiro-acesso',
+        buttonLabel: 'Voltar',
+        passwordLabel: '',
+      });
+    }
+    await auth.setPassword(r.user_id, password);
+    await auth.markTokenUsed((await auth.pool.query(
+      `SELECT id FROM access_tokens WHERE user_id = $1 AND purpose = 'first_access' AND used_at IS NULL ORDER BY id DESC LIMIT 1`,
+      [r.user_id]
+    )).rows[0]?.id);
+    await auth.audit(r.user_id, r.username, 'first_access_done', null, null, req);
+    const sid = await auth.createSession(r.user_id, req);
+    res.cookie(auth.SESSION_COOKIE, sid, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: (process.env.ENVIRONMENT || 'test') === 'production',
+      maxAge: auth.SESSION_TTL_HOURS * 3600 * 1000,
+    });
+    res.redirect('/admin');
+  } catch (err) {
+    console.error('[auth] first-access error', err);
+    res.status(500).render('auth', {
+      title: 'Erro',
+      subtitle: '',
+      error: err.message,
+      action: '/primeiro-acesso',
+      showToken: true,
+      buttonLabel: 'Tentar de novo',
+    });
+  }
+});
+
+// Tela de login
+app.get('/login', (req, res) => {
+  const sid = req.cookies?.[auth.SESSION_COOKIE];
+  auth.getSession(sid).then((s) => {
+    if (s) return res.redirect('/admin');
+    res.render('auth', {
+      title: 'Login',
+      subtitle: 'Entre com seu usuário e senha do TDF Portal.',
+      action: '/login',
+      showUsername: true,
+      passwordLabel: 'Senha',
+      buttonLabel: 'Entrar',
+      altText: 'Primeiro acesso?',
+      altHref: '/primeiro-acesso',
+    });
+  }).catch(() => {
+    res.render('auth', {
+      title: 'Login',
+      subtitle: 'Entre com seu usuário e senha do TDF Portal.',
+      action: '/login',
+      showUsername: true,
+      passwordLabel: 'Senha',
+      buttonLabel: 'Entrar',
+      altText: 'Primeiro acesso?',
+      altHref: '/primeiro-acesso',
+    });
+  });
+});
+
+// POST do login
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body || {};
+  if (!username || !password) {
+    return res.status(400).render('auth', {
+      title: 'Login',
+      subtitle: '',
+      error: 'Usuário e senha são obrigatórios.',
+      action: '/login',
+      showUsername: true,
+      buttonLabel: 'Entrar',
+    });
+  }
+  try {
+    const user = await auth.findUserByUsername(username);
+    if (!user || !user.is_active) {
+      await auth.audit(null, username, 'login_failed', null, { reason: 'user_not_found' }, req);
+      return res.status(401).render('auth', {
+        title: 'Login',
+        subtitle: '',
+        error: 'Usuário ou senha inválidos.',
+        action: '/login',
+        showUsername: true,
+        buttonLabel: 'Entrar',
+      });
+    }
+    const ok = await auth.verifyPassword(user.id, password);
+    if (!ok) {
+      await auth.audit(user.id, username, 'login_failed', null, { reason: 'bad_password' }, req);
+      return res.status(401).render('auth', {
+        title: 'Login',
+        subtitle: '',
+        error: 'Usuário ou senha inválidos.',
+        action: '/login',
+        showUsername: true,
+        buttonLabel: 'Entrar',
+      });
+    }
+    const sid = await auth.createSession(user.id, req);
+    res.cookie(auth.SESSION_COOKIE, sid, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: (process.env.ENVIRONMENT || 'test') === 'production',
+      maxAge: auth.SESSION_TTL_HOURS * 3600 * 1000,
+    });
+    await auth.pool.query('UPDATE users SET last_login_at = NOW() WHERE id = $1', [user.id]);
+    await auth.audit(user.id, username, 'login', null, null, req);
+    res.redirect('/admin');
+  } catch (err) {
+    console.error('[auth] login error', err);
+    res.status(500).render('auth', {
+      title: 'Login',
+      subtitle: '',
+      error: err.message,
+      action: '/login',
+      showUsername: true,
+      buttonLabel: 'Entrar',
+    });
+  }
+});
+
+// Logout (POST no /admin)
+app.post('/logout', async (req, res) => {
+  const sid = req.cookies?.[auth.SESSION_COOKIE];
+  await auth.destroySession(sid).catch(() => {});
+  res.clearCookie(auth.SESSION_COOKIE);
+  if (req.user) {
+    await auth.audit(req.user.id, req.user.username, 'logout', null, null, req).catch(() => {});
+  }
+  res.redirect('/login');
+});
+
+// Admin (protegido)
+app.get('/admin', auth.requireAuth, (req, res) => {
+  res.render('admin', {
+    user: req.user,
+    env: process.env.ENVIRONMENT || 'test',
+  });
 });
 
 // ====================================================================

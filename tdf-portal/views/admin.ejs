@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — TDF Portal</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      background: #f5f7fa;
+      color: #1a2332;
+    }
+    header {
+      background: #0b3d91;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    header h1 { margin: 0; font-size: 1.25rem; }
+    .user {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .badge {
+      background: rgba(255,255,255,0.2);
+      padding: 0.25rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+    }
+    .badge.admin { background: #f59e0b; }
+    .badge.financeiro { background: #10b981; }
+    form.logout { margin: 0; }
+    form.logout button {
+      background: transparent;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    form.logout button:hover { background: rgba(255,255,255,0.1); }
+
+    main {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+    }
+    .welcome {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
+    }
+    .welcome h2 { margin: 0 0 0.5rem; color: #0b3d91; }
+    .welcome p { color: #5a6b85; margin: 0.25rem 0; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .tile {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border-left: 4px solid #0b3d91;
+    }
+    .tile.disabled { border-left-color: #94a3b8; opacity: 0.6; }
+    .tile h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+    .tile p { color: #5a6b85; font-size: 0.88rem; margin: 0 0 0.75rem; }
+    .tile .stage {
+      display: inline-block;
+      background: #eef4ff;
+      color: #0b3d91;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .tile.disabled .stage { background: #f1f5f9; color: #64748b; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>TDF Portal — Admin</h1>
+    <div class="user">
+      <span class="badge <%= user.role %>"><%= user.role %></span>
+      <span><%= user.username %></span>
+      <form class="logout" method="POST" action="/api/auth/logout">
+        <button type="submit">Sair</button>
+      </form>
+    </div>
+  </header>
+
+  <main>
+    <div class="welcome">
+      <h2>Bem-vindo, <%= user.username %>!</h2>
+      <p>Logado como <strong><%= user.role %></strong> · <%= new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) %></p>
+      <% if (user.must_reset) { %>
+        <p style="color:#c33;">⚠️ Você precisa redefinir sua senha.</p>
+      <% } %>
+    </div>
+
+    <div class="grid">
+      <div class="tile">
+        <h3>🔐 Login & Auth</h3>
+        <p>Login, sessão, logout, reset de senha.</p>
+        <span class="stage">Etapa 1 ✅</span>
+      </div>
+
+      <div class="tile disabled">
+        <h3>📊 BI Financeiro Multiempresa</h3>
+        <p>32 abas com dados das 3 empresas (Mococa, TDF, American).</p>
+        <span class="stage">Etapa 3</span>
+      </div>
+
+      <div class="tile disabled">
+        <h3>🔄 Sincronização OMIE → Postgres</h3>
+        <p>Cron que copia dados da OMIE para o banco local a cada 30min.</p>
+        <span class="stage">Etapa 2</span>
+      </div>
+
+      <% if (user.role === 'admin') { %>
+        <div class="tile disabled">
+          <h3>⚙️ Configurações</h3>
+          <p>Empresas, OMIE, Zoho, Auvo, backups.</p>
+          <span class="stage">Etapa 4</span>
+        </div>
+
+        <div class="tile disabled">
+          <h3>👥 Usuários</h3>
+          <p>Criar/editar usuários, papéis, permissões.</p>
+          <span class="stage">Etapa 4</span>
+        </div>
+      <% } %>
+
+      <div class="tile">
+        <h3>📡 Diagnóstico</h3>
+        <p>Healthcheck, logs, status das APIs externas.</p>
+        <span class="stage">Disponível</span>
+        <p style="margin-top:0.5rem; font-size:0.8rem;">
+          <a href="/api/auth/me" target="_blank">/api/auth/me</a> ·
+          <a href="/health" target="_blank">/health</a>
+        </p>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

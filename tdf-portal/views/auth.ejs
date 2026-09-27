@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — TDF Portal</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f7fa;
+      color: #1a2332;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 2rem;
+      max-width: 420px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 1.4rem;
+      margin: 0 0 0.5rem;
+      color: #0b3d91;
+    }
+    .sub {
+      color: #5a6b85;
+      font-size: 0.92rem;
+      margin-bottom: 1.5rem;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      color: #2c3e50;
+    }
+    input[type=text], input[type=password] {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid #d1dae6;
+      border-radius: 8px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      transition: border-color 0.15s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #0b3d91;
+      box-shadow: 0 0 0 3px rgba(11,61,145,0.1);
+    }
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: #0b3d91;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover { background: #082d6e; }
+    button:disabled { background: #94a3b8; cursor: not-allowed; }
+    .error {
+      background: #fee;
+      border: 1px solid #fcc;
+      color: #c33;
+      padding: 0.7rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    .info {
+      background: #eef4ff;
+      border: 1px solid #c8dbff;
+      color: #0b3d91;
+      padding: 0.7rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: #5a6b85;
+    }
+    .footer a {
+      color: #0b3d91;
+      text-decoration: none;
+    }
+    .footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1><%= title %></h1>
+    <div class="sub"><%= subtitle %></div>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="error"><%= error %></div>
+    <% } %>
+    <% if (typeof info !== 'undefined' && info) { %>
+      <div class="info"><%= info %></div>
+    <% } %>
+
+    <form method="POST" action="<%= action %>">
+      <% if (typeof showToken !== 'undefined' && showToken) { %>
+        <label for="token">Token de acesso</label>
+        <input type="text" id="token" name="token" value="<%= tokenValue || '' %>" required autofocus>
+      <% } %>
+      <% if (typeof showUsername !== 'undefined' && showUsername) { %>
+        <label for="username">Usuário</label>
+        <input type="text" id="username" name="username" required autofocus autocomplete="username">
+      <% } %>
+      <label for="password"><%= typeof passwordLabel !== 'undefined' ? passwordLabel : 'Senha' %></label>
+      <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password">
+
+      <button type="submit"><%= buttonLabel || 'Entrar' %></button>
+    </form>
+
+    <div class="footer">
+      <% if (typeof altHref !== 'undefined' && altHref) { %>
+        <a href="<%= altHref %>"><%= altText %></a>
+      <% } else { %>
+        TDF Portal — uso interno
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>
