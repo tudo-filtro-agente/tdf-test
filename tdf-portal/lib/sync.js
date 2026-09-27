@@ -31,24 +31,30 @@ async function getEmpresas() {
 
 async function startSyncLog(empresaId, triggeredBy = 'manual') {
   const { rows } = await pool.query(
-    `INSERT INTO sync_log (empresa_id, started_at, status, triggered_by)
-     VALUES ($1, NOW(), 'running', $2) RETURNING id`,
+    `INSERT INTO sync_log (empresa_id, tipo, started_at, status, triggered_by)
+     VALUES ($1, 'all', NOW(), 'running', $2) RETURNING id`,
     [empresaId, triggeredBy]
   );
   return rows[0].id;
 }
 
 async function finishSyncLog(logId, status, totals, errorMsg = null) {
+  // totals = JSON com chaves por entidade (somar tudo é só pra referência)
+  const totalRegs = typeof totals === 'object' && totals !== null
+    ? Object.values(totals).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0)
+    : (typeof totals === 'number' ? totals : 0);
   await pool.query(
     `UPDATE sync_log
      SET finished_at = NOW(),
          status = $2,
          registros_processados = $3,
          error_message = $4,
-         duration_ms = EXTRACT(MILLISECOND FROM (NOW() - started_at))::int
-                 + EXTRACT(SECOND FROM (NOW() - started_at))::int * 1000
+         duration_ms = COALESCE(
+           (EXTRACT(EPOCH FROM (NOW() - started_at)) * 1000)::int,
+           0
+         )
      WHERE id = $1`,
-    [logId, status, totals, errorMsg]
+    [logId, status, totalRegs, errorMsg]
   );
 }
 
