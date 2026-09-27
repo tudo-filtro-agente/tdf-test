@@ -439,28 +439,36 @@ async function upsertFornecedores(empresaId, rows) {
 // Estratégia: busca as contas correntes já sincronizadas no Postgres,
 // depois chama listarMovimentos() uma vez por conta.
 async function syncMovimentos(empresa) {
-  // Pega os omie_codigo das contas bancárias já sincronizadas
+  console.log(`[sync] ${empresa.nome}.movimentos: buscando CCs ativas`);
   const r = await pool.query(
     `SELECT omie_codigo FROM contas_bancarias WHERE empresa_id = $1 AND ativa = true ORDER BY omie_codigo`,
     [empresa.id]
   );
-  const contasCC = r.rows.map(x => x.omie_codigo).filter(Boolean);
+  const contasCC = r.rows.map(x => Number(x.omie_codigo)).filter(Boolean);
+  console.log(`[sync] ${empresa.nome}.movimentos: ${contasCC.length} CCs encontradas:`, contasCC);
   if (!contasCC.length) {
     console.log(`[sync] ${empresa.nome}.movimentos: nenhuma conta corrente ativa, pulando`);
     return 0;
   }
   let totalCount = 0;
   for (const nCodCC of contasCC) {
-    const data = await omie.listarMovimentos(empresa.nome, { nCodCC });
-    const fields = ['listaMovimentos', 'movimentos'];
-    let rows = [];
-    for (const f of fields) {
-      if (Array.isArray(data[f])) { rows = data[f]; break; }
+    try {
+      const data = await omie.listarMovimentos(empresa.nome, { nCodCC });
+      const fields = ['listaMovimentos', 'movimentos'];
+      let rows = [];
+      for (const f of fields) {
+        if (Array.isArray(data[f])) { rows = data[f]; break; }
+      }
+      if (!rows.length) {
+        console.log(`[sync] ${empresa.nome}.movimentos CC=${nCodCC}: 0 registros`);
+        continue;
+      }
+      const n = await upsertMovimentos(empresa.id, rows);
+      totalCount += n;
+      console.log(`[sync] ${empresa.nome}.movimentos CC=${nCodCC}: ${n} registros`);
+    } catch (e) {
+      console.error(`[sync] ${empresa.nome}.movimentos CC=${nCodCC} ERRO:`, e.message);
     }
-    if (!rows.length) continue;
-    const n = await upsertMovimentos(empresa.id, rows);
-    totalCount += n;
-    console.log(`[sync] ${empresa.nome}.movimentos CC=${nCodCC}: ${n} registros`);
   }
   return totalCount;
 }
