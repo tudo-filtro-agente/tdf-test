@@ -64,22 +64,22 @@ async function upsertContasPagar(empresaId, rows) {
   for (const r of rows) {
     await pool.query(
       `INSERT INTO contas_pagar
-       (empresa_id, omie_id, fornecedor_id, fornecedor_nome, numero_documento, numero_parcela,
+       (empresa_id, omie_codigo, codigo_fornecedor, nome_fornecedor, numero_documento, parcela,
         valor_documento, valor_pago, data_emissao, data_vencimento, data_pagamento,
-        status, categoria_codigo, observacao, synced_at)
+        status, categoria, observacao, synced_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW())
-       ON CONFLICT (empresa_id, omie_id) DO UPDATE SET
-         fornecedor_id = EXCLUDED.fornecedor_id,
-         fornecedor_nome = EXCLUDED.fornecedor_nome,
+       ON CONFLICT (empresa_id, omie_codigo) DO UPDATE SET
+         codigo_fornecedor = EXCLUDED.codigo_fornecedor,
+         nome_fornecedor = EXCLUDED.nome_fornecedor,
          numero_documento = EXCLUDED.numero_documento,
-         numero_parcela = EXCLUDED.numero_parcela,
+         parcela = EXCLUDED.parcela,
          valor_documento = EXCLUDED.valor_documento,
          valor_pago = EXCLUDED.valor_pago,
          data_emissao = EXCLUDED.data_emissao,
          data_vencimento = EXCLUDED.data_vencimento,
          data_pagamento = EXCLUDED.data_pagamento,
          status = EXCLUDED.status,
-         categoria_codigo = EXCLUDED.categoria_codigo,
+         categoria = EXCLUDED.categoria,
          observacao = EXCLUDED.observacao,
          synced_at = NOW()`,
       [
@@ -109,22 +109,22 @@ async function upsertContasReceber(empresaId, rows) {
   for (const r of rows) {
     await pool.query(
       `INSERT INTO contas_receber
-       (empresa_id, omie_id, cliente_id, cliente_nome, numero_documento, numero_parcela,
+       (empresa_id, omie_codigo, codigo_cliente, nome_cliente, numero_documento, parcela,
         valor_documento, valor_recebido, data_emissao, data_vencimento, data_recebimento,
-        status, categoria_codigo, observacao, synced_at)
+        status, categoria, observacao, synced_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW())
-       ON CONFLICT (empresa_id, omie_id) DO UPDATE SET
-         cliente_id = EXCLUDED.cliente_id,
-         cliente_nome = EXCLUDED.cliente_nome,
+       ON CONFLICT (empresa_id, omie_codigo) DO UPDATE SET
+         codigo_cliente = EXCLUDED.codigo_cliente,
+         nome_cliente = EXCLUDED.nome_cliente,
          numero_documento = EXCLUDED.numero_documento,
-         numero_parcela = EXCLUDED.numero_parcela,
+         parcela = EXCLUDED.parcela,
          valor_documento = EXCLUDED.valor_documento,
          valor_recebido = EXCLUDED.valor_recebido,
          data_emissao = EXCLUDED.data_emissao,
          data_vencimento = EXCLUDED.data_vencimento,
          data_recebimento = EXCLUDED.data_recebimento,
          status = EXCLUDED.status,
-         categoria_codigo = EXCLUDED.categoria_codigo,
+         categoria = EXCLUDED.categoria,
          observacao = EXCLUDED.observacao,
          synced_at = NOW()`,
       [
@@ -154,9 +154,9 @@ async function upsertMovimentos(empresaId, rows) {
   for (const r of rows) {
     await pool.query(
       `INSERT INTO movimentos
-       (empresa_id, omie_id, conta_bancaria, tipo, data_movimento, valor, descricao, categoria, conciliado, synced_at)
+       (empresa_id, omie_codigo, conta_bancaria, tipo, data_movimento, valor, descricao, categoria, conciliado, synced_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
-       ON CONFLICT (empresa_id, omie_id) DO UPDATE SET
+       ON CONFLICT (empresa_id, omie_codigo) DO UPDATE SET
          conta_bancaria = EXCLUDED.conta_bancaria,
          tipo = EXCLUDED.tipo,
          data_movimento = EXCLUDED.data_movimento,
@@ -187,9 +187,9 @@ async function upsertContasBancarias(empresaId, rows) {
   for (const r of rows) {
     await pool.query(
       `INSERT INTO contas_bancarias
-       (empresa_id, omie_id, nome, banco, agencia, conta, tipo, saldo_atual, ativa, synced_at)
+       (empresa_id, omie_codigo, nome, banco, agencia, conta, tipo, saldo_atual, ativa, synced_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
-       ON CONFLICT (empresa_id, omie_id) DO UPDATE SET
+       ON CONFLICT (empresa_id, omie_codigo) DO UPDATE SET
          nome = EXCLUDED.nome,
          banco = EXCLUDED.banco,
          agencia = EXCLUDED.agencia,
@@ -220,9 +220,9 @@ async function upsertCategorias(empresaId, rows) {
   for (const r of rows) {
     await pool.query(
       `INSERT INTO categorias
-       (empresa_id, codigo, nome, tipo, synced_at)
+       (empresa_id, omie_codigo, nome, tipo, synced_at)
        VALUES ($1,$2,$3,$4,NOW())
-       ON CONFLICT (empresa_id, codigo) DO UPDATE SET
+       ON CONFLICT (empresa_id, omie_codigo) DO UPDATE SET
          nome = EXCLUDED.nome,
          tipo = EXCLUDED.tipo,
          synced_at = NOW()`,
@@ -238,15 +238,15 @@ async function upsertNfEntrada(empresaId, rows) {
   for (const r of rows) {
     await pool.query(
       `INSERT INTO nf_entrada
-       (empresa_id, omie_id, numero, serie, chave_acesso, fornecedor_id, fornecedor_nome,
+       (empresa_id, omie_codigo, numero, serie, chave_acesso, codigo_fornecedor, nome_fornecedor,
         data_emissao, data_entrada, valor_total, valor_produtos, valor_impostos, status, synced_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,NOW())
-       ON CONFLICT (empresa_id, omie_id) DO UPDATE SET
+       ON CONFLICT (empresa_id, omie_codigo) DO UPDATE SET
          numero = EXCLUDED.numero,
          serie = EXCLUDED.serie,
          chave_acesso = EXCLUDED.chave_acesso,
-         fornecedor_id = EXCLUDED.fornecedor_id,
-         fornecedor_nome = EXCLUDED.fornecedor_nome,
+         codigo_fornecedor = EXCLUDED.codigo_fornecedor,
+         nome_fornecedor = EXCLUDED.nome_fornecedor,
          data_emissao = EXCLUDED.data_emissao,
          data_entrada = EXCLUDED.data_entrada,
          valor_total = EXCLUDED.valor_total,
@@ -280,9 +280,9 @@ async function upsertFornecedores(empresaId, rows) {
   for (const r of rows) {
     await pool.query(
       `INSERT INTO fornecedores
-       (empresa_id, omie_id, razao_social, nome_fantasia, cnpj_cpf, email, telefone, cidade, estado, synced_at)
+       (empresa_id, omie_codigo, razao_social, nome_fantasia, cnpj_cpf, email, telefone, cidade, estado, synced_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
-       ON CONFLICT (empresa_id, omie_id) DO UPDATE SET
+       ON CONFLICT (empresa_id, omie_codigo) DO UPDATE SET
          razao_social = EXCLUDED.razao_social,
          nome_fantasia = EXCLUDED.nome_fantasia,
          cnpj_cpf = EXCLUDED.cnpj_cpf,
