@@ -20,6 +20,7 @@ require('dotenv').config();
 
 const omie = require('./lib/omie');
 const sync = require('./lib/sync');
+const cron = require('./lib/cron');
 const opsClient = require('./lib/tdf-ops-client');
 const auth = require('./lib/auth');
 const { initAuth } = require('./lib/seed');
@@ -414,6 +415,53 @@ app.get('/api/auth/test-seed', async (req, res) => {
       }
     });
 
+    // Status do cron (autenticado)
+    app.get('/api/bi/admin/cron/status', auth.requireAuth, async (req, res) => {
+      try {
+        const c = cron.status();
+        // Pega também o último sync automático do log
+        const { rows } = await auth.pool.query(
+          `SELECT sl.id, e.nome AS empresa, sl.started_at, sl.finished_at, sl.status, sl.total_db, sl.duration_ms
+             FROM sync_log sl JOIN empresas e ON e.id = sl.empresa_id
+            WHERE sl.triggered_by LIKE 'cron:%'
+            ORDER BY sl.started_at DESC LIMIT 10`
+        );
+        res.json({ ok: true, cron: c, ultimos_cron_syncs: rows });
+      } catch (err) {
+        res.status(500).json({ ok: false, erro: err.message });
+      }
+    });
+
+    // Disparo manual do cron (força uma execução imediata)
+    app.post('/api/bi/admin/cron/trigger', auth.requireAuth, async (req, res) => {
+      try {
+        console.log(`[cron] trigger manual solicitado por ${req.user.username}`);
+        // Roda em background pra não segurar a request; retorna ack imediato
+        cron.tick('manual-trigger').catch(err => console.error('[cron] erro no trigger:', err));
+        res.json({ ok: true, mensagem: 'Cron disparado em background. Aguarde ~30s e veja o status.' });
+      } catch (err) {
+        res.status(500).json({ ok: false, erro: err.message });
+      }
+    });
+
+    // Liga/desliga o cron (autenticado)
+    app.post('/api/bi/admin/cron/toggle', auth.requireAuth, async (req, res) => {
+      try {
+        const acao = req.query.acao; // 'start' ou 'stop'
+        if (acao === 'start') {
+          const r = cron.start();
+          res.json({ ok: true, acao: 'start', resultado: r });
+        } else if (acao === 'stop') {
+          const r = cron.stop();
+          res.json({ ok: true, acao: 'stop', resultado: r });
+        } else {
+          res.status(400).json({ ok: false, erro: 'acao deve ser "start" ou "stop"' });
+        }
+      } catch (err) {
+        res.status(500).json({ ok: false, erro: err.message });
+      }
+    });
+
     // 1º acesso / reset — valida token e cria/autoriza troca de senha
 app.post('/api/auth/redeem-token', async (req, res) => {
   const { token, new_password } = req.body || {};
@@ -662,6 +710,8 @@ async function bootstrap() {
     console.log(`[tdf-portal] DRY_RUN=${omie.DRY_RUN}`);
     console.log(`[tdf-portal] TDF_OPS_URL=${process.env.TDF_OPS_URL}`);
     console.log(`[tdf-portal] empresas OMIE: ${Object.keys(omie.EMPRESAS).join(', ')}`);
+    // Inicia o cron de sync OMIE → Postgres
+    cron.start();
   });
 }
 bootstrap();

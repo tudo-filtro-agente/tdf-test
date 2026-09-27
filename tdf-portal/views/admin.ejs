@@ -130,9 +130,11 @@
           <button id="btn-sync" type="button" style="padding: 6px 12px; border-radius: 6px; border: 0; background: #2563eb; color: white; cursor: pointer; font-weight: 500;">Sincronizar agora</button>
           <button id="btn-sync-mock" type="button" style="padding: 6px 12px; border-radius: 6px; border: 0; background: #f59e0b; color: white; cursor: pointer; font-weight: 500;">Sync teste (mock)</button>
           <button id="btn-sync-log" type="button" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer;">Ver log</button>
+          <button id="btn-cron" type="button" style="padding: 6px 12px; border-radius: 6px; border: 0; background: #7c3aed; color: white; cursor: pointer; font-weight: 500;">⏰ Cron</button>
           <span id="sync-status" style="font-size: 12px; color: #64748b;"></span>
         </div>
         <div id="sync-log" style="display: none; margin-top: 12px; padding: 10px; background: #f8fafc; border-radius: 6px; font-size: 12px; max-height: 240px; overflow-y: auto;"></div>
+        <div id="cron-panel" style="display: none; margin-top: 12px; padding: 10px; background: #faf5ff; border-radius: 6px; font-size: 12px;"></div>
       </div>
 
       <% if (user.role === 'admin') { %>
@@ -216,6 +218,64 @@
         logDiv.style.display = vis ? 'none' : 'block';
         if (!vis) loadLog();
       });
+
+      // Painel do cron
+      const btnCron = document.getElementById('btn-cron');
+      const cronPanel = document.getElementById('cron-panel');
+      if (btnCron) {
+        btnCron.addEventListener('click', () => {
+          const vis = cronPanel.style.display !== 'none';
+          cronPanel.style.display = vis ? 'none' : 'block';
+          if (!vis) loadCronPanel();
+        });
+      }
+
+      async function loadCronPanel() {
+        cronPanel.innerHTML = '<div style="color:#64748b">carregando...</div>';
+        try {
+          const r = await fetch('/api/bi/admin/cron/status', { credentials: 'same-origin' });
+          const data = await r.json();
+          if (!data.ok) throw new Error(data.erro || 'erro');
+          const c = data.cron;
+          const lastRun = c.last_run ? new Date(c.last_run).toLocaleString('pt-BR') : 'nunca';
+          const nextRun = c.next_run_estimate ? new Date(c.next_run_estimate).toLocaleString('pt-BR') : '—';
+          const lastResult = c.last_result
+            ? `<br>• <b>Último resultado:</b> ${c.last_result.status} (${c.last_result.total || 0} regs) em ${new Date(c.last_result.finished_at).toLocaleString('pt-BR')}`
+            : '';
+          const cronSyncs = data.ultimos_cron_syncs || [];
+          const cronSyncsHtml = cronSyncs.length
+            ? cronSyncs.map(s => `<div>• <b>${s.empresa}</b>: ${s.status} · ${s.total_db} regs · ${new Date(s.started_at).toLocaleString('pt-BR')}</div>`).join('')
+            : '<div style="color:#64748b">Nenhum sync automático ainda.</div>';
+          cronPanel.innerHTML = `
+            <div><b>Status:</b> ${c.enabled ? '✅ ATIVO' : '⏸ PARADO'} ${c.running ? '(sincronizando agora)' : ''}</div>
+            <div><b>Intervalo:</b> a cada ${c.interval_min} minutos (${c.cron_expression || '—'})</div>
+            <div><b>Última execução:</b> ${lastRun}${lastResult}</div>
+            <div><b>Próxima (estimada):</b> ${nextRun}</div>
+            <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+              <button id="cron-trigger" style="padding:4px 10px; border-radius:5px; border:0; background:#7c3aed; color:white; cursor:pointer;">Disparar agora</button>
+              <button id="cron-stop" style="padding:4px 10px; border-radius:5px; border:1px solid #cbd5e1; background:white; cursor:pointer;">Parar</button>
+              <button id="cron-start" style="padding:4px 10px; border-radius:5px; border:0; background:#16a34a; color:white; cursor:pointer;">Iniciar</button>
+              <button id="cron-refresh" style="padding:4px 10px; border-radius:5px; border:1px solid #cbd5e1; background:white; cursor:pointer;">Atualizar</button>
+            </div>
+            <div style="margin-top:10px;"><b>Últimos syncs automáticos:</b>${cronSyncsHtml}</div>
+          `;
+          document.getElementById('cron-trigger').onclick = async () => {
+            await fetch('/api/bi/admin/cron/trigger', { method: 'POST', credentials: 'same-origin' });
+            setTimeout(loadCronPanel, 2000);
+          };
+          document.getElementById('cron-stop').onclick = async () => {
+            await fetch('/api/bi/admin/cron/toggle?acao=stop', { method: 'POST', credentials: 'same-origin' });
+            setTimeout(loadCronPanel, 500);
+          };
+          document.getElementById('cron-start').onclick = async () => {
+            await fetch('/api/bi/admin/cron/toggle?acao=start', { method: 'POST', credentials: 'same-origin' });
+            setTimeout(loadCronPanel, 500);
+          };
+          document.getElementById('cron-refresh').onclick = loadCronPanel;
+        } catch (e) {
+          cronPanel.innerHTML = '<div style="color:#dc2626">Erro: ' + e.message + '</div>';
+        }
+      }
 
       loadLog();
     })();
