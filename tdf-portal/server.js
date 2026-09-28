@@ -827,7 +827,7 @@ app.get('/api/auth/test-seed', async (req, res) => {
 
     // ========== ETAPA 3 — BI FINANCEIRO ==========
     // Dashboard principal (autenticado). Lê do Postgres (cache local).
-    app.get('/bi', auth.requireAuth, async (req, res) => {
+    app.get('/bi/dashboard', auth.requireAuth, async (req, res) => {
       try {
         const empresas = (await auth.pool.query(`SELECT id, nome FROM empresas WHERE ativo = true ORDER BY id`)).rows;
         res.render('bi/dashboard', { user: req.user, empresas });
