@@ -40,17 +40,29 @@ module.exports = function ({ pool, requireAuth }) {
   });
 
   // ============ STATE (colaborativo — kv_store) ============
+  async function ensureKvTable() {
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS kv_store (
+          key TEXT PRIMARY KEY,
+          value JSONB NOT NULL,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+    } catch (e) {
+      console.warn('[bi-financeiro] ensureKvTable:', e.message);
+    }
+  }
+
   router.get('/state', requireAuth, async (req, res) => {
     try {
+      await ensureKvTable();
       const r = await pool.query(
-        `SELECT value, version FROM kv_store WHERE key = 'bi_financeiro_state' LIMIT 1`
+        `SELECT value FROM kv_store WHERE key = 'bi_financeiro_state' LIMIT 1`
       );
-      if (r.rows.length === 0) {
-        return res.json({ ok: true, state: null });
-      }
-      const row = r.rows[0];
-      const value = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
-      res.json({ ok: true, state: value, version: row.version });
+      if (r.rows.length === 0) return res.json({ ok: true, state: null, version: 0 });
+      const value = typeof r.rows[0].value === 'string' ? JSON.parse(r.rows[0].value) : r.rows[0].value;
+      res.json({ ok: true, state: value, version: 1 });
     } catch (e) {
       res.json({ ok: false, error: e.message });
     }
@@ -58,18 +70,16 @@ module.exports = function ({ pool, requireAuth }) {
 
   router.put('/state', requireAuth, async (req, res) => {
     try {
+      await ensureKvTable();
       const state = req.body || {};
-      const version = (state._meta && state._meta.version) || 0;
       const value = JSON.stringify(state);
       await pool.query(
-        `INSERT INTO kv_store (key, value, version, updated_at)
-         VALUES ('bi_financeiro_state', $1::jsonb, 1, NOW())
-         ON CONFLICT (key) DO UPDATE
-         SET value = EXCLUDED.value, version = kv_store.version + 1, updated_at = NOW()`,
+        `INSERT INTO kv_store (key, value, updated_at)
+         VALUES ('bi_financeiro_state', $1::jsonb, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
         [value]
       );
-      const r = await pool.query(`SELECT version FROM kv_store WHERE key = 'bi_financeiro_state'`);
-      res.json({ ok: true, version: r.rows[0]?.version || 1 });
+      res.json({ ok: true, version: 1 });
     } catch (e) {
       res.json({ ok: false, error: e.message });
     }
