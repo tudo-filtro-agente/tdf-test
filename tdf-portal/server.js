@@ -24,6 +24,11 @@ const sync = require('./lib/sync');
 const cron = require('./lib/cron');
 const bi = require('./lib/bi');
 const biFinanceiro = require('./lib/bi-financeiro');
+const biBancos = require('./lib/bi-financeiro-bancos');
+const biPagar = require('./lib/bi-financeiro-pagar');
+const biReceber = require('./lib/bi-financeiro-receber');
+const biFornecedores = require('./lib/bi-financeiro-fornecedores');
+const biEstoque = require('./lib/bi-financeiro-estoque');
 const opsClient = require('./lib/tdf-ops-client');
 const auth = require('./lib/auth');
 const { initAuth } = require('./lib/seed');
@@ -39,6 +44,13 @@ app.use(expressLayouts);
 app.set('layout', 'paulo/layout');
 
 // ========== BI FINANCEIRO — router isolado (clone do Paulo) ==========
+// Routers específicos PRIMEIRO (são mais específicos que o catch-all do bi-financeiro.js)
+app.use('/bi-financeiro/api', biBancos({ pool: auth.pool, requireAuth: auth.requireAuth }));
+app.use('/bi-financeiro/api', biPagar({ pool: auth.pool, requireAuth: auth.requireAuth }));
+app.use('/bi-financeiro/api', biReceber({ pool: auth.pool, requireAuth: auth.requireAuth }));
+app.use('/bi-financeiro/api', biFornecedores({ pool: auth.pool, requireAuth: auth.requireAuth }));
+app.use('/bi-financeiro/api', biEstoque({ pool: auth.pool, requireAuth: auth.requireAuth }));
+// Router geral DEPOIS (tem catch-all que captura endpoints não implementados)
 app.use('/bi-financeiro/api', biFinanceiro({ pool: auth.pool, requireAuth: auth.requireAuth }));
 
 // Helper: renderiza views/auth com defaults garantidos (EJS não tem typeof safety)

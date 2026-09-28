@@ -213,17 +213,17 @@ module.exports = function ({ pool, requireAuth }) {
   // ============ STUB para endpoints não implementados ============
   // O front do BI é resiliente — todos os outros endpoints recebem { ok:false, error:'em_breve' }
   // e a UI mostra "Em breve" sem quebrar.
+  // IMPORTANTE: NÃO duplicar endpoints já implementados em outros routers (bancos, pagar, receber, fornecedores, estoque)
   const stubEndpoints = [
-    'bancos', 'bancos/', 'aprovadores', 'aprovadores/',
+    'aprovadores', 'aprovadores/',
     'pagamentos', 'pagamentos/', 'recebimentos', 'recebimentos/',
-    'compras', 'compras/', 'fornecedores', 'fornecedores/', 'fornecedores/search',
-    'estoque/dashboard', 'estoque/empresas', 'estoque/locais', 'estoque/movimentar', 'estoque/produtos', 'estoque/saldo',
+    'compras', 'compras/',
     'auditoria', 'pagamentos-dashboard', 'recebimentos-dashboard',
     'nf/listar', 'nf/upload', 'nf/imap/status', 'nf/imap/trigger',
     'rotas/listar', 'rotas/historico', 'rotas/finalizar',
     'veiculos', 'os-materiais/listar',
     'recorrencia/last-run', 'recorrencia/preview', 'recorrencia/rodar-agora',
-    'vendas-zoho', 'recebimentos/from-zoho',
+    'vendas-zoho',
     'bulk-delete', 'owners', 'zapi-config', 'zapi-config/',
     'zapi-config-global', 'zapi-config-global/teste',
     'focusnfe/config', 'focusnfe/config/', 'focusnfe/emitir',
