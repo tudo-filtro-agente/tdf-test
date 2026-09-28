@@ -1,0 +1,219 @@
+<%
+const hoje = new Date();
+const dias = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const diaStr = dias[hoje.getDay()] + ', ' + hoje.getDate() + ' ' + meses[hoje.getMonth()];
+const horaStr = hoje.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+const userName = (user && (user.name || user.username)) ? (user.name || user.username) : 'Usuário';
+const isAdminUser = (user && user.role === 'admin');
+%>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home - Portal TDF</title>
+<link rel="icon" type="image/png" href="/paulo-assets/favicon.png">
+<meta name="theme-color" content="#0066CC">
+<script>
+try { if (localStorage.getItem('tdf-theme') === 'light') document.documentElement.setAttribute('data-theme', 'light'); } catch(_) {}
+window.tdfTemaToggle = function(){
+  var root = document.documentElement;
+  var eraLight = root.getAttribute('data-theme') === 'light';
+  if (eraLight) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', 'light');
+};
+</script>
+<link rel="stylesheet" href="/paulo-assets/style.css?v=20260927">
+</head>
+<body>
+<aside class="tdf-sidebar" id="tdfSidebar">
+  <div class="tsb-brand">
+    <img src="/paulo-assets/logo-small.png" alt="Tudo de Filtro" class="tsb-logo">
+    <div class="tsb-brand-txt"><b>Tudo de Filtro</b><small>PORTAL INTERNO</small></div>
+    <button class="tsb-collapse" type="button" onclick="tdfSidebarToggle()">⇤</button>
+  </div>
+  <div class="tsb-search">
+    <span class="tsb-search-ic">🔍</span>
+    <input id="tsbQ" type="text" placeholder="Buscar tela..." oninput="tdfSidebarFiltrar(this.value)" autocomplete="off">
+    <span class="tsb-kbd">⌘K</span>
+  </div>
+  <nav class="tsb-nav" id="tsbNav">
+    <div class="tsb-group">
+      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎯</span><span class="tsb-lbl">Trabalho do dia</span><span class="tsb-chev">▾</span></button>
+      <div class="tsb-group-body">
+        <a class="tsb-item active" href="/paulo/home"><span class="tsb-ico">🏠</span><span class="tsb-lbl">Home</span></a>
+        <a class="tsb-item" href="/paulo/cockpit"><span class="tsb-ico">📊</span><span class="tsb-lbl">Painel</span></a>
+        <a class="tsb-item" href="/paulo/minhas-metas"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Minhas Metas</span></a>
+        <a class="tsb-item" href="/paulo/premiacao"><span class="tsb-ico">🏆</span><span class="tsb-lbl">Premiação</span><span class="tsb-badge">NEW</span></a>
+        <a class="tsb-item" href="/paulo/leads-parados"><span class="tsb-ico">⏰</span><span class="tsb-lbl">Parados hoje</span></a>
+        <a class="tsb-item" href="/paulo/retornos"><span class="tsb-ico">📅</span><span class="tsb-lbl">Retornos &amp; Follow-ups</span></a>
+      </div>
+    </div>
+    <div class="tsb-group">
+      <button class="tsb-group-title" type="button"><span class="tsb-gi">💬</span><span class="tsb-lbl">Clientes &amp; Conversas</span><span class="tsb-chev">▾</span></button>
+      <div class="tsb-group-body">
+        <a class="tsb-item" href="/paulo/manutencao"><span class="tsb-ico">🗂️</span><span class="tsb-lbl">CRM</span></a>
+        <a class="tsb-item" href="/paulo/inbox"><span class="tsb-ico">💬</span><span class="tsb-lbl">Inbox</span></a>
+        <a class="tsb-item" href="/paulo/operacional"><span class="tsb-ico">🛠</span><span class="tsb-lbl">Operacional</span></a>
+      </div>
+    </div>
+    <% if (isAdminUser) { %>
+    <div class="tsb-group">
+      <button class="tsb-group-title" type="button"><span class="tsb-gi">🪜</span><span class="tsb-lbl">Funis (Closy)</span><span class="tsb-chev">▾</span></button>
+      <div class="tsb-group-body">
+        <a class="tsb-item" href="/paulo/closy"><span class="tsb-ico">🪜</span><span class="tsb-lbl">Funis Closy</span></a>
+        <a class="tsb-item" href="/paulo/closy-produtos"><span class="tsb-ico">📦</span><span class="tsb-lbl">Produtos + Calculadora</span></a>
+        <a class="tsb-item tsb-money" href="/paulo/forecast"><span class="tsb-ico">💰</span><span class="tsb-lbl">Forecast Manutenção</span></a>
+      </div>
+    </div>
+    <div class="tsb-group">
+      <button class="tsb-group-title" type="button"><span class="tsb-gi">📊</span><span class="tsb-lbl">Gestão &amp; Inteligência</span><span class="tsb-chev">▾</span></button>
+      <div class="tsb-group-body">
+        <a class="tsb-item" href="/paulo/gestao"><span class="tsb-ico">📊</span><span class="tsb-lbl">Gestor</span></a>
+        <a class="tsb-item" href="/paulo/gestao-closy"><span class="tsb-ico">📈</span><span class="tsb-lbl">Gestão Closy</span></a>
+        <a class="tsb-item" href="/paulo/dashboard-trafego"><span class="tsb-ico">⚡</span><span class="tsb-lbl">Dashboard Tráfego</span><span class="tsb-badge">NEW</span></a>
+        <a class="tsb-item" href="/paulo/intake-monitor"><span class="tsb-ico">📡</span><span class="tsb-lbl">Monitor Intake</span></a>
+        <a class="tsb-item" href="/paulo/nubia"><span class="tsb-ico">🤖</span><span class="tsb-lbl">Núbia SDR IA</span></a>
+        <a class="tsb-item" href="/paulo/auditoria-crm"><span class="tsb-ico">🔍</span><span class="tsb-lbl">Auditoria CRM</span></a>
+      </div>
+    </div>
+    <% } %>
+    <div class="tsb-group">
+      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎓</span><span class="tsb-lbl">Aprender &amp; Ferramentas</span><span class="tsb-chev">▾</span></button>
+      <div class="tsb-group-body">
+        <a class="tsb-item" href="/paulo/onboarding"><span class="tsb-ico">📚</span><span class="tsb-lbl">Onboarding</span></a>
+        <a class="tsb-item" href="/paulo/playbook"><span class="tsb-ico">📖</span><span class="tsb-lbl">Playbook</span></a>
+        <a class="tsb-item" href="/paulo/produtos"><span class="tsb-ico">📦</span><span class="tsb-lbl">Produtos</span></a>
+        <a class="tsb-item" href="/paulo/treinamento"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Treinamento</span></a>
+        <a class="tsb-item" href="/paulo/ferramentas"><span class="tsb-ico">🛠️</span><span class="tsb-lbl">Ferramentas</span></a>
+        <a class="tsb-item" href="/paulo/ia"><span class="tsb-ico">🤖</span><span class="tsb-lbl">IA Consulta</span></a>
+      </div>
+    </div>
+    <div class="tsb-group">
+      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎮</span><span class="tsb-lbl">Jogo &amp; Premiação</span><span class="tsb-chev">▾</span></button>
+      <div class="tsb-group-body">
+        <a class="tsb-item" href="/paulo/conquistas"><span class="tsb-ico">🏅</span><span class="tsb-lbl">Conquistas</span></a>
+        <a class="tsb-item" href="/paulo/corrida"><span class="tsb-ico">🏎️</span><span class="tsb-lbl">Corrida</span></a>
+        <a class="tsb-item" href="/paulo/coins"><span class="tsb-ico">🪙</span><span class="tsb-lbl">Coins</span></a>
+        <a class="tsb-item" href="/paulo/meta-pessoal"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Minha Meta</span></a>
+        <a class="tsb-item" href="/paulo/loja"><span class="tsb-ico">🏪</span><span class="tsb-lbl">Loja</span></a>
+      </div>
+    </div>
+    <% if (isAdminUser) { %>
+    <div class="tsb-group tsb-group-admin">
+      <button class="tsb-group-title" type="button"><span class="tsb-gi">🛡️</span><span class="tsb-lbl">Administração</span><span class="tsb-chev">▾</span></button>
+      <div class="tsb-group-body">
+        <a class="tsb-item tsb-money" href="/bi"><span class="tsb-ico">💰</span><span class="tsb-lbl">BI Financeiro Multiempresa</span></a>
+        <a class="tsb-item" href="/paulo/pdv"><span class="tsb-ico">🛒</span><span class="tsb-lbl">PDV (Loja)</span></a>
+        <a class="tsb-item" href="/paulo/squads"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Squads &amp; Metas</span></a>
+        <a class="tsb-item" href="/paulo/admin"><span class="tsb-ico">⚙️</span><span class="tsb-lbl">Admin Sistema</span></a>
+      </div>
+    </div>
+    <% } %>
+  </nav>
+  <div class="tsb-foot">
+    <a class="tsb-foot-link" href="/paulo/meu-perfil">
+      <span class="tsb-avatar"><%= (userName || '?').charAt(0).toUpperCase() %></span>
+      <span class="tsb-foot-name"><b><%= userName %></b><small>Ver perfil</small></span>
+    </a>
+    <div class="tsb-foot-actions">
+      <button onclick="window.tdfTemaToggle()" class="tsb-iconbtn" type="button">🌙</button>
+      <a href="/logout" class="tsb-iconbtn tsb-logout">⏻</a>
+    </div>
+  </div>
+</aside>
+<button class="tsb-hamb" type="button" onclick="tdfSidebarMobile()">☰</button>
+<div class="tsb-overlay" id="tsbOverlay" onclick="tdfSidebarMobile(false)"></div>
+
+<main class="tdf-main" id="tdfMain">
+  <div class="tdf-content">
+    <div class="tdf-header-bar">
+      <div class="tdf-header-left">
+        <h1 class="tdf-greeting">Bom dia, <strong><%= userName %>!</strong></h1>
+        <p class="tdf-empresa">Tudo de Filtro — Portal TDF</p>
+      </div>
+      <div class="tdf-header-right">
+        <div class="tdf-clock" id="tdfClock"><%= horaStr %></div>
+        <div class="tdf-date"><%= diaStr %></div>
+      </div>
+    </div>
+    <div class="tdf-section">
+      <div class="tdf-section-title">📣 Novidades do Portal</div>
+      <div class="tdf-card tdf-card-purple">
+        <div class="tdf-news-list">
+          <div class="tdf-news-item">🎉 <strong>BI Financeiro Multiempresa</strong> — chegou! Sincronização OMIE em tempo real.</div>
+          <div class="tdf-news-item">📊 <strong>Dashboard de Tráfego</strong> — monitoramento de campanhas.</div>
+          <div class="tdf-news-item">🏆 <strong>Premiação v7</strong> — novo sistema com ranking.</div>
+          <div class="tdf-news-item">📚 <strong>Central de Treinamentos</strong> — aulas gravadas e trilhas.</div>
+        </div>
+      </div>
+    </div>
+    <div class="tdf-section">
+      <div class="tdf-section-title">📄 Propostas do Mês</div>
+      <div class="tdf-grid-4">
+        <div class="tdf-card tdf-card-blue"><div class="tdf-card-icon">🏠</div><div class="tdf-card-label">Filtro de Entrada</div><div class="tdf-card-value">R$ 0</div></div>
+        <div class="tdf-card tdf-card-blue"><div class="tdf-card-icon">🚰</div><div class="tdf-card-label">Bebedouro</div><div class="tdf-card-value">R$ 0</div></div>
+        <div class="tdf-card tdf-card-blue"><div class="tdf-card-icon">💧</div><div class="tdf-card-label">Purificador</div><div class="tdf-card-value">R$ 0</div></div>
+        <div class="tdf-card tdf-card-blue"><div class="tdf-card-icon">📦</div><div class="tdf-card-label">Outros</div><div class="tdf-card-value">R$ 0</div></div>
+      </div>
+    </div>
+    <div class="tdf-section">
+      <div class="tdf-section-title">🎯 Trabalho do Dia</div>
+      <div class="tdf-grid-3">
+        <a href="/paulo/cockpit" class="tdf-card tdf-card-green"><div class="tdf-card-icon">📊</div><div class="tdf-card-label">Meu Painel</div><div class="tdf-card-sub">Acompanhe suas métricas</div></a>
+        <a href="/paulo/playbook" class="tdf-card tdf-card-green"><div class="tdf-card-icon">📋</div><div class="tdf-card-label">Scripts &amp; Modelos</div><div class="tdf-card-sub">Ferramentas de vendas</div></a>
+        <a href="/paulo/ia" class="tdf-card tdf-card-green"><div class="tdf-card-icon">🤖</div><div class="tdf-card-label">IA Consulta</div><div class="tdf-card-sub">Tire dúvidas rápido</div></a>
+      </div>
+    </div>
+    <div class="tdf-section">
+      <div class="tdf-section-title">🎓 Escola TDF</div>
+      <div class="tdf-grid-3">
+        <a href="/paulo/treinamento" class="tdf-card tdf-card-orange"><div class="tdf-card-icon">📚</div><div class="tdf-card-label">Treinamentos</div><div class="tdf-card-sub">Aprenda a vender mais</div></a>
+        <a href="/paulo/onboarding" class="tdf-card tdf-card-orange"><div class="tdf-card-icon">🚀</div><div class="tdf-card-label">Onboarding</div><div class="tdf-card-sub">Primeiros passos</div></a>
+        <a href="/paulo/playbook" class="tdf-card tdf-card-orange"><div class="tdf-card-icon">📖</div><div class="tdf-card-label">Playbook</div><div class="tdf-card-sub">Melhores práticas</div></a>
+      </div>
+    </div>
+    <div class="tdf-section">
+      <div class="tdf-section-title">📈 Resultados &amp; Gestão</div>
+      <div class="tdf-grid-3">
+        <a href="/bi" class="tdf-card tdf-card-gold"><div class="tdf-card-icon">💰</div><div class="tdf-card-label">BI Financeiro</div><div class="tdf-card-sub">Dados OMIE em tempo real</div></a>
+        <a href="/paulo/gestao" class="tdf-card tdf-card-gold"><div class="tdf-card-icon">📊</div><div class="tdf-card-label">Central de Resultados</div><div class="tdf-card-sub">KPIs e metas</div></a>
+        <a href="/paulo/gestao-closy" class="tdf-card tdf-card-gold"><div class="tdf-card-icon">🪜</div><div class="tdf-card-label">Documentação do Processo</div><div class="tdf-card-sub">Como funciona</div></a>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+function tdfAtualizarRelogio(){
+  var el = document.getElementById('tdfClock');
+  if(el) el.textContent = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+setInterval(tdfAtualizarRelogio, 1000);
+function tdfSidebarToggle(){ document.getElementById('tdfSidebar').classList.toggle('collapsed'); }
+function tdfSidebarMobile(force){
+  var sb = document.getElementById('tdfSidebar');
+  var ov = document.getElementById('tsbOverlay');
+  var abrir = force === undefined ? !sb.classList.contains('mobile-open') : force;
+  sb.classList.toggle('mobile-open', abrir);
+  ov.classList.toggle('show', abrir);
+}
+function tdfSidebarFiltrar(q){
+  q = (q||'').trim().toLowerCase();
+  document.querySelectorAll('#tsbNav .tsb-group').forEach(function(g) {
+    var any = false;
+    g.querySelectorAll('.tsb-item').forEach(function(it) {
+      var hit = it.textContent.toLowerCase().indexOf(q) !== -1;
+      it.style.display = hit ? 'flex' : 'none';
+      if (hit) any = true;
+    });
+    g.style.display = any ? 'block' : 'none';
+  });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('#tsbNav .tsb-group-title').forEach(function(t) {
+    t.addEventListener('click', function() { t.closest('.tsb-group').classList.toggle('collapsed'); });
+  });
+});
+</script>
+</body>
+</html>

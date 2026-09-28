@@ -1,140 +1,15 @@
-<%
-const hoje = new Date();
-const dias = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
-const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-const diaStr = dias[hoje.getDay()] + ', ' + hoje.getDate() + ' ' + meses[hoje.getMonth()];
-const horaStr = hoje.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-const userName = (user && (user.name || user.username)) ? (user.name || user.username) : 'Usuário';
-const isAdminUser = (user && user.role === 'admin');
-%>
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Home - Portal TDF</title>
-<link rel="icon" type="image/png" href="/paulo-assets/favicon.png">
-<meta name="theme-color" content="#0066CC">
-<script>
-try { if (localStorage.getItem('tdf-theme') === 'light') document.documentElement.setAttribute('data-theme', 'light'); } catch(_) {}
-window.tdfTemaToggle = function(){
-  var root = document.documentElement;
-  var eraLight = root.getAttribute('data-theme') === 'light';
-  if (eraLight) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', 'light');
-};
-</script>
-<link rel="stylesheet" href="/paulo-assets/style.css?v=20260927">
-</head>
-<body>
-<aside class="tdf-sidebar" id="tdfSidebar">
-  <div class="tsb-brand">
-    <img src="/paulo-assets/logo-small.png" alt="Tudo de Filtro" class="tsb-logo">
-    <div class="tsb-brand-txt"><b>Tudo de Filtro</b><small>PORTAL INTERNO</small></div>
-    <button class="tsb-collapse" type="button" onclick="tdfSidebarToggle()">⇤</button>
-  </div>
-  <div class="tsb-search">
-    <span class="tsb-search-ic">🔍</span>
-    <input id="tsbQ" type="text" placeholder="Buscar tela..." oninput="tdfSidebarFiltrar(this.value)" autocomplete="off">
-    <span class="tsb-kbd">⌘K</span>
-  </div>
-  <nav class="tsb-nav" id="tsbNav">
-    <div class="tsb-group">
-      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎯</span><span class="tsb-lbl">Trabalho do dia</span><span class="tsb-chev">▾</span></button>
-      <div class="tsb-group-body">
-        <a class="tsb-item active" href="/paulo/home"><span class="tsb-ico">🏠</span><span class="tsb-lbl">Home</span></a>
-        <a class="tsb-item" href="/paulo/cockpit"><span class="tsb-ico">📊</span><span class="tsb-lbl">Painel</span></a>
-        <a class="tsb-item" href="/paulo/minhas-metas"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Minhas Metas</span></a>
-        <a class="tsb-item" href="/paulo/premiacao"><span class="tsb-ico">🏆</span><span class="tsb-lbl">Premiação</span><span class="tsb-badge">NEW</span></a>
-        <a class="tsb-item" href="/paulo/leads-parados"><span class="tsb-ico">⏰</span><span class="tsb-lbl">Parados hoje</span></a>
-        <a class="tsb-item" href="/paulo/retornos"><span class="tsb-ico">📅</span><span class="tsb-lbl">Retornos &amp; Follow-ups</span></a>
-      </div>
-    </div>
-    <div class="tsb-group">
-      <button class="tsb-group-title" type="button"><span class="tsb-gi">💬</span><span class="tsb-lbl">Clientes &amp; Conversas</span><span class="tsb-chev">▾</span></button>
-      <div class="tsb-group-body">
-        <a class="tsb-item" href="/paulo/manutencao"><span class="tsb-ico">🗂️</span><span class="tsb-lbl">CRM</span></a>
-        <a class="tsb-item" href="/paulo/inbox"><span class="tsb-ico">💬</span><span class="tsb-lbl">Inbox</span></a>
-        <a class="tsb-item" href="/paulo/operacional"><span class="tsb-ico">🛠</span><span class="tsb-lbl">Operacional</span></a>
-      </div>
-    </div>
-    <% if (isAdminUser) { %>
-    <div class="tsb-group">
-      <button class="tsb-group-title" type="button"><span class="tsb-gi">🪜</span><span class="tsb-lbl">Funis (Closy)</span><span class="tsb-chev">▾</span></button>
-      <div class="tsb-group-body">
-        <a class="tsb-item" href="/paulo/closy"><span class="tsb-ico">🪜</span><span class="tsb-lbl">Funis Closy</span></a>
-        <a class="tsb-item" href="/paulo/closy-produtos"><span class="tsb-ico">📦</span><span class="tsb-lbl">Produtos + Calculadora</span></a>
-        <a class="tsb-item tsb-money" href="/paulo/forecast"><span class="tsb-ico">💰</span><span class="tsb-lbl">Forecast Manutenção</span></a>
-      </div>
-    </div>
-    <div class="tsb-group">
-      <button class="tsb-group-title" type="button"><span class="tsb-gi">📊</span><span class="tsb-lbl">Gestão &amp; Inteligência</span><span class="tsb-chev">▾</span></button>
-      <div class="tsb-group-body">
-        <a class="tsb-item" href="/paulo/gestao"><span class="tsb-ico">📊</span><span class="tsb-lbl">Gestor</span></a>
-        <a class="tsb-item" href="/paulo/gestao-closy"><span class="tsb-ico">📈</span><span class="tsb-lbl">Gestão Closy</span></a>
-        <a class="tsb-item" href="/paulo/dashboard-trafego"><span class="tsb-ico">⚡</span><span class="tsb-lbl">Dashboard Tráfego</span><span class="tsb-badge">NEW</span></a>
-        <a class="tsb-item" href="/paulo/intake-monitor"><span class="tsb-ico">📡</span><span class="tsb-lbl">Monitor Intake</span></a>
-        <a class="tsb-item" href="/paulo/nubia"><span class="tsb-ico">🤖</span><span class="tsb-lbl">Núbia SDR IA</span></a>
-        <a class="tsb-item" href="/paulo/auditoria-crm"><span class="tsb-ico">🔍</span><span class="tsb-lbl">Auditoria CRM</span></a>
-      </div>
-    </div>
-    <% } %>
-    <div class="tsb-group">
-      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎓</span><span class="tsb-lbl">Aprender &amp; Ferramentas</span><span class="tsb-chev">▾</span></button>
-      <div class="tsb-group-body">
-        <a class="tsb-item" href="/paulo/onboarding"><span class="tsb-ico">📚</span><span class="tsb-lbl">Onboarding</span></a>
-        <a class="tsb-item" href="/paulo/playbook"><span class="tsb-ico">📖</span><span class="tsb-lbl">Playbook</span></a>
-        <a class="tsb-item" href="/paulo/produtos"><span class="tsb-ico">📦</span><span class="tsb-lbl">Produtos</span></a>
-        <a class="tsb-item" href="/paulo/treinamento"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Treinamento</span></a>
-        <a class="tsb-item" href="/paulo/ferramentas"><span class="tsb-ico">🛠️</span><span class="tsb-lbl">Ferramentas</span></a>
-        <a class="tsb-item" href="/paulo/ia"><span class="tsb-ico">🤖</span><span class="tsb-lbl">IA Consulta</span></a>
-      </div>
-    </div>
-    <div class="tsb-group">
-      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎮</span><span class="tsb-lbl">Jogo &amp; Premiação</span><span class="tsb-chev">▾</span></button>
-      <div class="tsb-group-body">
-        <a class="tsb-item" href="/paulo/conquistas"><span class="tsb-ico">🏅</span><span class="tsb-lbl">Conquistas</span></a>
-        <a class="tsb-item" href="/paulo/corrida"><span class="tsb-ico">🏎️</span><span class="tsb-lbl">Corrida</span></a>
-        <a class="tsb-item" href="/paulo/coins"><span class="tsb-ico">🪙</span><span class="tsb-lbl">Coins</span></a>
-        <a class="tsb-item" href="/paulo/meta-pessoal"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Minha Meta</span></a>
-        <a class="tsb-item" href="/paulo/loja"><span class="tsb-ico">🏪</span><span class="tsb-lbl">Loja</span></a>
-      </div>
-    </div>
-    <% if (isAdminUser) { %>
-    <div class="tsb-group tsb-group-admin">
-      <button class="tsb-group-title" type="button"><span class="tsb-gi">🛡️</span><span class="tsb-lbl">Administração</span><span class="tsb-chev">▾</span></button>
-      <div class="tsb-group-body">
-        <a class="tsb-item tsb-money" href="/bi"><span class="tsb-ico">💰</span><span class="tsb-lbl">BI Financeiro Multiempresa</span></a>
-        <a class="tsb-item" href="/paulo/pdv"><span class="tsb-ico">🛒</span><span class="tsb-lbl">PDV (Loja)</span></a>
-        <a class="tsb-item" href="/paulo/squads"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Squads &amp; Metas</span></a>
-        <a class="tsb-item" href="/paulo/admin"><span class="tsb-ico">⚙️</span><span class="tsb-lbl">Admin Sistema</span></a>
-      </div>
-    </div>
-    <% } %>
-  </nav>
-  <div class="tsb-foot">
-    <a class="tsb-foot-link" href="/paulo/meu-perfil">
-      <span class="tsb-avatar"><%= (userName || '?').charAt(0).toUpperCase() %></span>
-      <span class="tsb-foot-name"><b><%= userName %></b><small>Ver perfil</small></span>
-    </a>
-    <div class="tsb-foot-actions">
-      <button onclick="window.tdfTemaToggle()" class="tsb-iconbtn" type="button">🌙</button>
-      <a href="/logout" class="tsb-iconbtn tsb-logout">⏻</a>
-    </div>
-  </div>
-</aside>
-<button class="tsb-hamb" type="button" onclick="tdfSidebarMobile()">☰</button>
-<div class="tsb-overlay" id="tsbOverlay" onclick="tdfSidebarMobile(false)"></div>
-
+<% const activePage = 'home'; const pageTitle = 'Home'; %>
+<% const hoje = new Date(); const _dias = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB']; const _meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']; const _dia = _dias[hoje.getDay()] + ', ' + hoje.getDate() + ' ' + _meses[hoje.getMonth()]; const _hora = hoje.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); const _un = (user && (user.name || user.username)) ? (user.name || user.username) : 'Usuário'; const _adm = user && user.role === 'admin'; %>
 <main class="tdf-main" id="tdfMain">
   <div class="tdf-content">
     <div class="tdf-header-bar">
       <div class="tdf-header-left">
-        <h1 class="tdf-greeting">Bom dia, <strong><%= userName %>!</strong></h1>
+        <h1 class="tdf-greeting">Bom dia, <strong><%= _un %>!</strong></h1>
         <p class="tdf-empresa">Tudo de Filtro — Portal TDF</p>
       </div>
       <div class="tdf-header-right">
-        <div class="tdf-clock" id="tdfClock"><%= horaStr %></div>
-        <div class="tdf-date"><%= diaStr %></div>
+        <div class="tdf-clock" id="tdfClock"><%= _hora %></div>
+        <div class="tdf-date"><%= _dia %></div>
       </div>
     </div>
     <div class="tdf-section">
@@ -215,5 +90,3 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
-</body>
-</html>
