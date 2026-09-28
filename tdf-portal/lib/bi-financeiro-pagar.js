@@ -51,7 +51,7 @@ module.exports = function ({ pool, requireAuth }) {
 
   // ---------- GET /contas-pagar — listagem ----------
 
-  router.get('/', requireAuth, async (req, res) => {
+  router.get('/contas-pagar', requireAuth, async (req, res) => {
     try {
       const empresaIds = parseEmpresas(req);
       const statusList = parseStatus(req);
@@ -135,7 +135,7 @@ module.exports = function ({ pool, requireAuth }) {
 
   // ---------- GET /contas-pagar/:id — detalhe ----------
 
-  router.get('/:id', requireAuth, async (req, res) => {
+  router.get('/contas-pagar/:id', requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) {
@@ -167,19 +167,19 @@ module.exports = function ({ pool, requireAuth }) {
 
   // ---------- POST /contas-pagar — reject (read_only) ----------
 
-  router.post('/', requireAuth, (req, res) => {
+  router.post('/contas-pagar', requireAuth, (req, res) => {
     res.status(405).json({ ok: false, error: 'read_only' });
   });
 
   // ---------- PUT /contas-pagar/:id — reject (read_only) ----------
 
-  router.put('/:id', requireAuth, (req, res) => {
+  router.put('/contas-pagar/:id', requireAuth, (req, res) => {
     res.status(405).json({ ok: false, error: 'read_only' });
   });
 
   // ---------- DELETE /contas-pagar/:id — reject (read_only) ----------
 
-  router.delete('/:id', requireAuth, (req, res) => {
+  router.delete('/contas-pagar/:id', requireAuth, (req, res) => {
     res.status(405).json({ ok: false, error: 'read_only' });
   });
 

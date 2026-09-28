@@ -38,7 +38,7 @@ module.exports = function ({ pool, requireAuth }) {
   // Query: ?empresaBI=1,2,3
   // Retorna: { ok: true, total_produtos, valor_estoque, produtos_baixo_estoque: [], resumo_por_categoria: [] }
 
-  router.get('/dashboard', requireAuth, async (req, res) => {
+  router.get('/estoque/dashboard', requireAuth, async (req, res) => {
     try {
       const empresaIds = parseEmpresas(req);
       const ef = empresaFilter(empresaIds);
@@ -111,7 +111,7 @@ module.exports = function ({ pool, requireAuth }) {
   // GET /bi-financeiro/api/estoque/empresas
   // Retorna: { ok: true, empresas: [{id, nome}] }
 
-  router.get('/empresas', requireAuth, async (req, res) => {
+  router.get('/estoque/empresas', requireAuth, async (req, res) => {
     try {
       const r = await pool.query(
         `SELECT id, nome FROM empresas WHERE ativo = true ORDER BY id`
@@ -128,7 +128,7 @@ module.exports = function ({ pool, requireAuth }) {
   // Retorna: { ok: true, locais: [{id, nome, empresa_id}] }
   //          ou { ok: true, locais: [] } se tabela nao existir/vazia
 
-  router.get('/locais', requireAuth, async (req, res) => {
+  router.get('/estoque/locais', requireAuth, async (req, res) => {
     try {
       const r = await pool.query(
         `SELECT id, nome, empresa_id FROM locais_estoque WHERE ativo = true ORDER BY empresa_id, nome`
@@ -147,7 +147,7 @@ module.exports = function ({ pool, requireAuth }) {
   // Retorna: { ok: true, total, page, limit, rows: [] }
   // Placeholder estruturado — tabela produtos ainda nao existe
 
-  router.get('/produtos', requireAuth, async (req, res) => {
+  router.get('/estoque/produtos', requireAuth, async (req, res) => {
     try {
       const empresaIds = parseEmpresas(req);
       const ef = empresaFilter(empresaIds);
@@ -207,7 +207,7 @@ module.exports = function ({ pool, requireAuth }) {
   // Body: { produto_id, tipo: 'entrada'|'saida', quantidade, observacao }
   // Retorna: { ok: false, error: 'em_breve' }
 
-  router.post('/movimentar', requireAuth, async (req, res) => {
+  router.post('/estoque/movimentar', requireAuth, async (req, res) => {
     // Funcionalidade de movimentacao ainda nao implementada
     res.json({ ok: false, error: 'em_breve' });
   });
@@ -218,7 +218,7 @@ module.exports = function ({ pool, requireAuth }) {
   // Retorna: { ok: true, saldos: [] }
   // Placeholder estruturado
 
-  router.get('/saldo', requireAuth, async (req, res) => {
+  router.get('/estoque/saldo', requireAuth, async (req, res) => {
     try {
       const empresaIds = parseEmpresas(req);
       const produtoId = req.query.produto_id ? parseInt(req.query.produto_id, 10) : null;

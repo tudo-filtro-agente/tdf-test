@@ -29,7 +29,7 @@ module.exports = function ({ pool, requireAuth }) {
   }
 
   // ========== GET /bi-financeiro/api/contas-receber ====================
-  router.get('/', requireAuth, async (req, res) => {
+  router.get('/contas-receber', requireAuth, async (req, res) => {
     try {
       const empresaIds = parseEmpresas(req);
       const status = req.query.status || null;               // em_aberto | atrasado
@@ -128,7 +128,7 @@ module.exports = function ({ pool, requireAuth }) {
   });
 
   // ========== GET /bi-financeiro/api/contas-receber/:id ===============
-  router.get('/:id', requireAuth, async (req, res) => {
+  router.get('/contas-receber/:id', requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) {
@@ -175,18 +175,18 @@ module.exports = function ({ pool, requireAuth }) {
   });
 
   // ========== POST /bi-financeiro/api/contas-receber ==================
-  router.post('/', requireAuth, readOnly);
+  router.post('/contas-receber', requireAuth, readOnly);
 
   // ========== PUT /bi-financeiro/api/contas-receber/:id ==============
-  router.put('/:id', requireAuth, readOnly);
+  router.put('/contas-receber/:id', requireAuth, readOnly);
 
   // ========== DELETE /bi-financeiro/api/contas-receber/:id ===========
-  router.delete('/:id', requireAuth, readOnly);
+  router.delete('/contas-receber/:id', requireAuth, readOnly);
 
   // ========== GET /bi-financeiro/api/recebimentos/from-zoho ==========
   // Lista contas_receber onde raw->>'origem' = 'zoho'
   // Se a coluna não existir, retorna erro estruturado em vez de SQL falhar
-  router.get('/from-zoho', requireAuth, async (req, res) => {
+  router.get('/recebimentos/from-zoho', requireAuth, async (req, res) => {
     try {
       const empresaIds = parseEmpresas(req);
       const ef = empresaFilter(empresaIds);

@@ -25,7 +25,7 @@ module.exports = function ({ pool, requireAuth }) {
 
   // ============ GET /bi-financeiro/api/fornecedores ============
   // Query: ?empresaBI=1,2,3 &search=texto &page=1 &limit=50
-  router.get('/', requireAuth, async (req, res) => {
+  router.get('/fornecedores', requireAuth, async (req, res) => {
     try {
       const empresaIds = parseEmpresas(req);
       const search = (req.query.search || '').trim();
@@ -76,7 +76,7 @@ module.exports = function ({ pool, requireAuth }) {
 
   // ============ GET /bi-financeiro/api/fornecedores/search ============
   // Query: ?q=texto (mínimo 2 chars, retorna até 20)
-  router.get('/search', requireAuth, async (req, res) => {
+  router.get('/fornecedores/search', requireAuth, async (req, res) => {
     try {
       const q = (req.query.q || '').trim();
       if (q.length < 2) {
@@ -103,7 +103,7 @@ module.exports = function ({ pool, requireAuth }) {
   });
 
   // ============ GET /bi-financeiro/api/fornecedores/:id ============
-  router.get('/:id', requireAuth, async (req, res) => {
+  router.get('/fornecedores/:id', requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) return res.json({ ok: false, error: 'id_invalido' });
@@ -129,7 +129,7 @@ module.exports = function ({ pool, requireAuth }) {
 
   // ============ POST /bi-financeiro/api/fornecedores ============
   // Body: { empresa_id, razao_social, nome_fantasia, cnpj_cpf, email, telefone, cidade, estado }
-  router.post('/', requireAuth, async (req, res) => {
+  router.post('/fornecedores', requireAuth, async (req, res) => {
     try {
       const { empresa_id, razao_social, nome_fantasia, cnpj_cpf, email, telefone, cidade, estado } = req.body || {};
 
@@ -160,7 +160,7 @@ module.exports = function ({ pool, requireAuth }) {
 
   // ============ PUT /bi-financeiro/api/fornecedores/:id ============
   // Body: campos opcionais — atualiza apenas os fornecidos
-  router.put('/:id', requireAuth, async (req, res) => {
+  router.put('/fornecedores/:id', requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) return res.json({ ok: false, error: 'id_invalido' });
@@ -203,7 +203,7 @@ module.exports = function ({ pool, requireAuth }) {
   });
 
   // ============ DELETE /bi-financeiro/api/fornecedores/:id ============
-  router.delete('/:id', requireAuth, async (req, res) => {
+  router.delete('/fornecedores/:id', requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) return res.json({ ok: false, error: 'id_invalido' });
@@ -228,7 +228,7 @@ module.exports = function ({ pool, requireAuth }) {
   // Body: JSON { csv: "empresa_id,razao_social,..." }
   // CSV columns: empresa_id, razao_social, nome_fantasia, cnpj_cpf, email, telefone, cidade, estado
   // Ignora duplicatas por (empresa_id, cnpj_cpf)
-  router.post('/import-csv', requireAuth, async (req, res) => {
+  router.post('/fornecedores/import-csv', requireAuth, async (req, res) => {
     try {
       const csvText = req.body?.csv;
       if (!csvText || typeof csvText !== 'string') {
