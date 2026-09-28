@@ -1,0 +1,404 @@
+<% const activePage = 'admin-score-leads'; const pageTitle = 'Score de Leads — Critérios'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.ls-wrap{max-width:1500px;margin:0 auto;padding:24px;color:var(--text)}
+.ls-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #a371f7;border-radius:12px;padding:18px;margin-bottom:14px}
+.ls-header h1{color:#c084fc;margin:0;font-size:20px;display:flex;align-items:center;gap:10px}
+.ls-header p{color:#9ca3af;font-size:12px;margin:8px 0 0;line-height:1.5}
+.ls-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:0}
+.ls-tab{background:transparent;color:#9ca3af;border:none;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;text-decoration:none}
+.ls-tab.active{color:#c084fc;border-bottom-color:#a371f7}
+.ls-tab:hover{color:var(--text)}
+.ls-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.ls-btn{background:#a371f7;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer}
+.ls-btn:hover{background:#7c5cff}
+.ls-btn.s{background:#10b981;color:#000}
+.ls-btn.d{background:#ef4444}
+.ls-btn.g{background:#374151;color:#fff}
+.ls-btn:disabled{opacity:.5;cursor:wait}
+.ls-select{background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:6px 10px;font-size:12px}
+.ls-input{background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:6px 10px;font-size:12px}
+.ls-card{background:#161725;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px}
+.ls-card.inactive{opacity:.55;border-color:#444}
+.ls-card.neg{border-left:3px solid #ef4444}
+.ls-card.pos{border-left:3px solid #10b981}
+.ls-row{display:grid;grid-template-columns:1fr 90px 80px 130px 110px 140px 130px;gap:10px;align-items:center}
+.ls-row .name{font-weight:700;color:var(--text);font-size:13px}
+.ls-row .desc{color:#9ca3af;font-size:11px;margin-top:2px}
+.ls-row .pts{font-size:18px;font-weight:800;text-align:center}
+.ls-row .pts.pos{color:#10b981} .ls-row .pts.neg{color:#ef4444}
+.ls-row select, .ls-row input{font-size:11px;padding:5px 7px}
+.ls-row .actions{display:flex;gap:4px;justify-content:flex-end}
+.ls-pill{display:inline-block;background:rgba(167,113,247,.15);color:#c084fc;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase}
+.ls-pill.g{background:rgba(16,185,129,.15);color:#10b981}
+.ls-section-head{margin:20px 0 8px;padding:8px 12px;background:#1a0e2a;border-radius:6px;display:flex;align-items:center;gap:10px}
+.ls-section-head .title{color:#c084fc;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+.ls-section-head .count{color:#9ca3af;font-size:11px}
+.ls-modal-back{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:center;justify-content:center}
+.ls-modal-back.open{display:flex}
+.ls-modal{background:#161725;border:1px solid #a371f7;border-radius:12px;padding:20px;max-width:680px;width:92vw;max-height:88vh;overflow:auto}
+.ls-modal h3{color:#c084fc;margin:0 0 10px;font-size:16px}
+.ls-modal label{display:block;color:#9ca3af;font-size:11px;font-weight:700;text-transform:uppercase;margin:9px 0 4px}
+.ls-modal input, .ls-modal select, .ls-modal textarea{width:100%;background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:7px 10px;font-size:12px;box-sizing:border-box}
+.ls-modal textarea{font-family:monospace;font-size:11px;min-height:130px}
+.ls-tier-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.ls-tier-card{background:#1a0e2a;border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.ls-tier-card .icon{font-size:24px}
+.ls-tier-card .name{color:var(--text);font-weight:800;font-size:12px;margin:4px 0}
+.ls-tier-card .range{color:#9ca3af;font-size:10px}
+.ls-tier-card input{width:50px;display:inline-block;font-size:11px}
+.ls-status-line{background:#0a0a0f;border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:11px;color:#9ca3af;margin-bottom:10px}
+.ls-status-line strong{color:#c084fc}
+</style>
+
+<div class="ls-wrap">
+  <div class="ls-header">
+    <h1>🎯 Score de Leads — Configuração</h1>
+    <p>
+      Critérios editáveis que viram tier (💎 Diamante / 🥇 Ouro / 🥈 Prata / 🥉 Bronze / 🪨 Pedra).
+      Cada peso aqui afeta diretamente <strong>distribuição</strong>, <strong>SLA</strong> e <strong>prioridade</strong> dos leads.
+      Toda alteração é registrada em <a href="/admin/score-leads/auditoria" style="color:#c084fc">Auditoria</a>.
+    </p>
+  </div>
+
+  <div class="ls-tabs">
+    <a class="ls-tab active" href="/admin/score-leads">📋 Critérios</a>
+    <a class="ls-tab" href="/admin/score-leads/distancia">📍 Distância & Cidades</a>
+    <a class="ls-tab" href="/admin/score-leads/cadencia">⏱️ Cadência por Tier</a>
+    <a class="ls-tab" href="/admin/score-leads/teste">🧪 Testar Lead</a>
+    <a class="ls-tab" href="/admin/score-leads/overrides">✋ Overrides Manuais</a>
+    <a class="ls-tab" href="/admin/score-leads/auditoria">📜 Auditoria</a>
+  </div>
+
+  <div id="ls-status-line" class="ls-status-line">Carregando…</div>
+
+  <div class="ls-toolbar">
+    <label style="color:#9ca3af;font-size:11px;font-weight:700">Produto:</label>
+    <select class="ls-select" id="ls-filter-product" onchange="lsLoad()">
+      <option value="">Todos</option>
+      <option value="FILTRO_ENTRADA_AGUA_TRATADA">Filtro Entrada — Água Tratada</option>
+      <option value="FILTRO_ENTRADA_POCO">Filtro Entrada — Poço</option>
+      <option value="IRON_FREE">Iron Free</option>
+      <option value="SCALE_STOP">Scale Stop</option>
+      <option value="BEBEDOURO_INDUSTRIAL">Bebedouro Industrial</option>
+      <option value="PURIFICADOR">Purificador</option>
+      <option value="REFIL_MANUTENCAO">Refil/Manutenção</option>
+      <option value="PECAS_ACESSORIOS">Peças/Acessórios</option>
+      <option value="OUTROS">Outros</option>
+    </select>
+    <label style="color:#9ca3af;font-size:11px;font-weight:700">
+      <input type="checkbox" id="ls-include-inactive" onchange="lsLoad()"> Mostrar inativos
+    </label>
+    <span style="flex:1"></span>
+    <button class="ls-btn" onclick="lsOpenNew()">➕ Novo critério</button>
+    <button class="ls-btn g" onclick="lsRunTests()">🧪 Rodar 8 testes</button>
+    <button class="ls-btn g" onclick="lsReseed()">🔄 Reseed defaults</button>
+    <button class="ls-btn g" onclick="lsOpenSettings()">⚙️ Settings (tiers)</button>
+  </div>
+
+  <div id="ls-list"></div>
+</div>
+
+<!-- ============ Modal Edit/New Criterion ============ -->
+<div class="ls-modal-back" id="ls-modal-edit">
+  <div class="ls-modal">
+    <h3 id="ls-modal-title">Novo critério</h3>
+    <input type="hidden" id="ls-cr-id">
+    <label>Código (único)</label><input id="ls-cr-code" placeholder="ex: IRON_FREE__poco_water_source">
+    <label>Nome</label><input id="ls-cr-name">
+    <label>Descrição</label><input id="ls-cr-desc">
+    <label>Produto</label>
+    <select id="ls-cr-product">
+      <option value="FILTRO_ENTRADA_AGUA_TRATADA">Filtro Entrada — Tratada</option>
+      <option value="FILTRO_ENTRADA_POCO">Filtro Entrada — Poço</option>
+      <option value="IRON_FREE">Iron Free</option>
+      <option value="SCALE_STOP">Scale Stop</option>
+      <option value="BEBEDOURO_INDUSTRIAL">Bebedouro Industrial</option>
+      <option value="PURIFICADOR">Purificador</option>
+      <option value="REFIL_MANUTENCAO">Refil/Manutenção</option>
+      <option value="PECAS_ACESSORIOS">Peças/Acessórios</option>
+      <option value="OUTROS">Outros</option>
+    </select>
+    <label>Pontos (positivo = soma, negativo = penaliza)</label>
+    <input type="number" id="ls-cr-points">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div><label>Prioridade</label><input type="number" id="ls-cr-priority" value="100"></div>
+      <div><label>Grupo (group_key)</label><input id="ls-cr-group" placeholder="ex: sintomas, perfil"></div>
+      <div><label>Group cap (max pts)</label><input type="number" id="ls-cr-groupcap" placeholder="opcional"></div>
+    </div>
+    <div style="display:flex;gap:18px;margin-top:8px">
+      <label style="display:flex;align-items:center;gap:5px;text-transform:none">
+        <input type="checkbox" id="ls-cr-active" checked> Ativo
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;text-transform:none">
+        <input type="checkbox" id="ls-cr-accum" checked> Pode acumular dentro do grupo
+      </label>
+    </div>
+    <label>Condição (DSL JSON)</label>
+    <textarea id="ls-cr-cond" placeholder='{"type":"truthy","field":"has_water_analysis"}'></textarea>
+    <p style="color:#9ca3af;font-size:10px;margin:5px 0 0">
+      Tipos: <code>truthy</code>, <code>falsy</code>, <code>has_value</code>, <code>in_list</code>,
+      <code>contains_any</code>, <code>numeric_compare</code>, <code>distance_range</code>,
+      <code>all_of</code>, <code>any_of</code>, <code>not</code>.
+    </p>
+    <label>Motivo da alteração (opcional)</label>
+    <input id="ls-cr-reason" placeholder="ex: ajuste após Q1 review">
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+      <button class="ls-btn g" onclick="lsCloseModal()">Cancelar</button>
+      <button class="ls-btn s" onclick="lsSaveCriterion()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Modal Settings (tiers) ============ -->
+<div class="ls-modal-back" id="ls-modal-settings">
+  <div class="ls-modal">
+    <h3>⚙️ Settings — Thresholds de Tier</h3>
+    <p style="color:#9ca3af;font-size:11px;margin:0 0 10px">
+      Faixas de score que determinam o tier final. Aceitam null em min/max pra "sem limite".
+    </p>
+    <div class="ls-tier-grid" id="ls-tier-grid"></div>
+    <h3 style="margin-top:18px">Regras especiais</h3>
+    <div id="ls-special-rules"></div>
+    <label>Motivo</label>
+    <input id="ls-settings-reason">
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+      <button class="ls-btn g" onclick="document.getElementById('ls-modal-settings').classList.remove('open')">Cancelar</button>
+      <button class="ls-btn s" onclick="lsSaveSettings()">💾 Salvar settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _LS_DATA = [];
+let _LS_SETTINGS = {};
+
+async function lsLoad(){
+  const product = document.getElementById('ls-filter-product').value;
+  const inc = document.getElementById('ls-include-inactive').checked ? '1' : '0';
+  document.getElementById('ls-list').innerHTML = '<div style="color:#888;padding:20px;text-align:center">⏳ Carregando...</div>';
+  try {
+    const [crRes, statusRes] = await Promise.all([
+      fetch(`/api/lead-score/criteria?product_type=${encodeURIComponent(product)}&include_inactive=${inc}`).then(r=>r.json()),
+      fetch('/api/lead-score/status').then(r=>r.json()),
+    ]);
+    if (!crRes.ok) throw new Error(crRes.error || 'erro');
+    _LS_DATA = crRes.items || [];
+    if (statusRes.ok) {
+      document.getElementById('ls-status-line').innerHTML =
+        `<strong>${statusRes.criteria_active}</strong> critérios ativos · <strong>${statusRes.distance_bands_active}</strong> faixas distância · <strong>${statusRes.cities_registered}</strong> cidades cadastradas · <strong>${statusRes.history_records}</strong> snapshots históricos`;
+    }
+    lsRender();
+  } catch(e){
+    document.getElementById('ls-list').innerHTML = `<div style="color:#ef4444;padding:20px">${e.message}</div>`;
+  }
+}
+
+function lsRender(){
+  const byProduct = {};
+  for (const c of _LS_DATA) {
+    if (!byProduct[c.product_type]) byProduct[c.product_type] = [];
+    byProduct[c.product_type].push(c);
+  }
+  const html = Object.keys(byProduct).sort().map(p => {
+    const items = byProduct[p];
+    return `
+      <div class="ls-section-head">
+        <span class="title">${p}</span>
+        <span class="count">${items.length} critérios</span>
+      </div>
+      ${items.map(c => lsCardHtml(c)).join('')}
+    `;
+  }).join('') || '<div style="color:#888;padding:30px;text-align:center">Nenhum critério encontrado pra esse filtro.</div>';
+  document.getElementById('ls-list').innerHTML = html;
+}
+
+function lsCardHtml(c){
+  const pos = c.points >= 0 ? 'pos' : 'neg';
+  const inactiveCls = c.is_active ? '' : 'inactive';
+  return `
+    <div class="ls-card ${pos} ${inactiveCls}">
+      <div class="ls-row">
+        <div>
+          <div class="name">${escapeHtml(c.name)}</div>
+          <div class="desc">${escapeHtml(c.description||'')} · <code style="font-size:10px;color:#a371f7">${escapeHtml(c.code)}</code></div>
+        </div>
+        <div class="pts ${pos}">${c.points>0?'+':''}${c.points}</div>
+        <div style="text-align:center">
+          <span class="ls-pill ${c.is_active?'g':''}">${c.is_active?'Ativo':'Inativo'}</span>
+        </div>
+        <div style="font-size:11px;color:#9ca3af">
+          ${c.group_key ? `<span class="ls-pill">${escapeHtml(c.group_key)}</span>` : ''}
+          ${c.group_cap != null ? `<br><span style="font-size:10px">cap ${c.group_cap}</span>` : ''}
+        </div>
+        <div style="font-size:11px;color:#9ca3af">prio ${c.priority}</div>
+        <div style="font-size:10px;color:#9ca3af">${c.updated_by||'-'} · ${new Date(c.updated_at).toLocaleDateString('pt-BR')}</div>
+        <div class="actions">
+          <button class="ls-btn g" onclick='lsOpenEdit(${JSON.stringify(c).replace(/'/g,"&apos;")})'>✏️</button>
+          <button class="ls-btn ${c.is_active?'d':'s'}" onclick="lsToggle(${c.id}, ${!c.is_active})">${c.is_active?'⏸️':'▶️'}</button>
+          <button class="ls-btn d" onclick="lsDelete(${c.id})">🗑️</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function lsOpenNew(){
+  document.getElementById('ls-modal-title').textContent = 'Novo critério';
+  ['ls-cr-id','ls-cr-code','ls-cr-name','ls-cr-desc','ls-cr-points','ls-cr-group','ls-cr-groupcap','ls-cr-cond','ls-cr-reason'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('ls-cr-priority').value = 100;
+  document.getElementById('ls-cr-active').checked = true;
+  document.getElementById('ls-cr-accum').checked = true;
+  document.getElementById('ls-modal-edit').classList.add('open');
+}
+
+function lsOpenEdit(c){
+  document.getElementById('ls-modal-title').textContent = 'Editar: ' + c.name;
+  document.getElementById('ls-cr-id').value = c.id;
+  document.getElementById('ls-cr-code').value = c.code;
+  document.getElementById('ls-cr-name').value = c.name;
+  document.getElementById('ls-cr-desc').value = c.description || '';
+  document.getElementById('ls-cr-product').value = c.product_type;
+  document.getElementById('ls-cr-points').value = c.points;
+  document.getElementById('ls-cr-priority').value = c.priority;
+  document.getElementById('ls-cr-group').value = c.group_key || '';
+  document.getElementById('ls-cr-groupcap').value = c.group_cap || '';
+  document.getElementById('ls-cr-active').checked = c.is_active;
+  document.getElementById('ls-cr-accum').checked = c.accumulable;
+  document.getElementById('ls-cr-cond').value = JSON.stringify(c.condition_json, null, 2);
+  document.getElementById('ls-cr-reason').value = '';
+  document.getElementById('ls-modal-edit').classList.add('open');
+}
+
+function lsCloseModal(){ document.getElementById('ls-modal-edit').classList.remove('open'); }
+
+async function lsSaveCriterion(){
+  let cond;
+  try { cond = JSON.parse(document.getElementById('ls-cr-cond').value || '{}'); }
+  catch(e){ alert('Condição JSON inválida: ' + e.message); return; }
+  const payload = {
+    id: document.getElementById('ls-cr-id').value || undefined,
+    code: document.getElementById('ls-cr-code').value,
+    name: document.getElementById('ls-cr-name').value,
+    description: document.getElementById('ls-cr-desc').value,
+    product_type: document.getElementById('ls-cr-product').value,
+    condition_json: cond,
+    points: Number(document.getElementById('ls-cr-points').value),
+    priority: Number(document.getElementById('ls-cr-priority').value) || 100,
+    group_key: document.getElementById('ls-cr-group').value || null,
+    group_cap: document.getElementById('ls-cr-groupcap').value ? Number(document.getElementById('ls-cr-groupcap').value) : null,
+    is_active: document.getElementById('ls-cr-active').checked,
+    accumulable: document.getElementById('ls-cr-accum').checked,
+    reason: document.getElementById('ls-cr-reason').value || null,
+  };
+  const url = payload.id ? `/api/lead-score/criteria/${payload.id}` : '/api/lead-score/criteria';
+  const method = payload.id ? 'PUT' : 'POST';
+  const r = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) }).then(r=>r.json());
+  if (!r.ok) { alert(r.error || 'erro'); return; }
+  lsCloseModal();
+  lsLoad();
+}
+
+async function lsToggle(id, active){
+  const r = await fetch(`/api/lead-score/criteria/${id}`, {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ is_active: active, reason: active?'reativado via UI':'pausado via UI' })
+  }).then(r=>r.json());
+  if (!r.ok) alert(r.error || 'erro');
+  lsLoad();
+}
+
+async function lsDelete(id){
+  if (!confirm('Excluir esse critério? (a auditoria mantém o histórico)')) return;
+  const reason = prompt('Motivo da exclusão:') || 'sem motivo';
+  await fetch(`/api/lead-score/criteria/${id}?reason=${encodeURIComponent(reason)}`, { method: 'DELETE' });
+  lsLoad();
+}
+
+async function lsReseed(){
+  if (!confirm('Reaplicar os critérios default? (NÃO sobrescreve regras editadas por você)')) return;
+  const r = await fetch('/api/lead-score/reseed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({force:false, reason:'manual reseed via UI'}) }).then(r=>r.json());
+  if (!r.ok) { alert(r.error||'erro'); return; }
+  alert(`OK — critérios upserted: ${r.result.critUpserted}, faixas: ${r.result.bandUpserted}, settings: ${r.result.settingsUpserted}, cidades: ${r.result.citiesUpserted}`);
+  lsLoad();
+}
+
+async function lsRunTests(){
+  const btn = event.target; btn.disabled = true; btn.textContent = '⏳ Rodando...';
+  try {
+    const r = await fetch('/api/lead-score/run-tests', { method:'POST' }).then(r=>r.json());
+    if (!r.ok) { alert(r.error||'erro'); return; }
+    const lines = (r.cases||[]).map(c => `${c.status==='pass'?'✅':'❌'} ${c.name}` + (c.failed?.length?'\n   '+c.failed.join('\n   '):'')).join('\n\n');
+    alert(`RESULTADO: ${r.passed}/${r.total} passou (${r.failed} falhou)\n\n${lines}`);
+  } finally { btn.disabled = false; btn.textContent = '🧪 Rodar 8 testes'; }
+}
+
+async function lsOpenSettings(){
+  const r = await fetch('/api/lead-score/settings').then(r=>r.json());
+  if (!r.ok) { alert(r.error||'erro'); return; }
+  const items = r.items || [];
+  _LS_SETTINGS = {};
+  items.forEach(s => _LS_SETTINGS[s.key] = s.value_json);
+  const tiers = _LS_SETTINGS.tier_thresholds || {};
+  const order = ['DIAMANTE','OURO','PRATA','BRONZE','PEDRA'];
+  document.getElementById('ls-tier-grid').innerHTML = order.map(t => {
+    const cfg = tiers[t] || {};
+    return `
+      <div class="ls-tier-card">
+        <div class="icon">${cfg.icon||'•'}</div>
+        <div class="name">${t}</div>
+        <div class="range">
+          min <input id="ls-tier-${t}-min" value="${cfg.min==null?'':cfg.min}" placeholder="null">
+        </div>
+        <div class="range">
+          max <input id="ls-tier-${t}-max" value="${cfg.max==null?'':cfg.max}" placeholder="null">
+        </div>
+      </div>
+    `;
+  }).join('');
+  const sr = _LS_SETTINGS.special_rules || {};
+  document.getElementById('ls-special-rules').innerHTML = Object.keys(sr).map(k => `
+    <label style="display:flex;align-items:center;gap:8px;color:#e5e7eb;font-size:12px;text-transform:none;margin:6px 0">
+      <input type="checkbox" id="ls-sr-${k}" ${sr[k]?'checked':''}> <code style="color:#c084fc">${k}</code>
+    </label>
+  `).join('');
+  document.getElementById('ls-modal-settings').classList.add('open');
+}
+
+async function lsSaveSettings(){
+  const order = ['DIAMANTE','OURO','PRATA','BRONZE','PEDRA'];
+  const icons = { DIAMANTE:'💎', OURO:'🥇', PRATA:'🥈', BRONZE:'🥉', PEDRA:'🪨' };
+  const newTiers = {};
+  for (const t of order) {
+    const minV = document.getElementById(`ls-tier-${t}-min`).value;
+    const maxV = document.getElementById(`ls-tier-${t}-max`).value;
+    newTiers[t] = {
+      min: minV === '' ? null : Number(minV),
+      max: maxV === '' ? null : Number(maxV),
+      icon: icons[t],
+    };
+  }
+  const reason = document.getElementById('ls-settings-reason').value || 'edit via UI';
+  let r = await fetch('/api/lead-score/settings/tier_thresholds', {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ value: newTiers, reason })
+  }).then(r=>r.json());
+  if (!r.ok) { alert(r.error||'erro'); return; }
+  // special rules
+  const sr = _LS_SETTINGS.special_rules || {};
+  const newSr = {};
+  for (const k of Object.keys(sr)) newSr[k] = document.getElementById(`ls-sr-${k}`).checked;
+  r = await fetch('/api/lead-score/settings/special_rules', {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ value: newSr, reason })
+  }).then(r=>r.json());
+  if (!r.ok) { alert(r.error||'erro'); return; }
+  document.getElementById('ls-modal-settings').classList.remove('open');
+  alert('Settings salvos.');
+}
+
+lsLoad();
+</script>

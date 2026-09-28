@@ -1,0 +1,125 @@
+<% const activePage = 'auditoria-crm'; const pageTitle = 'Auditoria · Vendedores'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.aud-wrap{max-width:1500px;margin:0 auto;padding:20px}
+.aud-head h1{font-size:22px;color:var(--text);margin:0;display:flex;align-items:center;gap:10px}
+.aud-head .sub{color:var(--text-muted);font-size:13px;margin-top:2px}
+.aud-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin:18px 0}
+.aud-tab{padding:10px 18px;color:var(--text-muted);text-decoration:none;border-bottom:3px solid transparent;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.aud-tab:hover{color:var(--text)}
+.aud-tab.active{color:#00AAFF;border-bottom-color:#00AAFF}
+.box{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px}
+.box h3{margin:0 0 12px;color:var(--text);font-size:14px}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{padding:10px;text-align:left;font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:700;border-bottom:1px solid var(--border);background:var(--bg);letter-spacing:.4px}
+.tbl td{padding:10px;border-bottom:1px solid var(--bg-hover);color:var(--text)}
+.tbl tr:hover td{background:var(--bg-hover)}
+.score-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:14px;font-weight:800;font-size:13px}
+.score-pill.gold{background:linear-gradient(135deg,#F0C040,#D29922);color:var(--bg)}
+.score-pill.silver{background:linear-gradient(135deg,var(--text-muted),#6E7681);color:#fff}
+.score-pill.bronze{background:linear-gradient(135deg,#A0522D,#7d3a18);color:#fff}
+.score-pill.high{background:rgba(63,185,80,.15);color:#3FB950;border:1px solid #3FB950}
+.score-pill.med{background:rgba(210,153,34,.15);color:#D29922;border:1px solid #D29922}
+.score-pill.low{background:rgba(248,81,73,.15);color:#F85149;border:1px solid #F85149}
+.bar-c{height:8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;overflow:hidden;width:120px;display:inline-block;vertical-align:middle;margin-left:8px}
+.bar{height:100%;background:linear-gradient(90deg,#3FB950,#00AAFF)}
+.filters{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.filters select{padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px}
+.legend{font-size:11px;color:var(--text-muted);line-height:1.7;margin-top:10px}
+.legend strong{color:var(--text)}
+.crit-cell{color:#F85149;font-weight:700}
+</style>
+
+<div class="aud-wrap">
+  <div>
+    <h1>👥 Auditoria por vendedor</h1>
+    <div class="sub">Quem segue o processo, quem está burlando, quem precisa de coaching.</div>
+  </div>
+
+  <nav class="aud-tabs">
+    <a class="aud-tab" href="/auditoria-crm">Visão geral</a>
+    <a class="aud-tab" href="/auditoria-crm/influencia-ia">Influência da IA</a>
+    <a class="aud-tab" href="/auditoria-crm/distribuicao-leads">Distribuição</a>
+    <a class="aud-tab active" href="/auditoria-crm/vendedores">Vendedores</a>
+    <a class="aud-tab" href="/auditoria-crm/sistemica-ia">🔬 Sistêmica IA</a>
+  </nav>
+
+  <div class="filters">
+    <label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px">Período:</label>
+    <select id="f-period" onchange="reload()">
+      <option value="today">Hoje</option>
+      <option value="last7">7 dias</option>
+      <option value="last30" selected>30 dias</option>
+    </select>
+  </div>
+
+  <div class="box">
+    <h3>🏆 Ranking — Score de cumprimento de processo</h3>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Vendedor</th>
+            <th>Score</th>
+            <th>Recebidos</th>
+            <th>Contatos</th>
+            <th>Tasks (criadas/concluídas)</th>
+            <th>Sem prova</th>
+            <th>Stage manual</th>
+            <th>Perdas suspeitas</th>
+            <th>Propostas</th>
+            <th>Won</th>
+          </tr>
+        </thead>
+        <tbody id="ranking-tbody"><tr><td colspan="11" style="padding:20px;text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="legend">
+      <strong>Score</strong> de 0 a 100. Bonificações por: contato dentro do SLA, ligação no GoTo, mensagem WATI/Z-API, follow-up no prazo, proposta acompanhada, perda com motivo válido, CRM atualizado.<br>
+      <strong>Penalidades:</strong> tarefa concluída sem log, lead parado sem contato, perda sem motivo, mudança de etapa suspeita, proposta sem follow-up, lead quente esquecido.
+    </div>
+  </div>
+</div>
+
+<script>
+function scoreClass(s) {
+  if (s >= 80) return 'high';
+  if (s >= 50) return 'med';
+  return 'low';
+}
+
+async function reload() {
+  const period = document.getElementById('f-period').value;
+  const r = await fetch('/api/auditoria-crm/vendedores?period=' + period).then(r => r.json());
+  if (!r.ok) return;
+  if (!r.rows.length) {
+    document.getElementById('ranking-tbody').innerHTML = '<tr><td colspan="11" style="padding:20px;text-align:center;color:#8B949E">Sem dados no período</td></tr>';
+    return;
+  }
+  document.getElementById('ranking-tbody').innerHTML = r.rows.map((row, i) => {
+    const score = row.process_compliance_score || 0;
+    const cls = scoreClass(score);
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
+    return `<tr>
+      <td style="font-weight:700">${medal}</td>
+      <td><strong>${row.vendedor}</strong></td>
+      <td>
+        <span class="score-pill ${cls}">${score}</span>
+        <span class="bar-c"><span class="bar" style="width:${score}%"></span></span>
+      </td>
+      <td>${row.recebidos}</td>
+      <td>${row.contatos}</td>
+      <td>${row.tasks_criadas} / ${row.tasks_concluidas}</td>
+      <td class="${row.tasks_sem_log > 0 ? 'crit-cell' : ''}">${row.tasks_sem_log}</td>
+      <td class="${row.stage_manual > 3 ? 'crit-cell' : ''}">${row.stage_manual}</td>
+      <td class="${row.perdas_suspeitas > 0 ? 'crit-cell' : ''}">${row.perdas_suspeitas}</td>
+      <td>${row.propostas}</td>
+      <td style="color:#3FB950;font-weight:700">${row.won}</td>
+    </tr>`;
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', reload);
+</script>

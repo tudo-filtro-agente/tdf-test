@@ -1,0 +1,444 @@
+<% const activePage = 'auditoria-crm'; const pageTitle = 'Auditoria · Sistêmica IA'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.aud-wrap{max-width:1600px;margin:0 auto;padding:20px}
+.aud-head h1{font-size:22px;color:var(--text);margin:0;display:flex;align-items:center;gap:10px}
+.aud-head .sub{color:var(--text-muted);font-size:13px;margin-top:2px}
+.aud-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin:18px 0;flex-wrap:wrap}
+.aud-tab{padding:10px 18px;color:var(--text-muted);text-decoration:none;border-bottom:3px solid transparent;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.aud-tab:hover{color:var(--text)}
+.aud-tab.active{color:#00AAFF;border-bottom-color:#00AAFF}
+.filters{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.filters select{padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px}
+
+.section{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:18px}
+.section h2{margin:0 0 14px;color:var(--text);font-size:16px;display:flex;align-items:center;gap:10px}
+.section h2 .pill{font-size:10px;padding:2px 8px;border-radius:10px;background:#0D1F33;color:#3399FF;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.section .lead{color:var(--text-muted);font-size:12px;margin:-8px 0 16px;line-height:1.5}
+
+.agents{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:900px){.agents{grid-template-columns:1fr}}
+.agent-card{background:linear-gradient(180deg,#0D1F33,var(--bg-card));border:1px solid #3399FF55;border-radius:12px;padding:18px}
+.agent-card.nubia{background:linear-gradient(180deg,#1A0D2E,var(--bg-card));border-color:#A371F755}
+.agent-card h3{margin:0 0 6px;color:var(--text);display:flex;align-items:center;gap:8px;font-size:16px}
+.agent-card .role{color:var(--text-muted);font-size:11px;margin-bottom:14px;text-transform:uppercase;letter-spacing:.4px}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+.kpi{padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px}
+.kpi .l{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.kpi .v{font-size:18px;font-weight:800;color:var(--text);margin-top:3px}
+.kpi.ok .v{color:#3FB950}
+.kpi.warn .v{color:#D29922}
+.kpi.bad .v{color:#F85149}
+.kpi .sub{font-size:10px;color:var(--text-muted);margin-top:2px}
+
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{padding:9px;text-align:left;font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:700;border-bottom:1px solid var(--border);background:var(--bg);letter-spacing:.4px}
+.tbl td{padding:9px;border-bottom:1px solid var(--bg-hover);color:var(--text);vertical-align:middle}
+.tbl tr:hover td{background:var(--bg-hover)}
+.tbl code{color:#00AAFF;font-size:11px}
+
+.weakness{padding:14px;border-radius:8px;border-left:4px solid #F85149;background:#1a0d0d;margin-bottom:10px}
+.weakness.medium{border-left-color:#D29922;background:#1a1408}
+.weakness h4{margin:0 0 6px;color:#F85149;font-size:13px}
+.weakness.medium h4{color:#D29922}
+.weakness p{margin:6px 0;color:var(--text);font-size:12px;line-height:1.6}
+.weakness .fix{padding:8px 10px;background:rgba(63,185,80,.06);border-left:2px solid #3FB950;border-radius:0 6px 6px 0;color:#9be0a8;font-size:11px;margin-top:8px;line-height:1.6}
+
+.dim-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:900px){.dim-grid{grid-template-columns:1fr}}
+
+.bar-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed var(--bg-hover);font-size:12px}
+.bar-row:last-child{border-bottom:none}
+.bar-row .name{width:120px;color:var(--text);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-row .bar-c{flex:1;height:8px;background:var(--bg);border:1px solid var(--border);border-radius:3px;overflow:hidden}
+.bar-row .bar{height:100%;background:linear-gradient(90deg,#3399FF,#00AAFF)}
+.bar-row .num{font-size:11px;font-weight:700;color:#3399FF;width:60px;text-align:right;flex-shrink:0}
+
+.case-card{padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;font-size:12px}
+.case-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px}
+.case-head .left{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.case-head code{color:#00AAFF;font-size:11px}
+.case-meta{font-size:10px;color:var(--text-muted)}
+.case-reason{color:var(--text);font-style:italic;margin:6px 0}
+.case-rule{font-size:10px;color:var(--text-muted);margin-top:6px}
+.case-rule strong{color:#A371F7}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.badge.claude{background:rgba(51,153,255,.15);color:#3399FF}
+.badge.nubia{background:rgba(163,113,247,.15);color:#A371F7}
+.badge.ok{background:rgba(63,185,80,.15);color:#3FB950}
+.badge.warn{background:rgba(210,153,34,.15);color:#D29922}
+.badge.bad{background:rgba(248,81,73,.15);color:#F85149}
+.badge.executada{background:rgba(63,185,80,.15);color:#3FB950}
+.badge.ignorada{background:rgba(248,81,73,.15);color:#F85149}
+.badge.venda{background:rgba(63,185,80,.15);color:#3FB950}
+.badge.perda{background:rgba(248,81,73,.15);color:#F85149}
+.badge.sem_contato{background:rgba(248,81,73,.2);color:#F85149}
+.badge.em_andamento{background:rgba(139,148,158,.15);color:var(--text-muted)}
+
+.split-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:900px){.split-2{grid-template-columns:1fr}}
+
+.disclaimer{padding:14px 18px;background:linear-gradient(135deg,#1a0d2e,#0D1F33);border:1px solid #A371F7;border-radius:10px;margin-bottom:18px;font-size:13px;color:#fff;line-height:1.6}
+.disclaimer strong{color:#A371F7}
+
+.tag{display:inline-block;padding:1px 6px;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:10px;color:var(--text-muted);margin:1px}
+</style>
+
+<div class="aud-wrap">
+  <div>
+    <h1>🔬 Sistêmica IA</h1>
+    <div class="sub">Raio-X cru de Claude e Núbia: critérios reais, hit rate, fraquezas. Sem maquiagem.</div>
+  </div>
+
+  <nav class="aud-tabs">
+    <a class="aud-tab" href="/auditoria-crm">Visão geral</a>
+    <a class="aud-tab" href="/auditoria-crm/influencia-ia">Influência IA</a>
+    <a class="aud-tab" href="/auditoria-crm/distribuicao-leads">Distribuição</a>
+    <a class="aud-tab" href="/auditoria-crm/vendedores">Vendedores</a>
+    <a class="aud-tab active" href="/auditoria-crm/sistemica-ia">Sistêmica IA</a>
+  </nav>
+
+  <div class="filters">
+    <label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px">Período:</label>
+    <select id="f-period" onchange="reload()">
+      <option value="today">Hoje</option>
+      <option value="last7">7 dias</option>
+      <option value="last30" selected>30 dias</option>
+      <option value="last90">90 dias</option>
+    </select>
+  </div>
+
+  <div class="disclaimer">
+    <strong>📋 Como ler essa página.</strong> Aqui você audita o que <strong>Claude</strong> e <strong>Núbia</strong> fazem de verdade no CRM:
+    quais regras disparam, com qual confiança, qual desfecho cada decisão teve, e — na seção final — quais
+    <strong>fraquezas a própria auditoria detectou na IA</strong> (incluindo fraquezas que eu, Claude, deveria corrigir em mim mesmo).
+  </div>
+
+  <!-- 1. AGENTES -->
+  <div class="agents">
+    <div class="agent-card claude" id="agent-claude">
+      <h3>🧠 Claude (Diretor IA) <span class="badge claude">Claude</span></h3>
+      <div class="role">Distribui leads, recomenda ações, cria tarefas, audita CRM</div>
+      <div class="kpi-grid" id="claude-kpis"></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Top regras disparadas:</div>
+      <div id="claude-rules" style="margin-top:8px"></div>
+    </div>
+    <div class="agent-card nubia" id="agent-nubia">
+      <h3>💬 Núbia (SDR IA) <span class="badge nubia">Núbia</span></h3>
+      <div class="role">Saúda, qualifica via SPIN, faz follow-up, transfere pro closer</div>
+      <div class="kpi-grid" id="nubia-kpis"></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Top regras disparadas:</div>
+      <div id="nubia-rules" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- 2. AÇÕES POR AGENTE -->
+  <div class="split-2" style="margin-top:18px">
+    <div class="section">
+      <h2>O que Claude faz <span class="pill">action types</span></h2>
+      <div class="lead">Cada tipo de ação que o Claude tomou no período, com confiança e desfecho.</div>
+      <div style="overflow-x:auto">
+        <table class="tbl" id="claude-actions">
+          <thead><tr><th>Ação</th><th>Qtd</th><th>Confiança</th><th>Leads</th><th>+/-</th></tr></thead>
+          <tbody><tr><td colspan="5" style="padding:20px;text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="section">
+      <h2>O que Núbia faz <span class="pill">action types</span></h2>
+      <div class="lead">Cada tipo de ação da Núbia (SPIN, qualificação, handoff).</div>
+      <div style="overflow-x:auto">
+        <table class="tbl" id="nubia-actions">
+          <thead><tr><th>Ação</th><th>Qtd</th><th>Confiança</th><th>Leads</th><th>+/-</th></tr></thead>
+          <tbody><tr><td colspan="5" style="padding:20px;text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. CRITÉRIOS DE DISTRIBUIÇÃO (Claude) -->
+  <div class="section">
+    <h2>📐 Critérios de distribuição <span class="pill">Claude</span></h2>
+    <div class="lead">
+      Como Claude escolhe o vendedor. Cada distribuição é avaliada pelo desfecho real:
+      contato dentro do SLA, virou venda, virou perda, ou parou no caminho.
+    </div>
+
+    <div class="dim-grid">
+      <div>
+        <h4 style="color:#3399FF;font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 8px">Por regra de roteamento</h4>
+        <div id="dim-regra"></div>
+      </div>
+      <div>
+        <h4 style="color:#3399FF;font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 8px">Por tier do lead</h4>
+        <div id="dim-tier"></div>
+      </div>
+      <div>
+        <h4 style="color:#3399FF;font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 8px">Por vendedor</h4>
+        <div id="dim-vendedor"></div>
+      </div>
+    </div>
+
+    <h4 style="color:var(--text);font-size:13px;margin:18px 0 8px">Últimas 30 distribuições — caso a caso</h4>
+    <div style="overflow-x:auto;max-height:50vh;overflow-y:auto">
+      <table class="tbl" id="dist-detail">
+        <thead><tr><th>Quando</th><th>Lead</th><th>Tier</th><th>Produto</th><th>Vendedor</th><th>Regra</th><th>Tempo p/ contato</th><th>Desfecho</th></tr></thead>
+        <tbody><tr><td colspan="8" style="padding:20px;text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 4. CRITÉRIOS DE QUALIFICAÇÃO (Núbia) -->
+  <div class="section">
+    <h2>🎯 Critérios de qualificação <span class="pill">Núbia</span></h2>
+    <div class="lead">
+      O que Núbia coletou de cada lead pra qualificar (sintomas, decisor, timing) e o que aconteceu
+      depois: closer atuou? virou venda?
+    </div>
+    <div style="overflow-x:auto;max-height:50vh;overflow-y:auto">
+      <table class="tbl" id="qual-table">
+        <thead><tr><th>Quando</th><th>Lead</th><th>Sintomas</th><th>Decisor</th><th>Timing</th><th>Confiança</th><th>Closer atuou?</th><th>Virou venda?</th></tr></thead>
+        <tbody><tr><td colspan="8" style="padding:20px;text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 5. RECOMENDAÇÕES CLAUDE -->
+  <div class="section">
+    <h2>💡 Recomendações que Claude fez <span class="pill">execução</span></h2>
+    <div class="lead">
+      Cada vez que Claude recomendou uma ação ao vendedor, marca aqui. O loop fecha quando
+      o vendedor loga <code>ia_action_executed</code> — caso contrário, conta como ignorada.
+    </div>
+    <div id="recs-list"></div>
+  </div>
+
+  <!-- 6. CASOS RECENTES -->
+  <div class="split-2" style="margin-top:0">
+    <div class="section">
+      <h2>📜 Últimas decisões Claude</h2>
+      <div id="claude-recent"></div>
+    </div>
+    <div class="section">
+      <h2>📜 Últimas decisões Núbia</h2>
+      <div id="nubia-recent"></div>
+    </div>
+  </div>
+
+  <!-- 7. FRAQUEZAS DETECTADAS -->
+  <div class="section" style="border-color:#F85149">
+    <h2 style="color:#F85149">⚠️ Fraquezas auto-detectadas <span class="pill" style="background:rgba(248,81,73,.15);color:#F85149">honesto</span></h2>
+    <div class="lead">
+      A própria auditoria atravessou os logs e identificou onde a IA está falhando.
+      <strong style="color:#F85149">Isso não é a IA se vendendo bem — é onde ela precisa melhorar.</strong>
+    </div>
+    <div id="weaknesses"></div>
+  </div>
+</div>
+
+<script>
+function fmtNum(n) { return Number(n||0).toLocaleString('pt-BR'); }
+function fmtDate(d) { if(!d) return '—'; const dt=new Date(d); return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+function fmtMin(m) { if(m==null) return '—'; if(m<1) return Math.round(m*60)+'s'; if(m<60) return Math.round(m)+'min'; return (m/60).toFixed(1)+'h'; }
+
+function kpiCard(label, value, sub, cls) {
+  return `<div class="kpi ${cls||''}"><div class="l">${label}</div><div class="v">${value}</div>${sub?`<div class="sub">${sub}</div>`:''}</div>`;
+}
+
+function rateClass(pct, goodAbove, badBelow) {
+  if (pct == null) return '';
+  if (pct >= goodAbove) return 'ok';
+  if (pct <= badBelow) return 'bad';
+  return 'warn';
+}
+
+async function reload() {
+  const period = document.getElementById('f-period').value;
+  const r = await fetch('/api/auditoria-crm/sistemica-ia?period=' + period).then(r => r.json());
+  if (!r.ok) {
+    document.body.insertAdjacentHTML('afterbegin', `<div style="padding:20px;color:#F85149">Erro: ${r.error}</div>`);
+    return;
+  }
+
+  /* AGENTE: Claude */
+  const c = r.agents.claude;
+  const cs = c.summary;
+  const ck = c.kpis;
+  document.getElementById('claude-kpis').innerHTML = [
+    kpiCard('Total ações', fmtNum(cs.total)),
+    kpiCard('Leads únicos', fmtNum(cs.leads_unicos)),
+    kpiCard('Confiança média', (cs.confianca_media||'—') + '%', cs.alta_confianca + ' alta / ' + cs.baixa_confianca + ' baixa'),
+    kpiCard('Recom. executadas', ck.recommendation_execution_rate + '%', ck.recommendations_executed + '/' + ck.recommendations_total + ' em 24h', rateClass(ck.recommendation_execution_rate, 70, 30)),
+    kpiCard('Distrib. → contato', ck.distribution_contact_rate + '%', 'closer tocou', rateClass(ck.distribution_contact_rate, 75, 50)),
+    kpiCard('Distrib. → venda', ck.distribution_sold_rate + '%', 'virou won', rateClass(ck.distribution_sold_rate, 20, 5)),
+  ].join('');
+  document.getElementById('claude-rules').innerHTML = c.rules.length
+    ? c.rules.slice(0,5).map(rule => `
+        <div class="bar-row">
+          <span class="name" title="${rule.regra}">${rule.regra}</span>
+          <div class="bar-c"><div class="bar" style="width:${100*rule.disparos/c.rules[0].disparos}%"></div></div>
+          <span class="num">${rule.disparos}</span>
+        </div>`).join('')
+    : '<div style="color:#8B949E;font-size:11px">Sem regras disparadas no período</div>';
+
+  /* AGENTE: Núbia */
+  const n = r.agents.nubia;
+  const ns = n.summary;
+  const nk = n.kpis;
+  document.getElementById('nubia-kpis').innerHTML = [
+    kpiCard('Total ações', fmtNum(ns.total)),
+    kpiCard('Leads únicos', fmtNum(ns.leads_unicos)),
+    kpiCard('Confiança média', (ns.confianca_media||'—') + '%'),
+    kpiCard('Qualificações', fmtNum(nk.qualifications_total)),
+    kpiCard('Closer atuou', nk.handoff_rate + '%', nk.qualifications_handed_off + '/' + nk.qualifications_total, rateClass(nk.handoff_rate, 70, 40)),
+    kpiCard('Virou venda', nk.sold_rate + '%', nk.qualifications_sold + ' won', rateClass(nk.sold_rate, 15, 5)),
+  ].join('');
+  document.getElementById('nubia-rules').innerHTML = n.rules.length
+    ? n.rules.slice(0,5).map(rule => `
+        <div class="bar-row">
+          <span class="name" title="${rule.regra}">${rule.regra}</span>
+          <div class="bar-c"><div class="bar" style="width:${100*rule.disparos/n.rules[0].disparos}%;background:linear-gradient(90deg,#A371F7,#C084FC)"></div></div>
+          <span class="num" style="color:#A371F7">${rule.disparos}</span>
+        </div>`).join('')
+    : '<div style="color:#8B949E;font-size:11px">Sem regras disparadas no período</div>';
+
+  /* AÇÕES */
+  function renderActions(rows, tbodyId) {
+    const tbody = document.querySelector(`#${tbodyId} tbody`);
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:#8B949E">Sem ações</td></tr>'; return; }
+    tbody.innerHTML = rows.map(a => `
+      <tr>
+        <td><code>${a.action_type}</code></td>
+        <td>${a.n}</td>
+        <td>${a.confianca_avg ? a.confianca_avg + '%' : '—'}</td>
+        <td>${a.leads}</td>
+        <td><span style="color:#3FB950">+${a.pos}</span> / <span style="color:#F85149">-${a.neg}</span></td>
+      </tr>`).join('');
+  }
+  renderActions(c.actions, 'claude-actions');
+  renderActions(n.actions, 'nubia-actions');
+
+  /* DIMENSÕES DA DISTRIBUIÇÃO */
+  function renderDim(rows, dim, elId) {
+    const filtered = rows.filter(x => x.dimensao === dim).slice(0,8);
+    if (!filtered.length) { document.getElementById(elId).innerHTML = '<div style="color:#8B949E;font-size:11px;padding:8px">Sem dados</div>'; return; }
+    const max = Math.max(...filtered.map(x => x.total));
+    document.getElementById(elId).innerHTML = filtered.map(x => `
+      <div class="bar-row">
+        <span class="name" title="${x.valor}">${x.valor}</span>
+        <div class="bar-c"><div class="bar" style="width:${100*x.total/max}%"></div></div>
+        <span class="num">${x.total}</span>
+      </div>
+      <div style="font-size:10px;color:#8B949E;margin:-2px 0 4px 8px">
+        contato ${x.pct_contato || 0}% · venda ${x.pct_venda || 0}%
+      </div>
+    `).join('');
+  }
+  renderDim(r.distribution.by_dimension, 'regra', 'dim-regra');
+  renderDim(r.distribution.by_dimension, 'tier', 'dim-tier');
+  renderDim(r.distribution.by_dimension, 'vendedor', 'dim-vendedor');
+
+  /* DISTRIBUIÇÃO DETALHE */
+  const distTbody = document.querySelector('#dist-detail tbody');
+  const distRows = r.distribution.criteria.slice(0,30);
+  if (!distRows.length) {
+    distTbody.innerHTML = '<tr><td colspan="8" style="padding:20px;text-align:center;color:#8B949E">Sem distribuições no período</td></tr>';
+  } else {
+    distTbody.innerHTML = distRows.map(d => `
+      <tr>
+        <td style="color:#8B949E;font-size:11px">${fmtDate(d.occurred_at)}</td>
+        <td>${(d.crm_record_name||'').slice(0,30)}</td>
+        <td><span class="tag">${d.tier||'—'}</span></td>
+        <td style="font-size:11px">${(d.produto||'').slice(0,22)}</td>
+        <td><strong>${d.vendedor||'(sem owner)'}</strong></td>
+        <td><code>${d.regra||'—'}</code></td>
+        <td>${fmtMin(d.min_ate_contato)}</td>
+        <td><span class="badge ${d.desfecho}">${d.desfecho}</span></td>
+      </tr>`).join('');
+  }
+
+  /* QUALIFICAÇÕES NÚBIA */
+  const qualTbody = document.querySelector('#qual-table tbody');
+  if (!r.qualification.criteria.length) {
+    qualTbody.innerHTML = '<tr><td colspan="8" style="padding:20px;text-align:center;color:#8B949E">Sem qualificações no período</td></tr>';
+  } else {
+    qualTbody.innerHTML = r.qualification.criteria.slice(0,30).map(q => {
+      const sint = Array.isArray(q.sintomas) ? q.sintomas.map(s => `<span class="tag">${s}</span>`).join(' ') : '—';
+      return `<tr>
+        <td style="color:#8B949E;font-size:11px">${fmtDate(q.occurred_at)}</td>
+        <td>${(q.crm_record_name||'').slice(0,30)}</td>
+        <td>${sint || '—'}</td>
+        <td><span class="tag">${q.decisor}</span></td>
+        <td><span class="tag">${q.timing}</span></td>
+        <td>${q.confidence_score ? q.confidence_score + '%' : '—'}</td>
+        <td>${q.closer_atuou ? '<span class="badge ok">SIM</span>' : '<span class="badge bad">NÃO</span>'}</td>
+        <td>${q.virou_venda ? '<span class="badge venda">VENDA</span>' : '—'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  /* RECOMENDAÇÕES CLAUDE */
+  const recsEl = document.getElementById('recs-list');
+  if (!r.recommendations.length) {
+    recsEl.innerHTML = '<div style="color:#8B949E;font-size:13px">Sem recomendações Claude no período.</div>';
+  } else {
+    recsEl.innerHTML = r.recommendations.map(rec => `
+      <div class="case-card">
+        <div class="case-head">
+          <div class="left">
+            <span class="badge claude">Claude</span>
+            <span class="case-meta">${fmtDate(rec.occurred_at)}</span>
+            ${rec.executada ? '<span class="badge executada">✓ EXECUTADA' + (rec.horas_ate_execucao ? ' em ' + Number(rec.horas_ate_execucao).toFixed(1) + 'h' : '') + '</span>' : '<span class="badge ignorada">✗ IGNORADA</span>'}
+            ${rec.virou_venda ? '<span class="badge venda">→ VENDA</span>' : ''}
+          </div>
+          <span class="case-meta">${rec.vendedor || '—'} · conf. ${rec.confidence_score || '?'}%</span>
+        </div>
+        <div style="font-size:11px;color:#E6EDF3;margin-bottom:4px"><strong>${rec.crm_record_name || '?'}</strong></div>
+        <div class="case-reason">"${rec.reason || '—'}"</div>
+        <div class="case-rule">Regra: <strong>${rec.rule_triggered || '—'}</strong></div>
+      </div>
+    `).join('');
+  }
+
+  /* CASOS RECENTES */
+  function renderRecent(rows, elId, agentClass) {
+    const el = document.getElementById(elId);
+    if (!rows.length) { el.innerHTML = '<div style="color:#8B949E;font-size:13px">Sem decisões no período.</div>'; return; }
+    el.innerHTML = rows.map(d => `
+      <div class="case-card">
+        <div class="case-head">
+          <div class="left">
+            <span class="badge ${agentClass}">${agentClass === 'claude' ? 'Claude' : 'Núbia'}</span>
+            <code>${d.action_type}</code>
+            ${d.confidence_score ? `<span class="case-meta">conf ${d.confidence_score}%</span>` : ''}
+          </div>
+          <span class="case-meta">${fmtDate(d.occurred_at)}</span>
+        </div>
+        ${d.crm_record_name ? `<div style="font-size:11px;color:#E6EDF3"><strong>${d.crm_record_name}</strong></div>` : ''}
+        ${d.reason ? `<div class="case-reason">"${d.reason}"</div>` : ''}
+        ${d.rule_triggered ? `<div class="case-rule">Regra: <strong>${d.rule_triggered}</strong></div>` : ''}
+        ${d.vendedor ? `<div class="case-rule">→ ${d.vendedor}</div>` : ''}
+      </div>
+    `).join('');
+  }
+  renderRecent(c.recent, 'claude-recent', 'claude');
+  renderRecent(n.recent, 'nubia-recent', 'nubia');
+
+  /* FRAQUEZAS */
+  const wEl = document.getElementById('weaknesses');
+  if (!r.weaknesses.length) {
+    wEl.innerHTML = '<div style="padding:14px;background:rgba(63,185,80,.05);border-left:4px solid #3FB950;border-radius:6px;color:#3FB950">✓ Sem fraquezas detectadas no período.</div>';
+  } else {
+    wEl.innerHTML = r.weaknesses.map(w => `
+      <div class="weakness ${w.severity}">
+        <h4>⚠️ ${w.title}</h4>
+        <p>${w.description}</p>
+        <div class="fix"><strong>💡 Como melhorar:</strong> ${w.fix}</div>
+      </div>
+    `).join('');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', reload);
+</script>

@@ -1,0 +1,123 @@
+<% const activePage = 'admin-score-leads'; const pageTitle = 'Score de Leads — Auditoria'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.lsa-wrap{max-width:1500px;margin:0 auto;padding:24px;color:var(--text)}
+.lsa-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #a371f7;border-radius:12px;padding:18px;margin-bottom:14px}
+.lsa-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.lsa-tab{background:transparent;color:#9ca3af;border:none;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;text-decoration:none}
+.lsa-tab.active{color:#c084fc;border-bottom-color:#a371f7}
+.lsa-toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.lsa-toolbar select, .lsa-toolbar input{background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:6px 10px;font-size:12px}
+.lsa-btn{background:#a371f7;color:#fff;border:none;border-radius:5px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer}
+.lsa-tbl{width:100%;border-collapse:collapse;font-size:12px;background:#161725;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.lsa-tbl th{background:#1a0e2a;color:#c084fc;padding:9px 10px;text-align:left;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase}
+.lsa-tbl td{padding:7px 10px;border-bottom:1px solid #1a1a2a;vertical-align:top}
+.lsa-tbl tr:hover{background:rgba(167,113,247,.05)}
+.lsa-pill{display:inline-block;background:rgba(167,113,247,.15);color:#c084fc;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase}
+.lsa-pill.crit{background:rgba(16,185,129,.15);color:#10b981}
+.lsa-pill.dist{background:rgba(245,158,11,.15);color:#fbbf24}
+.lsa-pill.setting{background:rgba(167,113,247,.15);color:#c084fc}
+.lsa-pill.over{background:rgba(239,68,68,.15);color:#fca5a5}
+.lsa-pill.seed{background:rgba(99,102,241,.15);color:#a5b4fc}
+.lsa-diff-row{font-family:monospace;font-size:10px;color:#9ca3af}
+.lsa-diff-row .old{color:#ef4444;text-decoration:line-through}
+.lsa-diff-row .new{color:#10b981}
+</style>
+
+<div class="lsa-wrap">
+  <div class="lsa-header">
+    <h1 style="color:#c084fc;margin:0;font-size:20px">📜 Auditoria — Alterações em regras de score</h1>
+    <p style="color:#9ca3af;font-size:12px;margin:8px 0 0">
+      Toda alteração em critério, faixa de distância, setting ou override manual fica registrada aqui.
+      Inclui quem alterou, quando, o valor antigo, o novo, e o motivo (quando informado).
+    </p>
+  </div>
+
+  <div class="lsa-tabs">
+    <a class="lsa-tab" href="/admin/score-leads">📋 Critérios</a>
+    <a class="lsa-tab" href="/admin/score-leads/distancia">📍 Distância & Cidades</a>
+    <a class="lsa-tab" href="/admin/score-leads/cadencia">⏱️ Cadência por Tier</a>
+    <a class="lsa-tab" href="/admin/score-leads/teste">🧪 Testar Lead</a>
+    <a class="lsa-tab" href="/admin/score-leads/overrides">✋ Overrides Manuais</a>
+    <a class="lsa-tab active" href="/admin/score-leads/auditoria">📜 Auditoria</a>
+  </div>
+
+  <div class="lsa-toolbar">
+    <label style="color:#9ca3af;font-size:11px">Tipo:</label>
+    <select id="lsa-type" onchange="lsaLoad()">
+      <option value="">Todos</option>
+      <option value="criterion">Critério</option>
+      <option value="distance_band">Faixa distância</option>
+      <option value="city">Cidade</option>
+      <option value="setting">Setting</option>
+      <option value="manual_override">Override manual</option>
+      <option value="cadence">Cadência (config)</option>
+      <option value="cadence_run">Cadência (run)</option>
+      <option value="seed">Seed</option>
+    </select>
+    <label style="color:#9ca3af;font-size:11px">Usuário:</label>
+    <input id="lsa-actor" placeholder="ex: paulo" oninput="lsaLoad()">
+    <label style="color:#9ca3af;font-size:11px">Limite:</label>
+    <select id="lsa-limit" onchange="lsaLoad()">
+      <option>50</option><option selected>100</option><option>250</option><option>500</option>
+    </select>
+    <button class="lsa-btn" onclick="lsaLoad()">🔄 Atualizar</button>
+  </div>
+
+  <table class="lsa-tbl">
+    <thead>
+      <tr>
+        <th style="width:120px">Quando</th>
+        <th style="width:90px">Tipo</th>
+        <th style="width:110px">Usuário</th>
+        <th style="width:200px">Alvo</th>
+        <th style="width:120px">Campo</th>
+        <th>Mudança</th>
+        <th style="width:250px">Motivo</th>
+      </tr>
+    </thead>
+    <tbody id="lsa-body"><tr><td colspan="7" style="padding:20px;text-align:center;color:var(--text-muted)">⏳ Carregando...</td></tr></tbody>
+  </table>
+</div>
+
+<script>
+async function lsaLoad(){
+  const target_type = document.getElementById('lsa-type').value;
+  const actor = document.getElementById('lsa-actor').value;
+  const limit = document.getElementById('lsa-limit').value;
+  const params = new URLSearchParams();
+  if (target_type) params.set('target_type', target_type);
+  if (actor) params.set('actor', actor);
+  params.set('limit', limit);
+  const r = await fetch('/api/lead-score/audit?' + params.toString()).then(r=>r.json());
+  if (!r.ok) {
+    document.getElementById('lsa-body').innerHTML = `<tr><td colspan="7" style="color:#ef4444">${r.error}</td></tr>`;
+    return;
+  }
+  const items = r.items || [];
+  if (!items.length) {
+    document.getElementById('lsa-body').innerHTML = '<tr><td colspan="7" style="color:#888;padding:20px;text-align:center">Nenhum evento encontrado.</td></tr>';
+    return;
+  }
+  document.getElementById('lsa-body').innerHTML = items.map(i => `
+    <tr>
+      <td style="font-size:11px;color:#9ca3af">${new Date(i.occurred_at).toLocaleString('pt-BR')}</td>
+      <td><span class="lsa-pill ${i.target_type==='criterion'?'crit':i.target_type==='distance_band'?'dist':i.target_type==='setting'?'setting':i.target_type==='manual_override'?'over':i.target_type==='seed'?'seed':''}">${escapeHtml(i.target_type)}</span></td>
+      <td style="font-weight:700">${escapeHtml(i.actor)}</td>
+      <td>${escapeHtml(i.target_label || i.target_id || '-')}</td>
+      <td style="font-family:monospace;font-size:11px;color:#a371f7">${escapeHtml(i.field_changed||'-')}</td>
+      <td class="lsa-diff-row">
+        ${i.old_value ? '<div class="old">' + escapeHtml(truncate(i.old_value,120)) + '</div>' : ''}
+        ${i.new_value ? '<div class="new">' + escapeHtml(truncate(i.new_value,120)) + '</div>' : ''}
+      </td>
+      <td style="color:#9ca3af;font-size:11px;font-style:italic">${escapeHtml(i.reason||'-')}</td>
+    </tr>
+  `).join('');
+}
+
+function truncate(s, n){ s = String(s); return s.length > n ? s.slice(0,n-3)+'...' : s; }
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+lsaLoad();
+</script>

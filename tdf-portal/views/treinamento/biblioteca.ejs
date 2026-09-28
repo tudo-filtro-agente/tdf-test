@@ -1,0 +1,53 @@
+<% var pageTitle = 'Biblioteca de Produtos'; var activePage = 'treinamento'; %>
+<%- include('../layout', { user, activePage, pageTitle }) %>
+
+<div class="page-header">
+  <h1>📚 Biblioteca de Produtos</h1>
+  <p class="subtitle">Vídeos e materiais técnicos de cada produto e tratamento. Estude antes de falar com o cliente.</p>
+</div>
+
+<div class="container">
+  <% grupos.forEach(function(g){ %>
+    <div style="margin-top:28px;">
+      <h2 style="font-size:1.15rem;color:<%= g.cor %>;border-left:3px solid <%= g.cor %>;padding-left:10px;margin-bottom:14px;"><%= g.tema %></h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">
+        <% g.itens.forEach(function(it){ %>
+          <div style="background:#0D1117;border:1px solid <%= g.cor %>40;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;">
+            <% if (it.tipo === 'video') { %>
+              <% if (it.existe) { %>
+                <video controls preload="metadata" style="width:100%;aspect-ratio:16/9;background:#000;display:block;">
+                  <source src="/biblioteca-files/<%= it.arq %>" type="video/mp4">
+                  Seu navegador não suporta vídeo.
+                </video>
+              <% } else { %>
+                <div style="width:100%;aspect-ratio:16/9;background:#161B22;display:flex;align-items:center;justify-content:center;color:#566;font-size:.85rem;">⏳ em breve</div>
+              <% } %>
+            <% } else { %>
+              <div style="width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#161B22,#0D1117);display:flex;align-items:center;justify-content:center;font-size:3rem;">📄</div>
+            <% } %>
+            <div style="padding:14px;flex:1;display:flex;flex-direction:column;">
+              <div style="font-weight:700;color:<%= g.cor %>;font-size:1rem;"><%= it.titulo %></div>
+              <div style="color:#8899AA;font-size:.82rem;margin-top:6px;flex:1;"><%= it.desc %></div>
+              <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+                <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:<%= it.tipo==='video'?'rgba(0,170,255,.15)':'rgba(239,68,68,.12)' %>;color:<%= it.tipo==='video'?'#00AAFF':'#f87171' %>;text-transform:uppercase;font-weight:700;"><%= it.tipo %></span>
+                <% if (it.existe) { %>
+                  <% if (it.tipo === 'pdf') { %>
+                    <a href="/biblioteca-files/<%= it.arq %>" target="_blank" style="margin-left:auto;color:<%= g.cor %>;text-decoration:none;font-weight:700;font-size:.85rem;">Abrir PDF →</a>
+                  <% } else { %>
+                    <a href="/biblioteca-files/<%= it.arq %>" target="_blank" style="margin-left:auto;color:<%= g.cor %>;text-decoration:none;font-weight:700;font-size:.85rem;">Tela cheia →</a>
+                  <% } %>
+                <% } else { %>
+                  <span style="margin-left:auto;color:#566;font-size:.8rem;">indisponível</span>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  <% }); %>
+
+  <div style="margin:34px 0;text-align:center;">
+    <a href="/treinamento" style="color:#00AAFF;text-decoration:none;">← Voltar pro Treinamento</a>
+  </div>
+</div>

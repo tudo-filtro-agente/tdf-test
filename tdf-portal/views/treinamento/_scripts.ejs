@@ -1,0 +1,33 @@
+<script>
+function markComplete(module) {
+  const key = 'treino_' + module;
+  if (localStorage.getItem(key) === '1') {
+    localStorage.removeItem(key);
+    const btn = document.querySelector('.treino-complete-btn');
+    if (btn) {
+      btn.textContent = 'Marcar como concluido';
+      btn.classList.remove('completed');
+    }
+  } else {
+    localStorage.setItem(key, '1');
+    const btn = document.querySelector('.treino-complete-btn');
+    if (btn) {
+      btn.textContent = 'Concluido ✓';
+      btn.classList.add('completed');
+    }
+  }
+}
+
+// Check on load
+(function() {
+  const path = window.location.pathname;
+  const module = path.split('/').pop();
+  if (module && localStorage.getItem('treino_' + module) === '1') {
+    const btn = document.querySelector('.treino-complete-btn');
+    if (btn) {
+      btn.textContent = 'Concluido ✓';
+      btn.classList.add('completed');
+    }
+  }
+})();
+</script>

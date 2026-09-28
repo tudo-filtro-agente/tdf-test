@@ -1,0 +1,111 @@
+<% var pageTitle = 'Central de Treinamentos'; var activePage = 'treinamento'; %>
+<%- include('../layout', { user, activePage, pageTitle }) %>
+<style>
+.tc-wrap{max-width:1180px;margin:0 auto;padding:0 16px 80px}
+.tc-h{margin:16px 0 2px;color:#fff;font-size:1.5rem}
+.tc-sub{color:#8899AA;margin:0 0 16px}
+.tc-legend{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0;font-size:.78rem;color:#8899AA}
+.tc-legend b{color:#c9d4de;font-weight:600}
+.tc-scroll{overflow-x:auto;border:1px solid #1f2b3a;border-radius:12px}
+.tc-table{border-collapse:collapse;width:100%;min-width:760px}
+.tc-table th,.tc-table td{border-bottom:1px solid #1f2b3a;padding:11px 12px;text-align:center;font-size:.85rem}
+.tc-table thead th{background:#0b1725;color:#E6EDF3;position:sticky;top:0}
+.tc-table th.aluno,.tc-table td.aluno{text-align:left;position:sticky;left:0;background:#0D1117;min-width:150px;z-index:1}
+.tc-table thead th.aluno{background:#0b1725;z-index:2}
+.tc-acad{display:flex;flex-direction:column;align-items:center;gap:2px}
+.tc-acad .ic{font-size:1.2rem}
+.tc-acad a{color:inherit;text-decoration:none}
+.tc-acad a:hover{text-decoration:underline}
+.tc-soon{font-size:9px;letter-spacing:.4px;background:#1a2433;color:#5b7c99;border:1px solid #2a3a4d;border-radius:8px;padding:1px 6px;text-transform:uppercase}
+.tc-cell{display:inline-flex;flex-direction:column;align-items:center;gap:4px;min-width:80px}
+.tc-bar{height:7px;width:76px;background:#0b1220;border:1px solid #1f2b3a;border-radius:20px;overflow:hidden}
+.tc-bar>i{display:block;height:100%;background:linear-gradient(90deg,#00AAFF,#3FB950)}
+.tc-pct{font-size:.72rem;color:#8899AA}
+.tc-badge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:9px}
+.tc-cert{background:rgba(46,160,67,.15);color:#3FB950;border:1px solid #3FB95055}
+.tc-appr{background:rgba(0,170,255,.12);color:#00AAFF;border:1px solid #00AAFF44}
+.tc-none{color:#3a4657;font-size:.8rem}
+.tc-soon-cell{color:#3a4657;font-size:.75rem}
+.tc-foot td{background:#0b1220;color:#8899AA;font-size:.78rem;font-weight:600}
+.tc-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:16px 0}
+.tc-card{background:#0D1117;border:1px solid #1f2b3a;border-radius:12px;padding:14px}
+.tc-card .t{font-weight:700;color:#E6EDF3;display:flex;align-items:center;gap:6px;font-size:.92rem}
+.tc-card .m{color:#8899AA;font-size:.78rem;margin-top:6px}
+.tc-card.on{border-color:#00AAFF44}
+.tc-card b.big{font-size:1.5rem;color:#00AAFF;display:block}
+</style>
+<div class="tc-wrap">
+  <h1 class="tc-h">📊 Central de Treinamentos</h1>
+  <p class="tc-sub">Quem está treinado em cada produto. Uma linha por vendedor, uma coluna por academia. Clique no produto ativo para o painel detalhado.</p>
+
+  <!-- cards resumo por academia -->
+  <div class="tc-cards">
+    <% resumoAcad.forEach(function(s){ %>
+      <div class="tc-card <%= s.ativo?'on':'' %>">
+        <div class="t"><span><%= s.acad.icon %></span> <%= s.acad.nome %> <% if(!s.ativo){ %><span class="tc-soon">em breve</span><% } %></div>
+        <% if(s.ativo){ %>
+          <b class="big"><%= s.certificados %></b>
+          <div class="m"><%= s.certificados %> certificados · <%= s.aprovados %> aprovados na prova · <%= s.iniciaram %>/<%= s.totalAlunos %> iniciaram · média <%= s.mediaPct %>%</div>
+          <div class="m" style="margin-top:6px"><a href="<%= s.acad.gestorUrl %>" style="color:#00AAFF;text-decoration:none">painel detalhado →</a></div>
+        <% } else { %>
+          <div class="m">Academia ainda não criada. Quando existir, entra aqui automaticamente.</div>
+        <% } %>
+      </div>
+    <% }) %>
+  </div>
+
+  <div class="tc-legend">
+    <span><b>Legenda:</b></span>
+    <span><span class="tc-badge tc-cert">🎓 CERT</span> certificado</span>
+    <span><span class="tc-badge tc-appr">✅ PROVA</span> aprovado na prova</span>
+    <span>barra = % de módulos concluídos</span>
+    <span><span class="tc-none">—</span> não iniciou</span>
+  </div>
+
+  <div class="tc-scroll">
+    <table class="tc-table">
+      <thead>
+        <tr>
+          <th class="aluno">Vendedor</th>
+          <% ACADEMIAS.forEach(function(a){ %>
+            <th>
+              <div class="tc-acad">
+                <span class="ic"><%= a.icon %></span>
+                <% if(a.status==='ativo'){ %><a href="<%= a.gestorUrl %>"><%= a.nome %></a><% } else { %><span><%= a.nome %></span><span class="tc-soon">em breve</span><% } %>
+              </div>
+            </th>
+          <% }) %>
+        </tr>
+      </thead>
+      <tbody>
+        <% if(!linhas.length){ %>
+          <tr><td class="aluno">—</td><% ACADEMIAS.forEach(function(){ %><td class="tc-none">—</td><% }) %></tr>
+        <% } %>
+        <% linhas.forEach(function(l){ %>
+          <tr>
+            <td class="aluno"><b><%= l.nome %></b><br><span style="color:#5b7c99;font-size:.72rem"><%= l.username %></span></td>
+            <% l.celulas.forEach(function(c){ %>
+              <td>
+                <% if(!c.ativo){ %>
+                  <span class="tc-soon-cell">em breve</span>
+                <% } else if(!c.r.iniciou){ %>
+                  <span class="tc-none">—</span>
+                <% } else { %>
+                  <div class="tc-cell">
+                    <div class="tc-bar"><i style="width:<%= c.r.pct %>%"></i></div>
+                    <span class="tc-pct"><%= c.r.concluidos %>/<%= c.r.total %> · <%= c.r.pct %>%</span>
+                    <div style="display:flex;gap:4px">
+                      <% if(c.r.certificado){ %><span class="tc-badge tc-cert">🎓 CERT</span><% } else if(c.r.provaAprovada){ %><span class="tc-badge tc-appr">✅ <%= c.r.melhorNota %>%</span><% } %>
+                    </div>
+                  </div>
+                <% } %>
+              </td>
+            <% }) %>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="color:#5b7c99;font-size:.78rem;margin-top:12px">Novas academias de produto aparecem aqui sozinhas — basta cadastrá-las em <code>data/treinamentos/catalogo.js</code> com status "ativo".</p>
+</div>

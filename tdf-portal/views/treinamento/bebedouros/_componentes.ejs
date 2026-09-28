@@ -1,0 +1,151 @@
+<%
+// include('_componentes', { ref, ...dados })  — renderiza uma ferramenta interativa
+if (ref === 'anatomia') { %>
+  <div style="display:grid;grid-template-columns:minmax(220px,340px) 1fr;gap:18px;margin:16px 0" class="tb-anat">
+    <div style="position:relative;background:#0b1220;border:1px solid #1f2b3a;border-radius:12px;padding:10px">
+      <img src="<%= ANATOMIA.imagem %>" alt="Bebedouro" style="width:100%;border-radius:8px;display:block" onerror="this.style.opacity=.2">
+      <% ANATOMIA.componentes.forEach(function(c,i){ %>
+        <button class="anat-dot" data-i="<%= i %>" title="<%= c.nome %>"
+          style="position:absolute;left:<%= c.x %>%;top:<%= c.y %>%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:#00AAFF;color:#04121f;border:2px solid #fff;font-weight:800;cursor:pointer;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.5)"><%= i+1 %></button>
+      <% }) %>
+    </div>
+    <div id="anatInfo" style="background:#0D1117;border:1px solid #00AAFF40;border-radius:12px;padding:16px;min-height:220px">
+      <div style="color:#8899AA">👆 Clique em um número na imagem para ver o componente, o benefício e como explicar ao cliente.</div>
+    </div>
+  </div>
+  <script>
+  (function(){
+    var C = <%- JSON.stringify(ANATOMIA.componentes) %>;
+    document.querySelectorAll('.anat-dot').forEach(function(b){
+      b.onclick=function(){
+        document.querySelectorAll('.anat-dot').forEach(x=>x.style.background='#00AAFF');
+        b.style.background='#3FB950';
+        var c=C[+b.dataset.i];
+        document.getElementById('anatInfo').innerHTML =
+          '<div style="font-size:1.15rem;font-weight:700;color:#00AAFF;margin-bottom:8px">'+(c.icon||'')+' '+c.nome+'</div>'+
+          row('O que é', c.oque)+row('Para que serve', c.serve)+
+          '<div style="border-radius:8px;background:rgba(46,160,67,.08);border:1px solid #3FB95044;padding:9px 11px;margin:8px 0"><b style="color:#3FB950">Benefício:</b> <span style="color:#c9d4de">'+c.beneficio+'</span></div>'+
+          '<div style="border-radius:8px;background:rgba(0,170,255,.07);border:1px solid #00AAFF44;padding:9px 11px;margin:8px 0"><b style="color:#00AAFF">Como explicar:</b> <span style="color:#dbe7f0;font-style:italic">'+c.comoExplicar+'</span></div>'+
+          '<div style="border-radius:8px;background:rgba(239,68,68,.07);border:1px solid #ef444444;padding:9px 11px;margin:8px 0"><b style="color:#ef6a6a">⛔ Não prometer:</b> <span style="color:#c9d4de">'+c.naoPrometer+'</span></div>';
+      };
+    });
+    function row(t,v){ return '<div style="margin:6px 0;color:#c9d4de;font-size:.9rem"><b style="color:#8899AA">'+t+':</b> '+v+'</div>'; }
+  })();
+  </script>
+<%
+} else if (ref === 'comparador') { %>
+  <div style="overflow-x:auto;margin:16px 0">
+    <table class="tb-table">
+      <thead><tr><th>Modelo</th><% PRODUTOS.forEach(function(p){ %><th><%= p.litros %> L</th><% }) %></tr></thead>
+      <tbody>
+        <tr><td>Pessoas/hora (ref.)</td><% PRODUTOS.forEach(function(p){ %><td><%= p.pessoasHora %></td><% }) %></tr>
+        <tr><td>Compressor</td><% PRODUTOS.forEach(function(p){ %><td><%= p.compressor %></td><% }) %></tr>
+        <tr><td>Peso</td><% PRODUTOS.forEach(function(p){ %><td><%= p.peso %></td><% }) %></tr>
+        <tr><td>Garantia</td><% PRODUTOS.forEach(function(p){ %><td><%= p.garantia %></td><% }) %></tr>
+        <tr><td>Dimensões</td><% PRODUTOS.forEach(function(p){ %><td><%= p.dimensao %> <% if(p.dimensaoPendente){ %><span class="tb-tag pend" title="<%= p.dimensaoNota %>">⚠️ validar</span><% } %></td><% }) %></tr>
+        <tr><td>Perfil</td><% PRODUTOS.forEach(function(p){ %><td style="font-size:.8rem;color:#8899AA"><%= p.perfil %></td><% }) %></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="tb-callout alerta"><div class="ct">⚠️ Dimensões pendentes de validação técnica</div>
+    <div style="font-size:.85rem">Vários modelos misturam metro e centímetro na publicação do site (ex.: altura "1,27" rotulada cm; 200 L com "1,10 cm"). <b>Não corrija por conta própria</b> nem publique como definitivo. Use "pendente de validação técnica" com o cliente e confirme com a fábrica.</div>
+  </div>
+  <%- include('_componentes', { ref:'calculadora', PRODUTOS, COMPONENTES_COMUNS, REGRAS_TORNEIRA, BEBEDOUROS, UPSELL_REFIL, brl, ANATOMIA }) %>
+<%
+} else if (ref === 'calculadora') { %>
+  <div class="tb-quiz" style="border-color:#00AAFF44">
+    <div class="q">🧮 Calculadora de dimensionamento (apoio — nunca substitui avaliação técnica)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <label style="font-size:.82rem;color:#8899AA">Total de pessoas<input id="c_total" type="number" min="0" class="tb-opt" style="margin:4px 0" placeholder="ex: 120"></label>
+      <label style="font-size:.82rem;color:#8899AA">Pessoas no PICO (ao mesmo tempo)<input id="c_pico" type="number" min="0" class="tb-opt" style="margin:4px 0" placeholder="ex: 80"></label>
+      <label style="font-size:.82rem;color:#8899AA">Ambiente<select id="c_amb" class="tb-opt" style="margin:4px 0"><option value="interno">Interno ventilado</option><option value="quente">Interno quente / sem ventilação</option><option value="externo">Externo / obra</option></select></label>
+      <label style="font-size:.82rem;color:#8899AA">Voltagem confirmada?<select id="c_volt" class="tb-opt" style="margin:4px 0"><option value="nao">Não confirmada</option><option value="sim">Sim</option></select></label>
+    </div>
+    <button class="tb-btn" style="margin-top:10px" onclick="calcDim()">Calcular recomendação</button>
+    <div id="c_out" style="margin-top:12px"></div>
+  </div>
+  <script>
+  var PRODS = <%- JSON.stringify(PRODUTOS.map(p=>({litros:p.litros,min:p.pessoasHoraMin,max:p.pessoasHoraMax,compressor:p.compressor,perfil:p.perfil}))) %>;
+  function calcDim(){
+    var total=+document.getElementById('c_total').value||0, pico=+document.getElementById('c_pico').value||0;
+    var amb=document.getElementById('c_amb').value, volt=document.getElementById('c_volt').value;
+    var faltando=[];
+    if(!total) faltando.push('total de pessoas');
+    if(!pico) faltando.push('pico de consumo (o dado mais importante)');
+    if(volt==='nao') faltando.push('voltagem (110/220)');
+    // base: usa o PICO, não o total. escolhe o menor modelo cujo max cobre o pico com folga.
+    var refDemanda = pico || Math.round(total*0.5); // se não tem pico, estima grosso e AVISA
+    if(amb==='quente') refDemanda = Math.round(refDemanda*1.2);
+    if(amb==='externo') refDemanda = Math.round(refDemanda*1.25);
+    var adequado=null, seguro=null;
+    for(var i=0;i<PRODS.length;i++){ if(PRODS[i].max>=refDemanda){ adequado=PRODS[i]; seguro=PRODS[i+1]||PRODS[i]; break; } }
+    if(!adequado){ adequado=PRODS[PRODS.length-1]; seguro=null; }
+    var out='';
+    if(!pico){ out+='<div class="tb-callout perigo"><div class="ct">⛔ Sem o pico, não dá recomendação confiável</div><div style="font-size:.85rem">Você informou só o total. O modelo é definido pelo <b>pico</b>. Pergunte quantas pessoas usam ao mesmo tempo antes de recomendar.</div></div>'; }
+    out+='<div class="tb-callout sucesso"><div class="ct">Provavelmente adequado</div><div><b style="color:#3FB950;font-size:1.1rem">'+adequado.litros+' litros</b> (compressor '+adequado.compressor+') — cobre demanda ajustada de ~'+refDemanda+' pessoas/hora.</div></div>';
+    if(seguro && seguro.litros!==adequado.litros){ out+='<div class="tb-callout info"><div class="ct">Com margem de segurança</div><div><b>'+seguro.litros+' litros</b> — se há crescimento previsto, pico irregular ou ambiente quente, suba um nível.</div></div>'; }
+    if(faltando.length){ out+='<div class="tb-callout alerta"><div class="ct">⚠️ Informações ainda ausentes</div><div style="font-size:.85rem">Falta confirmar: '+faltando.join(', ')+'.</div></div>'; }
+    out+='<div class="tb-callout info"><div class="ct">Riscos & próximo passo</div><div style="font-size:.85rem">Não descer de modelo só por preço sem registrar o risco de subdimensionamento. Água de poço, muitos pontos ou obra pedem <b>avaliação técnica</b> antes de fechar.</div></div>';
+    document.getElementById('c_out').innerHTML=out;
+  }
+  </script>
+<%
+} else if (ref === 'bant') { %>
+  <div class="tb-quiz" style="border-color:#00AAFF44">
+    <div class="q">🧭 Formulário BANT-DP — pontue de 0 a 2 cada dimensão (score 0–12)</div>
+    <% ['Budget (orçamento)','Authority (decisor)','Need (necessidade/dor)','Timing (prazo)','Dimensionamento (dados do pico)','Processo de compra'].forEach(function(dim,i){ %>
+      <div style="margin:10px 0">
+        <div style="color:#E6EDF3;font-size:.9rem;margin-bottom:4px"><%= dim %></div>
+        <div style="display:flex;gap:8px">
+          <% [0,1,2].forEach(function(v){ %><button type="button" class="tb-opt bant-b" data-dim="<%= i %>" data-v="<%= v %>" style="width:auto;flex:1;text-align:center"><%= v %></button><% }) %>
+        </div>
+      </div>
+    <% }) %>
+    <div id="bant_out" style="margin-top:12px"></div>
+  </div>
+  <script>
+  (function(){
+    var scores=[null,null,null,null,null,null];
+    document.querySelectorAll('.bant-b').forEach(function(b){ b.onclick=function(){
+      var d=+b.dataset.dim; document.querySelectorAll('.bant-b[data-dim="'+d+'"]').forEach(x=>x.classList.remove('ok'));
+      b.classList.add('ok'); scores[d]=+b.dataset.v; render();
+    };});
+    function render(){
+      if(scores.some(s=>s===null)){ document.getElementById('bant_out').innerHTML='<div style="color:#8899AA;font-size:.85rem">Pontue todas as 6 dimensões.</div>'; return; }
+      var t=scores.reduce((a,b)=>a+b,0), cls, cor, acao;
+      if(t>=10){cls='🔥 Oportunidade QUENTE';cor='#3FB950';acao='Priorizar agora. Recomendar modelo, proposta e próximo passo com data.';}
+      else if(t>=7){cls='✅ Oportunidade QUALIFICADA';cor='#00AAFF';acao='Avançar. Fechar as lacunas (decisor/prazo) e conduzir para proposta.';}
+      else if(t>=4){cls='🌱 NUTRIR';cor='#F59E0B';acao='Ainda imaturo. Educar, entender dor e prazo. Não queimar com preço.';}
+      else{cls='🔎 PESQUISA / baixa maturidade';cor='#8899AA';acao='Provável pesquisa de preço. Qualificar mais antes de investir tempo.';}
+      document.getElementById('bant_out').innerHTML='<div class="tb-callout info" style="border-color:'+cor+'66"><div class="ct" style="color:'+cor+'">Score '+t+'/12 — '+cls+'</div><div style="font-size:.88rem">'+acao+'</div></div>';
+    }
+  })();
+  </script>
+<%
+} else if (ref === 'upsell') { %>
+  <div class="tb-quiz" style="border-color:#3FB95044">
+    <div class="q">🎁 Simulador do upsell — Refil <%= UPSELL_REFIL.produto %></div>
+    <table class="tb-table" style="margin:8px 0">
+      <tr><td>Preço normal por refil</td><td><b><%= brl(UPSELL_REFIL.precoUnitario) %></b></td></tr>
+      <tr><td>3 refis no preço normal</td><td><%= brl(UPSELL_REFIL.precoTresNormal) %></td></tr>
+      <tr><td>3 refis na oferta (com o bebedouro)</td><td><b style="color:#3FB950"><%= brl(UPSELL_REFIL.precoTresPromo) %></b></td></tr>
+      <tr><td>Economia</td><td><b style="color:#3FB950"><%= brl(UPSELL_REFIL.economia) %></b></td></tr>
+      <tr><td>1º refil (brinde) + 3 adicionais</td><td><b><%= UPSELL_REFIL.totalRefisComOferta %> refis no total</b></td></tr>
+    </table>
+    <div class="tb-callout sucesso"><div style="font-size:.86rem">Comunicação: com os 4 refis o cliente fica com <b><%= UPSELL_REFIL.coberturaTexto %></b>. Ofereça <b>só depois</b> do cliente aceitar o bebedouro.</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+      <button class="tb-btn ghost" onclick="TB.post('/api/upsell',{acao:'apresentado'}).then(()=>toastUp('apresentado'))">Marcar: apresentei</button>
+      <button class="tb-btn green" onclick="TB.post('/api/upsell',{acao:'aceito'}).then(()=>toastUp('aceito ✓'))">Cliente aceitou</button>
+      <button class="tb-btn ghost" onclick="TB.post('/api/upsell',{acao:'recusado'}).then(()=>toastUp('recusado'))">Cliente recusou</button>
+    </div>
+    <div id="up_toast" style="margin-top:8px;color:#3FB950;font-size:.85rem"></div>
+  </div>
+  <script>function toastUp(t){document.getElementById('up_toast').textContent='Registrado: '+t;}</script>
+<%
+} else if (ref === 'crm-checklist') { %>
+  <div class="tb-callout perigo"><div class="ct">⛔ Regra inegociável</div><div>Nenhuma oportunidade pode ficar <b>sem próximo passo e sem data</b> no CRM.</div></div>
+  <% var campos=['Nome','Empresa','Segmento','CNPJ/CPF','Telefone','E-mail','Cidade','CEP','Origem do lead','Compra direta / revenda / licitação','Qtd de pessoas','Pessoas simultâneas','Turnos','Pico','Modelo solicitado','Modelo recomendado','Qtd de equipamentos','Voltagem','Torneiras','Origem da água','Prazo','Orçamento','Decisor','Processo de aprovação','Concorrentes','Próximo passo','Data do próximo contato','Upsell apresentado','Upsell aceito','Motivo de perda']; %>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;margin:12px 0">
+    <% campos.forEach(function(c){ %><label style="display:flex;gap:8px;align-items:center;background:#0b1220;border:1px solid #1f2b3a;border-radius:8px;padding:8px 11px;color:#c9d4de;font-size:.85rem;cursor:pointer"><input type="checkbox"> <%= c %></label><% }) %>
+  </div>
+<% } %>

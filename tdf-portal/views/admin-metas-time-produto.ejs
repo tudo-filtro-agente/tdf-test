@@ -1,0 +1,124 @@
+<% const activePage = 'admin'; const pageTitle = 'Metas por Time × Produto'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.mt-wrap{max-width:1300px;margin:0 auto;padding:24px;color:var(--text)}
+.mt-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #fbbf24;border-radius:12px;padding:18px;margin-bottom:18px}
+.mt-header h1{color:#fbbf24;margin:0;font-size:20px}
+.mt-table{width:100%;border-collapse:collapse;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:18px}
+.mt-table th{background:#161725;color:#9ca3af;font-size:11px;font-weight:800;text-transform:uppercase;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.mt-table td{padding:10px 12px;border-bottom:1px solid #1a1a1a;font-size:12px;color:var(--text)}
+.mt-table input{width:90px;background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:5px 8px;font-size:11px}
+.mt-table tr:hover td{background:rgba(255,255,255,.02)}
+.mt-team-row{background:linear-gradient(90deg,rgba(251,191,36,.05),transparent);font-weight:800}
+.mt-bar{height:6px;background:var(--bg-card);border-radius:3px;overflow:hidden;margin-top:3px}
+.mt-bar-fill{height:100%;transition:width .4s}
+.mt-pct{font-size:10px;font-weight:700;margin-top:2px}
+.mt-btn{background:#fbbf24;color:#000;border:none;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:800;cursor:pointer}
+.mt-stat-mini{font-size:10px;color:var(--text-muted);margin-top:2px}
+</style>
+
+<div class="mt-wrap">
+  <div class="mt-header">
+    <h1>🎯 Metas por Time × Produto</h1>
+    <p style="color:var(--text-muted);font-size:12px;margin:6px 0 0">Define meta mensal de QUANTIDADE e RECEITA pra cada time × produto. Mostra progresso em tempo real do mês atual (Fechado Ganho do CRM).</p>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="mt-btn" onclick="mtCarregar()">🔄 Atualizar progresso</button>
+      <button class="mt-btn" onclick="mtSalvar()" style="background:#22c55e">💾 Salvar metas</button>
+      <span id="mt-status" style="color:#9ca3af;font-size:11px;margin-left:auto;align-self:center"></span>
+    </div>
+  </div>
+
+  <div id="mt-content"><div style="text-align:center;color:var(--text-muted);padding:30px">⏳ Carregando...</div></div>
+</div>
+
+<script>
+let _MTP = { metas: {}, times: [], produtos: [], progresso: {} };
+
+async function mtCarregar(){
+  const status = document.getElementById('mt-status');
+  status.textContent = '⏳ Buscando progresso do mês...';
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch('/admin/metas-time-produto').then(r => r.json()),
+      fetch('/admin/metas-time-produto/progresso').then(r => r.json()),
+    ]);
+    if (r1.error) throw new Error(r1.error);
+    _MTP.metas = r1.metas || {};
+    _MTP.times = r1.times || [];
+    _MTP.produtos = r1.produtos || [];
+    _MTP.progresso = r2.progresso || {};
+    _MTP.realizado = r2.realizado || {};
+    mtRender();
+    status.textContent = '✅ '+new Date().toLocaleTimeString('pt-BR');
+  } catch(e) {
+    document.getElementById('mt-content').innerHTML = `<div style="color:#ef4444;padding:20px">❌ ${e.message}</div>`;
+    status.textContent = '❌ '+e.message;
+  }
+}
+
+function mtRender(){
+  let html = '';
+  _MTP.times.forEach(t => {
+    html += `
+      <table class="mt-table">
+        <thead>
+          <tr><th colspan="6" style="background:${t.cor}22;color:${t.cor};font-size:14px">${t.label}</th></tr>
+          <tr>
+            <th>Produto</th>
+            <th>Meta Qtd</th>
+            <th>Realizado Qtd</th>
+            <th>Meta Receita (R$)</th>
+            <th>Realizado R$</th>
+            <th>Progresso</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    _MTP.produtos.forEach(p => {
+      const m = _MTP.metas[t.id]?.[p.id] || { meta_qtd: 0, meta_rs: 0 };
+      const real = _MTP.realizado?.[t.id]?.[p.id] || { qtd: 0, rs: 0 };
+      const pctQ = m.meta_qtd > 0 ? Math.min(150, Math.round((real.qtd/m.meta_qtd)*100)) : null;
+      const pctR = m.meta_rs > 0 ? Math.min(150, Math.round((real.rs/m.meta_rs)*100)) : null;
+      const corQ = pctQ == null ? '#666' : pctQ >= 100 ? '#10b981' : pctQ >= 70 ? '#fbbf24' : '#ef4444';
+      const corR = pctR == null ? '#666' : pctR >= 100 ? '#10b981' : pctR >= 70 ? '#fbbf24' : '#ef4444';
+      html += `<tr>
+        <td>${p.label}</td>
+        <td><input type="number" min="0" step="1" value="${m.meta_qtd||''}" data-team="${t.id}" data-prod="${p.id}" data-field="meta_qtd" placeholder="0"></td>
+        <td><strong style="color:${corQ}">${real.qtd||0}</strong>${pctQ != null ? '<div class="mt-stat-mini">'+pctQ+'%</div>' : ''}</td>
+        <td><input type="number" min="0" step="100" value="${m.meta_rs||''}" data-team="${t.id}" data-prod="${p.id}" data-field="meta_rs" placeholder="0"></td>
+        <td><strong style="color:${corR}">R$ ${Math.round(real.rs||0).toLocaleString('pt-BR')}</strong>${pctR != null ? '<div class="mt-stat-mini">'+pctR+'%</div>' : ''}</td>
+        <td>
+          ${pctR != null ? `<div class="mt-bar"><div class="mt-bar-fill" style="background:${corR};width:${Math.min(100,pctR)}%"></div></div><div class="mt-pct" style="color:${corR}">${pctR}%</div>` : '<span style="color:#666;font-size:10px">— sem meta —</span>'}
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+  });
+  document.getElementById('mt-content').innerHTML = html;
+}
+
+async function mtSalvar(){
+  const novas = {};
+  document.querySelectorAll('input[data-team]').forEach(inp => {
+    const team = inp.dataset.team;
+    const prod = inp.dataset.prod;
+    const field = inp.dataset.field;
+    if (!novas[team]) novas[team] = {};
+    if (!novas[team][prod]) novas[team][prod] = { meta_qtd: 0, meta_rs: 0 };
+    novas[team][prod][field] = parseFloat(inp.value) || 0;
+  });
+  try {
+    const r = await fetch('/admin/metas-time-produto', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ metas: novas }),
+    });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    document.getElementById('mt-status').textContent = '✅ Salvo · ' + new Date().toLocaleTimeString('pt-BR');
+    setTimeout(() => mtCarregar(), 500);
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+mtCarregar();
+</script>

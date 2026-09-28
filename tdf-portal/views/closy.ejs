@@ -1,0 +1,830 @@
+<% const activePage = 'closy'; const pageTitle = 'CRM Closy · Funis Zoho'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.cz-wrap{padding:14px 18px 80px;max-width:100%}
+.cz-h{font-size:18px;color:var(--text);margin:0 0 4px;font-weight:800;display:flex;align-items:center;gap:10px}
+.cz-h .badge-pre{display:inline-block;background:#374151;color:#9ca3af;font-size:10px;font-weight:800;padding:2px 8px;border-radius:8px;border:1px dashed #6b7280}
+.cz-sub{color:var(--text-muted);font-size:12px;margin:0 0 12px}
+.cz-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 14px}
+.cz-bar label{color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+.cz-bar select,.cz-bar input{background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;min-width:160px}
+.cz-bar select:focus,.cz-bar input:focus{outline:none;border-color:#1f6feb}
+.cz-bar .total{margin-left:auto;color:#1f6feb;font-weight:800;font-size:14px}
+
+.cz-board{display:flex;gap:10px;overflow-x:auto;align-items:stretch;height:calc(100vh - 200px);padding-bottom:10px}
+.cz-col{min-width:280px;max-width:320px;flex:0 0 auto;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column}
+.cz-col-head{padding:10px 12px;border-bottom:2px solid #1f6feb;background:var(--bg-card);border-radius:8px 8px 0 0;display:flex;align-items:center;gap:8px;cursor:help}
+.cz-col-head .icon{font-size:14px}
+.cz-col-head .nome{flex:1;color:var(--text);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.cz-col-head .count{background:#222;color:#fff;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700}
+.cz-col-head .valor{color:#22c55e;font-size:10px;font-weight:700;margin-left:6px}
+.cz-col-body{flex:1;overflow-y:auto;padding:6px}
+.cz-col-body::-webkit-scrollbar{width:5px}
+.cz-col-body::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+.cz-empty{color:#444;text-align:center;padding:18px;font-size:11px}
+
+.cz-card{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all .15s;position:relative}
+.cz-card:hover{background:var(--bg-hover);border-color:#1f6feb}
+.cz-card .nome{color:var(--text);font-weight:700;font-size:12px;line-height:1.3;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.cz-card .meta{color:var(--text-muted);font-size:10px;line-height:1.4}
+.cz-card .meta .row{display:flex;gap:5px;align-items:center;margin-top:2px}
+.cz-card .vlr{color:#22c55e;font-weight:700;font-size:11px}
+.cz-card .tier{font-size:10px}
+.cz-card .pre{display:inline-block;background:#374151;color:#9ca3af;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;border:1px dashed #6b7280;margin-left:4px}
+.cz-card .stuck-badge{display:inline-block;background:rgba(239,68,68,.18);color:#fca5a5;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;border:1px solid rgba(239,68,68,.45);margin-left:4px}
+.cz-card.stuck{border-color:rgba(239,68,68,.4);box-shadow:inset 4px 0 0 #ef4444}
+.cz-card .src{display:inline-block;background:#1f2937;color:#60a5fa;font-size:8px;font-weight:700;padding:1px 5px;border-radius:6px;margin-top:3px}
+.cz-card .tag{display:inline-block;background:#1f2937;color:#fbbf24;font-size:8px;font-weight:700;padding:1px 5px;border-radius:6px;margin-right:3px;margin-top:3px}
+
+.cz-loading{padding:40px;text-align:center;color:var(--text-muted);font-size:12px}
+.cz-error{padding:30px;text-align:center;color:#ef4444;font-size:12px;background:#1a0a0a;border:1px solid #4a1a1a;border-radius:8px}
+
+/* Drawer de edição (Fase 3) — botões de ação no canto */
+.cz-card .card-actions{position:absolute;top:4px;right:4px;display:flex;gap:3px;opacity:0;transition:opacity .15s;z-index:2}
+.cz-card:hover .card-actions{opacity:1}
+.cz-card .card-actions button{border:none;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700;cursor:pointer}
+.cz-card .card-actions .edit-btn{background:rgba(31,111,235,.15);border:1px solid rgba(31,111,235,.4);color:#7cb9f5}
+.cz-card .card-actions .edit-btn:hover{background:#1f6feb;color:#fff}
+.cz-card .card-actions .chat-btn{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);color:#22c55e}
+.cz-card .card-actions .chat-btn:hover{background:#25D366;color:#fff}
+
+</style>
+
+<div class="cz-wrap">
+  <h1 class="cz-h">🪜 CRM Closy · Funis Zoho <span id="cz-pre-count" class="badge-pre" style="display:none">0 PRÉ-LEAD</span></h1>
+  <p class="cz-sub">Espelha os funis reais do Zoho · pré-leads (Stage anterior a Qualificado) marcados em cinza</p>
+
+  <div class="cz-bar" style="margin-bottom:8px">
+    <label>📌 View</label>
+    <select id="cz-view" onchange="czAplicarView()" style="min-width:240px">
+      <option value="">— Sem filtro salvo —</option>
+    </select>
+    <button onclick="czSalvarView()" title="Salvar combinação atual de filtros como uma view nomeada" style="background:#22c55e;color:#000;border:none;padding:7px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">💾 Salvar view</button>
+    <button onclick="czGerenciarViews()" title="Renomear ou apagar views salvas" style="background:#374151;color:#ddd;border:1px solid #4a5260;padding:7px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">⚙️</button>
+  </div>
+
+  <div class="cz-bar">
+    <label>Funil</label>
+    <select id="cz-funil" onchange="czOnFunilChange()"><option>Carregando...</option></select>
+    <label>Owner</label>
+    <select id="cz-owner" onchange="czCarregarDeals()">
+      <option value="">Todos</option>
+    </select>
+    <label>Tier</label>
+    <select id="cz-tier" onchange="czCarregarDeals()">
+      <option value="">Todos</option>
+      <option value="Diamante">💎 Diamante</option>
+      <option value="Ouro">🥇 Ouro</option>
+      <option value="Prata">🥈 Prata</option>
+      <option value="Bronze">🥉 Bronze</option>
+    </select>
+    <input id="cz-busca" type="text" placeholder="buscar nome/telefone/cidade" oninput="czRender()" style="flex:1;min-width:200px">
+    <button onclick="czCarregarDeals()" style="background:#1f6feb;border:none;color:#fff;padding:7px 14px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">↻ Atualizar</button>
+    <button onclick="czAbrirConfigCard()" title="Escolher quais campos aparecem nos cards" style="background:#a371f7;border:none;color:#fff;padding:7px 14px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">⚙️ Card</button>
+    <span class="total" id="cz-total">0 deals</span>
+  </div>
+
+<!-- MODAL CONFIG CARD (Fase 4) -->
+<div id="cz-cardcfg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg-card);border:1px solid #a371f7;border-radius:12px;padding:18px;max-width:580px;width:100%;max-height:90vh;overflow-y:auto;color:var(--text)">
+    <h2 style="margin:0 0 14px;font-size:15px;display:flex;align-items:center;gap:10px">⚙️ Customizar Card do Kanban
+      <button onclick="czFecharConfigCard()" style="margin-left:auto;background:#222;border:1px solid var(--border);color:#ddd;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:11px">✕</button>
+    </h2>
+    <p style="color:var(--text-muted);font-size:11px;margin:0 0 12px">Marque os campos que devem aparecer nos cards e arraste a ordem (use os botões ▲▼).</p>
+    <div id="cz-cardcfg-list" style="display:flex;flex-direction:column;gap:6px"></div>
+    <div style="margin-top:14px;display:flex;justify-content:space-between;gap:8px">
+      <button onclick="czRestaurarDefaultCard()" style="background:#374151;color:#ddd;border:1px solid #4a5260;border-radius:5px;padding:8px 14px;font-size:11px;font-weight:700;cursor:pointer">↺ Restaurar default</button>
+      <div>
+        <button onclick="czFecharConfigCard()" style="background:#222;border:1px solid var(--border);color:#ddd;border-radius:6px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer">Cancelar</button>
+        <button onclick="czSalvarConfigCard()" style="background:#22c55e;color:#000;border:none;border-radius:6px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer">💾 Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div class="cz-board" id="cz-board">
+    <div class="cz-loading">⏳ Carregando funis do Zoho...</div>
+  </div>
+</div>
+
+<!-- Drawer de edição agora vem do shared cliente-drawer.js (UX #4) -->
+<!-- Usa window.abrirClienteDrawer(dealId, {phone, nome}) -->
+
+
+<script>
+const CZ_OWNERS = <%- JSON.stringify(closers || []) %>;
+let _CZ_FUNIS = [];
+let _CZ_FUNIL_ATIVO = null;
+let _CZ_DEALS = [];
+
+const PRE_LEAD_STAGES = /^(IA sem Contato|Leads Novos|Etapa IA|Primeiro Contato|Em Qualifica)/i;
+const QUALIF_STAGES = /^(Qualificado|Proposta|Em Atendimento|Fechado)/i;
+
+const STAGE_ICON = {
+  'Leads Novos':'📋', 'IA sem Contato':'🤖', 'Etapa IA':'🤖',
+  'Primeiro Contato':'☎️', 'Em Qualificação':'🔍', 'Analise ou vazão':'💧',
+  'Qualificado':'✅', 'Em Atendimento':'🤝',
+  'Proposta':'📨', 'Proposta Quente':'🔥', 'Proposta Fria':'❄️',
+  'Fechado Ganho':'🏆', 'Fechado Perdido':'❌',
+};
+
+function czFmtMoney(v){ return v ? 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) : ''; }
+function czFmtData(d){ if(!d) return ''; const x=new Date(d); return x.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}); }
+function czTierIcon(t){ return t==='Diamante'?'💎':t==='Ouro'?'🥇':t==='Prata'?'🥈':t==='Bronze'?'🥉':''; }
+function czIsPreLead(stage, tags){
+  if (Array.isArray(tags) && (tags.includes('pré-lead')||tags.includes('pre-lead'))) return true;
+  return PRE_LEAD_STAGES.test(stage) && !QUALIF_STAGES.test(stage);
+}
+
+async function czInit(){
+  // Popula owners
+  const ownerSel = document.getElementById('cz-owner');
+  for (const o of CZ_OWNERS) {
+    const opt = document.createElement('option');
+    opt.value = o.crmOwner || o.username; opt.textContent = o.name || o.username;
+    ownerSel.appendChild(opt);
+  }
+  // Carrega config do card (Fase 4)
+  await czCarregarCardConfig();
+  // Carrega views salvas (Fase 2)
+  await czCarregarViews();
+  // Carrega funis
+  try {
+    const r = await fetch('/closy/funis');
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    _CZ_FUNIS = d.funis || [];
+    const sel = document.getElementById('cz-funil');
+    sel.innerHTML = _CZ_FUNIS.map(f =>
+      `<option value="${f.layoutId}::${f.pipelineName}">${f.isAggregate?'🌐 ':''}${f.pipelineName}${f.layoutName!=='Todos'?' · '+f.layoutName:''}</option>`
+    ).join('');
+    if (_CZ_FUNIS.length) {
+      _CZ_FUNIL_ATIVO = _CZ_FUNIS[0];
+      czCarregarDeals();
+    }
+  } catch(e) {
+    document.getElementById('cz-board').innerHTML = `<div class="cz-error">Erro ao carregar funis: ${e.message}</div>`;
+  }
+}
+
+function czOnFunilChange(){
+  const v = document.getElementById('cz-funil').value;
+  const [layoutId, pipelineName] = v.split('::');
+  _CZ_FUNIL_ATIVO = _CZ_FUNIS.find(f => f.layoutId === layoutId && f.pipelineName === pipelineName);
+  czCarregarDeals();
+}
+
+async function czCarregarDeals(){
+  if (!_CZ_FUNIL_ATIVO) return;
+  const board = document.getElementById('cz-board');
+  board.innerHTML = '<div class="cz-loading">⏳ Carregando deals...</div>';
+  try {
+    const params = new URLSearchParams();
+    if (_CZ_FUNIL_ATIVO.layoutId !== '_all') params.set('layout', _CZ_FUNIL_ATIVO.layoutId);
+    if (_CZ_FUNIL_ATIVO.pipelineId !== '_all') params.set('pipeline', _CZ_FUNIL_ATIVO.pipelineName);
+    const stages = _CZ_FUNIL_ATIVO.stages.filter(s => s.category !== 'closed' && !/Fechado/i.test(s.name)).map(s => s.name);
+    if (stages.length) params.set('stages', stages.join(','));
+    const owner = document.getElementById('cz-owner').value;
+    if (owner) params.set('owner', owner);
+    const tier = document.getElementById('cz-tier').value;
+    if (tier) params.set('tier', tier);
+    const r = await fetch('/closy/deals?' + params.toString());
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    _CZ_DEALS = d.deals || [];
+    document.getElementById('cz-total').textContent = `${_CZ_DEALS.length} deals`;
+    czRender();
+  } catch(e) {
+    board.innerHTML = `<div class="cz-error">Erro: ${e.message}</div>`;
+  }
+}
+
+function czRender(){
+  if (!_CZ_FUNIL_ATIVO) return;
+  const busca = (document.getElementById('cz-busca').value || '').toLowerCase();
+  const filtrados = busca ? _CZ_DEALS.filter(d =>
+    (d.nome||'').toLowerCase().includes(busca) ||
+    (d.phone||'').includes(busca) ||
+    (d.cidade||'').toLowerCase().includes(busca)
+  ) : _CZ_DEALS;
+
+  const stages = _CZ_FUNIL_ATIVO.stages.filter(s => !/Fechado/i.test(s.name));
+  const porStage = {};
+  for (const s of stages) porStage[s.name] = [];
+  for (const d of filtrados) {
+    if (porStage[d.stage]) porStage[d.stage].push(d);
+  }
+
+  let totalPre = 0;
+  for (const d of filtrados) if (czIsPreLead(d.stage, d.tags)) totalPre++;
+  const preCount = document.getElementById('cz-pre-count');
+  if (totalPre > 0) { preCount.style.display='inline-block'; preCount.textContent = totalPre + ' PRÉ-LEAD'; }
+  else preCount.style.display = 'none';
+
+  const board = document.getElementById('cz-board');
+  board.innerHTML = stages.map(s => {
+    const cards = porStage[s.name] || [];
+    const totalVlr = cards.reduce((acc, c) => acc + (c.amount||0), 0);
+    return `
+      <div class="cz-col" title="${s.category||'open'}">
+        <div class="cz-col-head" title="Stage: ${s.name} · Categoria: ${s.category||'open'}">
+          <span class="icon">${STAGE_ICON[s.name]||'📁'}</span>
+          <span class="nome">${s.name}</span>
+          <span class="count">${cards.length}</span>
+          ${totalVlr>0?`<span class="valor">${czFmtMoney(totalVlr)}</span>`:''}
+        </div>
+        <div class="cz-col-body">
+          ${cards.length === 0 ? '<div class="cz-empty">vazio</div>' : cards.slice(0, 50).map(c => czRenderCard(c)).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Render dinâmico do card baseado em _CZ_CARD_CONFIG (Fase 4)
+let _CZ_CARD_CONFIG = { campos: ['cidade','amount','owner','produto','leadSource','closingDate','tags'] };
+let _CZ_CARD_LABELS = {};
+function czCarregarCardConfig(){
+  return fetch('/closy/card-config').then(r => r.json()).then(d => {
+    if (d.config?.campos?.length) _CZ_CARD_CONFIG = d.config;
+    _CZ_CARD_LABELS = d.todosCampos || {};
+  }).catch(() => {});
+}
+function czRenderField(c, key){
+  if (!c[key] && c[key] !== 0) {
+    if (key === 'tags' && (c.tags||[]).length > 0) {} else return '';
+  }
+  switch(key){
+    case 'cidade': return c.cidade ? `<div class="row">📍 ${c.cidade}</div>` : '';
+    case 'amount': return c.amount > 0 ? `<div class="row"><span class="vlr">${czFmtMoney(c.amount)}</span></div>` : '';
+    case 'owner': return c.owner ? `<div class="row">👤 ${c.owner.split(' ')[0]}</div>` : '';
+    case 'produto': return c.produto ? `<div class="row">📦 ${c.produto.slice(0,30)}</div>` : '';
+    case 'leadSource': return c.leadSource ? `<div class="row"><span class="src">${c.leadSource.slice(0,28)}</span></div>` : '';
+    case 'closingDate': return c.closingDate ? `<div class="row" style="color:#666;font-size:9px">📅 ${czFmtData(c.closingDate)}</div>` : '';
+    case 'lastActivity': return c.lastActivity ? `<div class="row" style="color:#666;font-size:9px">⏱️ ${czFmtData(c.lastActivity)}</div>` : '';
+    case 'phone': return c.phone ? `<div class="row" style="font-size:10px;color:#888">📞 <span onclick="window.copyTel&&copyTel('${c.phone.replace(/'/g,"\\'")}',this)" title="Click pra copiar" style="cursor:pointer;user-select:all;padding:1px 6px;border-radius:4px;background:rgba(34,197,94,.08);border:1px solid #22c55e44;color:#86efac;font-family:monospace">${c.phone}</span> <button onclick="window.copyTel&&copyTel('${c.phone.replace(/'/g,"\\'")}',this)" style="background:transparent;border:1px solid #30363D;color:#9ca3af;border-radius:4px;padding:1px 5px;font-size:9px;cursor:pointer" title="Copiar">📋</button></div>` : '';
+    case 'pipeline': return c.pipeline ? `<div class="row" style="font-size:10px;color:#888">🪜 ${c.pipeline}</div>` : '';
+    case 'layout': return c.layout ? `<div class="row" style="font-size:10px;color:#888">🗂️ ${c.layout}</div>` : '';
+    case 'createdAt': return c.createdAt ? `<div class="row" style="font-size:9px;color:#666">🕐 criado ${czFmtData(c.createdAt)}</div>` : '';
+    case 'daysInStage':
+      if (c.daysInStage == null) return '';
+      const cor = c.stuck ? '#ef4444' : (c.daysInStage >= 5 ? '#f59e0b' : '#888');
+      const lbl = c.stuck ? `⚠️ ${c.daysInStage}d travado` : `⏳ ${c.daysInStage}d`;
+      return `<div class="row" style="font-size:10px;color:${cor};font-weight:${c.stuck?'700':'400'}">${lbl}</div>`;
+    case 'produtoVinculado':
+      if (!c.produtoVinculadoNome) return '';
+      return `<div class="row" style="font-size:10px;color:#7cb9f5">🔗 ${c.produtoVinculadoNome.slice(0,32)} <span style="color:#666">(${c.produtoVinculadoVidaUtil}m)</span></div>`;
+    case 'tier': return c.tier ? `<div class="row">${czTierIcon(c.tier)} ${c.tier}</div>` : '';
+    case 'tags':
+      const tags = (c.tags||[]).filter(t => t!=='pré-lead' && t!=='pre-lead').slice(0,2);
+      return tags.length ? tags.map(t => `<span class="tag">${t}</span>`).join('') : '';
+    default: return '';
+  }
+}
+function czRenderCard(c){
+  const isPre = czIsPreLead(c.stage, c.tags);
+  const tooltip = [
+    c.nome, c.phone, c.cidade,
+    c.tier ? 'Tier: '+c.tier : '',
+    c.owner ? 'Owner: '+c.owner : '',
+    c.leadSource ? 'Origem: '+c.leadSource : '',
+    c.produto ? 'Produto: '+c.produto : '',
+    c.lastActivity ? 'Última atividade: '+czFmtData(c.lastActivity) : '',
+    'Click pra abrir',
+  ].filter(Boolean).join('\n');
+  const camposHtml = (_CZ_CARD_CONFIG.campos || []).map(k => czRenderField(c, k)).join('');
+  const stuckBadge = c.stuck ? `<span class="stuck-badge" title="Travado há ${c.daysInStage} dias (limite: ${c.stageThreshold}d)">${c.daysInStage}d</span>` : '';
+  return `
+    <div class="cz-card${c.stuck?' stuck':''}" title="${tooltip.replace(/"/g,'&quot;')}" onclick="czAbrirDeal('${c.id}','${c.phone}','${(c.nome||'').replace(/'/g,"\\'")}')" ondblclick="event.stopPropagation();czAbrirConversa('${c.id}','${c.phone}','${(c.nome||'').replace(/'/g,"\\'")}')">
+      <div class="card-actions">
+        ${c.phone?`<button class="chat-btn" onclick="event.stopPropagation();czAbrirConversa('${c.id}','${c.phone}','${(c.nome||'').replace(/'/g,"\\'")}')" title="Abrir conversa WATI lado-a-lado">💬</button>`:''}
+        <button class="edit-btn" onclick="event.stopPropagation();window.abrirClienteDrawer('${c.id}', { phone: '${c.phone||''}', nome: '${(c.nome||'').replace(/'/g,"\\'")}' })" title="Editar campos">✏️</button>
+      </div>
+      <div class="nome">
+        ${c.tier?`<span class="tier" title="${c.tier}">${czTierIcon(c.tier)}</span>`:''}
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nome||'?'}</span>
+        ${isPre?'<span class="pre" title="Pré-lead — vira lead após Qualificado">PRÉ</span>':''}
+        ${stuckBadge}
+      </div>
+      <div class="meta">${camposHtml}</div>
+    </div>
+  `;
+}
+
+// Modal config card
+function czAbrirConfigCard(){
+  const sel = new Set(_CZ_CARD_CONFIG.campos || []);
+  const todos = Object.entries(_CZ_CARD_LABELS);
+  const html = todos.map(([key, info]) => {
+    const inIdx = (_CZ_CARD_CONFIG.campos || []).indexOf(key);
+    const checked = sel.has(key);
+    return `<div data-key="${key}" style="display:flex;align-items:center;gap:8px;background:#161616;border:1px solid #2a2a2a;border-radius:6px;padding:8px 10px;cursor:pointer">
+      <input type="checkbox" ${checked?'checked':''} onchange="czToggleCardField('${key}', this.checked)" style="width:auto">
+      <span style="font-size:14px">${info.icon}</span>
+      <span style="flex:1;color:#fff;font-size:12px;font-weight:600">${info.label}</span>
+      ${checked ? `
+        <button onclick="czMoverCardField('${key}',-1)" style="background:#222;border:1px solid #444;color:#aaa;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer">▲</button>
+        <button onclick="czMoverCardField('${key}',1)" style="background:#222;border:1px solid #444;color:#aaa;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer">▼</button>
+        <span style="color:#7cb9f5;font-weight:800;font-size:11px;min-width:18px;text-align:center">${inIdx+1}</span>
+      ` : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('cz-cardcfg-list').innerHTML = html;
+  document.getElementById('cz-cardcfg').style.display = 'flex';
+}
+function czFecharConfigCard(){ document.getElementById('cz-cardcfg').style.display = 'none'; }
+function czToggleCardField(key, checked){
+  let campos = [...(_CZ_CARD_CONFIG.campos || [])];
+  if (checked && !campos.includes(key)) campos.push(key);
+  if (!checked) campos = campos.filter(k => k !== key);
+  _CZ_CARD_CONFIG.campos = campos;
+  czAbrirConfigCard(); // re-render
+}
+function czMoverCardField(key, delta){
+  const campos = [...(_CZ_CARD_CONFIG.campos || [])];
+  const idx = campos.indexOf(key);
+  if (idx < 0) return;
+  const newIdx = Math.max(0, Math.min(campos.length - 1, idx + delta));
+  if (newIdx === idx) return;
+  campos.splice(idx, 1);
+  campos.splice(newIdx, 0, key);
+  _CZ_CARD_CONFIG.campos = campos;
+  czAbrirConfigCard();
+}
+function czRestaurarDefaultCard(){
+  _CZ_CARD_CONFIG.campos = ['cidade','amount','owner','produto','leadSource','closingDate','tags'];
+  czAbrirConfigCard();
+}
+// === FASE 2: CUSTOM VIEWS ===
+let _CZ_VIEWS = { minhas: [], compartilhadas: [] };
+async function czCarregarViews(){
+  try {
+    const r = await fetch('/closy/views');
+    const d = await r.json();
+    _CZ_VIEWS = d;
+    czRenderViewSelect();
+  } catch(_){}
+}
+function czRenderViewSelect(){
+  const sel = document.getElementById('cz-view');
+  if (!sel) return;
+  let opts = '<option value="">— Sem filtro salvo —</option>';
+  if (_CZ_VIEWS.minhas?.length) {
+    opts += '<optgroup label="Minhas">';
+    opts += _CZ_VIEWS.minhas.map(v => `<option value="${v.id}">${v.nome}</option>`).join('');
+    opts += '</optgroup>';
+  }
+  if (_CZ_VIEWS.compartilhadas?.length) {
+    opts += '<optgroup label="Compartilhadas">';
+    opts += _CZ_VIEWS.compartilhadas.map(v => `<option value="${v.id}" data-shared="1">${v.nome} · ${v.criadoPor}</option>`).join('');
+    opts += '</optgroup>';
+  }
+  sel.innerHTML = opts;
+}
+function czCapturarFiltrosAtuais(){
+  const v = document.getElementById('cz-funil').value;
+  const [layoutId, pipelineName] = (v || '').split('::');
+  return {
+    layoutId: layoutId || '',
+    pipelineName: pipelineName || '',
+    owner: document.getElementById('cz-owner').value || '',
+    tier: document.getElementById('cz-tier').value || '',
+    busca: document.getElementById('cz-busca').value || '',
+  };
+}
+async function czAplicarView(){
+  const id = document.getElementById('cz-view').value;
+  if (!id) return;
+  const v = [..._CZ_VIEWS.minhas, ..._CZ_VIEWS.compartilhadas].find(x => x.id === id);
+  if (!v) return;
+  // Aplica os filtros
+  if (v.filtro.layoutId && v.filtro.pipelineName) {
+    document.getElementById('cz-funil').value = v.filtro.layoutId + '::' + v.filtro.pipelineName;
+    czOnFunilChange();
+  }
+  if (v.filtro.owner !== undefined) document.getElementById('cz-owner').value = v.filtro.owner;
+  if (v.filtro.tier !== undefined) document.getElementById('cz-tier').value = v.filtro.tier;
+  if (v.filtro.busca !== undefined) document.getElementById('cz-busca').value = v.filtro.busca;
+  czCarregarDeals();
+}
+async function czSalvarView(){
+  const nome = prompt('Nome da view:', '');
+  if (!nome) return;
+  const publica = confirm('Compartilhar com o time? (OK = todos veem · Cancelar = só você)');
+  const filtro = czCapturarFiltrosAtuais();
+  try {
+    const r = await fetch('/closy/views', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ nome, filtro, publica }) });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    await czCarregarViews();
+    document.getElementById('cz-view').value = d.view.id;
+    alert('✅ View "'+nome+'" salva!');
+  } catch(e) { alert('Erro: '+e.message); }
+}
+async function czGerenciarViews(){
+  if (!_CZ_VIEWS.minhas?.length && !_CZ_VIEWS.compartilhadas?.length) {
+    alert('Nenhuma view salva ainda. Configure os filtros e clique em "💾 Salvar view".');
+    return;
+  }
+  const lista = [
+    ..._CZ_VIEWS.minhas.map(v => ({...v, mine:true})),
+    ..._CZ_VIEWS.compartilhadas.map(v => ({...v, mine:false})),
+  ];
+  const linhas = lista.map((v, i) => `${i+1}. ${v.mine?'(minha)':'(de '+v.criadoPor+')'} ${v.nome}${v.publica?' [pública]':''}`).join('\n');
+  const acao = prompt(`Views salvas:\n\n${linhas}\n\nDigite o número pra DELETAR (ou cancele):`);
+  if (!acao) return;
+  const idx = parseInt(acao, 10) - 1;
+  const v = lista[idx];
+  if (!v) { alert('Número inválido'); return; }
+  if (!v.mine) { alert('Não dá pra deletar view de outro usuário'); return; }
+  if (!confirm('Deletar view "'+v.nome+'"?')) return;
+  try {
+    const r = await fetch('/closy/views/'+v.id, { method:'DELETE' });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    await czCarregarViews();
+    alert('✅ View deletada');
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+async function czSalvarConfigCard(){
+  try {
+    const r = await fetch('/closy/card-config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ campos: _CZ_CARD_CONFIG.campos }) });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    czFecharConfigCard();
+    czRender();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+
+function czAbrirDeal(dealId, phone, nome){
+  // Click padrão no card: abre drawer com conversa lado-a-lado (não chat flutuante)
+  // Se não tem phone, abre o editor de campos
+  if (phone) czAbrirConversa(dealId, phone, nome);
+  else window.abrirClienteDrawer(dealId, { phone, nome });
+}
+
+// === DRAWER LATERAL DE CONVERSA WATI (Fase pedido Paulo) ===
+let _CZ_CONV_REFRESH_TIMER = null;
+let _CZ_CONV_DEAL = null;
+function czAbrirConversa(dealId, phone, nome){
+  if (!phone) { alert('Esse deal não tem telefone cadastrado.'); return; }
+  _CZ_CONV_DEAL = { dealId, phone, nome };
+  // Cria drawer se não existir
+  let drawer = document.getElementById('cz-conv-drawer');
+  if (!drawer) {
+    drawer = document.createElement('div');
+    drawer.id = 'cz-conv-drawer';
+    drawer.style.cssText = 'position:fixed;top:0;right:-580px;width:560px;max-width:100vw;height:100vh;background:#0e0e0e;border-left:1px solid #2a2a2a;z-index:200;transition:right .25s;display:flex;flex-direction:column;color:#e6edf3';
+    drawer.innerHTML = `
+      <header style="padding:12px 16px;border-bottom:1px solid #222;background:linear-gradient(135deg,#0d1117,#161B22);display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap">
+        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1f2937,#374151);display:flex;align-items:center;justify-content:center;color:#cbd5db;font-weight:800;font-size:13px;flex-shrink:0" id="cz-conv-avatar">—</div>
+        <div style="flex:1;min-width:120px">
+          <div id="cz-conv-nome" style="color:#fff;font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</div>
+          <div id="cz-conv-meta" style="color:#888;font-size:10px">—</div>
+        </div>
+        <button onclick="czTogglarZapi()" id="cz-conv-zapi-btn" title="Modo Z-API: envia mensagem fora da janela 24h" style="background:#22c55e;color:#000;border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer">📞 Z-API</button>
+        <button onclick="czAbrirTemplates()" title="Enviar template WATI aprovado" style="background:#a371f7;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer">📋 Templates</button>
+        <button onclick="czPedirDiretor()" title="🎙️ Diretor IA: pede análise + sugestão de mensagem" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer">🎙️</button>
+        <button onclick="window.abrirClienteDrawer(_CZ_CONV_DEAL.dealId, { phone: _CZ_CONV_DEAL.phone, nome: _CZ_CONV_DEAL.nome })" title="Abrir editor de campos" style="background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer">✏️</button>
+        <a id="cz-conv-wati-link" href="#" target="_blank" title="Abrir no inbox completo" style="background:#25D366;color:#fff;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:700;text-decoration:none">↗</a>
+        <button onclick="czFecharConversa()" title="Fechar" style="background:transparent;border:1px solid #333;color:#aaa;border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer">✕</button>
+      </header>
+      <!-- Tabs: 💬 Conversa | 📋 Tarefas + Núbia -->
+      <div style="border-bottom:1px solid #222;background:#0d0d0d;display:flex;flex-shrink:0">
+        <button onclick="czConvAba('chat')" id="cz-tab-chat" style="flex:1;background:transparent;border:none;color:#7cb9f5;border-bottom:2px solid #1f6feb;padding:8px 10px;font-size:11px;font-weight:700;cursor:pointer">💬 Conversa</button>
+        <button onclick="czConvAba('tarefas')" id="cz-tab-tarefas" style="flex:1;background:transparent;border:none;color:#888;padding:8px 10px;font-size:11px;font-weight:700;cursor:pointer">📋 Tarefas + 🤖 Núbia <span id="cz-tab-tarefas-count" style="background:#374151;color:#9ca3af;padding:1px 5px;border-radius:6px;font-size:9px;margin-left:3px;display:none"></span></button>
+      </div>
+      <div id="cz-conv-msgs" style="flex:1;overflow-y:auto;padding:14px;background:#0a0a0a;display:flex;flex-direction:column;gap:6px;min-height:0"></div>
+      <div id="cz-conv-tasks" style="flex:1;overflow-y:auto;padding:14px;background:#0a0a0a;display:none;min-height:0"></div>
+      <div style="border-top:1px solid #222;padding:10px 14px;background:#0d0d0d;flex-shrink:0">
+        <div id="cz-conv-modo" style="background:rgba(34,197,94,.1);color:#22c55e;font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;margin-bottom:6px;text-align:center;text-transform:uppercase;letter-spacing:.4px;border:1px solid rgba(34,197,94,.3)">📡 Modo: WATI · janela 24h</div>
+        <div style="display:flex;gap:6px">
+          <textarea id="cz-conv-input" placeholder="Digite uma mensagem... (Enter envia)" rows="2" style="flex:1;background:#161616;border:1px solid #30363D;color:#fff;border-radius:6px;padding:8px 10px;font-size:12px;font-family:inherit;resize:vertical;min-height:40px"></textarea>
+          <button onclick="czEnviarMsg()" id="cz-conv-send" style="background:#22c55e;color:#000;border:none;border-radius:6px;padding:0 14px;font-size:12px;font-weight:800;cursor:pointer">Enviar</button>
+        </div>
+        <div id="cz-conv-aviso" style="color:#666;font-size:9px;margin-top:4px">⏰ Janela 24h: só funciona se cliente respondeu nas últimas 24h. Use Z-API ou Template fora dela.</div>
+      </div>
+    `;
+    document.body.appendChild(drawer);
+    // Enter envia
+    setTimeout(() => {
+      const t = document.getElementById('cz-conv-input');
+      if (t) t.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); czEnviarMsg(); }
+      });
+    }, 100);
+  }
+  // Popula header
+  const iniciais = (nome || phone || '?').split(/\s+/).slice(0,2).map(s=>s[0]||'').join('').toUpperCase();
+  document.getElementById('cz-conv-avatar').textContent = iniciais || '?';
+  document.getElementById('cz-conv-nome').textContent = nome || phone;
+  document.getElementById('cz-conv-meta').textContent = `📞 ${phone}`;
+  document.getElementById('cz-conv-wati-link').href = `/inbox#phone=${phone.replace(/\D/g,'')}`;
+  // Abre + carrega
+  drawer.style.right = '0';
+  czCarregarMensagens(phone);
+  // Refresh 5s
+  if (_CZ_CONV_REFRESH_TIMER) clearInterval(_CZ_CONV_REFRESH_TIMER);
+  _CZ_CONV_REFRESH_TIMER = setInterval(() => {
+    if (_CZ_CONV_DEAL?.phone === phone) czCarregarMensagens(phone, true);
+  }, 5000);
+}
+
+function czFecharConversa(){
+  const d = document.getElementById('cz-conv-drawer');
+  if (d) d.style.right = '-580px';
+  if (_CZ_CONV_REFRESH_TIMER) { clearInterval(_CZ_CONV_REFRESH_TIMER); _CZ_CONV_REFRESH_TIMER = null; }
+  _CZ_CONV_DEAL = null;
+}
+
+// Troca aba dentro do drawer (chat ↔ tarefas)
+function czConvAba(aba){
+  const tabChat = document.getElementById('cz-tab-chat');
+  const tabTk = document.getElementById('cz-tab-tarefas');
+  const msgs = document.getElementById('cz-conv-msgs');
+  const tasks = document.getElementById('cz-conv-tasks');
+  if (aba === 'chat') {
+    tabChat.style.color = '#7cb9f5'; tabChat.style.borderBottom = '2px solid #1f6feb';
+    tabTk.style.color = '#888'; tabTk.style.borderBottom = 'none';
+    msgs.style.display = 'flex'; tasks.style.display = 'none';
+  } else {
+    tabTk.style.color = '#a371f7'; tabTk.style.borderBottom = '2px solid #a371f7';
+    tabChat.style.color = '#888'; tabChat.style.borderBottom = 'none';
+    msgs.style.display = 'none'; tasks.style.display = 'block';
+    czCarregarTarefas();
+  }
+}
+
+async function czCarregarTarefas(){
+  if (!_CZ_CONV_DEAL) return;
+  const wrap = document.getElementById('cz-conv-tasks');
+  wrap.innerHTML = '<div style="color:#888;text-align:center;padding:20px;font-size:11px">⏳ Carregando...</div>';
+  try {
+    const r = await fetch('/tarefas/deal/' + _CZ_CONV_DEAL.dealId);
+    const d = await r.json();
+    czRenderTarefas(d);
+  } catch(e) {
+    wrap.innerHTML = `<div style="color:#ef4444;padding:20px">Erro: ${e.message}</div>`;
+  }
+}
+
+function czRenderTarefas(d){
+  const wrap = document.getElementById('cz-conv-tasks');
+  const abertas = (d.tarefas || []).filter(t => t.status === 'aberta');
+  const concluidas = (d.tarefas || []).filter(t => t.status === 'concluida');
+  // Atualiza badge na tab
+  const badge = document.getElementById('cz-tab-tarefas-count');
+  if (abertas.length > 0) {
+    badge.style.display = 'inline-block';
+    badge.textContent = abertas.length;
+  } else { badge.style.display = 'none'; }
+
+  function renderTk(t){
+    const venc = new Date(t.dataHora);
+    const dataLocal = venc.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const atrasada = venc.getTime() < Date.now() && t.status === 'aberta';
+    return `<div style="background:#161616;border:1px solid #2a2a2a;border-radius:6px;padding:8px 10px;margin-bottom:6px;${atrasada?'border-left:3px solid #ef4444':(t.status==='concluida'?'opacity:.5;border-left:3px solid #22c55e':'border-left:3px solid #1f6feb')}">
+      <div style="display:flex;align-items:flex-start;gap:6px">
+        <div style="flex:1;color:#fff;font-size:12px;font-weight:600">${(t.titulo||'').replace(/</g,'&lt;')}</div>
+        ${t.status==='aberta'?`<button onclick="czConcluirTarefa('${t.id}')" title="Marcar concluída" style="background:transparent;border:1px solid #22c55e;color:#22c55e;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer">✓</button>`:'<span style="color:#22c55e;font-size:10px">✓ feita</span>'}
+      </div>
+      <div style="color:${atrasada?'#fca5a5':'#888'};font-size:10px;margin-top:3px">📅 ${dataLocal}${atrasada?' · ⚠️ atrasada':''}</div>
+      ${t.observacao?`<div style="color:#aaa;font-size:10px;margin-top:3px;font-style:italic">${t.observacao.replace(/</g,'&lt;').slice(0,120)}</div>`:''}
+      <div style="color:#666;font-size:9px;margin-top:3px">por ${t.criadoPorNome||'?'}</div>
+    </div>`;
+  }
+
+  function renderNubia(ev){
+    const dt = new Date(ev.at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `<div style="background:#1a0f2e;border:1px solid #4c1d95;border-radius:6px;padding:8px 10px;margin-bottom:6px">
+      <div style="color:#c4a4ff;font-size:11px;font-weight:700">🤖 ${(ev.label||'').replace(/</g,'&lt;').slice(0,140)}</div>
+      <div style="color:#888;font-size:10px;margin-top:3px">${dt} · ${ev.by||'Sistema'}</div>
+    </div>`;
+  }
+
+  wrap.innerHTML = `
+    <!-- Nova tarefa rápida -->
+    <div style="background:#0d1f3a;border:1px solid #1f6feb;border-radius:8px;padding:10px;margin-bottom:14px">
+      <div style="color:#7cb9f5;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">+ Nova tarefa rápida</div>
+      <input id="cz-tk-titulo" placeholder="Ex: Ligar de novo amanhã 10h" style="width:100%;background:#161616;border:1px solid #30363D;color:#fff;border-radius:5px;padding:7px 9px;font-size:12px;margin-bottom:6px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <input id="cz-tk-data" type="datetime-local" style="flex:1;background:#161616;border:1px solid #30363D;color:#fff;border-radius:5px;padding:6px 8px;font-size:11px">
+        <button onclick="czCriarTarefaRapida()" style="background:#22c55e;color:#000;border:none;border-radius:5px;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer">Criar</button>
+      </div>
+    </div>
+
+    <!-- Lista tarefas -->
+    <div style="margin-bottom:14px">
+      <div style="color:#888;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">📋 Tarefas (${abertas.length} abertas)</div>
+      ${abertas.length===0?'<div style="color:#444;text-align:center;padding:14px;font-size:11px;font-style:italic">sem tarefas abertas</div>':abertas.map(renderTk).join('')}
+      ${concluidas.length>0?'<details style="margin-top:8px"><summary style="color:#666;font-size:10px;cursor:pointer">▸ '+concluidas.length+' concluídas</summary>'+concluidas.slice(0,5).map(renderTk).join('')+'</details>':''}
+    </div>
+
+    <!-- Núbia -->
+    <div style="background:#0a0a0a;border:1px solid #4c1d95;border-radius:8px;padding:10px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+        <span style="color:#a371f7;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;flex:1">🤖 Núbia · histórico</span>
+        <button onclick="czDispararNubiaAgora()" style="background:#7c3aed;color:#fff;border:none;border-radius:5px;padding:5px 12px;font-size:10px;font-weight:800;cursor:pointer">+ Disparar agora</button>
+      </div>
+      ${(d.nubia||[]).length===0?'<div style="color:#444;text-align:center;padding:14px;font-size:11px;font-style:italic">Núbia ainda não foi acionada nesse deal</div>':(d.nubia||[]).map(renderNubia).join('')}
+    </div>
+  `;
+  // Default datetime: amanhã 10h
+  const amanha = new Date(); amanha.setDate(amanha.getDate()+1); amanha.setHours(10,0,0,0);
+  const iso = amanha.toISOString().slice(0,16);
+  const dataInput = document.getElementById('cz-tk-data');
+  if (dataInput) dataInput.value = iso;
+}
+
+async function czCriarTarefaRapida(){
+  if (!_CZ_CONV_DEAL) return;
+  const titulo = document.getElementById('cz-tk-titulo').value.trim();
+  const dataHora = document.getElementById('cz-tk-data').value;
+  if (!titulo || !dataHora) { alert('Preencha título e data'); return; }
+  try {
+    const r = await fetch('/tarefas', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        dealId: _CZ_CONV_DEAL.dealId,
+        dealNome: _CZ_CONV_DEAL.nome,
+        titulo,
+        dataHora: new Date(dataHora).toISOString(),
+        lembreteMin: 5,
+      }),
+    });
+    const d = await r.json();
+    if (d.error) { alert('❌ '+d.error); return; }
+    document.getElementById('cz-tk-titulo').value = '';
+    czCarregarTarefas();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+async function czConcluirTarefa(id){
+  try {
+    const r = await fetch('/tarefas/' + id + '/concluir', { method:'POST' });
+    const d = await r.json();
+    if (d.error) { alert('❌ '+d.error); return; }
+    czCarregarTarefas();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+async function czDispararNubiaAgora(){
+  if (!_CZ_CONV_DEAL) return;
+  if (!confirm('🤖 Disparar Núbia (reengajamento) pra ' + (_CZ_CONV_DEAL.nome||_CZ_CONV_DEAL.phone) + '?')) return;
+  try {
+    const r = await fetch('/manutencao/forecast-leads/acao-massa', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        dealIds: [_CZ_CONV_DEAL.dealId],
+        action: 'nubia',
+        payload: { contexto: 'Disparo manual via drawer de conversa' },
+      }),
+    });
+    const d = await r.json();
+    if (d.error) { alert('❌ '+d.error); return; }
+    alert('✅ Núbia disparada — verifica timeline');
+    czCarregarTarefas();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+async function czCarregarMensagens(phone, silent){
+  const msgsEl = document.getElementById('cz-conv-msgs');
+  if (!msgsEl) return;
+  if (!silent) msgsEl.innerHTML = '<div style="color:#888;text-align:center;padding:20px;font-size:12px">⏳ Carregando histórico...</div>';
+  try {
+    const r = await fetch('/inbox/mensagens?phone=' + encodeURIComponent(phone));
+    const d = await r.json();
+    if (d.error) { if (!silent) msgsEl.innerHTML = `<div style="color:#ef4444;padding:20px;text-align:center">${d.error}</div>`; return; }
+    const msgs = d.mensagens || [];
+    if (!msgs.length) { msgsEl.innerHTML = '<div style="color:#666;text-align:center;padding:30px;font-size:11px">Sem mensagens ainda</div>'; return; }
+    const wasAtBottom = msgsEl.scrollTop + msgsEl.clientHeight >= msgsEl.scrollHeight - 30;
+    const oldCount = msgsEl.querySelectorAll('.cz-conv-msg').length;
+    if (silent && msgs.length === oldCount) return; // sem mudança
+    msgsEl.innerHTML = msgs.map(m => {
+      const isSys = m.isSystem;
+      const isNos = m.owner;
+      const cor = isSys ? '#374151' : (isNos ? '#005c4b' : '#1f2937');
+      const align = isSys ? 'center' : (isNos ? 'flex-end' : 'flex-start');
+      const maxW = isSys ? '85%' : '78%';
+      const ts = m.timestamp ? new Date((m.timestamp*1000) || m.timestamp).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+      const op = isNos && (m.operatorName || m.templateName) ? `<div style="color:#a7d2c7;font-size:9px;margin-bottom:2px">${m.operatorName||('📨 '+m.templateName)}</div>` : '';
+      const checks = isNos ? (m.status === 'READ' ? ' <span style="color:#7cb9f5">✓✓</span>' : (m.status === 'DELIVERED' ? ' <span style="color:#aaa">✓✓</span>' : ' <span style="color:#aaa">✓</span>')) : '';
+      return `<div class="cz-conv-msg" style="align-self:${align};max-width:${maxW};background:${cor};color:#fff;padding:7px 10px;border-radius:8px;font-size:12px;word-wrap:break-word;${isSys?'opacity:.65;font-style:italic;font-size:10px;text-align:center':''}">${op}${(m.texto||'').replace(/</g,'&lt;').replace(/\n/g,'<br>')}<div style="color:#a7d2c7;font-size:9px;margin-top:3px;text-align:right">${ts}${checks}</div></div>`;
+    }).join('');
+    if (wasAtBottom || !silent) msgsEl.scrollTop = msgsEl.scrollHeight;
+  } catch(e) {
+    if (!silent) msgsEl.innerHTML = `<div style="color:#ef4444;padding:20px">Erro: ${e.message}</div>`;
+  }
+}
+
+let _CZ_CONV_MODO = 'wati'; // 'wati' | 'zapi'
+function czTogglarZapi(){
+  _CZ_CONV_MODO = (_CZ_CONV_MODO === 'wati') ? 'zapi' : 'wati';
+  const modoEl = document.getElementById('cz-conv-modo');
+  const btn = document.getElementById('cz-conv-zapi-btn');
+  const aviso = document.getElementById('cz-conv-aviso');
+  if (_CZ_CONV_MODO === 'zapi') {
+    modoEl.style.background = 'rgba(167,113,247,.15)';
+    modoEl.style.color = '#a371f7';
+    modoEl.style.borderColor = 'rgba(167,113,247,.4)';
+    modoEl.textContent = '📞 Modo: Z-API · sem restrição de janela 24h';
+    btn.style.background = '#a371f7'; btn.style.color = '#fff';
+    btn.textContent = '📞 Z-API ✓';
+    aviso.textContent = '✅ Z-API: envia mesmo cliente sem responder. Mensagem chega como msg comum (não template).';
+  } else {
+    modoEl.style.background = 'rgba(34,197,94,.1)';
+    modoEl.style.color = '#22c55e';
+    modoEl.style.borderColor = 'rgba(34,197,94,.3)';
+    modoEl.textContent = '📡 Modo: WATI · janela 24h';
+    btn.style.background = '#22c55e'; btn.style.color = '#000';
+    btn.textContent = '📞 Z-API';
+    aviso.textContent = '⏰ Janela 24h: só funciona se cliente respondeu nas últimas 24h. Use Z-API ou Template fora dela.';
+  }
+}
+
+async function czEnviarMsg(){
+  if (!_CZ_CONV_DEAL) return;
+  const inp = document.getElementById('cz-conv-input');
+  const text = (inp.value || '').trim();
+  if (!text) return;
+  const btn = document.getElementById('cz-conv-send');
+  btn.disabled = true; btn.textContent = '...';
+  const url = _CZ_CONV_MODO === 'zapi' ? '/inbox/zapi-enviar' : '/inbox/responder';
+  try {
+    const r = await fetch(url, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ phone: _CZ_CONV_DEAL.phone, text }),
+    });
+    const d = await r.json();
+    if (d.error) {
+      alert('❌ ' + d.error + (_CZ_CONV_MODO === 'wati' ? '\n\n💡 Tente o modo Z-API (botão 📞 Z-API) ou Templates.' : ''));
+      return;
+    }
+    inp.value = '';
+    setTimeout(() => czCarregarMensagens(_CZ_CONV_DEAL.phone, true), 500);
+  } catch(e) { alert('Erro: '+e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Enviar'; }
+}
+
+let _CZ_TEMPLATES = null;
+async function czAbrirTemplates(){
+  if (!_CZ_CONV_DEAL) return;
+  if (!_CZ_TEMPLATES) {
+    try { const r = await fetch('/inbox/templates'); const d = await r.json(); _CZ_TEMPLATES = d.templates || d || []; } catch(_) { _CZ_TEMPLATES = []; }
+  }
+  if (!_CZ_TEMPLATES.length) { alert('Nenhum template WATI disponível.'); return; }
+  const lista = _CZ_TEMPLATES.map((t,i) => `${i+1}. ${t.elementName||t.name}`).join('\n');
+  const escolha = prompt('Escolha um template:\n\n' + lista + '\n\n(digite o número)');
+  if (!escolha) return;
+  const tpl = _CZ_TEMPLATES[parseInt(escolha,10) - 1];
+  if (!tpl) { alert('Número inválido'); return; }
+  if (!confirm('Enviar template "' + (tpl.elementName||tpl.name) + '" pra ' + _CZ_CONV_DEAL.phone + '?')) return;
+  try {
+    const r = await fetch('/inbox/template', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ phone: _CZ_CONV_DEAL.phone, templateName: tpl.elementName||tpl.name, params: [] }),
+    });
+    const d = await r.json();
+    if (d.error) { alert('❌ ' + d.error); return; }
+    alert('✅ Template enviado');
+    setTimeout(() => czCarregarMensagens(_CZ_CONV_DEAL.phone, true), 1500);
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+async function czPedirDiretor(){
+  if (!_CZ_CONV_DEAL) return;
+  const msgsEl = document.getElementById('cz-conv-msgs');
+  const aviso = document.createElement('div');
+  aviso.style.cssText = 'background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.4);color:#fca5a5;padding:12px;border-radius:8px;margin:8px 0;font-size:11px;align-self:stretch';
+  aviso.innerHTML = '🎙️ <strong>Diretor IA</strong> analisando conversa...';
+  msgsEl.appendChild(aviso);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+  try {
+    const r = await fetch('/inbox/diretor-vendas', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ phone: _CZ_CONV_DEAL.phone, dealId: _CZ_CONV_DEAL.dealId }),
+    });
+    const d = await r.json();
+    if (d.error) {
+      aviso.innerHTML = '🎙️ <strong style="color:#ef4444">Diretor IA falhou:</strong> ' + d.error;
+      return;
+    }
+    const sugestao = d.sugestao || d.message || d.texto || JSON.stringify(d);
+    aviso.innerHTML = `
+      <div style="font-weight:800;color:#dc2626;font-size:11px;margin-bottom:6px">🎙️ DIRETOR IA</div>
+      <div style="color:#fff;line-height:1.4">${(sugestao||'').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+      ${d.msgPronta ? `
+        <div style="margin-top:10px;padding-top:8px;border-top:1px solid #4a1a1a">
+          <div style="color:#fbbf24;font-size:10px;font-weight:700;margin-bottom:4px">✏️ Mensagem sugerida:</div>
+          <div style="color:#fff;background:#161616;padding:8px;border-radius:5px;font-size:11px;line-height:1.4">${d.msgPronta.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+          <button onclick="document.getElementById('cz-conv-input').value=this.dataset.msg;this.parentElement.parentElement.scrollIntoView();" data-msg="${(d.msgPronta||'').replace(/"/g,'&quot;')}" style="background:#22c55e;color:#000;border:none;border-radius:5px;padding:5px 10px;font-size:10px;font-weight:800;cursor:pointer;margin-top:6px">📋 Usar essa mensagem</button>
+        </div>` : ''}
+    `;
+  } catch(e) { aviso.innerHTML = '🎙️ <strong style="color:#ef4444">Erro:</strong> ' + e.message; }
+}
+
+czInit();
+</script>

@@ -1,0 +1,114 @@
+<%- include('../../layout', { user, activePage, pageTitle }) %>
+<%- include('_shared') %>
+<style>
+.sv-etapa{background:#0D1117;border:1px solid #1f2b3a;border-radius:14px;padding:16px;margin:14px 0}
+.sv-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.sv-head .ic{font-size:1.4rem}
+.sv-head .t{font-weight:700;color:#fff;font-size:1.1rem}
+.sv-head .n{margin-left:auto;color:#334;font-weight:800}
+.sv-obj{color:#8899AA;font-size:.86rem;margin:2px 0 10px}
+.sv-tec{display:inline-block;background:rgba(163,113,247,.12);color:#c084fc;border:1px solid #A371F755;border-radius:8px;padding:3px 9px;font-size:.72rem;margin-bottom:10px}
+.sv-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:720px){.sv-cols{grid-template-columns:1fr}}
+.sv-col{border-radius:10px;padding:10px}
+.sv-col.wa{background:rgba(37,211,102,.05);border:1px solid #25D36633}
+.sv-col.call{background:rgba(0,170,255,.05);border:1px solid #00AAFF33}
+.sv-col .lbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.sv-col.wa .lbl{color:#25D366}.sv-col.call .lbl{color:#00AAFF}
+.sv-msg{position:relative;background:#0b1220;border:1px solid #1f2b3a;border-radius:9px;padding:10px 34px 10px 12px;margin:6px 0;color:#dbe7f0;font-size:.9rem;line-height:1.5;white-space:pre-wrap}
+.sv-msg .cp{position:absolute;top:7px;right:7px;background:#12283d;border:1px solid #00AAFF44;color:#00AAFF;border-radius:6px;font-size:10px;padding:3px 7px;cursor:pointer}
+.sv-por{margin-top:10px;font-size:.83rem;color:#8899AA}
+.sv-por b{color:#3FB950}
+.sv-evit{margin-top:6px;font-size:.83rem;color:#c9d4de}
+.sv-evit b{color:#ef6a6a}
+.sv-sec-h{color:#00AAFF;font-size:1.2rem;font-weight:700;margin:30px 0 10px;border-left:3px solid #00AAFF;padding-left:10px}
+.sv-2{background:#0D1117;border:1px solid #1f2b3a;border-radius:12px;padding:14px;margin:10px 0}
+.sv-2 .q{font-weight:700;color:#E6EDF3;margin-bottom:8px}
+</style>
+<div class="tb-wrap">
+  <a class="tb-back" href="<%= base %>">← Voltar ao treinamento</a>
+
+  <% if (!SCRIPT) { %>
+    <h1 style="color:#fff;margin:12px 0 6px">💬 Script de Venda — Bebedouro Industrial</h1>
+    <div class="tb-callout alerta" style="margin-top:12px"><div class="ct">Em preparação</div><div>O roteiro está sendo finalizado e aparece aqui automaticamente assim que ficar pronto.</div></div>
+  <% } else { %>
+    <div style="margin:12px 0 6px">
+      <h1 style="color:#fff;margin:0;font-size:1.5rem"><%= SCRIPT.SCRIPT_META.titulo %></h1>
+      <p style="color:#8899AA;margin:4px 0"><%= SCRIPT.SCRIPT_META.subtitulo %></p>
+    </div>
+    <div class="tb-callout info"><div class="ct">ℹ️ Como usar</div><div><%- SCRIPT.SCRIPT_META.comoUsar %></div></div>
+
+    <!-- ETAPAS -->
+    <% (SCRIPT.ETAPAS||[]).forEach(function(e){ %>
+      <div class="sv-etapa">
+        <div class="sv-head"><span class="ic"><%= e.icon||'▶️' %></span><span class="t"><%= e.num %>. <%= e.titulo %></span><span class="n"><%= e.num %></span></div>
+        <% if(e.objetivo){ %><div class="sv-obj">🎯 <%= e.objetivo %></div><% } %>
+        <% if(e.tecnica){ %><span class="sv-tec">⚡ Técnica: <%= e.tecnica %></span><% } %>
+        <div class="sv-cols">
+          <div class="sv-col wa">
+            <div class="lbl">💬 WhatsApp</div>
+            <% (e.whatsapp||[]).forEach(function(m){ %>
+              <div class="sv-msg"><button class="cp" onclick="TB.copy(this, this.parentNode.innerText.replace(/^copiar\s*/,''))">copiar</button><%- m %></div>
+            <% }) %>
+          </div>
+          <div class="sv-col call">
+            <div class="lbl">📞 Ligação</div>
+            <% (e.ligacao||[]).forEach(function(m){ %>
+              <div class="sv-msg"><button class="cp" onclick="TB.copy(this, this.parentNode.innerText.replace(/^copiar\s*/,''))"><%- '' %>copiar</button><%- m %></div>
+            <% }) %>
+          </div>
+        </div>
+        <% if(e.porque){ %><div class="sv-por"><b>Por que funciona:</b> <%- e.porque %></div><% } %>
+        <% if(e.evitar && e.evitar.length){ %><div class="sv-evit"><b>Evite:</b> <%= e.evitar.join(' · ') %></div><% } %>
+      </div>
+    <% }) %>
+
+    <!-- ICP -->
+    <% if (SCRIPT.ICP_AJUSTES && SCRIPT.ICP_AJUSTES.length) { %>
+      <div class="sv-sec-h">🎯 Ajuste por ICP (adapte o gancho ao segmento)</div>
+      <div class="tb-cards">
+        <% SCRIPT.ICP_AJUSTES.forEach(function(a){ %>
+          <div class="tb-mini"><div class="mt"><%= a.segmento %></div><div class="md"><b style="color:#c9d4de">Gancho:</b> <%- a.gancho||'' %><br><b style="color:#c9d4de">Pergunta-chave:</b> <%- a.pergunta_chave||'' %><% if(a.modelo_comum){ %><br><b style="color:#c9d4de">Modelo comum:</b> <%- a.modelo_comum %><% } %></div></div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <!-- FECHAMENTOS -->
+    <% if (SCRIPT.FECHAMENTOS && SCRIPT.FECHAMENTOS.length) { %>
+      <div class="sv-sec-h">🤝 Fechamentos</div>
+      <% SCRIPT.FECHAMENTOS.forEach(function(f){ %>
+        <div class="sv-2">
+          <div class="q"><%= f.nome %> <span style="color:#5b7c99;font-weight:400;font-size:.82rem">— <%= f.quando %></span></div>
+          <div class="sv-cols">
+            <div class="sv-col wa"><div class="lbl">💬 WhatsApp</div><div class="sv-msg"><button class="cp" onclick="TB.copy(this, this.parentNode.innerText.replace(/^copiar\s*/,''))">copiar</button><%- f.whatsapp %></div></div>
+            <div class="sv-col call"><div class="lbl">📞 Ligação</div><div class="sv-msg"><button class="cp" onclick="TB.copy(this, this.parentNode.innerText.replace(/^copiar\s*/,''))">copiar</button><%- f.ligacao %></div></div>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+
+    <!-- OBJEÇÕES -->
+    <% if (SCRIPT.OBJECOES && SCRIPT.OBJECOES.length) { %>
+      <div class="sv-sec-h">🛡️ Objeções (resposta pronta)</div>
+      <% SCRIPT.OBJECOES.forEach(function(o){ %>
+        <div class="sv-2">
+          <div class="q">“<%= o.objecao %>”</div>
+          <div class="sv-cols">
+            <div class="sv-col wa"><div class="lbl">💬 WhatsApp</div><div class="sv-msg"><button class="cp" onclick="TB.copy(this, this.parentNode.innerText.replace(/^copiar\s*/,''))">copiar</button><%- o.whatsapp %></div></div>
+            <div class="sv-col call"><div class="lbl">📞 Ligação</div><div class="sv-msg"><button class="cp" onclick="TB.copy(this, this.parentNode.innerText.replace(/^copiar\s*/,''))">copiar</button><%- o.ligacao %></div></div>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+
+    <!-- UPSELL -->
+    <% if (SCRIPT.UPSELL) { %>
+      <div class="sv-sec-h">🎁 Upsell dos 3 refis</div>
+      <div class="tb-callout sucesso"><div><b>Momento:</b> <%- SCRIPT.UPSELL.momento %></div></div>
+      <div class="sv-cols">
+        <div class="sv-col wa"><div class="lbl">💬 WhatsApp</div><div class="sv-msg"><button class="cp" onclick="TB.copy(this, this.parentNode.innerText.replace(/^copiar\s*/,''))">copiar</button><%- SCRIPT.UPSELL.whatsapp %></div></div>
+        <div class="sv-col call"><div class="lbl">📞 Ligação</div><div class="sv-msg"><button class="cp" onclick="TB.copy(this, this.parentNode.innerText.replace(/^copiar\s*/,''))">copiar</button><%- SCRIPT.UPSELL.ligacao %></div></div>
+      </div>
+    <% } %>
+  <% } %>
+</div>

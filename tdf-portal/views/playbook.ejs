@@ -1,0 +1,1542 @@
+<% const activePage = 'playbook'; const pageTitle = 'Playbook'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<!-- TABS -->
+<div class="tabs" id="tabs">
+  <div class="tab active" data-tab="0">Lead Novo</div>
+  <div class="tab" data-tab="1">Qualificacao</div>
+  <div class="tab" data-tab="2">Proposta</div>
+  <div class="tab" data-tab="3">Fechamento</div>
+  <div class="tab" data-tab="4">Objecoes</div>
+  <div class="tab" data-tab="5">Pos-Venda</div>
+  <div class="tab" data-tab="6">CRM e Pipeline</div>
+  <div class="tab" data-tab="7">Scripts SDR</div>
+  <div class="tab" data-tab="8">Scripts Closer</div>
+  <div class="tab" data-tab="9">CRM Guia</div>
+  <div class="tab" data-tab="10">Score & Leads</div>
+  <div class="tab" data-tab="11">Regras de Perda</div>
+  <div class="tab" data-tab="11" style="background:#D29922;color:#fff;">🆕 Instalação R$590</div>
+  <div class="tab" data-tab="12" style="background:#A371F7;color:#fff;">🏆 Plano de Carreira</div>
+  <div class="tab" data-tab="13" style="background:#0066CC;color:#fff;">📋 Padrão de Execução</div>
+  <div class="tab" data-tab="14" style="background:#2EA043;color:#fff;">💰 Premiação</div>
+  <div class="tab" data-tab="15" style="background:#F85149;color:#fff;">🔧 Visita Técnica</div>
+</div>
+
+<!-- CONTENT -->
+<div class="container content-area">
+
+<!-- ==================== TAB 0: LEAD NOVO ==================== -->
+<div class="tab-panel active" id="panel-0">
+  <h2>Lead Novo -- Regra dos 5 Minutos</h2>
+  <p class="section-desc">A velocidade de contato e o fator mais importante na conversao de leads. Leads contactados em ate 5 minutos convertem 3x mais.</p>
+
+  <div class="alert alert-red"><span class="alert-icon">&#9888;</span><div><strong>REGRA DE OURO:</strong> Ligar em ate 5 MINUTOS apos o lead entrar no CRM. O lead ainda esta com o problema na cabeca, ainda esta no celular, ainda esta quente.</div></div>
+
+  <h3>Cadencia de Contato: 6 Tentativas em 48 Horas</h3>
+  <div class="card">
+    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Ligacao Imediata <span class="badge badge-red">5 min</span></div><div class="step-desc">Primeira ligacao no maximo 5 minutos apos o lead entrar.</div></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">WhatsApp se nao atender <span class="badge badge-yellow">10 min</span></div><div class="step-desc">"Oi [nome], aqui e o [vendedor] da Tudo de Filtro! Tentei te ligar agora. Vi que voce ta buscando solucao pra agua ai. Posso te ajudar!"</div></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Ligacao de follow-up <span class="badge badge-blue">2 horas</span></div><div class="step-desc">Segunda tentativa de ligacao 2 horas depois. Horarios bons: 9h-11h e 14h-16h.</div></div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Ligacao no dia seguinte <span class="badge badge-green">Dia +1</span></div><div class="step-desc">Ligue entre 9h e 10h da manha do dia seguinte.</div></div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-content"><div class="step-title">WhatsApp com conteudo de valor <span class="badge badge-purple">Dia +1 tarde</span></div><div class="step-desc">Mande video ou foto de antes/depois de instalacao. Gera curiosidade e prova social.</div></div></div>
+    <div class="step"><div class="step-num">6</div><div class="step-content"><div class="step-title">Ultima tentativa + despedida <span class="badge badge-yellow">Dia +2</span></div><div class="step-desc">"Oi [nome], tentei te ligar algumas vezes. Vou deixar meu contato aqui caso precise no futuro." Mova para "Sem Contato" no CRM.</div></div></div>
+  </div>
+
+  <h3>Script de Abertura</h3>
+  <div class="script">"Oi [nome], aqui e o [vendedor] da Tudo de Filtro! Vi que voce ta buscando solucao pra agua ai. Me conta: qual o problema que ta te incomodando?"</div>
+  <ul style="padding-left:20px;color:var(--text-muted);"><li><strong>Use o nome do lead</strong></li><li><strong>Se identifique</strong></li><li><strong>Pergunte sobre a DOR</strong></li><li><strong>Tom conversacional</strong></li></ul>
+
+  <h3>Google Ads vs Facebook Ads</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Caracteristica</th><th>Google Ads</th><th>Facebook Ads</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Intencao</strong></td><td><span class="badge badge-green">ALTA</span> -- buscou ativamente</td><td><span class="badge badge-yellow">BAIXA</span> -- viu anuncio no feed</td></tr>
+      <tr><td><strong>Prioridade</strong></td><td><span class="badge badge-red">PRIORIDADE 1</span></td><td>Prioridade 2</td></tr>
+      <tr><td><strong>Ciclo de venda</strong></td><td>Curto (3-7 dias)</td><td>Longo (7-30 dias)</td></tr>
+      <tr><td><strong>Abordagem</strong></td><td>Direto ao ponto</td><td>Educar primeiro</td></tr>
+      <tr><td><strong>Conversao</strong></td><td>71% das vendas do melhor vendedor</td><td>Complementar, volume</td></tr>
+      <tr><td><strong>Tempo de resposta</strong></td><td>Maximo 5 minutos</td><td>Maximo 15 minutos</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="alert alert-green"><span class="alert-icon">&#128161;</span><div><strong>DADO REAL:</strong> 71% das vendas do melhor vendedor vieram de Google Ads. O motivo? Ele liga rapido e o lead ja sabe o que quer.</div></div>
+</div>
+
+<!-- ==================== TAB 1: QUALIFICACAO ==================== -->
+<div class="tab-panel" id="panel-1">
+  <h2>Qualificacao -- 5 Perguntas Obrigatorias</h2>
+  <p class="section-desc">Antes de enviar proposta, voce DEVE fazer estas 5 perguntas.</p>
+
+  <div class="card card-highlight">
+    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Origem da Agua</div></div></div>
+    <div class="script">"A agua ai vem da rua (Sabesp) ou de poco?"</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Resposta</th><th>Implicacao</th><th>Proximo Passo</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Poco</strong></td><td>Precisa analise da agua</td><td>Pedir analise. Sem analise = nao enviar proposta.</td></tr>
+        <tr><td><strong>Rua (tratada)</strong></td><td>Sedimentos de tubulacao velha, cloro</td><td>Filtro de entrada residencial.</td></tr>
+        <tr><td><strong>Mista</strong></td><td>Complexidade maior</td><td>Pode precisar de 2 sistemas.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card card-green">
+    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Problema Percebido (DOR)</div></div></div>
+    <div class="script">"Qual o problema que voce ta percebendo na agua?"</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Sintoma</th><th>Causa</th><th>Solucao</th><th>Ticket</th></tr></thead>
+      <tbody>
+        <tr><td>Agua amarelada/avermelhada</td><td>Ferro dissolvido</td><td><strong>Iron Free</strong></td><td><em>Consultar</em></td></tr>
+        <tr><td>Manchas brancas</td><td>Calcario/dureza</td><td><strong>Scale Stop</strong></td><td><em>Consultar</em></td></tr>
+        <tr><td>Barro/sedimentos</td><td>Particulas</td><td><strong>Filtro de Entrada</strong></td><td><em>Consultar</em></td></tr>
+        <tr><td>Gosto/cheiro de cloro</td><td>Cloro residual</td><td><strong>Filtro de Carvao</strong></td><td><em>Consultar</em></td></tr>
+        <tr><td>Quer agua na empresa</td><td>Nao tem purificador</td><td><strong>Bebedouro</strong></td><td><em>Consultar</em></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card card-yellow">
+    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Tipo de Imovel</div></div></div>
+    <div class="script">"E pra residencia, empresa ou condominio?"</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Tipo</th><th>Ticket Medio</th><th>Decisor</th><th>Ciclo</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Residencia</strong></td><td><em>Variável</em></td><td>Morador (casal)</td><td>3-10 dias</td></tr>
+        <tr><td><strong>Empresa</strong></td><td><em>Variável</em></td><td>Dono/gerente</td><td>5-15 dias</td></tr>
+        <tr><td><strong>Condominio</strong></td><td><em>Variável</em></td><td>Sindico + assembleia</td><td>15-90 dias</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card card-red">
+    <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Urgencia</div></div></div>
+    <div class="script">"Pra quando voce precisa resolver isso?"</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Resposta</th><th>Prioridade</th><th>Acao</th></tr></thead>
+      <tbody>
+        <tr><td>"Preciso resolver urgente"</td><td><span class="badge badge-red">MAXIMA</span></td><td>Fechar em 24-48h.</td></tr>
+        <tr><td>"Proximas semanas"</td><td><span class="badge badge-yellow">MEDIA</span></td><td>Follow-up a cada 2 dias.</td></tr>
+        <tr><td>"To pesquisando"</td><td><span class="badge badge-green">BAIXA</span></td><td>Qualificar mais. Enviar conteudo.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card card-purple">
+    <div class="step"><div class="step-num">5</div><div class="step-content"><div class="step-title">Orcamento</div></div></div>
+    <div class="script">"Voce ja tem orcamento definido ou ta levantando opcoes?"</div>
+  </div>
+</div>
+
+<!-- ==================== TAB 2: PROPOSTA ==================== -->
+<div class="tab-panel" id="panel-2">
+  <h2>Proposta -- Regra das 2 Horas</h2>
+  <p class="section-desc">NUNCA mande proposta e suma. Ligue 2 HORAS apos enviar.</p>
+
+  <div class="alert alert-red"><span class="alert-icon">&#9888;</span><div><strong>REGRA DAS 2 HORAS:</strong> NUNCA mande proposta e suma. Ligue 2 HORAS apos enviar a proposta.</div></div>
+
+  <h3>Script Pos-Proposta</h3>
+  <div class="script">"Oi [nome], enviei a proposta! Deu pra dar uma olhada? Quero te explicar alguns pontos importantes."</div>
+
+  <h3>O Que a Proposta DEVE Conter</h3>
+  <div class="card">
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>1. Problema Identificado</strong> -- Personalizado para o cliente.</div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>2. Solucao Recomendada</strong> -- Modelo especifico com capacidade.</div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>3. Diferenciais</strong> -- Quartzo + zeolita, garantia 10 anos, pos-venda ativo.</div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>4. Valor + Pagamento</strong> -- 7x cartao OU PIX com desconto.</div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>5. Prazo + Instalacao</strong> -- Data prevista + agendamento (valor da instalação).</div></div>
+  </div>
+
+  <h3>Formas de Pagamento</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Forma</th><th>Condicao</th><th>Observacao</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Cartao</strong></td><td>Ate 7x sem juros</td><td>Preferencial. Maior parte dos fechamentos.</td></tr>
+      <tr><td><strong>PIX</strong></td><td>Desconto especial</td><td>Argumento de fechamento.</td></tr>
+      <tr><td><strong>Boleto (PJ)</strong></td><td>CNPJ 2+ anos, sem restricao</td><td>Analise de credito obrigatoria.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Instalacao como Moeda de Troca</h3>
+  <div class="card card-yellow">
+    <p>A instalacao custa <strong>valor da instalação</strong>. Use como moeda de troca, NAO de desconto no produto.</p>
+    <div class="script">"No preco do produto eu nao consigo mexer. Mas se voce fechar hoje, eu consigo incluir a instalacao. Sao valor da instalação de economia."</div>
+  </div>
+</div>
+
+<!-- ==================== TAB 3: FECHAMENTO ==================== -->
+<div class="tab-panel" id="panel-3">
+  <h2>Fechamento -- 4 Tecnicas</h2>
+  <p class="section-desc">O fechamento e o resultado natural de uma boa qualificacao e proposta.</p>
+
+  <div class="card card-highlight">
+    <h4>1. Fechamento Direto</h4>
+    <div class="script">"Entao vamos fechar? Prefere no cartao em 7x ou no PIX com desconto?"</div>
+    <p style="color:var(--text-muted);font-size:13px;">A tecnica de alternativa faz o lead escolher COMO pagar, nao SE vai comprar.</p>
+  </div>
+
+  <div class="card card-green">
+    <h4>2. Fechamento Alternativo</h4>
+    <div class="script">"Voce prefere o modelo de 2.000L/h ou o de 3.000L/h que tem mais folga?"</div>
+  </div>
+
+  <div class="card card-yellow">
+    <h4>3. Fechamento por Urgencia</h4>
+    <div class="script">"Enquanto a gente conversa, a agua continua passando sujeira por toda a tubulacao. Posso reservar o valor por 48h?"</div>
+    <div class="alert alert-yellow"><span class="alert-icon">&#9888;</span><div><strong>CUIDADO:</strong> Urgencia falsa queima credibilidade. So use se for verdade.</div></div>
+  </div>
+
+  <div class="card card-red">
+    <h4>4. Fechamento por Consequencia</h4>
+    <div class="script">"Trocar um chuveiro sao R$ 50-80 a cada 3 meses. Maquina de lavar nova sao R$ 2.000+. O filtro protege tudo por 10 anos."</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Dano</th><th>Custo</th><th>Frequencia</th></tr></thead>
+      <tbody>
+        <tr><td>Troca de chuveiro</td><td>R$ 50-80</td><td>A cada 3 meses</td></tr>
+        <tr><td>Troca de resistencia</td><td>R$ 30-50</td><td>A cada 4 meses</td></tr>
+        <tr><td>Maquina de lavar nova</td><td><em>Consultar</em></td><td>A cada 3-5 anos</td></tr>
+        <tr><td>Limpeza caixa d'agua</td><td>R$ 200-400</td><td>A cada 6 meses</td></tr>
+        <tr><td><strong>TOTAL em 10 anos</strong></td><td colspan="2"><strong>R$ 8.000 - 15.000+ em danos evitaveis</strong></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <h3>Cadencia Follow-Up Pos-Proposta (7 dias)</h3>
+  <div class="card">
+    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Dia 1: Verificacao <span class="badge badge-blue">Ligacao</span></div><div class="step-desc">"Conseguiu ver a proposta?"</div></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Dia 2: Conteudo <span class="badge badge-green">Ligacao + WhatsApp</span></div><div class="step-desc">Envie video/foto de instalacao similar. Prova social.</div></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Dia 3: Duvidas <span class="badge badge-yellow">WhatsApp</span></div><div class="step-desc">"Surgiu alguma duvida sobre a proposta?"</div></div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Dia 5: Prova Social <span class="badge badge-purple">WhatsApp</span></div><div class="step-desc">Envie depoimento de cliente com problema similar.</div></div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-content"><div class="step-title">Dia 7: Ultima Tentativa <span class="badge badge-red">Ligacao</span></div><div class="step-desc">"Consigo manter o valor da proposta ate amanha. O que voce decidiu?"</div></div></div>
+  </div>
+</div>
+
+<!-- ==================== TAB 4: OBJECOES ==================== -->
+<div class="tab-panel" id="panel-4">
+  <h2>Objecoes -- Respostas Prontas</h2>
+  <p class="section-desc">As 6 objecoes mais comuns. Decore as respostas. A objecao e um sinal de interesse.</p>
+
+  <div class="card card-red">
+    <div class="objection-trigger">"Esta caro"</div>
+    <p style="color:var(--text-muted);margin-bottom:12px;">O lead compara preco sem entender valor.</p>
+    <div class="script">"Entendo. Mas quanto voce gasta por ano com galao, troca de chuveiro, manutencao? O filtro se paga em menos de 2 anos. E a garantia e de 10 anos."</div>
+    <ul style="padding-left:20px;color:var(--text-muted);font-size:14px;">
+      <li>Galao: R$ 100-180/mes = R$ 1.200-2.160/ano</li>
+      <li>Troca de chuveiro: R$ 80 a cada 3 meses = R$ 320/ano</li>
+      <li>Em 2 anos ja se pagou. Nosso inox e 304 (qualidade hospitalar)</li>
+    </ul>
+  </div>
+
+  <div class="card card-yellow">
+    <div class="objection-trigger">"Vou pensar"</div>
+    <div class="script">"Claro! Mas me conta: o que exatamente precisa pensar? E o valor, o produto, ou o momento?"</div>
+  </div>
+
+  <div class="card card-highlight">
+    <div class="objection-trigger">"Vou pesquisar"</div>
+    <div class="script">"Boa! Inclusive recomendo. Compare: material (nosso e inox 304), garantia (10 anos), elemento filtrante (quartzo + zeolita) e pos-venda."</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Criterio</th><th>Tudo de Filtro</th><th>Pergunte ao Concorrente</th></tr></thead>
+      <tbody>
+        <tr><td>Material</td><td>Inox 304</td><td>Qual o tipo de inox?</td></tr>
+        <tr><td>Garantia</td><td>10 anos</td><td>Quanto tempo? O que cobre?</td></tr>
+        <tr><td>Elemento filtrante</td><td>Quartzo + Zeolita exclusivo</td><td>Qual o material filtrante?</td></tr>
+        <tr><td>Retrolavagem</td><td>Automatica</td><td>Manual ou automatica?</td></tr>
+        <tr><td>Pos-venda</td><td>Ativo (liga e agenda troca)</td><td>Tem pos-venda?</td></tr>
+        <tr><td>Instalacao</td><td>Tecnico proprio</td><td>Instala ou voce se vira?</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card card-purple">
+    <div class="objection-trigger">"Preciso falar com esposa/marido/socio"</div>
+    <div class="script">"Claro! Quer que eu prepare um resumo? Ou posso fazer uma ligacao rapida com voces dois juntos?"</div>
+  </div>
+
+  <div class="card card-green">
+    <div class="objection-trigger">"Na internet tem mais barato"</div>
+    <div class="script">"Provavelmente sim. Mas esse filtro remove ferro dissolvido? Tem retrolavagem automatica? Garantia de quanto tempo? Barato que nao resolve sai caro."</div>
+  </div>
+
+  <div class="card card-yellow">
+    <div class="objection-trigger">"Nao e prioridade agora"</div>
+    <div class="script">"Entendo. Mas enquanto nao e prioridade, a agua continua passando por toda a tubulacao. A cada dia, mais sedimento acumula."</div>
+  </div>
+</div>
+
+<!-- ==================== TAB 5: POS-VENDA ==================== -->
+<div class="tab-panel" id="panel-5">
+  <h2>Pos-Venda -- Sequencia de 4 Contatos</h2>
+  <p class="section-desc">O pos-venda constroi fidelidade e indicacao. 80% param de falar apos a venda. Os 20% melhores recebem indicacoes constantes.</p>
+
+  <div class="card card-green">
+    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">3 Dias Apos Instalacao <span class="badge badge-green">Satisfacao</span></div></div></div>
+    <div class="script">"Oi [nome]! Tudo funcionando bem com o filtro? A agua ja ta saindo limpa?"</div>
+  </div>
+
+  <div class="card card-highlight">
+    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">15 Dias <span class="badge badge-blue">Experiencia</span></div></div></div>
+    <div class="script">"Ja faz 15 dias com o filtro! Como ta a experiencia? Notou diferenca?"</div>
+    <p style="color:var(--text-muted);font-size:14px;">Peca avaliacao no Google.</p>
+  </div>
+
+  <div class="card card-purple">
+    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">30 Dias <span class="badge badge-purple">Indicacao</span></div></div></div>
+    <div class="script">"Voce conhece alguem -- vizinho, familiar, colega -- que tambem reclama da agua? Temos condicao especial pra indicacao."</div>
+  </div>
+
+  <div class="card card-yellow">
+    <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">90 Dias <span class="badge badge-yellow">Manutencao</span></div></div></div>
+    <div class="script">"Passando pra ver se ta tudo ok. Lembra que a gente faz a troca do elemento quando chegar a hora!"</div>
+  </div>
+
+  <h3>Ciclos de Manutencao</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Produto</th><th>Troca a Cada</th><th>Acao</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Filtro (agua tratada)</strong></td><td>3 anos</td><td>Pos-venda liga e agenda</td></tr>
+      <tr><td><strong>Filtro (agua de poco)</strong></td><td>2 anos</td><td>Pos-venda liga e agenda</td></tr>
+      <tr><td><strong>Iron Free</strong></td><td>2 anos</td><td>Pos-venda liga e agenda</td></tr>
+      <tr><td><strong>Bebedouro</strong></td><td>6-12 meses</td><td>Pos-venda liga e agenda</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="alert alert-green"><span class="alert-icon">&#128161;</span><div><strong>DIFERENCIAL CHAVE:</strong> O cliente NAO precisa lembrar de trocar o elemento. NOS ligamos e agendamos. Use isso em toda negociacao.</div></div>
+</div>
+
+<!-- ==================== TAB 6: CRM E PIPELINE ==================== -->
+<div class="tab-panel" id="panel-6">
+  <h2>CRM e Pipeline -- Checklist Diario</h2>
+  <p class="section-desc">Se nao esta no CRM, nao existe. Siga este checklist todo dia as 8h.</p>
+
+  <h3>Checklist Diario do Vendedor (8h)</h3>
+  <div class="card card-highlight">
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>1. Verificar leads novos sem contato</strong> -- Ligue AGORA.</div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>2. Verificar tarefas atrasadas</strong> -- Resolva TODAS antes de criar novas.</div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>3. Propostas enviadas sem retorno</strong> -- Ligue agora.</div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>4. Follow-ups pendentes</strong> -- Execute todos os de hoje.</div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>5. Atualizar estagios dos deals</strong></div></div>
+  </div>
+
+  <h3>Estagios do Pipeline</h3>
+  <div class="pipeline">
+    <div class="pipe-stage active">Primeiro Contato</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-stage">Em Qualificacao</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-stage">Proposta</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-stage">Fechamento</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-stage" style="border-color:var(--green);color:var(--green);">Ganho</div>
+  </div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Estagio</th><th>Criterio</th><th>Acao</th><th>Tempo Max</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Primeiro Contato</strong></td><td>Lead entrou</td><td>Ligar em 5 min. Cadencia 6 tentativas.</td><td>48h</td></tr>
+      <tr><td><strong>Qualificacao</strong></td><td>Falou com lead</td><td>5 perguntas obrigatorias.</td><td>5 dias</td></tr>
+      <tr><td><strong>Proposta</strong></td><td>Qualificado + proposta enviada</td><td>Follow-up em 2h. Cadencia 7 dias.</td><td>7 dias</td></tr>
+      <tr><td><strong>Fechamento</strong></td><td>Intencao de fechar</td><td>Tecnica de fechamento. Link pagamento.</td><td>3 dias</td></tr>
+      <tr><td><strong>Ganho</strong></td><td>Pagamento confirmado</td><td>Agendar instalacao. Pos-venda.</td><td>--</td></tr>
+      <tr><td><strong>Perdido</strong></td><td>Desistiu</td><td>Registrar motivo da perda.</td><td>--</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Metricas que Importam</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Metrica</th><th>Meta</th></tr></thead>
+    <tbody>
+      <tr><td>Tempo de primeiro contato</td><td>&lt; 5 minutos</td></tr>
+      <tr><td>Taxa de contato</td><td>&gt; 70%</td></tr>
+      <tr><td>Taxa de qualificacao</td><td>&gt; 50%</td></tr>
+      <tr><td>Taxa de conversao</td><td>&gt; 25%</td></tr>
+      <tr><td>Ticket medio</td><td><em>Consultar</em></td></tr>
+      <tr><td>Ciclo de venda</td><td>&lt; 10 dias</td></tr>
+    </tbody>
+  </table></div>
+</div>
+
+<!-- ==================== TAB 7: SCRIPTS SDR ==================== -->
+<div class="tab-panel" id="panel-7">
+  <h2>Scripts SDR -- Qualificacao por Produto</h2>
+  <p class="section-desc">O SDR qualifica e transfere. NUNCA passa preco (exceto bebedouro na 3a insistencia).</p>
+
+  <div class="alert alert-red"><span class="alert-icon">&#9888;</span><div><strong>REGRA ABSOLUTA:</strong> O SDR NAO vende. O SDR QUALIFICA e TRANSFERE. Se o lead pedir preco: "O valor depende do modelo ideal pro seu caso. Vou chamar nosso especialista."</div></div>
+
+  <h3>Script: Filtro de Entrada</h3>
+  <div class="card card-green">
+    <h4>Abertura</h4>
+    <div class="script">"Oi [nome]! Aqui e [vendedor] da Tudo de Filtro, especialista em qualidade da agua. Me conta: o que te fez buscar um filtro agora?"</div>
+  </div>
+
+  <div class="card">
+    <h4>Fluxo SPIN</h4>
+    <div class="step"><div class="step-num">S</div><div class="step-content"><div class="step-title">Situacao</div></div></div>
+    <div class="script">"A agua ai vem da rua, da Sabesp, certo?" / "E casa ou apartamento? Quantos banheiros?"</div>
+    <div class="step"><div class="step-num">P</div><div class="step-content"><div class="step-title">Problema</div></div></div>
+    <div class="script">"Voce percebe algo estranho na agua? Gosto, cheiro, cor diferente?" / "O chuveiro entope com frequencia?"</div>
+    <div class="step"><div class="step-num">I</div><div class="step-content"><div class="step-title">Implicacao</div></div></div>
+    <div class="script">"Ja abriu a caixa d'agua? Geralmente tem lodo, ferrugem e sedimentos. Essa sujeira vai pro banho das criancas, pra comida..."</div>
+    <div class="step"><div class="step-num">N</div><div class="step-content"><div class="step-title">Necessidade-Solucao</div></div></div>
+    <div class="script">"Um filtro de entrada faz TODA a agua ja chegar filtrada em todos os pontos da casa."</div>
+  </div>
+
+  <div class="card card-highlight">
+    <h4>Transicao para o Closer</h4>
+    <div class="script">"Perfeito, [nome]! Pelo que voce me descreveu, a gente tem a solucao certinha. Vou chamar nosso especialista tecnico. Ele vai te ligar em seguida!"</div>
+  </div>
+
+  <h3>Script: Agua de Poco (Iron Free)</h3>
+  <div class="alert alert-red"><span class="alert-icon">&#9888;</span><div><strong>REGRA CRITICA -- POCO:</strong> O SDR NUNCA indica produto nem passa preco para agua de poco. Apenas qualifique e transfira.</div></div>
+
+  <div class="card">
+    <h4>8 Perguntas Obrigatorias para Poco</h4>
+    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Sintomas da Agua</div></div></div>
+    <div class="script">"A agua sai amarelada, avermelhada, com cheiro, ou mancha a roupa?"</div>
+    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Fonte da Agua <span class="badge badge-red">CRITICO</span></div></div></div>
+    <div class="script">"Voce usa so poco ou tem agua da Sabesp tambem?"</div>
+    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Analise de Agua</div></div></div>
+    <div class="script">"Voce ja fez alguma analise da agua do poco? Tem laudo?"</div>
+    <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Vazao da Bomba</div></div></div>
+    <div class="script">"Sabe qual a vazao da bomba do poco?"</div>
+    <div class="step"><div class="step-num">5</div><div class="step-content"><div class="step-title">Pontos de Uso</div></div></div>
+    <div class="script">"Quantos banheiros tem? Tem piscina?"</div>
+    <div class="step"><div class="step-num">6</div><div class="step-content"><div class="step-title">Localizacao</div></div></div>
+    <div class="script">"Qual sua cidade e CEP?"</div>
+    <div class="step"><div class="step-num">7</div><div class="step-content"><div class="step-title">Tipo de Imovel</div></div></div>
+    <div class="script">"E residencia, empresa, sitio ou condominio?"</div>
+    <div class="step"><div class="step-num">8</div><div class="step-content"><div class="step-title">Urgencia</div></div></div>
+    <div class="script">"Pra quando voce precisa resolver?"</div>
+  </div>
+
+  <h3>Script: Bebedouro Industrial</h3>
+  <div class="card card-highlight">
+    <h4>Tabela de Bebedouros</h4>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Modelo</th><th>Capacidade</th><th>7x Cartao</th><th>PIX</th><th>Compressor</th><th>Indicacao</th></tr></thead>
+      <tbody>
+        <tr><td><strong>AF15</strong></td><td>15 L/h</td><td>7x R$ 228</td><td>R$ 1.590</td><td>1/10</td><td>Ate 20 pessoas</td></tr>
+        <tr><td><strong>AF25</strong></td><td>25 L/h</td><td>7x R$ 245</td><td>R$ 1.710</td><td>1/10</td><td>20-50 pessoas</td></tr>
+        <tr><td><strong>AF60</strong></td><td>60 L/h</td><td>7x R$ 321</td><td>R$ 2.245</td><td>1/5</td><td>50-100 pessoas</td></tr>
+        <tr><td><strong>AF100</strong></td><td>100 L/h</td><td>7x R$ 350</td><td>R$ 2.450</td><td>1/5</td><td>100-200 pessoas</td></tr>
+        <tr><td><strong>AF200</strong></td><td>200 L/h</td><td>7x R$ 488</td><td>R$ 3.413</td><td>1/5</td><td>200+ pessoas</td></tr>
+      </tbody>
+    </table></div>
+    <h4>Especificacoes Tecnicas</h4>
+    <ul style="padding-left:20px;color:var(--text-muted);font-size:14px;">
+      <li><strong>Material:</strong> Aco inox 304 (padrão cozinha industrial)</li>
+      <li><strong>Filtro:</strong> Embutido com retrolavagem automatica</li>
+      <li><strong>Refrigeracao:</strong> Sistema ventoinha + compressor primeira linha (ultra rapido)</li>
+      <li><strong>Eficiencia:</strong> Consome menos que um frigobar</li>
+      <li><strong>Torneiras:</strong> 2 geladas + 1 natural (pode configurar todas geladas)</li>
+      <li><strong>Frete SP (CEP 01-19):</strong> GRATIS | Fora SP: consultar</li>
+      <li><strong>Regra:</strong> Dimensionar com 30-50% de folga acima da necessidade</li>
+    </ul>
+    <div class="alert alert-red"><span class="alert-icon">&#9888;</span><div><strong>NAO EXISTE MODELO DE 50 LITROS!</strong> A linha vai de 25L direto para 60L.</div></div>
+  </div>
+
+  <h3>Regras de Ouro do SDR</h3>
+  <div class="card card-red">
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>NUNCA passe preco</strong> (exceto bebedouro na 3a insistencia)</div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>NUNCA indique produto para agua de poco</strong></div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>Uma pergunta por vez</strong></div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>Anote as palavras EXATAS do lead</strong></div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>Preencha TUDO no CRM</strong> antes de transferir</div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>Transfira com entusiasmo</strong></div></div>
+  </div>
+</div>
+
+<!-- ==================== TAB 8: SCRIPTS CLOSER ==================== -->
+<div class="tab-panel" id="panel-8">
+  <h2>Scripts Closer -- Apresentacao e Fechamento</h2>
+  <p class="section-desc">O closer recebe leads qualificados do SDR. Missao: apresentar, tratar objecoes e FECHAR.</p>
+
+  <div class="alert alert-blue"><span class="alert-icon">&#128161;</span><div><strong>ANTES DE LIGAR:</strong> Leia TODAS as notas do SDR no CRM. Nao repita perguntas.</div></div>
+
+  <h3>Closer: Filtro de Entrada</h3>
+
+  <div class="card card-green">
+    <h4>Passo 1: Abertura com Conexao</h4>
+    <div class="script">"Oi [nome], aqui e o [closer] da Tudo de Filtro. O [SDR] me passou tudo. Pelo que entendi, [REPETIR A DOR COM AS PALAVRAS DO LEAD]. E isso mesmo?"</div>
+  </div>
+
+  <div class="card card-highlight">
+    <h4>Passo 2: Ampliar o Problema</h4>
+    <div class="script">"A agua sai limpa da estacao, mas percorre quilometros de canos velhos. Ferrugem, sedimento, biofilme. Tudo vai pra caixa d'agua."</div>
+  </div>
+
+  <div class="card card-highlight">
+    <h4>Passo 3: Apresentar a Solucao</h4>
+    <div class="script">"A solucao e o [modelo]. Instalado na entrada -- TODA a agua que entra ja passa pelo filtro."</div>
+  </div>
+
+  <div class="card card-purple">
+    <h4>Passo 4: Diferenciais (Nessa Ordem)</h4>
+    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Elemento Filtrante Exclusivo</div></div></div>
+    <div class="script">"Cristais de quartzo e zeolita -- tecnologia exclusiva. Nenhum concorrente tem."</div>
+    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Garantia de 10 Anos</div></div></div>
+    <div class="script">"Inox 304 -- qualidade hospitalar. Garantia de 10 anos, nao 1 como os concorrentes."</div>
+    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Retrolavagem Automatica</div></div></div>
+    <div class="script">"O filtro se limpa sozinho. Voce nao precisa fazer nada."</div>
+    <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Pos-Venda Ativo</div></div></div>
+    <div class="script">"Quando chegar a hora de trocar o elemento, NOS ligamos e agendamos. A maioria vende e some."</div>
+  </div>
+
+  <div class="card card-green">
+    <h4>Passo 5: Apresentar Preco e Fechar</h4>
+    <div class="script">"O investimento fica em 7x de [valor] no cartao sem juros. Menos de R$ [valor diario] por dia pra ter agua limpa por 10 anos. Vamos fechar?"</div>
+  </div>
+
+  <h3>Closer: Iron Free (Agua de Poco)</h3>
+  <div class="alert alert-red"><span class="alert-icon">&#9888;</span><div><strong>PRE-REQUISITO:</strong> So apresenta proposta se tiver analise de agua OU visita tecnica agendada.</div></div>
+
+  <div class="card">
+    <h4>Explicar o Processo Tecnico</h4>
+    <div class="script">"O ferro esta DISSOLVIDO -- sai transparente e depois fica amarela. O Iron Free faz OXIDACAO CONTROLADA: transforma o ferro em particulas solidas e depois retira. A agua sai cristalina."</div>
+  </div>
+
+  <div class="card">
+    <h4>Dimensionamento</h4>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Vazao da Bomba</th><th>Modelo</th><th>Pontos de Uso</th></tr></thead>
+      <tbody>
+        <tr><td>Ate 1.000 L/h</td><td>Iron Free 1000</td><td>Ate 2 banheiros</td></tr>
+        <tr><td>1.000 - 1.500 L/h</td><td>Iron Free 1500</td><td>Ate 3 banheiros</td></tr>
+        <tr><td>1.500 - 2.000 L/h</td><td>Iron Free 2000</td><td>Ate 4 banheiros + piscina</td></tr>
+        <tr><td>2.000 - 3.000 L/h</td><td>Iron Free 3000</td><td>Ate 5 banheiros + piscina</td></tr>
+        <tr><td>3.000 - 5.000 L/h</td><td>Iron Free 5000</td><td>Grandes propriedades</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <h3>Regras de Ouro do Closer</h3>
+  <div class="card card-red">
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>Leia TODAS as notas do SDR</strong></div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>Use as palavras do lead</strong></div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>Apresente preco SEMPRE em 7x primeiro</strong></div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>Diferenciais antes do preco</strong></div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>Instalacao e moeda de troca</strong> (valor da instalação)</div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>Objecao e sinal de interesse</strong></div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>Sempre termine com proximo passo claro</strong></div></div>
+    <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div><strong>Atualize o CRM apos CADA ligacao</strong></div></div>
+  </div>
+</div>
+
+<!-- ==================== TAB 9: CRM GUIA ==================== -->
+<div class="tab-panel" id="panel-9">
+  <h2>CRM -- Guia Completo para Vendedores</h2>
+  <p class="section-desc">O CRM e o cerebro digital de vendas. Se nao esta no CRM, nao aconteceu.</p>
+
+  <div class="card card-highlight">
+    <p style="font-size:16px;"><strong>CRM = Customer Relationship Management</strong></p>
+    <p>Cada contato, cada conversa, cada negociacao -- tudo em um lugar so.</p>
+    <div class="alert alert-red"><span class="alert-icon">&#9888;</span><div><strong>REGRA NUMERO 1:</strong> Se nao esta no CRM, nao aconteceu.</div></div>
+  </div>
+
+  <h3>Pipeline Completo</h3>
+  <div class="pipeline">
+    <div class="pipe-stage active">Primeiro Contato</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-stage">Em Qualificacao</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-stage">Analise e Vazao</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-stage">Qualificado</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-stage">Proposta</div><div class="pipe-arrow">&#8594;</div>
+    <div class="pipe-stage" style="border-color:var(--green);color:var(--green);">Ganho</div>
+  </div>
+
+  <h3>Como Nomear Tarefas</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Tipo</th><th>Nomenclatura</th><th>Quando Usar</th></tr></thead>
+    <tbody>
+      <tr><td>Primeiro contato</td><td><strong>"Ligacao para Lead [N]"</strong></td><td>Tentativas iniciais</td></tr>
+      <tr><td>Follow-up</td><td><strong>"Follow [N]"</strong></td><td>Apos proposta</td></tr>
+      <tr><td>Qualificacao</td><td><strong>"Qualificacao - [acao]"</strong></td><td>Durante qualificacao</td></tr>
+      <tr><td>Fechamento</td><td><strong>"Mensagem de Fechamento"</strong></td><td>Tentativa final</td></tr>
+      <tr><td>Pos-venda</td><td><strong>"Pos-Venda [periodo]"</strong></td><td>Apos instalacao</td></tr>
+      <tr><td>Visita tecnica</td><td><strong>"Agendar Visita Tecnica"</strong></td><td>Poco sem laudo</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Rotina Diaria</h3>
+  <div class="card card-highlight">
+    <div class="step"><div class="step-num" style="background:var(--danger);">08h</div><div class="step-content"><div class="step-title">Verificar Leads Novos <span class="badge badge-red">URGENTE</span></div><div class="step-desc">Tem lead novo? Ligue AGORA.</div></div></div>
+    <div class="step"><div class="step-num" style="background:var(--warning);">08:30</div><div class="step-content"><div class="step-title">Resolver Tarefas Atrasadas <span class="badge badge-yellow">PRIORIDADE</span></div><div class="step-desc">Resolva TODAS antes de fazer qualquer outra coisa.</div></div></div>
+    <div class="step"><div class="step-num" style="background:var(--accent);">09h</div><div class="step-content"><div class="step-title">Executar Tarefas do Dia <span class="badge badge-blue">PRODUCAO</span></div><div class="step-desc">Prioridade: propostas sem retorno > follow-ups > qualificacao > pos-venda.</div></div></div>
+    <div class="step"><div class="step-num" style="background:var(--green);">12h</div><div class="step-content"><div class="step-title">Atualizacao Meio-Dia <span class="badge badge-green">REGISTRO</span></div><div class="step-desc">Atualize TODOS os deals trabalhados.</div></div></div>
+    <div class="step"><div class="step-num" style="background:var(--purple);">17h</div><div class="step-content"><div class="step-title">Planejar o Amanha <span class="badge badge-purple">PLANEJAMENTO</span></div><div class="step-desc">Verifique tarefas de amanha. Deals parados &gt; 48h?</div></div></div>
+  </div>
+
+  <h3>Erros que Custam Vendas</h3>
+  <div class="card card-red">
+    <div class="check-item"><div class="check-box checked"></div><div><strong>Criar varias tarefas</strong> no mesmo deal sem resolver as anteriores</div></div>
+    <div class="check-item"><div class="check-box checked"></div><div><strong>Nao registrar ligacoes</strong> -- anote TUDO no CRM</div></div>
+    <div class="check-item"><div class="check-box checked"></div><div><strong>Deals no estagio errado</strong> -- so avanca quando cumprir criterio</div></div>
+    <div class="check-item"><div class="check-box checked"></div><div><strong>Deal parado &gt; 48h</strong> sem atividade</div></div>
+    <div class="check-item"><div class="check-box checked"></div><div><strong>Cherry-picking de leads</strong> -- TODO lead recebe contato</div></div>
+    <div class="check-item"><div class="check-box checked"></div><div><strong>Fechar como "Sem contato" cedo</strong> -- minimo 6 tentativas em 48h</div></div>
+  </div>
+
+  <h3>Metricas Monitoradas</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Metrica</th><th>Meta</th><th>Se Estiver Baixa...</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Tempo 1o contato</strong></td><td>&lt; 5 min</td><td>Perdendo leads quentes</td></tr>
+      <tr><td><strong>Taxa de contato</strong></td><td>&gt; 70%</td><td>Reveja horarios e cadencia</td></tr>
+      <tr><td><strong>Taxa qualificacao</strong></td><td>&gt; 50%</td><td>Melhore as perguntas</td></tr>
+      <tr><td><strong>Taxa conversao</strong></td><td>&gt; 25%</td><td>Treine fechamento e objecoes</td></tr>
+      <tr><td><strong>Ticket medio</strong></td><td>&gt; R$ 3.500</td><td>Explore upsell</td></tr>
+      <tr><td><strong>Ciclo de venda</strong></td><td>&lt; 10 dias</td><td>Acelere follow-ups</td></tr>
+      <tr><td><strong>Tarefas atrasadas</strong></td><td>ZERO</td><td>Resolva tudo antes</td></tr>
+    </tbody>
+  </table></div>
+</div>
+
+<!-- ==================== TAB 10: SCORE & LEADS ==================== -->
+<div class="tab-panel" id="panel-10">
+  <h2>Score de Leads & Distribuicao Inteligente</h2>
+  <p class="section-desc">Todo lead que entra no Zoho CRM recebe automaticamente um <strong>Score de 0 a 100</strong> calculado por IA, baseado em dados reais de 1.000 vendas dos ultimos 150 dias. O score determina a prioridade do lead e pra qual vendedor ele vai.</p>
+
+  <div class="alert alert-red"><span class="alert-icon">&#9888;</span><div><strong>IMPORTANTE:</strong> O score e a distribuicao sao 100% automaticos. Voce NAO precisa fazer nada -- o lead ja chega na sua mao com o score calculado e a tarefa criada.</div></div>
+
+  <h3>O que e o Score?</h3>
+  <p>O score e uma nota de 0 a 100 que a IA calcula em segundos quando o lead entra. Quanto maior o score, mais provavel que esse lead compre. O calculo usa dados reais das nossas vendas.</p>
+
+  <h3>Os 5 Tiers (Classificacoes)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Tier</th><th>Score</th><th>SLA</th><th>O que significa</th></tr></thead>
+    <tbody>
+      <tr style="background:#e8f4fd;"><td><strong>Diamante</strong></td><td>70-100</td><td><span class="badge badge-red">5 MINUTOS</span></td><td>Lead quente -- alta chance de fechar. Ligar IMEDIATAMENTE.</td></tr>
+      <tr style="background:#fff8e1;"><td><strong>Ouro</strong></td><td>50-69</td><td><span class="badge badge-yellow">30 MINUTOS</span></td><td>Lead bom -- chance solida. Ligar rapido.</td></tr>
+      <tr style="background:#f5f5f5;"><td><strong>Prata</strong></td><td>30-49</td><td><span class="badge badge-blue">MESMO DIA</span></td><td>Lead medio -- precisa de mais conversa. Ligar no mesmo dia.</td></tr>
+      <tr style="background:#fff3e0;"><td><strong>Bronze</strong></td><td>15-29</td><td><span class="badge badge-green">48 HORAS</span></td><td>Lead frio -- baixa urgencia. Ligar em ate 2 dias.</td></tr>
+      <tr><td><strong>Pedra</strong></td><td>0-14</td><td>Baixa prioridade</td><td>Lead sem informacao ou muito frio. Sistema cuida automaticamente.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Como o Score e Calculado?</h3>
+  <p>A IA analisa 5 fatores do lead e soma pontos:</p>
+
+  <div class="card">
+    <h4>1. Origem do Lead (de onde veio) -- ate 25 pontos</h4>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Origem</th><th>Pontos</th><th>Por que?</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Google Ads</strong></td><td><span class="badge badge-green">+25</span></td><td>Lead BUSCOU ativamente. 75% fecha em 7 dias. Nosso melhor canal.</td></tr>
+        <tr><td><strong>Indicacao</strong></td><td><span class="badge badge-green">+20</span></td><td>Ja vem com confianca. Ciclo de 6 dias.</td></tr>
+        <tr><td><strong>Instagram</strong></td><td><span class="badge badge-yellow">+18</span></td><td>Ticket mais alto (R$3.678). 23% sao condominios.</td></tr>
+        <tr><td><strong>Organico Google</strong></td><td><span class="badge badge-yellow">+15</span></td><td>Pesquisou no Google sem clicar em anuncio. Ticket R$4.336.</td></tr>
+        <tr><td><strong>Facebook</strong></td><td><span class="badge badge-blue">+10</span></td><td>Viu anuncio no feed. Precisa mais educacao. Ciclo longo.</td></tr>
+        <tr><td><strong>Base Ativa</strong></td><td>+5</td><td>Cliente que voltou. Ticket baixo (refil).</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h4>2. Pipeline (tipo de produto) -- ate 15 pontos</h4>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Pipeline</th><th>Pontos</th><th>Ticket medio</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Funil Estacao de Tratamento (ET)</strong></td><td>+15</td><td>R$ 3.590</td></tr>
+        <tr><td><strong>Funil Agua Nao Tratada (AT)</strong></td><td>+15</td><td>R$ 6.660</td></tr>
+        <tr><td>LP - Funil ET ou AT</td><td>+10 a +12</td><td>Ciclo mais longo</td></tr>
+        <tr><td>Geral</td><td>+5</td><td>R$ 1.738</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h4>3. Tags de Qualificacao -- ate 30 pontos</h4>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Tag</th><th>Pontos</th><th>Por que?</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Interesse Quente</strong></td><td><span class="badge badge-red">+12</span></td><td>53% dos leads fechados tinham essa tag</td></tr>
+        <tr><td><strong>Condominio</strong></td><td><span class="badge badge-yellow">+10</span></td><td>23% dos leads Instagram. Ticket alto.</td></tr>
+        <tr><td><strong>Decisor</strong></td><td>+8</td><td>Quem decide a compra. 16% dos fechados.</td></tr>
+        <tr><td><strong>Imediato</strong></td><td>+5</td><td>Declara urgencia (mas os dados mostram que nao e tao confiavel).</td></tr>
+        <tr><td><strong>Tem analise</strong></td><td>+10 (AT)</td><td>Ja fez analise da agua = sabe que tem problema.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h4>4. Localizacao -- ate 15 pontos</h4>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Regiao</th><th>Pontos</th><th>Dado real</th></tr></thead>
+      <tbody>
+        <tr><td><strong>SJC / Vale do Paraiba</strong></td><td>+15</td><td>34,5% das nossas vendas vem daqui</td></tr>
+        <tr><td><strong>Campinas / regiao</strong></td><td>+12</td><td>32% das indicacoes vem de Campinas</td></tr>
+        <tr><td><strong>SP Capital</strong></td><td>+10</td><td>13% das vendas ET</td></tr>
+        <tr><td>Interior SP</td><td>+8</td><td>Boa cobertura</td></tr>
+        <tr><td>RJ</td><td>+5</td><td>Mercado crescendo</td></tr>
+        <tr><td>Outros estados</td><td>+3</td><td>Mais distante</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h4>5. Produto Mencionado -- ate 10 pontos</h4>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Produto</th><th>Pontos</th><th>Por que?</th></tr></thead>
+      <tbody>
+        <tr><td><strong>American Filter Inox</strong></td><td>+10</td><td>Nosso carro-chefe. 140 vendas.</td></tr>
+        <tr><td><strong>Iron Free</strong></td><td>+10</td><td>Ticket R$18.788! Quem pede sabe o que quer.</td></tr>
+        <tr><td><strong>Light Filter 1000</strong></td><td>+8</td><td>68 vendas. Volume forte.</td></tr>
+        <tr><td><strong>Fibra 2000+</strong></td><td>+8</td><td>AT de medio/alto porte.</td></tr>
+        <tr><td>Outro produto</td><td>+5</td><td>Sabe o que quer e bom sinal.</td></tr>
+        <tr><td>Nenhum</td><td>0</td><td>Ainda nao sabe o que precisa.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <h3>Exemplos Reais</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Lead</th><th>Origem</th><th>Info</th><th>Score</th><th>Tier</th></tr></thead>
+    <tbody>
+      <tr style="background:#e8f4fd;"><td>Joao</td><td>Google Ads</td><td>SJC + Interesse Quente + Decisor + American Filter</td><td><strong>88</strong></td><td><strong>Diamante</strong></td></tr>
+      <tr style="background:#fff8e1;"><td>Maria</td><td>Instagram</td><td>SP Capital + Condominio + Decisor</td><td><strong>61</strong></td><td><strong>Ouro</strong></td></tr>
+      <tr style="background:#f5f5f5;"><td>Carlos</td><td>Facebook</td><td>Interior SP + sem tags</td><td><strong>33</strong></td><td><strong>Prata</strong></td></tr>
+      <tr style="background:#fff3e0;"><td>Pedro</td><td>Facebook</td><td>Sem cidade + sem tags</td><td><strong>20</strong></td><td><strong>Bronze</strong></td></tr>
+      <tr><td>???</td><td>Sem origem</td><td>Nada preenchido</td><td><strong>2</strong></td><td><strong>Pedra</strong></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="alert alert-green"><span class="alert-icon">&#128161;</span><div><strong>DICA:</strong> Quanto mais informacao voce coleta do lead na primeira conversa (cidade, produto, urgencia), mais preciso o score fica pro proximo lead parecido. Preencher o CRM corretamente melhora o sistema pra todo mundo.</div></div>
+
+  <h3>Distribuicao de Leads -- Como Funciona</h3>
+  <p>O sistema distribui automaticamente o lead pro vendedor com melhor taxa de conversao pra aquele tipo de lead:</p>
+
+  <h4>Leads ET (Estacao de Tratamento)</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Tier</th><th>Quem recebe</th><th>Por que</th></tr></thead>
+    <tbody>
+      <tr style="background:#e8f4fd;"><td><strong>Diamante Google</strong></td><td>Gabriel Martins / Guilherme / Julia</td><td>Melhores taxas de conversao com Google</td></tr>
+      <tr style="background:#e8f4fd;"><td><strong>Diamante Indicacao</strong></td><td>Guilherme</td><td>Maior receita, ticket alto</td></tr>
+      <tr style="background:#e8f4fd;"><td><strong>Diamante Insta/Face</strong></td><td>Gabriel Martins / Guilherme</td><td>Top closers</td></tr>
+      <tr style="background:#fff8e1;"><td><strong>Ouro</strong></td><td>Julia / Guilherme / Gabriel M.</td><td>Equipe forte</td></tr>
+      <tr style="background:#f5f5f5;"><td><strong>Prata</strong></td><td>Julia / Tiago / Laudrik</td><td>Treinar novos com leads medios</td></tr>
+      <tr style="background:#fff3e0;"><td><strong>Bronze</strong></td><td>Tiago / Laudrik</td><td>Desenvolver os novos</td></tr>
+      <tr><td><strong>Pedra</strong></td><td>Automatico (sem vendedor)</td><td>Sistema cuida sozinho</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>Leads AT (Agua Nao Tratada / Poco)</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Tier</th><th>Quem recebe</th><th>Por que</th></tr></thead>
+    <tbody>
+      <tr style="background:#e8f4fd;"><td><strong>Diamante</strong></td><td>Gabriel Ferreira</td><td>Especialista AT. Ticket medio R$9.880</td></tr>
+      <tr style="background:#fff8e1;"><td><strong>Ouro</strong></td><td>Italo Alexandre</td><td>Especialista AT. Ticket medio R$7.350</td></tr>
+      <tr style="background:#f5f5f5;"><td><strong>Prata / Bronze</strong></td><td>Gabriel F. / Italo (rodizio)</td><td>Os 2 dividem</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="alert alert-yellow"><span class="alert-icon">&#128200;</span><div><strong>DADO REAL (ultimos 150 dias):</strong>
+    <ul style="margin:5px 0;padding-left:20px;">
+      <li>Gabriel Martins converte <strong>31,8%</strong> dos leads Google qualificados</li>
+      <li>Guilherme gera a <strong>maior receita</strong> do time (R$34k)</li>
+      <li>Gabriel Ferreira tem ticket medio de <strong>R$9.880</strong> no AT</li>
+      <li>Google Ads converte <strong>8x mais</strong> que Facebook no ET</li>
+      <li>Lead Diamante Google que nao e atendido em 15 min e <strong>redistribuido automaticamente</strong></li>
+    </ul>
+  </div></div>
+
+  <h3>Cadencia Automatica por Tier</h3>
+  <p>Alem do score e distribuicao, cada tier recebe uma cadencia diferente de follow-up:</p>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Tier</th><th>Ligacoes (voce)</th><th>WhatsApp (automatico)</th><th>Periodo</th></tr></thead>
+    <tbody>
+      <tr style="background:#e8f4fd;"><td><strong>Diamante</strong></td><td>~26 ligacoes (3 na 1a hora, depois 1/1h no D0, 1/2h D+1, diminuindo)</td><td>9 templates automaticos</td><td>5 dias</td></tr>
+      <tr style="background:#fff8e1;"><td><strong>Ouro</strong></td><td>~17 ligacoes (2 na 1a hora, depois 1/2h, diminuindo)</td><td>9 templates automaticos</td><td>5 dias</td></tr>
+      <tr style="background:#f5f5f5;"><td><strong>Prata</strong></td><td>3 ligacoes</td><td>5 templates</td><td>7 dias</td></tr>
+      <tr style="background:#fff3e0;"><td><strong>Bronze</strong></td><td>1 ligacao</td><td>3 templates</td><td>10 dias</td></tr>
+      <tr><td><strong>Pedra</strong></td><td>0 (automatico)</td><td>3 templates</td><td>15 dias</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="alert alert-green"><span class="alert-icon">&#128161;</span><div><strong>O QUE VOCE PRECISA FAZER:</strong>
+    <ul style="margin:5px 0;padding-left:20px;">
+      <li><strong>Ligar</strong> quando a tarefa aparecer no CRM</li>
+      <li><strong>NAO precisa</strong> mandar WhatsApp -- o sistema manda sozinho (maximo 2 por dia)</li>
+      <li>Se o lead <strong>responder</strong> um WhatsApp automatico, voce recebe uma tarefa urgente pra assumir a conversa</li>
+      <li>Preencher o CRM corretamente (cidade, produto, tags) -- isso melhora o score pra todo mundo</li>
+    </ul>
+  </div></div>
+
+  <h3>Dados Reais -- Ciclo de Venda</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>ET (Estacao)</th><th>AT (Poco)</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Mediana geral</strong></td><td>3 dias</td><td>6 dias</td></tr>
+      <tr><td><strong>Google Ads</strong></td><td>5 dias</td><td>15 dias</td></tr>
+      <tr><td><strong>Facebook</strong></td><td>6 dias</td><td>10 dias</td></tr>
+      <tr><td><strong>Indicacao</strong></td><td>6 dias</td><td>8 dias</td></tr>
+      <tr><td><strong>Ticket medio</strong></td><td>R$ 3.590</td><td>R$ 6.660</td></tr>
+    </tbody>
+  </table></div>
+
+</div>
+
+<!-- ==================== TAB 11: INSTALAÇÃO R$590 ==================== -->
+<div class="tab-panel" id="panel-11">
+
+<h2>Instalação Bonificada de R$ 590 — Posicionamento Comercial e Arma de Fechamento</h2>
+<p class="section-desc">Ensinar o vendedor a gerar valor na instalação, mostrar o que está incluso, usar isso como diferencial da Tudo de Filtro e aplicar a bonificação de forma estratégica no fechamento, sem parecer desconto.</p>
+
+<!-- OBJETIVO -->
+<div class="card card-highlight">
+  <h3>🎯 Objetivo deste Treinamento</h3>
+  <p>Ensinar você a transformar a instalação de R$ 590 em uma <strong>ferramenta poderosa de fechamento</strong>, sem jamais tratá-la como desconto. Ao final, você vai saber exatamente quando usar, como apresentar e qual frase dizer em cada situação.</p>
+</div>
+
+<!-- CONCEITO CENTRAL -->
+<div class="card card-red">
+  <h3>🧠 Conceito Central — GRAVE ISSO</h3>
+  <p>A instalação de R$ 590 <strong>NÃO É DESCONTO</strong>. É uma <strong>bonificação</strong> — uma condição especial que você oferece no momento certo.</p>
+  <p>O cliente não está comprando apenas uma instalação. Ele está comprando:</p>
+  <ul style="padding-left:20px;margin:8px 0;">
+    <li><strong>Comodidade</strong> — não precisa fazer nada</li>
+    <li><strong>Praticidade</strong> — resolvido em 2-3 horas</li>
+    <li><strong>Segurança</strong> — técnico especializado</li>
+    <li><strong>Mão de obra especializada</strong> — quem conhece o produto</li>
+    <li><strong>Material incluso</strong> — sem surpresas</li>
+    <li><strong>Zero dor de cabeça</strong> — do início ao fim</li>
+  </ul>
+  <div class="table-wrap"><table>
+    <thead><tr><th>❌ NUNCA DIGA</th><th>✅ SEMPRE DIGA</th></tr></thead>
+    <tbody>
+      <tr><td>"Vou te dar um desconto na instalação"</td><td>"Consigo incluir a instalação como bonificação"</td></tr>
+      <tr><td>"A instalação sai de graça"</td><td>"A instalação fica inclusa nessa condição"</td></tr>
+      <tr><td>"Vou tirar o valor da instalação"</td><td>"A logística e montagem ficam por nossa conta"</td></tr>
+      <tr><td>"Posso zerar a instalação"</td><td>"Consigo te entregar essa parte já inclusa"</td></tr>
+    </tbody>
+  </table></div>
+  <p style="color:var(--warning);margin-top:12px;"><strong>Por quê?</strong> Quando você fala "desconto", o cliente entende que o preço era inflado. Quando fala "bonificação" ou "condição especial", ele entende que está ganhando algo de valor real.</p>
+</div>
+
+<!-- COMO O VENDEDOR DEVE ENXERGAR -->
+<div class="card card-highlight">
+  <h3>👁️ Como o Vendedor Deve Enxergar Isso</h3>
+  <p>A instalação é uma <strong>alavanca de valor</strong> e uma <strong>arma de fechamento</strong>.</p>
+  <p>A lógica é:</p>
+  <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Primeiro gerar valor</div></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Mostrar tudo o que está incluso</div></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Tirar da cabeça do cliente a ideia de que ele vai ter trabalho</div></div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Só depois, no momento certo, usar a bonificação como condição para fechamento</div></div></div>
+</div>
+
+<!-- O QUE ESTÁ INCLUSO -->
+<h3>📦 O que Está Incluso na Instalação de R$ 590</h3>
+<div class="card">
+  <p>A instalação <strong>não é só apertar um cano</strong>. É um serviço completo que resolve toda a preocupação do cliente:</p>
+  <div class="check-item"><div class="check-box checked"></div><div><strong>Mão de obra especializada</strong> — técnico treinado pela Tudo de Filtro</div></div>
+  <div class="check-item"><div class="check-box checked"></div><div><strong>Conexões e registros</strong> — tudo incluso, sem surpresas</div></div>
+  <div class="check-item"><div class="check-box checked"></div><div><strong>Tubulação necessária</strong> — o cliente não precisa comprar nada</div></div>
+  <div class="check-item"><div class="check-box checked"></div><div><strong>Material completo</strong> — adaptadores, abraçadeiras, vedações</div></div>
+  <div class="check-item"><div class="check-box checked"></div><div><strong>Montagem completa</strong> — do início ao fim</div></div>
+  <div class="check-item"><div class="check-box checked"></div><div><strong>Sistema by-pass</strong> — quando aplicável, permite manutenção sem cortar a água</div></div>
+  <div class="check-item"><div class="check-box checked"></div><div><strong>Testes finais</strong> — verificação de pressão, vazamento, funcionamento</div></div>
+  <div class="check-item"><div class="check-box checked"></div><div><strong>Ajustes básicos</strong> — configuração da retrolavagem e orientação de uso</div></div>
+</div>
+
+<div class="alert alert-blue">
+  <span class="alert-icon">💡</span>
+  <div><strong>FRASE-CHAVE:</strong> "Você não precisa contratar ninguém e nem comprar material. A gente já leva tudo e entrega funcionando."</div>
+</div>
+
+<!-- COMO GERAR VALOR -->
+<h3>💎 Como Gerar Valor na Instalação</h3>
+<div class="card card-green">
+  <h4>O cliente precisa SENTIR o peso de R$ 590</h4>
+  <p>Antes de bonificar, o cliente precisa entender que a instalação tem valor REAL. Se ele não percebe o valor, a bonificação não tem impacto.</p>
+
+  <h4>O que o cliente NÃO precisa fazer (graças à instalação):</h4>
+  <div class="check-item"><div class="check-box checked"></div><div>❌ Procurar encanador — <em>"Sabe como é achar encanador disponível, né?"</em></div></div>
+  <div class="check-item"><div class="check-box checked"></div><div>❌ Comprar material — <em>"Conexão errada, registro errado... dor de cabeça certa"</em></div></div>
+  <div class="check-item"><div class="check-box checked"></div><div>❌ Correr risco de comprar item errado — <em>"Se comprar o registro errado, vaza tudo"</em></div></div>
+  <div class="check-item"><div class="check-box checked"></div><div>❌ Quebrar a cabeça com instalação — <em>"Nosso técnico faz em 2-3 horas e já sai funcionando"</em></div></div>
+  <div class="check-item"><div class="check-box checked"></div><div>✅ Recebe o sistema PRONTO — <em>"Você só abre a torneira e já tá filtrado"</em></div></div>
+
+  <div class="script">
+    "Essa parte normalmente envolve técnico, deslocamento e material, e gira em torno de R$ 590. A gente já leva tudo — conexões, registros, tubulação — e entrega funcionando. Você não precisa se preocupar com nada."
+  </div>
+  <div class="script" style="margin-top:12px;">
+    "A ideia é justamente te poupar de dor de cabeça. Você só nos manda a foto do local e a nossa equipe cuida do resto."
+  </div>
+</div>
+
+<!-- FOTO DO LOCAL -->
+<h3>📸 Como Usar a Foto do Local na Venda</h3>
+<div class="card card-highlight">
+  <h4>A foto é uma FERRAMENTA COMERCIAL, não um requisito técnico</h4>
+  <p>Quando você pede a foto, três coisas acontecem:</p>
+  <ol style="padding-left:20px;margin:12px 0;">
+    <li><strong>O cliente se visualiza com o produto</strong> — ele já começa a imaginar o filtro instalado</li>
+    <li><strong>Você gera compromisso</strong> — quem manda foto já está envolvido na compra</li>
+    <li><strong>Você avança a negociação</strong> — de "pesquisando" para "planejando instalar"</li>
+  </ol>
+
+  <div class="script">
+    "Se você quiser, me manda uma foto de onde entra a água aí na sua casa que eu já te explico como ficaria a instalação."
+  </div>
+
+  <p style="color:var(--text-muted);font-size:13px;margin-top:8px;">Essa frase é poderosa porque parece casual, mas leva o cliente a tomar uma ação concreta. Quem manda foto fecha em mais de 70% dos casos.</p>
+</div>
+
+<!-- ANCORAGEM -->
+<h3>⚓ Como Ancorar o Valor de R$ 590</h3>
+<div class="card card-yellow">
+  <h4>A sequência importa. SEMPRE nesta ordem:</h4>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <div class="step-title">Primeiro: mostre que a instalação TEM custo real</div>
+      <div class="step-desc">
+        <div class="script">"Essa parte normalmente envolve técnico, deslocamento e material, e gira em torno de R$ 590."</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <div class="step-title">Depois: mostre tudo que está incluso</div>
+      <div class="step-desc">"Inclui mão de obra, conexões, registros, tubulação, montagem, testes e ajustes. Tudo. Você não gasta mais nenhum centavo."</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <div class="step-title">Só ENTÃO: ofereça a bonificação (se for o momento)</div>
+      <div class="step-desc">
+        <div class="script">"O que eu consigo fazer hoje, se a gente já alinhar isso agora, é te entregar essa parte já inclusa."</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-red">
+    <span class="alert-icon">⚠️</span>
+    <div><strong>ERRO FATAL:</strong> Nunca ofereça a bonificação logo de cara. Se o cliente não sentiu o peso dos R$ 590 antes, ele não vai valorizar quando você bonificar.</div>
+  </div>
+</div>
+
+<!-- REGRAS DE USO -->
+<h3>📋 Regras de Uso da Bonificação</h3>
+<div class="card card-red">
+  <div class="table-wrap"><table>
+    <thead><tr><th>✅ PODE</th><th>❌ NÃO PODE</th></tr></thead>
+    <tbody>
+      <tr><td>Usar como moeda de troca no fechamento</td><td>Dar de graça logo no início</td></tr>
+      <tr><td>Vincular ao momento da decisão</td><td>Garantir pra "depois"</td></tr>
+      <tr><td>Justificar pela logística/rota da equipe</td><td>Dizer que é promoção</td></tr>
+      <tr><td>Usar após apresentar todo o valor do produto</td><td>Usar antes de qualificar o lead</td></tr>
+      <tr><td>Chamar de "bonificação" ou "condição especial"</td><td>Chamar de "desconto" ou "gratuito"</td></tr>
+    </tbody>
+  </table></div>
+</div>
+
+<!-- POSICIONAMENTO DA BONIFICAÇÃO -->
+<div class="card card-highlight">
+  <h3>🎯 Como Posicionar a Bonificação</h3>
+  <p>A instalação inclusa <strong>não é um benefício aberto</strong> para qualquer momento. Ela deve ser apresentada como uma condição que faz sentido <strong>se o cliente já alinhar naquele momento</strong>.</p>
+  <div class="script">"O que eu consigo fazer hoje, se a gente já alinhar isso agora, é te entregar essa parte da instalação já inclusa."</div>
+  <p style="margin-top:12px;"><strong>Justificativa operacional:</strong></p>
+  <div class="script">"Porque eu consigo otimizar a rota da equipe e encaixar a instalação na programação."</div>
+  <p style="margin-top:12px;"><strong>Limite da condição:</strong></p>
+  <div class="script">"Se ficar para depois, eu não consigo garantir essa mesma condição, porque muda a logística da equipe."</div>
+</div>
+
+<!-- MOMENTO CERTO VS ERRADO -->
+<h3>⏰ Momento CERTO vs Momento ERRADO</h3>
+<div class="card card-green">
+  <h4>✅ Momento CERTO de usar:</h4>
+  <ul style="padding-left:20px;">
+    <li>Cliente qualificado, entendeu o produto e o valor</li>
+    <li>Proposta apresentada, cliente demonstra interesse real</li>
+    <li>Cliente hesita no preço mas quer o produto</li>
+    <li>Cliente pede desconto → você redireciona pra instalação</li>
+    <li>Cliente pronto pra fechar → bonificação sela o negócio</li>
+  </ul>
+</div>
+
+<div class="card card-red">
+  <h4>❌ Momento ERRADO de usar:</h4>
+  <ul style="padding-left:20px;">
+    <li>Logo na primeira conversa (cliente nem sabe o que quer)</li>
+    <li>Antes de apresentar o produto e seus diferenciais</li>
+    <li>Quando o cliente ainda está "só pesquisando"</li>
+    <li>Como argumento principal de venda (o produto vende pelo valor, não pelo bônus)</li>
+    <li>Pra lead frio que não demonstrou interesse real</li>
+  </ul>
+</div>
+
+<!-- ESTRUTURA DE FALA -->
+<h3>🎯 Estrutura de Fala Recomendada</h3>
+<div class="card card-highlight">
+  <h4>Passo a passo — o que dizer e em que ordem:</h4>
+
+  <div class="step">
+    <div class="step-num" style="background:var(--accent);">1</div>
+    <div class="step-content">
+      <div class="step-title">Apresente o valor do produto</div>
+      <div class="step-desc">"O investimento fica em 7x de R$ [valor] no cartão."</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num" style="background:var(--warning);">2</div>
+    <div class="step-content">
+      <div class="step-title">Ancore a instalação</div>
+      <div class="step-desc">"Além disso, tem toda a parte de instalação — técnico, material, deslocamento — que normalmente gira em torno de R$ 590."</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num" style="background:var(--green);">3</div>
+    <div class="step-content">
+      <div class="step-title">Mostre o que está incluso</div>
+      <div class="step-desc">"Inclui mão de obra, conexões, registros, tubulação. Você não precisa contratar ninguém nem comprar nada."</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num" style="background:var(--danger);">4</div>
+    <div class="step-content">
+      <div class="step-title">Condicione ao fechamento</div>
+      <div class="step-desc">
+        <div class="script">"O que eu consigo fazer hoje, se a gente já alinhar isso agora, é te entregar essa parte já inclusa. Se ficar para depois, eu não consigo garantir essa mesma condição."</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num" style="background:var(--purple);">5</div>
+    <div class="step-content">
+      <div class="step-title">Justifique pela logística</div>
+      <div class="step-desc">"Isso porque depende da rota da equipe e da programação de instalações da semana."</div>
+    </div>
+  </div>
+</div>
+
+<!-- ROLEPLAYS -->
+<h3>🎭 Roleplays Práticos — Treine Antes de Usar</h3>
+
+<div class="card card-red">
+  <h4>Roleplay 1 — Cliente achou caro</h4>
+  <p><strong>Cliente:</strong> <em>"Achei caro."</em></p>
+  <div class="script">
+    "Entendo. Deixa eu te mostrar uma coisa importante. Além do equipamento, tem toda a parte de instalação com material, deslocamento e mão de obra, que normalmente gira em torno de R$ 590. O que eu consigo fazer hoje, se a gente já alinhar isso, é te entregar essa parte já inclusa. Ou seja, você não vai precisar se preocupar com nada, porque a gente já deixa funcionando."
+  </div>
+</div>
+
+<div class="card card-yellow">
+  <h4>Roleplay 2 — Cliente quer pensar</h4>
+  <p><strong>Cliente:</strong> <em>"Vou pensar."</em></p>
+  <div class="script">
+    "Perfeito, faz sentido avaliar. Só te explico com transparência: essa condição da instalação inclusa eu consigo segurar agora porque depende da logística e da rota da equipe. Se ficar para depois, eu não consigo garantir a mesma condição."
+  </div>
+</div>
+
+<div class="card card-highlight">
+  <h4>Roleplay 3 — Cliente quer desconto</h4>
+  <p><strong>Cliente:</strong> <em>"Consegue melhorar o valor?"</em></p>
+  <div class="script">
+    "O que eu consigo fazer, em vez de mexer no valor do equipamento, é te ajudar na instalação. Essa parte normalmente gira em torno de R$ 590, e hoje eu consigo te entregar isso já incluso se a gente já alinhar agora."
+  </div>
+</div>
+
+<div class="card card-green">
+  <h4>Roleplay 4 — Cliente com medo da instalação</h4>
+  <p><strong>Cliente:</strong> <em>"Vai dar muito trabalho instalar?"</em></p>
+  <div class="script">
+    "Não. Essa é justamente a vantagem. Você não precisa comprar material e nem contratar ninguém. A gente leva tudo, faz a instalação e já deixa funcionando. Se quiser, me manda uma foto de onde entra a água na casa que eu já te explico como ficaria."
+  </div>
+</div>
+
+<!-- FRASES PARA DECORAR -->
+<h3>💬 Frases Curtas para Decorar</h3>
+<div class="card" style="background:var(--bg);border:2px solid var(--accent);">
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    <div style="padding:12px 16px;background:var(--bg-card);border-radius:8px;border-left:4px solid var(--accent);">
+      <strong>Sobre o serviço:</strong><br>
+      "Você não precisa contratar ninguém e nem comprar material. A gente já leva tudo e entrega funcionando."
+    </div>
+    <div style="padding:12px 16px;background:var(--bg-card);border-radius:8px;border-left:4px solid var(--green);">
+      <strong>Para pedir a foto:</strong><br>
+      "Se você quiser, me manda uma foto de onde entra a água aí na sua casa que eu já te explico como ficaria a instalação."
+    </div>
+    <div style="padding:12px 16px;background:var(--bg-card);border-radius:8px;border-left:4px solid var(--warning);">
+      <strong>Para ancorar o valor:</strong><br>
+      "Essa parte normalmente envolve técnico, deslocamento e material, e gira em torno de R$ 590."
+    </div>
+    <div style="padding:12px 16px;background:var(--bg-card);border-radius:8px;border-left:4px solid var(--purple);">
+      <strong>Para bonificar:</strong><br>
+      "O que eu consigo fazer hoje, se a gente já alinhar isso agora, é te entregar essa parte já inclusa."
+    </div>
+    <div style="padding:12px 16px;background:var(--bg-card);border-radius:8px;border-left:4px solid var(--danger);">
+      <strong>Para criar urgência:</strong><br>
+      "Se ficar para depois, eu não consigo garantir essa mesma condição."
+    </div>
+  </div>
+</div>
+
+<!-- RESUMO FINAL -->
+<h3>✅ Resumo Final</h3>
+<div class="card card-highlight">
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Regra</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>A instalação <strong>NÃO é desconto</strong>. É bonificação, condição especial ou logística inclusa.</td></tr>
+      <tr><td>2</td><td><strong>Primeiro gere valor</strong>: mostre o que está incluso (mão de obra, material, montagem, testes).</td></tr>
+      <tr><td>3</td><td><strong>Depois ancore o preço</strong>: "Essa parte gira em torno de R$ 590."</td></tr>
+      <tr><td>4</td><td><strong>Só então bonifique</strong>: "Consigo incluir isso se alinharmos agora."</td></tr>
+      <tr><td>5</td><td><strong>Vincule ao momento</strong>: "Se ficar pra depois, não garanto a mesma condição."</td></tr>
+      <tr><td>6</td><td><strong>Justifique pela logística</strong>: rota da equipe, programação da semana.</td></tr>
+      <tr><td>7</td><td><strong>Peça a foto</strong>: é a melhor ferramenta de avanço comercial que existe.</td></tr>
+      <tr><td>8</td><td><strong>NUNCA dê no início</strong>: sem qualificação e sem valor, a bonificação é desperdiçada.</td></tr>
+      <tr><td>9</td><td><strong>NUNCA chame de desconto</strong>: muda toda a percepção do cliente.</td></tr>
+      <tr><td>10</td><td><strong>NUNCA mexa no preço do produto</strong>: a instalação é sua moeda, não o equipamento.</td></tr>
+    </tbody>
+  </table></div>
+</div>
+
+</div>
+
+<!-- ==================== TAB 11: REGRAS DE PERDA ==================== -->
+<div class="tab-panel" id="panel-11">
+  <h2>Regras para Fechar como Perdido</h2>
+  <p class="section-desc">A partir de 28/Abr/2026, o sistema monitora automaticamente quando um deal e fechado como "Sem contato". Se voce fechar antes do prazo minimo, <strong>o deal volta sozinho pra Primeiro Contato</strong> e voce recebe uma tarefa.</p>
+
+  <div class="alert alert-red"><span class="alert-icon">&#9888;</span><div><strong>REGRA AUTOMATICA:</strong> O sistema verifica a cada 30 minutos. Se voce fechar como "Sem contato" antes do prazo, o deal e REABERTO automaticamente e o gestor recebe alerta.</div></div>
+
+  <h3>Tempo Minimo + Tentativas por Tier</h3>
+  <p>Quanto melhor o lead (maior score), mais voce precisa tentar antes de desistir:</p>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Tier</th><th>Score</th><th>Min. Dias</th><th>Min. Tentativas</th><th>Logica</th></tr></thead>
+    <tbody>
+      <tr style="background:#e8f4fd;"><td><strong>Diamante</strong></td><td>70-100</td><td><span class="badge badge-red">5 DIAS</span></td><td><strong>15 tentativas</strong></td><td>Lead caro — nao pode desistir facil</td></tr>
+      <tr style="background:#fff8e1;"><td><strong>Ouro</strong></td><td>50-69</td><td><span class="badge badge-red">4 DIAS</span></td><td><strong>12 tentativas</strong></td><td>Lead bom — insistir</td></tr>
+      <tr style="background:#f5f5f5;"><td><strong>Prata</strong></td><td>30-49</td><td><span class="badge badge-yellow">3 DIAS</span></td><td><strong>8 tentativas</strong></td><td>Lead medio — tentar</td></tr>
+      <tr style="background:#fff3e0;"><td><strong>Bronze</strong></td><td>15-29</td><td><span class="badge badge-blue">2 DIAS</span></td><td><strong>6 tentativas</strong></td><td>Lead frio — minimo esforco</td></tr>
+      <tr><td><strong>Pedra</strong></td><td>0-14</td><td><span class="badge badge-green">1 DIA</span></td><td><strong>3 tentativas</strong></td><td>Lead sem info — rapido</td></tr>
+      <tr><td><strong>Sem score</strong></td><td>-</td><td><span class="badge badge-blue">2 DIAS</span></td><td><strong>6 tentativas</strong></td><td>Padrao</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>O que conta como "tentativa"?</h3>
+  <div class="card">
+    <ul style="padding-left:20px;">
+      <li>Ligacao registrada no CRM (tarefa concluida)</li>
+      <li>Mensagem WhatsApp enviada pelo WATI</li>
+      <li>Nota registrada no deal</li>
+    </ul>
+  </div>
+
+  <h3>O que acontece se voce fechar antes do prazo?</h3>
+  <div class="card card-highlight">
+    <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Deal REABERTO automaticamente</div><div class="step-desc">O sistema reverte pra "Primeiro Contato" e limpa a razao de perda.</div></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Tarefa criada pra voce</div><div class="step-desc">"REABERTO - [nome] precisa de X dias + Y tentativas"</div></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Gestor recebe alerta</div><div class="step-desc">O Paulo recebe notificacao no WhatsApp com seu nome e o deal.</div></div></div>
+  </div>
+
+  <h3>Motivos de Perda Disponiveis</h3>
+  <p>Quando for fechar como perdido, <strong>SEMPRE selecione o motivo correto</strong>:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Motivo</th><th>Quando usar</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Sem contato</strong></td><td>Tentou ligar/mandar mensagem varias vezes e nao conseguiu falar (respeitar dias + tentativas minimas)</td></tr>
+      <tr><td><strong>Cliente nao quis</strong></td><td>Falou com o cliente e ele disse que nao quer</td></tr>
+      <tr><td><strong>Adiou a compra</strong></td><td>Cliente quer mas nao agora — vai comprar depois</td></tr>
+      <tr><td><strong>Fechou com outra empresa</strong></td><td>Cliente comprou de concorrente</td></tr>
+      <tr><td><strong>Preco elevado</strong></td><td>Achou caro e nao fechou</td></tr>
+      <tr><td><strong>Sem condicoes financeiras</strong></td><td>Quer mas nao tem dinheiro</td></tr>
+      <tr><td><strong>Curioso</strong></td><td>So queria saber preco, sem intencao real</td></tr>
+      <tr><td><strong>Cliente so quer valor</strong></td><td>Pediu orcamento mas nao quer conversar</td></tr>
+      <tr><td><strong>Poco sem analise</strong></td><td>Lead AT que nao tem e nao quer fazer analise</td></tr>
+      <tr><td><strong>Cliente duplicado</strong></td><td>Ja tem outro deal aberto pra esse cliente</td></tr>
+      <tr><td><strong>Demora no follow</strong></td><td>Demorou demais pra fazer follow-up e perdeu</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="alert alert-green"><span class="alert-icon">&#128161;</span><div><strong>POR QUE ISSO IMPORTA:</strong> Em Abril, 82% dos deals foram fechados como perdido <strong>sem nenhum motivo</strong>. Isso impede a empresa de entender o que ta errado e melhorar. Preencher o motivo correto ajuda VOCE a receber leads melhores no futuro.</div></div>
+</div>
+
+</div><!-- /container -->
+
+<!-- ==================== TAB 12: PLANO DE CARREIRA ==================== -->
+<div class="tab-panel" id="panel-12">
+  <h2>Plano de Carreira — Time de Vendas</h2>
+  <p class="section-desc">Meta mensal: R$ 90.000 | Avaliacao a cada 3 meses | Regras claras. Crescimento previsivel. Jogo justo.</p>
+
+  <div class="alert alert-green"><span class="alert-icon">&#127942;</span><div><strong>POR QUE CRIAMOS:</strong> Dar clareza de crescimento, premiar performance real, evitar subjetividade. Todo mundo sabe o que precisa fazer.</div></div>
+
+  <h3>Niveis de Vendedor</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Nivel</th><th>Salario</th><th>Vale Alimentacao</th><th>Wellhub</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Junior</strong></td><td>Fixo</td><td>—</td><td>Basic</td></tr>
+      <tr style="background:#f8f9fa;"><td><strong>Pleno</strong></td><td>Fixo</td><td><strong style="color:#27ae60;">R$ 500</strong></td><td>Silver</td></tr>
+      <tr><td><strong>Senior</strong></td><td>Fixo</td><td><strong style="color:#27ae60;">R$ 1.000</strong></td><td>Gold</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Sistema de Pontuacao (100 pontos)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Criterio</th><th>Peso</th><th>O que avalia</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Resultado</strong></td><td><strong>40 pts</strong></td><td>% da meta atingida no trimestre</td></tr>
+      <tr style="background:#f8f9fa;"><td><strong>Consistencia</strong></td><td><strong>25 pts</strong></td><td>Quantos meses bateu R$ 90.000</td></tr>
+      <tr><td><strong>Processo</strong></td><td><strong>20 pts</strong></td><td>CRM em dia, follow-up, pipeline organizado</td></tr>
+      <tr style="background:#f8f9fa;"><td><strong>Postura</strong></td><td><strong>15 pts</strong></td><td>Pontualidade, compromisso, comunicacao</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Resultado (40 pts)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Media mensal do trimestre</th><th>Pontos</th></tr></thead>
+    <tbody>
+      <tr><td>100% ou mais da meta</td><td><strong style="color:#27ae60;">40 pts</strong></td></tr>
+      <tr style="background:#f8f9fa;"><td>90% a 99%</td><td><strong>32 pts</strong></td></tr>
+      <tr><td>80% a 89%</td><td><strong style="color:#e67e22;">24 pts</strong></td></tr>
+      <tr style="background:#f8f9fa;"><td>Abaixo de 80%</td><td><strong style="color:#e74c3c;">0 pts</strong></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Consistencia (25 pts)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Meses batendo R$ 90.000</th><th>Pontos</th></tr></thead>
+    <tbody>
+      <tr><td>3 meses</td><td><strong style="color:#27ae60;">25 pts</strong></td></tr>
+      <tr style="background:#f8f9fa;"><td>2 meses</td><td><strong>15 pts</strong></td></tr>
+      <tr><td>1 mes</td><td><strong style="color:#e67e22;">5 pts</strong></td></tr>
+      <tr style="background:#f8f9fa;"><td>0 meses</td><td><strong style="color:#e74c3c;">0 pts</strong></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Promocao (subir de nivel)</h3>
+  <div class="alert alert-green"><span class="alert-icon">&#128640;</span><div>
+    <strong>80 pontos ou mais</strong> + Meta batida em <strong>pelo menos 2 meses</strong> + <strong>Nenhum criterio zerado</strong>
+  </div></div>
+
+  <h3>Rebaixamento (descer de nivel)</h3>
+  <div class="alert alert-red"><span class="alert-icon">&#9888;&#65039;</span><div>
+    <strong>Menos de 60 pontos</strong> OU <strong>0 meses batendo meta</strong> OU <strong>Quebra grave</strong> de processo ou postura
+  </div></div>
+
+  <div style="background:var(--bg-card);border:1px solid #D29922;border-radius:12px;padding:20px;margin-top:20px;text-align:center;">
+    <p style="font-size:1.1rem;font-weight:700;color:#F0C040;">Aqui o jogo e simples:</p>
+    <p style="font-size:1.3rem;font-weight:800;color:var(--text);">Resultado + Consistencia + Processo</p>
+    <p style="font-size:1rem;color:var(--text-muted);margin-top:8px;">Quem entrega, cresce. Quem relaxa, ajusta.</p>
+  </div>
+</div>
+
+<!-- ==================== TAB 13: PADRAO DE EXECUCAO ==================== -->
+<div class="tab-panel" id="panel-13">
+  <h2>Padrao de Execucao Comercial</h2>
+  <p class="section-desc">Onboarding Comercial: Guia de Preparacao para Alta Performance. Estrutura, Cultura e Execucao.</p>
+
+  <div class="alert alert-blue"><span class="alert-icon">&#128161;</span><div><strong>FILOSOFIA:</strong> Onboarding nao e motivacao. E preparacao para execucao. O objetivo e transformar voce em um consultor produtivo, seguro e alinhado ao padrao da empresa.</div></div>
+
+  <h3>3 Pilares</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Pilar</th><th>Significado</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Clareza</strong></td><td>Entender o que vendemos e como geramos valor</td></tr>
+      <tr style="background:#f8f9fa;"><td><strong>Seguranca</strong></td><td>Saber atender um lead real e usar o CRM</td></tr>
+      <tr><td><strong>Execucao</strong></td><td>Dominar o follow-up e o padrao de comunicacao</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Cultura & Posicionamento</h3>
+  <div class="alert alert-green"><span class="alert-icon">&#128170;</span><div><strong>"Preza-se por PADRAO, PROCESSO E DISCIPLINA."</strong><br>Aqui nao se vende no improviso.</div></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Identidade</th><th>Significado</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Somos Especialistas</strong></td><td>Nao vendemos apenas hardware; vendemos a melhoria na qualidade da agua</td></tr>
+      <tr style="background:#f8f9fa;"><td><strong>Somos Consultivos</strong></td><td>Nossa venda e baseada em relacionamento e educacao, nao em empurrar produtos</td></tr>
+      <tr><td><strong>Somos Disciplinados</strong></td><td>Follow-up e parte do servico. Cliente nunca fica sem resposta</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Voce NAO e um tirador de pedidos</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    <div style="background:#2d1215;border:1px solid #F85149;border-radius:12px;padding:16px;">
+      <h4 style="color:#F85149;">O que NAO somos</h4>
+      <ul style="color:var(--text);font-size:14px;padding-left:18px;">
+        <li>Atendente passivo</li>
+        <li>Repetidor de script sem entendimento</li>
+        <li>Vendedor que some apos a primeira mensagem</li>
+      </ul>
+    </div>
+    <div style="background:#0d2818;border:1px solid #2EA043;border-radius:12px;padding:16px;">
+      <h4 style="color:#2EA043;">Quem VOCE e</h4>
+      <ul style="color:var(--text);font-size:14px;padding-left:18px;">
+        <li><strong>Consultor:</strong> Guia o cliente para a melhor solucao</li>
+        <li><strong>Educador:</strong> Ensina sobre a importancia da agua tratada</li>
+        <li><strong>Facilitador:</strong> Remove barreiras para a decisao</li>
+        <li><strong>Disciplinado:</strong> Mantem o CRM e o follow-up impecaveis</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Identificando a Dor do Cliente</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Tipo</th><th>Exemplo</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Sensorial</strong></td><td>Agua com gosto ou cheiro ruim</td></tr>
+      <tr style="background:#f8f9fa;"><td><strong>Visual</strong></td><td>Sujeira visivel (barro, limo, lodo) ou caixa d'agua suja</td></tr>
+      <tr><td><strong>Material</strong></td><td>Problemas frequentes em eletrodomesticos</td></tr>
+      <tr style="background:#f8f9fa;"><td><strong>Emocional</strong></td><td>Desconfianca com a procedencia da agua</td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert alert-red"><span class="alert-icon">&#9888;&#65039;</span><div><strong>Nunca pule a etapa de investigar a dor.</strong></div></div>
+
+  <h3>O Processo Comercial</h3>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+    <div style="background:#1e3a5f;color:#5ba3f5;padding:12px 16px;border-radius:8px;font-weight:700;text-align:center;flex:1;min-width:120px;">1. Recebimento<br><span style="font-weight:400;font-size:12px;color:var(--text-muted);">O lead chega</span></div>
+    <div style="color:#5ba3f5;display:flex;align-items:center;">→</div>
+    <div style="background:#1e3a5f;color:#5ba3f5;padding:12px 16px;border-radius:8px;font-weight:700;text-align:center;flex:1;min-width:120px;">2. Primeiros Minutos<br><span style="font-weight:400;font-size:12px;color:var(--text-muted);">Abordagem rapida</span></div>
+    <div style="color:#5ba3f5;display:flex;align-items:center;">→</div>
+    <div style="background:#1e3a5f;color:#5ba3f5;padding:12px 16px;border-radius:8px;font-weight:700;text-align:center;flex:1;min-width:120px;">3. Registro<br><span style="font-weight:400;font-size:12px;color:var(--text-muted);">Tudo vai para o CRM</span></div>
+    <div style="color:#5ba3f5;display:flex;align-items:center;">→</div>
+    <div style="background:#1e3a5f;color:#5ba3f5;padding:12px 16px;border-radius:8px;font-weight:700;text-align:center;flex:1;min-width:120px;">4. Avanco<br><span style="font-weight:400;font-size:12px;color:var(--text-muted);">Proximo passo definido</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+    <div style="background:#0d1520;border:1px solid #1e3a5f;border-radius:8px;padding:12px;text-align:center;font-size:13px;color:#5ba3f5;font-weight:600;">CRM e ferramenta de trabalho, nao burocracia</div>
+    <div style="background:#0d1520;border:1px solid #1e3a5f;border-radius:8px;padding:12px;text-align:center;font-size:13px;color:#5ba3f5;font-weight:600;">Lead sem proximo passo e lead abandonado</div>
+    <div style="background:#0d1520;border:1px solid #1e3a5f;border-radius:8px;padding:12px;text-align:center;font-size:13px;color:#5ba3f5;font-weight:600;">Disciplina gera venda</div>
+  </div>
+
+  <h3>Comunicacao: WhatsApp NAO e e-mail</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    <div style="background:#2d1215;border-radius:12px;padding:16px;">
+      <h4 style="color:#F85149;">Errado</h4>
+      <ul style="color:var(--text);font-size:14px;padding-left:18px;"><li>Textos longos</li><li>Linguagem tecnica</li><li>Passividade</li></ul>
+    </div>
+    <div style="background:#0d2818;border-radius:12px;padding:16px;">
+      <h4 style="color:#2EA043;">Certo</h4>
+      <ul style="color:var(--text);font-size:14px;padding-left:18px;"><li>Linguagem humana</li><li>Mensagens curtas</li><li>Pergunta para avancar</li></ul>
+    </div>
+  </div>
+
+  <h3>Follow-up: O Pilar Central</h3>
+  <div class="alert alert-blue"><span class="alert-icon">&#128197;</span><div><strong>Follow-up nao e chato; e um diferencial competitivo.</strong> E rotina, nao excecao.</div></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Aspecto</th><th>Regra</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Quando</strong></td><td>Baseado no compromisso agendado no CRM</td></tr>
+      <tr style="background:#f8f9fa;"><td><strong>Como</strong></td><td>Com motivo claro e agregacao de valor</td></tr>
+      <tr><td><strong>Encerramento</strong></td><td>Saber quando encerrar o ciclo corretamente</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Erros Inaceitaveis</h3>
+  <div style="background:#2d1215;border:1px solid #F85149;border-radius:12px;padding:16px;margin-bottom:16px;">
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:14px;color:#f87171;">
+      <div>&#9888;&#65039; <strong>Sumir:</strong> Abandonar o cliente ou o lead</div>
+      <div>&#9888;&#65039; <strong>Monologo:</strong> Mandar mensagem sem finalizar com uma pergunta</div>
+      <div>&#9888;&#65039; <strong>Preco:</strong> Falar apenas de valores antes de gerar valor</div>
+      <div>&#9888;&#65039; <strong>Passividade:</strong> Esperar o cliente decidir sozinho</div>
+      <div>&#9888;&#65039; <strong>Desorganizacao:</strong> Nao registrar no CRM ou tratar lead quente como frio</div>
+    </div>
+    <p style="color:#F85149;font-weight:700;margin-top:12px;font-size:13px;">Esses erros sao tratados como falhas graves de processo.</p>
+  </div>
+
+  <h3>Checklist de Validacao</h3>
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;">
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px;">Se voce nao pode marcar "Sim" em tudo, releia o material:</p>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--text);">
+      <div>☐ Sei explicar o que a Tudo de Filtro faz?</div>
+      <div>☐ Sei explicar o filtro de entrada de forma simples?</div>
+      <div>☐ Sei conduzir uma conversa consultiva?</div>
+      <div>☐ Sei fazer follow-up corretamente?</div>
+      <div>☐ Sei usar o CRM e registrar cada passo?</div>
+      <div>☐ Entendi o padrao de excelencia esperado de mim?</div>
+    </div>
+  </div>
+
+  <div style="background:linear-gradient(135deg,var(--bg),#1a1a2e);border:1px solid #0066CC;border-radius:12px;padding:24px;margin-top:20px;text-align:center;">
+    <p style="font-size:1.2rem;font-weight:800;color:var(--text);">Onboarding e preparacao para performance.</p>
+    <p style="font-size:1rem;color:var(--text-muted);margin-top:8px;">Vendedor bem treinado vende mais, erra menos e escala resultados.</p>
+    <p style="font-size:1.3rem;font-weight:800;color:#2EA043;margin-top:12px;">Vamos vender.</p>
+  </div>
+</div>
+
+<!-- ==================== TAB 14: PREMIACAO ==================== -->
+<div class="tab-panel" id="panel-14">
+  <h2>Premiacao e Bonificacao</h2>
+  <p class="section-desc">Aqui voce nao recebe comissao. Voce recebe PREMIO por resultado e BONIFICACOES por qualidade de venda. O modelo e claro, previsivel e igual para todos.</p>
+
+  <h3>1. Premio Base (por faixa de faturamento)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Faturamento Mensal</th><th>Premio</th></tr></thead>
+    <tbody>
+      <tr><td>Ate R$ 74.999</td><td style="color:var(--text-muted);">—</td></tr>
+      <tr style="background:#f8f9fa;"><td><strong>R$ 75.000</strong></td><td><strong style="color:#27ae60;">R$ 2.000</strong></td></tr>
+      <tr><td><strong>R$ 90.000</strong></td><td><strong style="color:#27ae60;">R$ 3.800</strong></td></tr>
+      <tr style="background:#f8f9fa;"><td><strong>R$ 110.000</strong></td><td><strong style="color:#27ae60;">R$ 4.900</strong></td></tr>
+      <tr><td><strong>R$ 130.000</strong></td><td><strong style="color:#27ae60;">R$ 6.000</strong></td></tr>
+      <tr style="background:#f8f9fa;"><td><strong>R$ 150.000</strong></td><td><strong style="color:#27ae60;">R$ 7.200</strong></td></tr>
+      <tr><td><strong>R$ 170.000</strong></td><td><strong style="color:#27ae60;">R$ 8.400</strong></td></tr>
+      <tr style="background:#f8f9fa;"><td><strong>R$ 190.000</strong></td><td><strong style="color:#27ae60;">R$ 9.800</strong></td></tr>
+      <tr><td><strong>R$ 210.000</strong></td><td><strong style="color:#27ae60;">R$ 11.200</strong></td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert alert-yellow"><span class="alert-icon">&#128204;</span><div>O premio <strong>nao e automatico</strong>. Depende de resultado + processo + validacao pela empresa.</div></div>
+
+  <h3>2. Bonificacao por Produtos de Maior Margem</h3>
+  <p class="section-desc">Produtos: Iron Free, Abrandadores, Ultrafiltracao, Scale Stop, Condominios, Alta vazao, Filtros acima de 5.000 L/h</p>
+  <div class="alert alert-blue"><span class="alert-icon">&#128161;</span><div>A bonificacao e aplicada sobre o <strong>PREMIO</strong>, nao sobre a venda.</div></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Faixa</th><th>Bonificacao</th><th>Exemplo (Premio + Bonus)</th></tr></thead>
+    <tbody>
+      <tr><td>R$ 75k</td><td>0%</td><td>R$ 2.000</td></tr>
+      <tr style="background:#f8f9fa;"><td>R$ 90k</td><td><strong>20%</strong></td><td>R$ 3.800 + R$ 760 = <strong>R$ 4.560</strong></td></tr>
+      <tr><td>R$ 110k</td><td><strong>30%</strong></td><td>R$ 4.900 + R$ 1.470 = <strong>R$ 6.370</strong></td></tr>
+      <tr style="background:#f8f9fa;"><td>R$ 130k</td><td><strong>40%</strong></td><td>R$ 6.000 + R$ 2.400 = <strong>R$ 8.400</strong></td></tr>
+      <tr><td>R$ 150k+</td><td><strong>50%</strong></td><td>R$ 7.200 + R$ 3.600 = <strong>R$ 10.800</strong></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>3. Campanhas Especificas (temporarias)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Campanha</th><th>Meta</th><th>Bonus</th></tr></thead>
+    <tbody>
+      <tr><td>Valvula Automatica</td><td>10 valvulas/mes</td><td><strong style="color:#27ae60;">+ R$ 500</strong></td></tr>
+      <tr style="background:#f8f9fa;"><td>Valvula Automatica</td><td>20 valvulas/mes</td><td><strong style="color:#27ae60;">+ R$ 1.500</strong></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>4. O que Entra na Premiacao</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    <div style="background:#0d2818;border:1px solid #2EA043;border-radius:12px;padding:16px;">
+      <h4 style="color:#2EA043;">Entra</h4>
+      <ul style="color:var(--text);font-size:14px;padding-left:18px;"><li>Valor dos produtos</li><li>Vendas dentro da tabela</li><li>Vendas fora da tabela COM autorizacao no CRM</li></ul>
+    </div>
+    <div style="background:#2d1215;border:1px solid #F85149;border-radius:12px;padding:16px;">
+      <h4 style="color:#F85149;">Nao Entra</h4>
+      <ul style="color:var(--text);font-size:14px;padding-left:18px;"><li>Frete</li><li>Custos logisticos especiais</li><li>Despesas de viagem fora do padrao</li><li>Itens vendidos a preco de custo</li><li>Vendas sem autorizacao no CRM</li></ul>
+    </div>
+  </div>
+
+  <h3>5. Premiacao Anual</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Meta Anual</th><th>Premio</th></tr></thead>
+    <tbody>
+      <tr><td><strong>R$ 1.500.000</strong></td><td><strong style="color:#F0C040;">Apple Watch ou Samsung Watch</strong></td></tr>
+      <tr style="background:#f8f9fa;"><td><strong>R$ 1.700.000</strong></td><td><strong style="color:#F0C040;">iPhone 17 Pro ou Samsung S25 Ultra</strong></td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert alert-green"><span class="alert-icon">&#127942;</span><div><strong>Todos que baterem a meta ganham.</strong> Nao e ranking.</div></div>
+
+  <div style="background:linear-gradient(135deg,var(--bg),#0d2818);border:1px solid #2EA043;border-radius:12px;padding:24px;margin-top:20px;text-align:center;">
+    <p style="font-size:1.2rem;font-weight:800;color:#2EA043;">Resultado + Processo + Constancia</p>
+    <p style="font-size:1rem;color:var(--text-muted);margin-top:8px;">Quem vende melhor, ganha mais.</p>
+  </div>
+</div>
+
+<!-- ==================== TAB 15: VISITA TECNICA ==================== -->
+<div class="tab-panel" id="panel-15">
+  <h2>Visita Tecnica — Agua de Poco</h2>
+  <p class="section-desc">A visita tecnica e o nosso diferencial pra leads de poco/mina que nao tem analise. O tecnico vai ate o cliente, mede tudo e ja dimensiona a solucao.</p>
+
+  <h3>Fluxo da Visita</h3>
+  <div class="card-grid">
+    <div class="info-card">
+      <div class="card-number">1</div>
+      <h4>Closer liga pro lead</h4>
+      <p>Voce (closer/especialista) liga primeiro e da uma <strong>ideia de investimento</strong> por telefone. O lead precisa saber a faixa de valor ANTES de marcar visita.</p>
+    </div>
+    <div class="info-card">
+      <div class="card-number">2</div>
+      <h4>Lead aceita a faixa?</h4>
+      <p>Se o lead disser que faz sentido o investimento, voce agenda a visita tecnica. Se nao fizer sentido, nao gasta visita.</p>
+    </div>
+    <div class="info-card">
+      <div class="card-number">3</div>
+      <h4>Tecnico vai ate o cliente</h4>
+      <p>Nosso tecnico vai presencialmente e mede: <strong>pH, ferro, manganes, aspecto da agua, vazao</strong>. Confirma tudo que precisa pro dimensionamento.</p>
+    </div>
+    <div class="info-card">
+      <div class="card-number">4</div>
+      <h4>Fechamento no dia!</h4>
+      <p>Com os dados confirmados, o tecnico apresenta a solucao final. <strong>Se fechar no dia da visita = paga SO o valor do filtro!</strong> A visita sai de graca.</p>
+    </div>
+  </div>
+
+  <h3>Tabela de Valores da Visita</h3>
+  <table class="styled-table">
+    <thead>
+      <tr>
+        <th>Distancia de SJC</th>
+        <th>Valor da Visita</th>
+        <th>Se Fechar no Dia</th>
+        <th>Se NAO Fechar</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Ate 300km</strong></td>
+        <td>R$ 800</td>
+        <td style="color:#2EA043;font-weight:700;">GRATIS (100% abatido)</td>
+        <td>Cliente paga R$ 800</td>
+      </tr>
+      <tr>
+        <td><strong>300 a 400km</strong></td>
+        <td>R$ 1.200</td>
+        <td style="color:#2EA043;font-weight:700;">50% desconto (paga R$ 600)</td>
+        <td>Cliente paga R$ 1.200</td>
+      </tr>
+      <tr>
+        <td><strong>400 a 500km</strong></td>
+        <td>R$ 1.600</td>
+        <td style="color:#2EA043;font-weight:700;">50% desconto (paga R$ 800)</td>
+        <td>Cliente paga R$ 1.600</td>
+      </tr>
+      <tr>
+        <td><strong>Acima de 500km</strong></td>
+        <td colspan="3" style="color:#F85149;">Nao atendemos visita. Indicar laboratorio da regiao do cliente.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Regioes que Atendemos</h3>
+  <ul>
+    <li><strong>Todo estado de SP</strong> (base SJC)</li>
+    <li><strong>Sul de MG:</strong> Pocos de Caldas, Pouso Alegre, Alfenas, Itajuba</li>
+    <li><strong>RJ:</strong> Ate Rio de Janeiro capital, Volta Redonda, Resende, Petropolis</li>
+  </ul>
+
+  <h3>Regras Importantes</h3>
+  <div style="background:var(--bg-card);border:1px solid #F85149;border-radius:12px;padding:16px;margin-top:12px;">
+    <p style="color:#F85149;font-weight:700;margin:0 0 8px;">NAO PODE:</p>
+    <ul style="color:var(--text);margin:0;">
+      <li>Marcar visita SEM passar ideia de investimento por telefone antes</li>
+      <li>Dizer que a visita e "gratis" de cara (ela tem valor, e abatido no fechamento)</li>
+      <li>Mandar tecnico pra leads que nao demonstraram real interesse</li>
+      <li>Prometer visita pra acima de 500km</li>
+    </ul>
+  </div>
+  <div style="background:var(--bg-card);border:1px solid #2EA043;border-radius:12px;padding:16px;margin-top:12px;">
+    <p style="color:#2EA043;font-weight:700;margin:0 0 8px;">ARGUMENTO DE VENDA:</p>
+    <ul style="color:var(--text);margin:0;">
+      <li>"A gente manda nosso tecnico ai, ele mede tudo e ja te entrega a solucao certinha"</li>
+      <li>"Se fechar no dia, voce paga so o filtro — a visita sai de graca!"</li>
+      <li>"O tecnico ja leva os dados pra dimensionar na hora, sem enrolacao"</li>
+      <li>"Diferente de outros que pedem analise e somem, a gente vai pessoalmente"</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// TAB SWITCHING
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('panel-' + this.dataset.tab).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+</script>
+
+</body>
+</html>

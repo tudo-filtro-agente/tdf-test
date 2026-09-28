@@ -499,6 +499,171 @@ app.get('/paulo/admin', auth.requireAuth, (req, res) => {
 });
 
 // ====================================================================
+// VIEWS IMPORTADAS DO PORTAL DO PAULO (views copiadas)
+// ====================================================================
+
+// Cockpit — painel de métricas (requer Zoho/Closy para dados reais)
+app.get('/cockpit', auth.requireAuth, (req, res) => {
+  res.render('cockpit', {
+    user: req.user,
+    isAdmin: req.user.role === 'admin',
+    closers: [],   // preenchido via API Zoho/Closy
+    metas: {},     // preenchido via API
+  });
+});
+
+// Playbook — scripts e processos de venda
+app.get('/playbook', auth.requireAuth, (req, res) => {
+  res.render('playbook', { user: req.user, isAdmin: req.user.role === 'admin' });
+});
+
+// Operacional — mapa de OS, GIR, POS
+app.get('/operacional', auth.requireAuth, (req, res) => {
+  res.render('operacional', { user: req.user, isAdmin: req.user.role === 'admin' });
+});
+
+// Treinamento — Escola TDF
+app.get('/treinamento', auth.requireAuth, (req, res) => {
+  res.render('treinamento-index', { user: req.user, isAdmin: req.user.role === 'admin' });
+});
+app.get('/treinamento/:page', auth.requireAuth, (req, res) => {
+  res.render('treinamento/' + req.params.page, { user: req.user, isAdmin: req.user.role === 'admin' });
+});
+
+// Produtos — catálogo
+app.get('/produtos', auth.requireAuth, (req, res) => {
+  res.render('produtos', { user: req.user, isAdmin: req.user.role === 'admin' });
+});
+
+// Admin — área técnica / conectores / acessos
+app.get('/admin/conectores', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-conectores', { user: req.user, isAdmin: true });
+});
+app.get('/admin/acessos', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-acessos', { user: req.user, isAdmin: true });
+});
+app.get('/admin/cidades', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-cidades', { user: req.user, isAdmin: true });
+});
+app.get('/admin/goto', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-goto', { user: req.user, isAdmin: true });
+});
+
+// Admin — Metas
+app.get('/admin/metas-closer', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-metas-closer', { user: req.user, isAdmin: true });
+});
+app.get('/admin/metas-time', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-metas-time-produto', { user: req.user, isAdmin: true });
+});
+
+// Admin — Score Leads
+app.get('/admin/score-leads', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-score-leads', { user: req.user, isAdmin: true });
+});
+app.get('/admin/score-leads/auditoria', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-score-leads-auditoria', { user: req.user, isAdmin: true });
+});
+app.get('/admin/score-leads/distribuicao', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-score-leads-distribuicao', { user: req.user, isAdmin: true });
+});
+app.get('/admin/score-leads/redistribuir', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-score-leads-redistribuir', { user: req.user, isAdmin: true });
+});
+app.get('/admin/score-leads/atrasos', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-score-leads-atrasos', { user: req.user, isAdmin: true });
+});
+app.get('/admin/score-leads/overrides', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-score-leads-overrides', { user: req.user, isAdmin: true });
+});
+app.get('/admin/score-leads/cadencia', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-score-leads-cadencia', { user: req.user, isAdmin: true });
+});
+app.get('/admin/score-leads/distancia', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-score-leads-distancia', { user: req.user, isAdmin: true });
+});
+app.get('/admin/score-leads/teste', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-score-leads-teste', { user: req.user, isAdmin: true });
+});
+
+// Admin — Squads, WhatsApp, Score geral
+app.get('/admin/squads', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-squads', { user: req.user, isAdmin: true });
+});
+app.get('/admin/whatsapp', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin-whatsapp', { user: req.user, isAdmin: true });
+});
+app.get('/admin/score', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('admin', { user: req.user, isAdmin: true });
+});
+
+// Auditoria CRM
+app.get('/auditoria', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('auditoria-crm', { user: req.user, isAdmin: true });
+});
+app.get('/auditoria/distribuicao', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('auditoria-crm-distribuicao', { user: req.user, isAdmin: true });
+});
+app.get('/auditoria/influencia-ia', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('auditoria-crm-influencia-ia', { user: req.user, isAdmin: true });
+});
+app.get('/auditoria/sistemica', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('auditoria-crm-sistemica', { user: req.user, isAdmin: true });
+});
+app.get('/auditoria/vendedores', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('auditoria-crm-vendedores', { user: req.user, isAdmin: true });
+});
+
+// Analytics SDR
+app.get('/analytics/sdr', auth.requireAuth, (req, res) => {
+  res.render('analytics-sdr', { user: req.user, isAdmin: req.user.role === 'admin' });
+});
+
+// Closy e Auvo (requer integração API)
+app.get('/closy', auth.requireAuth, (req, res) => {
+  res.render('closy', { user: req.user, isAdmin: req.user.role === 'admin' });
+});
+app.get('/closy/custom-fields', auth.requireAuth, (req, res) => {
+  res.render('closy-custom-fields', { user: req.user, isAdmin: req.user.role === 'admin' });
+});
+app.get('/auvo', auth.requireAuth, (req, res) => {
+  res.render('auvo', { user: req.user, isAdmin: req.user.role === 'admin' });
+});
+
+// Área técnica
+app.get('/area-tecnica', auth.requireAuth, (req, res) => {
+  res.render('area-tecnica', { user: req.user, isAdmin: req.user.role === 'admin' });
+});
+
+// BI Financeiro
+app.get('/bi/financeiro', auth.requireAuth, (req, res) => {
+  res.render('bi-financeiro', { user: req.user, isAdmin: req.user.role === 'admin' });
+});
+
+// ====================================================================
 // AUTH — Etapa 1 / Parte 1
 // ====================================================================
 

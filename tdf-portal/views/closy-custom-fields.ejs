@@ -1,0 +1,241 @@
+<% const activePage = 'closy'; const pageTitle = 'Campos Personalizados · Closy'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.cf-wrap{padding:14px 22px 80px;max-width:1200px;margin:0 auto}
+.cf-h{font-size:20px;color:var(--text);margin:0 0 4px;font-weight:800}
+.cf-sub{color:var(--text-muted);font-size:12px;margin:0 0 14px}
+.cf-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 14px}
+.cf-bar input{flex:1;background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;min-width:200px}
+.cf-bar .new{background:#22c55e;color:#000;border:none;padding:8px 16px;border-radius:6px;font-weight:800;font-size:11px;cursor:pointer}
+
+.cf-tbl{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.cf-thead,.cf-row{display:grid;grid-template-columns:2fr 1fr 1fr 1.4fr 70px 90px;gap:10px;padding:10px 14px;align-items:center;font-size:12px}
+.cf-thead{background:var(--bg-card);color:var(--text-muted);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border)}
+.cf-row{border-bottom:1px solid #1a1a1a}
+.cf-row:hover{background:var(--bg-card)}
+.cf-row.inativo{opacity:.5}
+.cf-row .label{color:var(--text);font-weight:700}
+.cf-row .api{color:#7cb9f5;font-family:monospace;font-size:11px;margin-top:2px}
+.cf-row .desc{color:var(--text-muted);font-size:9px;margin-top:2px}
+.cf-row .tipo{color:#fbbf24;font-size:11px}
+.cf-row .opts{color:var(--text-muted);font-size:10px}
+.cf-row .meta{color:var(--text-muted);font-size:9px}
+.cf-row .req{display:inline-block;background:#374151;color:#fbbf24;padding:1px 6px;border-radius:6px;font-size:9px;font-weight:700}
+.cf-row .acts{display:flex;gap:5px;justify-content:flex-end}
+.cf-row .acts button{background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer}
+.cf-row .acts button:hover{border-color:#1f6feb;color:var(--text)}
+.cf-row .acts .del:hover{border-color:#ef4444;color:#ef4444}
+
+.cf-empty{padding:50px 20px;text-align:center;color:var(--text-muted);font-size:13px}
+
+.cf-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;align-items:center;justify-content:center;padding:20px}
+.cf-modal.show{display:flex}
+.cf-card{background:var(--bg-card);border:1px solid #1f6feb;border-radius:12px;padding:18px;max-width:580px;width:100%;max-height:90vh;overflow-y:auto;color:var(--text)}
+.cf-card h2{margin:0 0 14px;font-size:15px;display:flex;align-items:center;gap:10px}
+.cf-card h2 .x{margin-left:auto;background:#222;border:1px solid var(--border);color:#ddd;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:11px}
+.cf-card label{display:block;color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;margin:10px 0 4px}
+.cf-card input,.cf-card select,.cf-card textarea{width:100%;background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 10px;font-size:12px;font-family:inherit}
+.cf-card .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cf-foot{margin-top:14px;display:flex;justify-content:flex-end;gap:8px}
+.cf-foot button{padding:9px 16px;font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;border:none}
+.cf-foot .save{background:#22c55e;color:#000}
+.cf-foot .cancel{background:#222;color:#ddd;border:1px solid var(--border)}
+</style>
+
+<div class="cf-wrap">
+  <h1 class="cf-h">🏷️ Campos Personalizados · Closy</h1>
+  <p class="cf-sub">Crie campos customizados que vivem só no Closy (não vão pro Zoho). Aparecem no drawer de edição de cada deal.</p>
+
+  <div class="cf-bar">
+    <input id="cf-search" placeholder="🔍 buscar label/apiName" oninput="cfRender()">
+    <button class="new" onclick="cfAbrirEditor()">+ Novo Campo</button>
+    <button onclick="cfAtivarMeddpicc()" title="Cria os 6 campos MEDDPICC pra qualificação estruturada" style="background:#a371f7;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:800;font-size:11px;cursor:pointer">🎯 Ativar MEDDPICC</button>
+  </div>
+
+  <div class="cf-tbl">
+    <div class="cf-thead">
+      <div>Label / API Name</div>
+      <div>Tipo</div>
+      <div>Opções</div>
+      <div>Descrição</div>
+      <div>Ordem</div>
+      <div></div>
+    </div>
+    <div id="cf-rows"><div class="cf-empty">⏳ Carregando...</div></div>
+  </div>
+</div>
+
+<div id="cf-modal" class="cf-modal">
+  <div class="cf-card">
+    <h2 id="cf-modal-title">Novo campo <button class="x" onclick="cfFechar()">✕</button></h2>
+    <input type="hidden" id="cf-id">
+    <label>Label do campo *</label>
+    <input id="cf-label" placeholder="Ex: Tipo de água, Tem caixa d'água, Distância da caixa">
+    <p style="color:var(--text-muted);font-size:10px;margin:4px 0">API Name será gerado automaticamente: <code id="cf-preview-api" style="color:#7cb9f5">cf_</code></p>
+    <div class="row">
+      <div>
+        <label>Tipo</label>
+        <select id="cf-tipo" onchange="cfTipoChange()">
+          <option value="text">Texto curto</option>
+          <option value="textarea">Texto longo</option>
+          <option value="number">Número</option>
+          <option value="date">Data</option>
+          <option value="enum">Lista (escolher)</option>
+          <option value="bool">Sim/Não</option>
+          <option value="phone">Telefone</option>
+          <option value="url">URL/Link</option>
+        </select>
+      </div>
+      <div>
+        <label>Ordem</label>
+        <input id="cf-ordem" type="number" min="1" placeholder="1">
+      </div>
+    </div>
+    <div id="cf-opts-wrap" style="display:none">
+      <label>Opções (uma por linha)</label>
+      <textarea id="cf-opts" rows="4" placeholder="Concessionária&#10;Poço artesiano&#10;Água da chuva"></textarea>
+    </div>
+    <label>Descrição (ajuda pro vendedor)</label>
+    <textarea id="cf-desc" rows="2" placeholder="Aparece como tooltip no drawer"></textarea>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer">
+      <input id="cf-req" type="checkbox" style="width:auto"> <span>Obrigatório (vendedor não consegue salvar deal sem preencher)</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer">
+      <input id="cf-ativo" type="checkbox" checked style="width:auto"> <span>Ativo (aparece no drawer)</span>
+    </label>
+    <div class="cf-foot">
+      <button class="cancel" onclick="cfFechar()">Cancelar</button>
+      <button class="save" onclick="cfSalvar()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _CF = [];
+
+const TIPO_LABEL = { text:'📝 Texto', textarea:'📄 Texto longo', number:'#️⃣ Número', date:'📅 Data', enum:'☑️ Lista', bool:'✓ Sim/Não', phone:'📞 Telefone', url:'🔗 URL' };
+
+async function cfCarregar(){
+  const r = await fetch('/closy/custom-fields');
+  const d = await r.json();
+  _CF = d.fields || [];
+  cfRender();
+}
+
+function cfRender(){
+  const busca = (document.getElementById('cf-search').value || '').toLowerCase();
+  const list = _CF.filter(f =>
+    !busca || (f.label||'').toLowerCase().includes(busca) || (f.apiName||'').toLowerCase().includes(busca)
+  );
+  const rows = document.getElementById('cf-rows');
+  if (!list.length) { rows.innerHTML = '<div class="cf-empty">Nenhum campo cadastrado. Clique em <strong>+ Novo Campo</strong></div>'; return; }
+  rows.innerHTML = list.map(f => `
+    <div class="cf-row${f.ativo===false?' inativo':''}">
+      <div>
+        <div class="label">${(f.label||'').replace(/</g,'&lt;')} ${f.required?'<span class="req">obrigatório</span>':''}</div>
+        <div class="api">${f.id}</div>
+        ${f.descricao?`<div class="desc">${f.descricao.replace(/</g,'&lt;')}</div>`:''}
+      </div>
+      <div class="tipo">${TIPO_LABEL[f.tipo]||f.tipo}</div>
+      <div class="opts">${(f.options||[]).slice(0,3).join(', ')}${(f.options||[]).length>3?'…':''}</div>
+      <div class="desc">${f.descricao?f.descricao.slice(0,40):''}</div>
+      <div class="meta">${f.ordem||'-'}</div>
+      <div class="acts">
+        <button onclick="cfEditar('${f.id}')">✏️</button>
+        <button class="del" onclick="cfRemover('${f.id}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function slugApi(s){
+  return 'cf_' + (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,30);
+}
+
+function cfTipoChange(){
+  const tipo = document.getElementById('cf-tipo').value;
+  document.getElementById('cf-opts-wrap').style.display = tipo === 'enum' ? 'block' : 'none';
+}
+
+document.addEventListener('input', e => {
+  if (e.target.id === 'cf-label') {
+    document.getElementById('cf-preview-api').textContent = slugApi(e.target.value);
+  }
+});
+
+function cfAbrirEditor(){
+  document.getElementById('cf-id').value = '';
+  document.getElementById('cf-label').value = '';
+  document.getElementById('cf-tipo').value = 'text';
+  document.getElementById('cf-ordem').value = (_CF.length + 1);
+  document.getElementById('cf-opts').value = '';
+  document.getElementById('cf-desc').value = '';
+  document.getElementById('cf-req').checked = false;
+  document.getElementById('cf-ativo').checked = true;
+  document.getElementById('cf-preview-api').textContent = 'cf_';
+  document.getElementById('cf-modal-title').firstChild.textContent = 'Novo campo ';
+  cfTipoChange();
+  document.getElementById('cf-modal').classList.add('show');
+}
+
+function cfEditar(id){
+  const f = _CF.find(x => x.id === id);
+  if (!f) return;
+  document.getElementById('cf-id').value = f.id;
+  document.getElementById('cf-label').value = f.label || '';
+  document.getElementById('cf-tipo').value = f.tipo || 'text';
+  document.getElementById('cf-ordem').value = f.ordem || 1;
+  document.getElementById('cf-opts').value = (f.options||[]).join('\n');
+  document.getElementById('cf-desc').value = f.descricao || '';
+  document.getElementById('cf-req').checked = !!f.required;
+  document.getElementById('cf-ativo').checked = f.ativo !== false;
+  document.getElementById('cf-preview-api').textContent = f.id;
+  document.getElementById('cf-modal-title').firstChild.textContent = 'Editar campo ';
+  cfTipoChange();
+  document.getElementById('cf-modal').classList.add('show');
+}
+
+function cfFechar(){ document.getElementById('cf-modal').classList.remove('show'); }
+
+async function cfSalvar(){
+  const body = {
+    id: document.getElementById('cf-id').value || undefined,
+    label: document.getElementById('cf-label').value.trim(),
+    tipo: document.getElementById('cf-tipo').value,
+    ordem: Number(document.getElementById('cf-ordem').value) || 1,
+    options: document.getElementById('cf-opts').value.split('\n').map(s => s.trim()).filter(Boolean),
+    descricao: document.getElementById('cf-desc').value.trim(),
+    required: document.getElementById('cf-req').checked,
+    ativo: document.getElementById('cf-ativo').checked,
+  };
+  if (!body.label) { alert('Label obrigatório'); return; }
+  const r = await fetch('/closy/custom-fields', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const d = await r.json();
+  if (d.error) { alert('Erro: '+d.error); return; }
+  cfFechar();
+  cfCarregar();
+}
+
+async function cfAtivarMeddpicc(){
+  if (!confirm('Criar os 6 campos MEDDPICC?\n\n• Metrics\n• Economic Buyer\n• Decision Criteria\n• Decision Process\n• Pain\n• Champion\n\nIdempotente — campos existentes não são duplicados.')) return;
+  try {
+    const r = await fetch('/closy/meddpicc/ativar', { method: 'POST' });
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    alert('✅ ' + d.criados + ' campos novos criados (de ' + d.total + ' totais)');
+    cfCarregar();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+async function cfRemover(id){
+  if (!confirm('Remover este campo? Os valores já preenchidos em deals NÃO serão apagados.')) return;
+  const r = await fetch('/closy/custom-fields/'+id, { method:'DELETE' });
+  const d = await r.json();
+  if (d.error) { alert('Erro: '+d.error); return; }
+  cfCarregar();
+}
+
+cfCarregar();
+</script>

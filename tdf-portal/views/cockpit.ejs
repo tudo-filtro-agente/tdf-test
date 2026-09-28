@@ -1,0 +1,2009 @@
+<% const activePage = 'cockpit'; const pageTitle = 'Meu Painel'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<div class="page-header">
+  <% if (isAdmin) { %>
+  <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+    <h1 id="greeting" style="margin:0;"></h1>
+    <select id="closer-select" onchange="loadCockpit(this.value)" style="background:var(--bg-card);color:#F0C040;border:2px solid #F0C040;border-radius:10px;padding:10px 16px;font-size:1rem;font-weight:700;cursor:pointer;">
+      <option value="">Todos os Closers</option>
+      <% closers.forEach(c => { %>
+        <option value="<%= c.username %>"><%= c.name %> (<%= c.team %>)</option>
+      <% }); %>
+    </select>
+  </div>
+  <% } else { %>
+  <h1 id="greeting"></h1>
+  <% } %>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <p class="subtitle" id="subtitle">Carregando seu painel...</p>
+    <button onclick="refreshAll()" id="refresh-btn" style="background:linear-gradient(135deg,#0066CC,#00AAFF);color:#fff;border:none;padding:8px 18px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">&#128260; Atualizar</button>
+    <span id="refresh-time" style="font-size:11px;color:#6b7280;"></span>
+  </div>
+</div>
+
+<div class="container" id="cockpit-content" style="opacity:0;transition:opacity 0.5s;">
+
+  <!-- ATALHOS RÁPIDOS (Sales Coach #3 — link pro histórico) -->
+  <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
+    <a href="#faca-agora" onclick="document.getElementById('faca-agora')?.scrollIntoView({behavior:'smooth'});return false" style="background:#F0C040;color:#000;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:800;text-decoration:none">⚡ Faça Agora</a>
+    <a href="/cockpit/historico-page" style="background:#1f6feb;color:#fff;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">📊 Meu Histórico de Vendas</a>
+    <a href="/resgate-hoje" style="background:#ef4444;color:#fff;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">🆘 Deals em Risco</a>
+    <a href="/commit-semana" style="background:#22c55e;color:#000;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">📋 Commit Semanal</a>
+  </div>
+
+  <!-- KPIs -->
+  <div id="kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;"></div>
+
+  <!-- Meta Progress -->
+  <div id="meta-section" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:24px;"></div>
+
+  <!-- BONZAO + REI DESTAQUE -->
+  <div id="destaque-top" style="display:none;margin-bottom:24px;"></div>
+
+  <!-- GAMIFICAÇÃO COLAPSADA (Sales Coach #2: Premiação + Patente + Anual ficam ocultos por default) -->
+  <details style="margin-bottom:18px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:6px 14px">
+    <summary style="cursor:pointer;color:var(--text-muted);font-weight:700;font-size:13px;padding:8px 0">🎮 Gamificação · Premiação · Patente · Competição Anual</summary>
+    <div style="padding-top:8px">
+      <!-- PREMIACAO -->
+      <div id="premiacao-card" style="background:linear-gradient(135deg,#0d2818,var(--bg-card));border:1px solid #2EA043;border-radius:16px;padding:20px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="font-size:20px;">&#128176;</span>
+          <h2 style="font-size:1.1rem;color:#2EA043;margin:0;">Premiacao</h2>
+        </div>
+        <div id="premiacao-content" style="font-size:14px;color:var(--text);"></div>
+      </div>
+
+      <!-- PATENTE -->
+      <div id="patente-card" style="background:linear-gradient(135deg,#1a1a2e,var(--bg-card));border:1px solid #A371F7;border-radius:16px;padding:20px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="font-size:20px;">&#9876;&#65039;</span>
+          <h2 style="font-size:1.1rem;color:#A371F7;margin:0;">Patente</h2>
+        </div>
+        <div id="patente-content" style="font-size:14px;color:var(--text);">Carregando...</div>
+      </div>
+
+      <!-- COMPETICAO ANUAL -->
+      <div id="anual-card" style="background:linear-gradient(135deg,#1a1a2e,var(--bg-card));border:1px solid #F0C040;border-radius:16px;padding:20px;margin-bottom:0;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <span style="font-size:20px;">&#127941;</span>
+          <h2 style="font-size:1.1rem;color:#F0C040;margin:0;">Competicao Anual</h2>
+        </div>
+        <div id="anual-content" style="font-size:14px;color:var(--text);">Carregando...</div>
+      </div>
+    </div>
+  </details>
+
+  <!-- FORECAST -->
+  <div style="background:var(--bg-card);border:1px solid #06b6d4;border-radius:16px;padding:20px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <span style="font-size:20px;">&#128202;</span>
+      <h2 style="font-size:1.1rem;color:#06b6d4;margin:0;">Forecast</h2>
+    </div>
+    <div id="forecast-content" style="font-size:14px;color:var(--text);">Carregando...</div>
+  </div>
+
+  <!-- SCORE + CHECKLIST + METAS DIARIAS -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;" id="score-section">
+    <!-- Score Card -->
+    <div id="score-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;text-align:center;">
+      <h3 style="color:var(--text-muted);font-size:0.85rem;margin:0;">SCORE DO DIA</h3>
+      <div id="score-value" style="font-size:3rem;font-weight:800;color:var(--text-muted);margin:8px 0;">--</div>
+      <div id="score-class" style="font-size:0.85rem;font-weight:700;">Carregando...</div>
+      <div id="score-breakdown" style="margin-top:14px;text-align:left;"></div>
+    </div>
+
+    <!-- Checklist -->
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h3 style="color:var(--text);font-size:0.95rem;margin:0;">Checklist do Dia</h3>
+        <span id="check-count" style="font-size:12px;font-weight:700;"></span>
+      </div>
+      <div id="checklist-items" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
+    <!-- Metas Diarias -->
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;">
+      <h3 style="color:#F0C040;font-size:0.95rem;margin:0 0 12px;">Meta Operacional Hoje</h3>
+      <div id="metas-diarias" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+  </div>
+
+  <!-- SCORE SEMANAL RIGOROSO (rubrica nova) -->
+  <div id="score-semana-card" style="background:linear-gradient(135deg,var(--bg) 0%,#1a0e2a 100%);border:2px solid #a371f7;border-radius:16px;padding:18px;margin-bottom:24px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <span style="font-size:22px">📊</span>
+      <h3 style="color:#c084fc;font-size:1rem;margin:0">Score da Semana — Rubrica Rigorosa v1</h3>
+      <span style="background:#2d1525;color:#fbbf24;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:800;margin-left:8px">100pts máximo</span>
+      <span id="ssem-tendencia" style="margin-left:auto;font-size:12px;font-weight:700"></span>
+    </div>
+    <div id="ssem-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px"></div>
+    <div id="ssem-dias" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-bottom:10px"></div>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:6px;line-height:1.5">
+      <strong style="color:var(--text-muted)">Rubrica:</strong> Ligações outbound (35) + Atendidas % (15) + Tempo médio conversa (10) + Diamante/Ouro tocados (15) + Velocidade leads novos &lt;30min (10) + Resultados venda/proposta (15) = <strong>100pts</strong>.
+      <span style="color:#fbbf24">Anti-defaults:</span> sem volume mínimo de calls/leads, NÃO ganha ponto por divisão zero.
+    </div>
+    <div id="ssem-detalhe-dia" style="display:none;margin-top:14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px"></div>
+  </div>
+
+  <!-- GOTO CALLS -->
+  <div style="background:var(--bg-card);border:1px solid #F0C040;border-radius:16px;padding:20px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <span style="font-size:20px;">&#128222;</span>
+      <h2 style="font-size:1.1rem;color:#F0C040;margin:0;">Ligacoes Hoje (GoTo)</h2>
+    </div>
+    <div id="calls-content" style="font-size:14px;color:var(--text);">Carregando...</div>
+  </div>
+
+  <!-- SCORE DETALHADO + ANTI-MALANDRAGEM -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+    <div style="background:var(--bg-card);border:1px solid #A371F7;border-radius:16px;padding:20px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="font-size:18px;">&#128200;</span>
+        <h3 style="color:#A371F7;font-size:1rem;margin:0;">Score Detalhado</h3>
+        <span id="score-det-total" style="font-size:1.2rem;font-weight:800;margin-left:auto;"></span>
+      </div>
+      <div id="score-det-entries" style="max-height:300px;overflow-y:auto;font-size:12px;"></div>
+    </div>
+    <div>
+      <div style="background:var(--bg-card);border:1px solid #ef4444;border-radius:16px;padding:20px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:18px;">&#128680;</span>
+          <h3 style="color:#ef4444;font-size:1rem;margin:0;">Anti-Malandragem</h3>
+          <span id="alert-count" style="background:#2d1215;color:#f87171;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;margin-left:auto;"></span>
+        </div>
+        <div id="anti-malandragem" style="font-size:13px;"></div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid #F0C040;border-radius:16px;padding:20px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:18px;">&#128172;</span>
+          <h3 style="color:#F0C040;font-size:1rem;margin:0;">Coach IA Diz</h3>
+        </div>
+        <div id="coach-msgs" style="font-size:13px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLOSY SCORES -->
+  <div style="background:var(--bg-card);border:1px solid #A371F7;border-radius:16px;padding:20px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <span style="font-size:20px;">&#127908;</span>
+      <h2 style="font-size:1.1rem;color:#A371F7;margin:0;">Closy — Score de Ligacoes</h2>
+      <a href="https://closy-app-production.up.railway.app" target="_blank" style="color:#58A6FF;font-size:11px;text-decoration:none;margin-left:auto;">Abrir Closy</a>
+    </div>
+    <div id="closy-content" style="font-size:14px;color:var(--text);">Carregando...</div>
+  </div>
+
+  <!-- COACH IA -->
+  <div id="coach-section" style="background:linear-gradient(135deg,#1e1225,#1a1a2e);border:1px solid #6b21a8;border-radius:16px;padding:20px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <span style="font-size:22px;">&#129504;</span>
+      <h2 style="font-size:1.2rem;color:#c084fc;margin:0;">Diretor IA</h2>
+      <button onclick="loadCoach()" style="background:#6b21a8;color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-weight:600;">Atualizar</button>
+      <span id="coach-loading" style="display:none;color:var(--text-muted);font-size:12px;">Analisando...</span>
+    </div>
+    <div id="coach-content" style="font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;"></div>
+  </div>
+
+  <!-- RAIO-X DO DIA -->
+  <div id="raiox-section" style="background:linear-gradient(135deg,var(--bg) 0%,#1a0e2a 100%);border:2px solid #c084fc;border-radius:16px;padding:20px;margin-bottom:24px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap" id="raiox-header">
+      <span style="font-size:22px">📊</span>
+      <h2 style="font-size:1.2rem;color:#c084fc;margin:0">Meu Dia em Tempo Real</h2>
+      <span id="raiox-hora" style="margin-left:auto;color:var(--text-muted);font-size:12px;font-family:monospace"></span>
+      <button onclick="toggleRaiox()" id="raiox-toggle" title="Minimizar/expandir o Diretor IA" style="background:#2d1525;color:#c084fc;border:1px solid #a371f7;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">▼ Minimizar</button>
+      <button onclick="loadRaiox()" style="background:#1e3a5f;color:#7cb9f5;border:1px solid #5ba3f5;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">🔄 Atualizar</button>
+    </div>
+    <div id="raiox-body">
+    <!-- PRÓXIMA AÇÃO (Sales Coach Win 3) — destaque no topo -->
+    <a id="proxima-acao" href="#" style="display:none;background:linear-gradient(135deg,#1f0d2e,#2d1525);border:2px solid #fbbf24;border-radius:12px;padding:14px 18px;margin-bottom:14px;text-decoration:none;transition:transform .15s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span id="px-icon" style="font-size:22px">⚡</span>
+        <div style="flex:1;min-width:200px">
+          <div id="px-prio" style="font-size:9px;color:#fbbf24;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">PRÓXIMA AÇÃO</div>
+          <div id="px-titulo" style="color:var(--text);font-weight:800;font-size:14px;line-height:1.3">—</div>
+          <div id="px-descricao" style="color:var(--text-muted);font-size:11px;margin-top:3px;line-height:1.4">—</div>
+        </div>
+        <span id="px-action" style="background:#fbbf24;color:#000;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:800;white-space:nowrap">→</span>
+      </div>
+    </a>
+    <!-- KPIs do dia -->
+    <div id="raiox-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:14px"></div>
+    <!-- FUNIL PESSOAL com alerta de drop (Sales Coach Win L) -->
+    <div id="funil-pessoal" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <span style="font-size:16px">🔻</span>
+        <strong style="color:var(--text);font-size:13px">Seu funil — leads criados nos últimos </strong>
+        <select id="fp-dias" onchange="carregarFunilPessoal()" style="background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700">
+          <option value="7">7 dias</option>
+          <option value="30" selected>30 dias</option>
+          <option value="60">60 dias</option>
+          <option value="90">90 dias</option>
+        </select>
+        <span id="fp-comparado" style="color:var(--text-muted);font-size:10px;margin-left:auto">vs período anterior</span>
+      </div>
+      <div id="fp-alertas" style="margin-bottom:10px"></div>
+      <div id="fp-bars"></div>
+    </div>
+    <!-- Sugestões do Diretor -->
+    <div id="raiox-sugestoes" style="margin-bottom:14px"></div>
+    <!-- Tabs -->
+    <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:12px;flex-wrap:wrap">
+      <button class="rx-tab active" data-tab="novos" onclick="rxTab('novos')" style="padding:8px 14px;background:#1e3a5f;color:#7cb9f5;border:1px solid #5ba3f5;border-radius:6px 6px 0 0;font-size:12px;font-weight:700;cursor:pointer">🆕 Novos hoje (<span id="rx-c-novos">0</span>)</button>
+      <button class="rx-tab" data-tab="parados" onclick="rxTab('parados')" style="padding:8px 14px;background:none;color:var(--text-muted);border:1px solid transparent;border-radius:6px 6px 0 0;font-size:12px;font-weight:700;cursor:pointer">⏰ Parados +48h (<span id="rx-c-parados">0</span>)</button>
+      <button class="rx-tab" data-tab="sem" onclick="rxTab('sem')" style="padding:8px 14px;background:none;color:var(--text-muted);border:1px solid transparent;border-radius:6px 6px 0 0;font-size:12px;font-weight:700;cursor:pointer">🚧 Sem Atividade (<span id="rx-c-sem">0</span>)</button>
+      <button class="rx-tab" data-tab="vendas" onclick="rxTab('vendas')" style="padding:8px 14px;background:none;color:var(--text-muted);border:1px solid transparent;border-radius:6px 6px 0 0;font-size:12px;font-weight:700;cursor:pointer">✅ Vendas Hoje (<span id="rx-c-vendas">0</span>)</button>
+    </div>
+    <div id="rx-pane-novos" class="rx-pane"></div>
+    <div id="rx-pane-parados" class="rx-pane" style="display:none"></div>
+    <div id="rx-pane-sem" class="rx-pane" style="display:none"></div>
+    <div id="rx-pane-vendas" class="rx-pane" style="display:none"></div>
+    </div><!-- /raiox-body -->
+  </div>
+
+  <!-- FACA AGORA -->
+  <div id="faca-agora" style="background:linear-gradient(135deg,#1C1208 0%,var(--bg-card-hover) 100%);border:1px solid #D29922;border-radius:16px;padding:20px;margin-bottom:24px;scroll-margin-top:80px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <span style="font-size:22px;">&#9889;</span>
+      <h2 style="font-size:1.2rem;color:#F0C040;margin:0;">Faca Agora</h2>
+      <span id="urgente-count" style="background:#F85149;color:#fff;font-size:11px;font-weight:700;padding:2px 10px;border-radius:10px;"></span>
+      <select id="fa-stage" onchange="renderDealsList()" style="margin-left:auto;background:var(--bg-hover);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;min-width:200px">
+        <option value="">📋 Todas as etapas</option>
+      </select>
+      <select id="fa-tier" onchange="renderDealsList()" style="background:var(--bg-hover);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700">
+        <option value="">💎 Todos tiers</option>
+        <option value="Diamante">💎 Diamante</option>
+        <option value="Ouro">🥇 Ouro</option>
+        <option value="Prata">🥈 Prata</option>
+        <option value="Bronze">🥉 Bronze</option>
+      </select>
+    </div>
+    <div id="deals-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+    <div id="deals-empty" style="display:none;color:var(--text-muted);text-align:center;padding:20px;font-size:13px">Nenhum lead nesta etapa/tier</div>
+  </div>
+  <script>
+  // ============= RAIO-X DO DIA =============
+  function toggleRaiox(){
+    const body = document.getElementById('raiox-body');
+    const btn = document.getElementById('raiox-toggle');
+    const min = body.style.display === 'none';
+    if (min) {
+      body.style.display = '';
+      btn.textContent = '▼ Minimizar';
+      localStorage.setItem('raiox-min', '0');
+    } else {
+      body.style.display = 'none';
+      btn.textContent = '▲ Expandir';
+      localStorage.setItem('raiox-min', '1');
+    }
+  }
+  // Restaura estado
+  if (localStorage.getItem('raiox-min') === '1') {
+    setTimeout(() => {
+      const b = document.getElementById('raiox-body');
+      const bt = document.getElementById('raiox-toggle');
+      if (b) b.style.display = 'none';
+      if (bt) bt.textContent = '▲ Expandir';
+    }, 50);
+  }
+
+  function rxFmtR$(v){ return 'R$ '+(Math.round(v||0)/1000).toFixed(1)+'k'; }
+  function rxFmtFull(v){ return 'R$ '+(v||0).toLocaleString('pt-BR'); }
+  function rxWpp(p){ return p?'https://live-2708.wati.io/2708/teamInbox/'+String(p).replace(/\D/g,''):'#'; }
+
+  function rxTab(name){
+    document.querySelectorAll('.rx-tab').forEach(t => {
+      const active = t.dataset.tab === name;
+      t.classList.toggle('active', active);
+      t.style.background = active ? '#1e3a5f' : 'none';
+      t.style.color = active ? '#7cb9f5' : '#888';
+      t.style.border = active ? '1px solid #5ba3f5' : '1px solid transparent';
+    });
+    document.querySelectorAll('.rx-pane').forEach(p => p.style.display = 'none');
+    document.getElementById('rx-pane-'+name).style.display = '';
+  }
+
+  async function loadRaiox(){
+    try{
+      const closerParam = new URLSearchParams(location.search).get('closer');
+      const url = '/cockpit/raiox-dia' + (closerParam ? '?closer='+encodeURIComponent(closerParam) : '');
+      const res = await fetch(url);
+      const d = await res.json();
+      if (d.error) { document.getElementById('raiox-section').innerHTML = '<div style="color:#ef4444;padding:14px;text-align:center">Erro: '+d.error+'</div>'; return; }
+      renderRaiox(d);
+      // Carrega Próxima Ação + Funil Pessoal em paralelo
+      loadProximaAcao();
+      carregarFunilPessoal();
+    }catch(e){ console.error('raiox:', e); }
+  }
+
+  async function carregarFunilPessoal(){
+    try {
+      const closerParam = new URLSearchParams(location.search).get('closer');
+      const dias = (document.getElementById('fp-dias')||{}).value || '30';
+      const qs = new URLSearchParams({ days: dias });
+      if (closerParam) qs.set('closer', closerParam);
+      const r = await fetch('/cockpit/conversao-stages?'+qs.toString());
+      const d = await r.json();
+      if (d.error || !d.atual) return;
+      // Só mostra se tem volume mínimo (5+ leads no período atual)
+      if (d.atual.total < 5) {
+        document.getElementById('funil-pessoal').style.display = 'none';
+        return;
+      }
+      document.getElementById('funil-pessoal').style.display = 'block';
+      // Alertas de drop
+      const al = document.getElementById('fp-alertas');
+      if (d.alertas?.length) {
+        al.innerHTML = d.alertas.map(a => `
+          <div style="background:#3a0a0a;border:1px solid #ef4444;border-left:4px solid #ef4444;border-radius:6px;padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+            <span style="font-size:18px">⚠️</span>
+            <div style="flex:1">
+              <div style="color:#fca5a5;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px">DROP DETECTADO</div>
+              <div style="color:#fff;font-size:12px;font-weight:700">${a.mensagem}</div>
+              <div style="color:#aaa;font-size:10px;margin-top:2px">Onde você está perdendo: revise abordagem em ${a.de} → ${a.para}</div>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        al.innerHTML = '';
+      }
+      // Barras visuais
+      const max = Math.max(...d.atual.etapas.map(e => e.count), 1);
+      const corBar = ['#7cb9f5','#fbbf24','#a371f7','#f97316','#22c55e'];
+      const html = d.atual.etapas.map((e, i) => {
+        const w = (e.count / max) * 100;
+        let deltaTag = '';
+        if (i > 0 && e.delta_pp != null) {
+          const dlt = e.delta_pp;
+          const cor = dlt >= 5 ? '#22c55e' : dlt <= -15 ? '#ef4444' : dlt <= -5 ? '#fbbf24' : '#666';
+          const sym = dlt > 0 ? '+' : '';
+          deltaTag = `<span style="background:${cor}22;color:${cor};padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;margin-left:6px" title="vs período anterior: ${e.prev_conv?.toFixed(0)||0}%">${sym}${dlt.toFixed(0)}pp</span>`;
+        }
+        const convStr = i === 0 ? '' : ` · ${e.conv_from_prev?.toFixed(0)||0}% conv${deltaTag}`;
+        return `
+          <div style="margin-bottom:8px">
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#ccc;margin-bottom:3px">
+              <span style="font-size:14px">${e.icon}</span>
+              <strong style="color:#fff">${e.label}</strong>
+              <span style="margin-left:auto;color:#aaa;font-variant-numeric:tabular-nums">${e.count} (${e.pct.toFixed(0)}%)</span>
+              ${i > 0 ? `<span style="color:#888;font-size:10px">${convStr}</span>` : ''}
+            </div>
+            <div style="height:10px;background:#161b22;border-radius:3px;overflow:hidden">
+              <div style="height:100%;background:${corBar[i]||'#888'};width:${w}%;transition:width .4s"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('fp-bars').innerHTML = html;
+    } catch(e) { console.error('funil-pessoal:', e); }
+  }
+
+  let _PX_LAST = null;
+  async function loadProximaAcao(){
+    try {
+      const closerParam = new URLSearchParams(location.search).get('closer');
+      const url = '/cockpit/proxima-acao' + (closerParam ? '?closer='+encodeURIComponent(closerParam) : '');
+      const r = await fetch(url);
+      const d = await r.json();
+      if (d.error) return;
+      const card = document.getElementById('proxima-acao');
+      if (!card) return;
+      const corMap = { CRITICA: '#ef4444', ALTA: '#f97316', MEDIA: '#fbbf24', OK: '#22c55e' };
+      const cor = corMap[d.prioridade] || '#fbbf24';
+      const ico = d.prioridade === 'CRITICA' ? '🚨' : d.prioridade === 'ALTA' ? '🔥' : d.prioridade === 'OK' ? '✅' : '⚡';
+      document.getElementById('px-icon').textContent = ico;
+      document.getElementById('px-prio').textContent = 'PRÓXIMA AÇÃO · ' + d.prioridade;
+      document.getElementById('px-prio').style.color = cor;
+      document.getElementById('px-titulo').textContent = d.titulo || '—';
+      document.getElementById('px-descricao').textContent = d.descricao || '';
+      document.getElementById('px-action').textContent = d.action_label || '→';
+      document.getElementById('px-action').style.background = cor;
+      card.style.borderColor = cor;
+      card.href = d.link || '#';
+      card.style.display = 'block';
+
+      // Push notification: dispara quando MUDA de prioridade (especialmente upgrade)
+      const sigChange = !_PX_LAST || _PX_LAST.tipo !== d.tipo || _PX_LAST.dealId !== d.dealId || _PX_LAST.prioridade !== d.prioridade;
+      const upgrade = !_PX_LAST || (_PX_LAST.prioridade !== 'CRITICA' && d.prioridade === 'CRITICA');
+      if (sigChange && d.prioridade !== 'OK') {
+        _pxPushNotif(d, upgrade);
+      }
+      _PX_LAST = { tipo: d.tipo, dealId: d.dealId, prioridade: d.prioridade };
+    } catch(e) { console.warn('proxima-acao:', e); }
+  }
+
+  function _pxPushNotif(d, upgrade){
+    // Popup visual flutuante (canto inferior direito, 15s)
+    const corMap = { CRITICA: '#ef4444', ALTA: '#f97316', MEDIA: '#fbbf24' };
+    const cor = corMap[d.prioridade] || '#fbbf24';
+    const ico = d.prioridade === 'CRITICA' ? '🚨' : d.prioridade === 'ALTA' ? '🔥' : '⚡';
+    let stack = document.getElementById('__pxNotifStack');
+    if (!stack) {
+      stack = document.createElement('div');
+      stack.id = '__pxNotifStack';
+      stack.style.cssText = 'position:fixed;bottom:200px;right:14px;z-index:9998;display:flex;flex-direction:column-reverse;gap:8px;max-width:340px';
+      document.body.appendChild(stack);
+    }
+    const el = document.createElement('a');
+    el.href = d.link || '#';
+    el.style.cssText = 'display:block;background:#0d0d0d;border:2px solid '+cor+';border-radius:10px;padding:12px 14px;color:#fff;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,.6);animation:pxSlideIn .3s ease-out;cursor:pointer';
+    el.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="font-size:22px">'+ico+'</span><span style="color:'+cor+';font-weight:800;font-size:10px;text-transform:uppercase;letter-spacing:.4px">Próxima Ação · '+d.prioridade+(upgrade?' · NOVA!':'')+'</span></div><div style="color:#fff;font-weight:700;font-size:13px;line-height:1.3">'+(d.titulo||'').replace(/</g,'&lt;')+'</div><div style="color:#aaa;font-size:11px;margin-top:3px">'+(d.descricao||'').replace(/</g,'&lt;')+'</div>';
+    stack.appendChild(el);
+    setTimeout(() => el.remove(), upgrade ? 25000 : 15000);
+    // Som via tdfSons (ICQ por default)
+    try { if (upgrade) window.tdfSons?.tocar(); } catch(_){}
+    // Browser Notification API (se permitido)
+    try {
+      if (upgrade && 'Notification' in window && Notification.permission === 'granted') {
+        const notif = new Notification('🚨 Próxima Ação CRÍTICA · Portal TDF', { body: (d.titulo||'') + '\n' + (d.descricao||''), icon: '/icon-192.png', tag: 'px-' + (d.dealId||'') });
+        notif.onclick = () => { window.focus(); if (d.link) window.location.href = d.link; };
+      }
+    } catch(_){}
+  }
+  // Pede permissão de notif na 1ª interação
+  document.addEventListener('click', () => {
+    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(()=>{});
+  }, { once: true });
+  // CSS animation
+  if (!document.getElementById('__pxNotifCss')) {
+    const s = document.createElement('style'); s.id = '__pxNotifCss';
+    s.textContent = '@keyframes pxSlideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}';
+    document.head.appendChild(s);
+  }
+  // Atualiza a cada 60s (era 90s — mais agressivo pra detectar mudança)
+  setInterval(loadProximaAcao, 60000);
+
+  function renderRaiox(d){
+    document.getElementById('raiox-hora').textContent = '⏰ '+d.hora+' BRT';
+
+    // KPIs
+    const a = d.atividades, v = d.vendasHoje;
+    document.getElementById('raiox-kpis').innerHTML = `
+      <div style="background:#161616;border:1px solid #30363D;border-left:3px solid #5ba3f5;border-radius:8px;padding:10px"><div style="font-size:10px;color:#888;text-transform:uppercase;font-weight:700">📞 Ligações</div><div style="font-size:20px;color:#fff;font-weight:800">${a.ligacoes}</div><div style="font-size:11px;color:#888">${a.ligacoesAtendidas} atendidas · ${a.minMedia||0}min/lig</div></div>
+      <div style="background:#161616;border:1px solid #30363D;border-left:3px solid #c084fc;border-radius:8px;padding:10px"><div style="font-size:10px;color:#888;text-transform:uppercase;font-weight:700">⚡ Atividades</div><div style="font-size:20px;color:#fff;font-weight:800">${a.atividadesTotais}</div><div style="font-size:11px;color:#888">deals movidos hoje</div></div>
+      <div style="background:#161616;border:1px solid #30363D;border-left:3px solid #F0C040;border-radius:8px;padding:10px"><div style="font-size:10px;color:#888;text-transform:uppercase;font-weight:700">📋 Propostas Movidas</div><div style="font-size:20px;color:#fff;font-weight:800">${a.propsMovidas}</div><div style="font-size:11px;color:#F0C040;font-weight:700">${rxFmtR$(a.valorPropsMovidas)}</div></div>
+      <div style="background:#161616;border:1px solid #30363D;border-left:3px solid ${v.count>0?'#22c55e':'#666'};border-radius:8px;padding:10px"><div style="font-size:10px;color:#888;text-transform:uppercase;font-weight:700">🏆 Vendas Hoje</div><div style="font-size:20px;color:${v.count>0?'#4ade80':'#888'};font-weight:800">${v.count}</div><div style="font-size:11px;color:#4ade80;font-weight:700">${rxFmtR$(v.fat)}</div></div>
+    `;
+
+    // Sugestões do Diretor
+    const sCol = { critico:'#ef4444', urgente:'#f97316', media:'#eab308', positivo:'#22c55e' };
+    document.getElementById('raiox-sugestoes').innerHTML = (d.sugestoes||[]).map(s => `
+      <div style="display:flex;gap:10px;padding:10px 12px;background:#101010;border-left:3px solid ${sCol[s.tipo]||'#666'};border-radius:6px;margin-bottom:6px;font-size:12px;line-height:1.5">
+        <div style="font-size:18px">${s.icon}</div>
+        <div style="flex:1">
+          <strong style="color:#fff;font-size:12px">${s.titulo}</strong>
+          <div style="color:#bbb;margin-top:2px">${s.texto}</div>
+        </div>
+      </div>
+    `).join('') || '<div style="color:#888;font-size:12px;padding:8px 0">Nenhuma sugestão do Diretor agora.</div>';
+
+    // Counts nas tabs
+    document.getElementById('rx-c-novos').textContent = d.leadsNovos.total;
+    document.getElementById('rx-c-parados').textContent = d.parados.total;
+    document.getElementById('rx-c-sem').textContent = d.semAtividade.total;
+    document.getElementById('rx-c-vendas').textContent = d.vendasHoje.count;
+
+    const tierCol = { Diamante:'#A371F7', Ouro:'#F0C040', Prata:'#9ca3af', Bronze:'#87592A' };
+
+    // Pane: Novos hoje (com onde pararam)
+    const novos = d.leadsNovos.lista || [];
+    const grupos = d.leadsNovos.ondePararam || {};
+    document.getElementById('rx-pane-novos').innerHTML = novos.length === 0
+      ? '<div style="color:#888;padding:14px;text-align:center;font-size:13px">Nenhum lead novo hoje ainda</div>'
+      : `
+        ${d.leadsNovos.semContato > 0 ? `<div style="background:#2d1215;border:1px solid #ef4444;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:13px;color:#fca5a5"><strong>⚠️ ${d.leadsNovos.semContato}</strong> dos ${d.leadsNovos.total} leads novos ainda não foram contatados.</div>` : ''}
+        <div style="background:#101010;border:1px solid #30363D;border-radius:8px;padding:10px;margin-bottom:10px;font-size:11px;color:#aaa">
+          <strong style="color:#fff;text-transform:uppercase;letter-spacing:.4px;font-size:10px">Onde pararam:</strong>
+          ${Object.entries(grupos).map(([s,arr]) => `<span style="display:inline-block;background:#1a1a1a;color:#7cb9f5;border:1px solid #30363D;border-radius:14px;padding:3px 10px;margin:3px 4px 0 0;font-size:11px">${s}: <strong>${arr.length}</strong></span>`).join('')}
+        </div>
+        <div style="overflow-x:auto"><table class="g-table" style="width:100%;font-size:12px;border-collapse:collapse">
+        <thead><tr style="border-bottom:1px solid #30363D;color:#888;font-size:10px;text-transform:uppercase">
+          <th style="text-align:left;padding:6px">Lead</th><th>Tier</th><th>Stage</th><th>Origem</th><th>Horas</th><th>Status</th><th>Ações</th>
+        </tr></thead><tbody>
+        ${novos.map(n => `<tr style="border-bottom:1px solid #1a1a1a">
+          <td style="padding:6px;font-weight:600"><a href="${n.crmLink}" target="_blank" style="color:#5ba3f5;text-decoration:none">${n.name}</a></td>
+          <td style="padding:6px;color:${tierCol[n.tier]||'#666'};font-weight:700">${n.tier}</td>
+          <td style="padding:6px;font-size:11px;color:#aaa">${n.stage}</td>
+          <td style="padding:6px;font-size:11px;color:#888">${n.source}</td>
+          <td style="padding:6px;font-size:11px">${n.horasNoFunil}h</td>
+          <td style="padding:6px">${n.contatado ? '<span style="color:#4ade80;font-weight:700">✓ Contatado</span>' : '<span style="color:#ef4444;font-weight:700">✗ Sem contato</span>'}</td>
+          <td style="padding:6px"><a href="${n.crmLink}" target="_blank" style="color:#5ba3f5;text-decoration:none;font-size:11px">CRM</a> ${n.phone?`· <a href="${rxWpp(n.phone)}" target="_blank" style="color:#25D366;text-decoration:none;font-size:11px">WATI</a>`:''}</td>
+        </tr>`).join('')}
+        </tbody></table></div>`;
+
+    // Pane: Parados
+    const parados = d.parados.lista || [];
+    document.getElementById('rx-pane-parados').innerHTML = parados.length === 0
+      ? '<div style="color:#4ade80;padding:14px;text-align:center;font-size:13px">✓ Nenhum lead parado +48h</div>'
+      : `<div style="overflow-x:auto"><table style="width:100%;font-size:12px;border-collapse:collapse">
+        <thead><tr style="border-bottom:1px solid #30363D;color:#888;font-size:10px;text-transform:uppercase">
+          <th style="text-align:left;padding:6px">Lead</th><th>Tier</th><th>Stage</th><th>Parado</th><th>Valor</th><th>Ações</th>
+        </tr></thead><tbody>
+        ${parados.map(p => `<tr style="border-bottom:1px solid #1a1a1a">
+          <td style="padding:6px;font-weight:600"><a href="${p.crmLink}" target="_blank" style="color:#5ba3f5;text-decoration:none">${p.name}</a></td>
+          <td style="padding:6px;color:${tierCol[p.tier]||'#666'};font-weight:700">${p.tier}</td>
+          <td style="padding:6px;font-size:11px;color:#aaa">${p.stage}</td>
+          <td style="padding:6px;color:${p.horas>96?'#ef4444':'#fbbf24'};font-weight:700">${p.horas}h</td>
+          <td style="padding:6px;font-weight:700;color:#fff">${p.valor?rxFmtFull(p.valor):'-'}</td>
+          <td style="padding:6px"><a href="${p.crmLink}" target="_blank" style="color:#5ba3f5;text-decoration:none;font-size:11px">CRM</a> ${p.phone?`· <a href="${rxWpp(p.phone)}" target="_blank" style="color:#25D366;text-decoration:none;font-size:11px">WATI</a>`:''}</td>
+        </tr>`).join('')}
+        </tbody></table></div>${d.parados.total > parados.length ? `<div style="text-align:center;color:#888;font-size:11px;padding:6px">+ ${d.parados.total - parados.length} parados não exibidos</div>`:''}`;
+
+    // Pane: Sem atividade
+    const sem = d.semAtividade.lista || [];
+    document.getElementById('rx-pane-sem').innerHTML = sem.length === 0
+      ? '<div style="color:#4ade80;padding:14px;text-align:center;font-size:13px">✓ Todos os leads tiveram alguma atividade</div>'
+      : `<div style="background:#2d2513;border:1px solid #eab308;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:#fbbf24"><strong>🚧 Esses leads entraram e estão parados sem nenhuma ação.</strong> Ou atue ou descarte com motivo.</div>
+        <div style="overflow-x:auto"><table style="width:100%;font-size:12px;border-collapse:collapse">
+        <thead><tr style="border-bottom:1px solid #30363D;color:#888;font-size:10px;text-transform:uppercase">
+          <th style="text-align:left;padding:6px">Lead</th><th>Tier</th><th>Stage</th><th>Origem</th><th>No funil há</th><th>Ações</th>
+        </tr></thead><tbody>
+        ${sem.map(s => `<tr style="border-bottom:1px solid #1a1a1a">
+          <td style="padding:6px;font-weight:600"><a href="${s.crmLink}" target="_blank" style="color:#5ba3f5;text-decoration:none">${s.name}</a></td>
+          <td style="padding:6px;color:${tierCol[s.tier]||'#666'};font-weight:700">${s.tier}</td>
+          <td style="padding:6px;font-size:11px;color:#aaa">${s.stage}</td>
+          <td style="padding:6px;font-size:11px;color:#888">${s.source}</td>
+          <td style="padding:6px;color:#fbbf24">${s.horasNoFunil}h</td>
+          <td style="padding:6px"><a href="${s.crmLink}" target="_blank" style="color:#5ba3f5;text-decoration:none;font-size:11px">CRM</a> ${s.phone?`· <a href="${rxWpp(s.phone)}" target="_blank" style="color:#25D366;text-decoration:none;font-size:11px">WATI</a>`:''}</td>
+        </tr>`).join('')}
+        </tbody></table></div>${d.semAtividade.total > sem.length ? `<div style="text-align:center;color:#888;font-size:11px;padding:6px">+ ${d.semAtividade.total - sem.length} não exibidos</div>`:''}`;
+
+    // Pane: Vendas hoje
+    const vendas = v.deals || [];
+    document.getElementById('rx-pane-vendas').innerHTML = vendas.length === 0
+      ? '<div style="color:#888;padding:14px;text-align:center;font-size:13px">Nenhuma venda fechada hoje ainda</div>'
+      : `<div style="overflow-x:auto"><table style="width:100%;font-size:12px;border-collapse:collapse">
+        <thead><tr style="border-bottom:1px solid #30363D;color:#888;font-size:10px;text-transform:uppercase">
+          <th style="text-align:left;padding:6px">Cliente</th><th>Produto</th><th>Valor</th><th>CRM</th>
+        </tr></thead><tbody>
+        ${vendas.map(vd => `<tr style="border-bottom:1px solid #1a1a1a">
+          <td style="padding:6px;font-weight:600">${vd.name}</td>
+          <td style="padding:6px;font-size:11px;color:#888">${vd.produto || '—'}</td>
+          <td style="padding:6px;color:#4ade80;font-weight:800">${rxFmtFull(vd.valor)}</td>
+          <td style="padding:6px"><a href="${vd.crmLink}" target="_blank" style="color:#5ba3f5;text-decoration:none;font-size:11px">Abrir</a></td>
+        </tr>`).join('')}
+        </tbody></table></div>`;
+  }
+
+  loadRaiox();
+  setInterval(loadRaiox, 3*60*1000); // refresh 3min
+  </script>
+
+  <!-- PROPOSTAS -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+    <div style="background:var(--bg-card);border:1px solid #2EA043;border-radius:16px;padding:20px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="font-size:18px;">&#9989;</span>
+        <h3 style="color:#2EA043;font-size:1rem;margin:0;">Propostas em Dia</h3>
+        <span id="prop-dia-cnt" style="background:#0d2818;color:#4ade80;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;"></span>
+      </div>
+      <div id="prop-dia-list" style="font-size:13px;"></div>
+    </div>
+    <div style="background:var(--bg-card);border:1px solid #F85149;border-radius:16px;padding:20px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="font-size:18px;">&#128680;</span>
+        <h3 style="color:#F85149;font-size:1rem;margin:0;">Propostas Atrasadas</h3>
+        <span id="prop-atraso-cnt" style="background:#2d1215;color:#f87171;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;"></span>
+        <span id="prop-atraso-valor" style="color:#F85149;font-size:12px;font-weight:700;margin-left:auto;"></span>
+      </div>
+      <div id="prop-atraso-list" style="font-size:13px;"></div>
+    </div>
+  </div>
+
+  <!-- CHECKLIST FUNIL -->
+  <div style="background:var(--bg-card);border:1px solid #06b6d4;border-radius:16px;padding:20px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <span style="font-size:20px;">&#128203;</span>
+      <h2 style="font-size:1.1rem;color:#06b6d4;margin:0;">Checklist do Funil</h2>
+      <span id="funil-pct" style="font-size:12px;font-weight:700;margin-left:auto;"></span>
+    </div>
+    <div id="funil-summary" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;"></div>
+    <div id="funil-urgentes" style="max-height:400px;overflow-y:auto;"></div>
+  </div>
+
+  <!-- LEADS PARADOS (com plano de ação) -->
+  <div style="background:linear-gradient(135deg,#1C1208 0%,#2d1215 100%);border:1px solid #F85149;border-radius:16px;padding:20px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <span style="font-size:20px;">&#128680;</span>
+      <h2 style="font-size:1.1rem;color:#F85149;margin:0;">Leads Parados</h2>
+      <span id="parados-cnt" style="background:#2d1215;color:#f87171;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;"></span>
+      <span id="parados-valor" style="color:#F85149;font-size:12px;font-weight:700;margin-left:auto;"></span>
+    </div>
+    <div id="parados-filters" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+      <button class="par-filter active" onclick="filterParados('all',this)" style="background:#F85149;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Todos</button>
+      <button class="par-filter" onclick="filterParados('Diamante',this)" style="background:var(--border);color:#A371F7;border:1px solid #A371F7;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Diamante</button>
+      <button class="par-filter" onclick="filterParados('Ouro',this)" style="background:var(--border);color:#F0C040;border:1px solid #F0C040;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Ouro</button>
+      <button class="par-filter" onclick="filterParados('Prata',this)" style="background:var(--border);color:var(--text-muted);border:1px solid var(--text-muted);padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Prata</button>
+      <button class="par-filter" onclick="filterParados('poco',this)" style="background:var(--border);color:#58A6FF;border:1px solid #58A6FF;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Agua Poco</button>
+      <button class="par-filter" onclick="filterParados('estacao',this)" style="background:var(--border);color:#2EA043;border:1px solid #2EA043;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Agua Estacao</button>
+    </div>
+    <div id="parados-list" style="max-height:600px;overflow-y:auto;"></div>
+  </div>
+
+  <!-- LEADS POR FONTE -->
+  <div style="background:var(--bg-card);border:1px solid #1F6FEB;border-radius:16px;padding:20px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <span style="font-size:18px;">&#128202;</span>
+      <h2 style="font-size:1.1rem;color:#58A6FF;margin:0;">Leads por Fonte</h2>
+    </div>
+    <div id="source-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;"></div>
+    <div id="source-deals" style="max-height:500px;overflow-y:auto;"></div>
+  </div>
+
+  <!-- Pipeline Breakdown -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+    <div id="stages-box" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;"></div>
+    <div id="tiers-box" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;"></div>
+  </div>
+
+  <!-- RANKING + GAMIFICACAO -->
+  <div style="background:var(--bg-card);border:1px solid #F0C040;border-radius:16px;padding:20px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <span style="font-size:20px;">&#127942;</span>
+      <h2 style="font-size:1.1rem;color:#F0C040;margin:0;">Ranking & Conquistas</h2>
+    </div>
+    <div id="gamificacao-content" style="font-size:14px;color:var(--text);">Carregando...</div>
+  </div>
+
+  <!-- Vendas do Mes -->
+  <div id="won-section" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:24px;"></div>
+
+</div>
+
+<div id="loading" style="text-align:center;padding:60px 0;color:var(--text-muted);">
+  <div style="font-size:40px;margin-bottom:16px;">&#128640;</div>
+  <div>Carregando seu pipeline...</div>
+</div>
+
+<div id="error" style="display:none;text-align:center;padding:60px 0;color:#F85149;">
+  <div style="font-size:40px;margin-bottom:16px;">&#9888;&#65039;</div>
+  <div>Erro ao carregar dados. Tente recarregar a pagina.</div>
+</div>
+
+<style>
+.kpi-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+  text-align: center;
+}
+.kpi-value { font-size: 1.8rem; font-weight: 800; color: var(--text); }
+.kpi-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+.kpi-sub { font-size: 0.75rem; margin-top: 6px; }
+
+.deal-card {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 16px; transition: border-color 0.2s;
+}
+.deal-card:hover { border-color: #58A6FF; }
+.deal-card.diamante { border-left: 4px solid #A371F7; }
+.deal-card.ouro { border-left: 4px solid #F0C040; }
+.deal-card.prata { border-left: 4px solid var(--text-muted); }
+.deal-card.bronze { border-left: 4px solid #87592A; }
+
+.deal-tier { font-size: 20px; min-width: 28px; text-align: center; }
+.deal-info { flex: 1; }
+.deal-name { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+.deal-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; }
+.deal-actions { display: flex; gap: 8px; }
+.deal-btn {
+  padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 600;
+  text-decoration: none; color: var(--text); transition: opacity 0.2s;
+}
+.deal-btn:hover { opacity: 0.8; }
+.btn-call { background: #2EA043; }
+.btn-wpp { background: #25D366; }
+.btn-crm { background: #1F6FEB; }
+
+.progress-bar {
+  height: 10px; border-radius: 6px; background: var(--border); overflow: hidden; margin-top: 8px;
+}
+.progress-fill {
+  height: 100%; border-radius: 6px; transition: width 1s ease;
+}
+
+.won-row {
+  display: flex; justify-content: space-between; padding: 8px 0;
+  border-bottom: 1px solid var(--border); font-size: 0.85rem; color: var(--text);
+}
+.won-row:last-child { border: none; }
+
+@media (max-width: 600px) {
+  .deal-actions { flex-direction: column; gap: 4px; }
+  .deal-card { flex-wrap: wrap; }
+  #kpis { grid-template-columns: 1fr 1fr; }
+}
+</style>
+
+<script>
+const userName = '<%= user.name %>';
+const isAdmin = <%= isAdmin ? 'true' : 'false' %>;
+
+function loadCockpit(closerUsername) {
+  const url = closerUsername ? `/cockpit/data?closer=${closerUsername}` : '/cockpit/data';
+  renderCockpit(url, closerUsername);
+  loadScore();
+loadAnual();
+loadPatente();
+loadForecast();
+loadDestaques();
+loadCalls();
+loadScoreDetalhado();
+loadChecklistFunil();
+loadClosy();
+loadScoreSemana();
+}
+
+async function loadScoreSemana(){
+  try {
+    const closer = new URLSearchParams(location.search).get('closer');
+    const url = '/cockpit/score-semana?dias=7' + (closer ? '&closer='+encodeURIComponent(closer) : '');
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.error) {
+      document.getElementById('ssem-stats').innerHTML = '<div style="color:#ef4444;font-size:12px;padding:8px">Erro: '+d.error+'</div>';
+      return;
+    }
+    // Tendência
+    const tend = d.resumo.tendencia;
+    const tendCor = tend === 'subindo' ? '#22c55e' : tend === 'caindo' ? '#ef4444' : '#888';
+    const tendIcon = tend === 'subindo' ? '↗️' : tend === 'caindo' ? '↘️' : '➡️';
+    const tendTxt = tend === 'subindo' ? `Subindo (+${d.resumo.delta_recente}pp)` : tend === 'caindo' ? `Caindo (${d.resumo.delta_recente}pp)` : 'Estável';
+    document.getElementById('ssem-tendencia').innerHTML = `<span style="color:${tendCor}">${tendIcon} ${tendTxt}</span>`;
+    // Stats
+    const stats = d.resumo;
+    document.getElementById('ssem-stats').innerHTML = `
+      <div style="background:#161b22;border:1px solid #30363D;border-radius:8px;padding:10px;text-align:center">
+        <div style="color:#888;font-size:10px;font-weight:700;text-transform:uppercase">Média 7d</div>
+        <div style="color:#fff;font-size:24px;font-weight:800">${stats.media}<span style="font-size:12px;color:#666">/100</span></div>
+      </div>
+      <div style="background:#161b22;border:1px solid #22c55e44;border-radius:8px;padding:10px;text-align:center">
+        <div style="color:#22c55e;font-size:10px;font-weight:700;text-transform:uppercase">Melhor</div>
+        <div style="color:#22c55e;font-size:24px;font-weight:800">${stats.melhor.total}</div>
+        <div style="color:#666;font-size:10px">${stats.melhor.dow} ${stats.melhor.data.slice(8,10)}/${stats.melhor.data.slice(5,7)}</div>
+      </div>
+      <div style="background:#161b22;border:1px solid #ef444444;border-radius:8px;padding:10px;text-align:center">
+        <div style="color:#ef4444;font-size:10px;font-weight:700;text-transform:uppercase">Pior</div>
+        <div style="color:#ef4444;font-size:24px;font-weight:800">${stats.pior.total}</div>
+        <div style="color:#666;font-size:10px">${stats.pior.dow} ${stats.pior.data.slice(8,10)}/${stats.pior.data.slice(5,7)}</div>
+      </div>
+    `;
+    // Dias
+    window._SSEM_DATA = d;
+    document.getElementById('ssem-dias').innerHTML = d.semana.map((dia, idx) => {
+      const isToday = dia.is_today;
+      const cor = dia.cor;
+      const opacity = isToday ? '1' : '0.92';
+      return `
+        <button onclick="ssemAbrirDia(${idx})" style="background:${cor}22;border:2px solid ${cor};border-radius:8px;padding:8px 4px;cursor:pointer;text-align:center;opacity:${opacity};transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+          <div style="color:#aaa;font-size:9px;font-weight:700;text-transform:uppercase">${dia.dow}</div>
+          <div style="color:#888;font-size:9px">${dia.data.slice(8,10)}/${dia.data.slice(5,7)}</div>
+          <div style="color:${cor};font-size:18px;font-weight:800;margin:3px 0">${dia.total}</div>
+          <div style="color:${cor};font-size:8px;font-weight:700;text-transform:uppercase">${dia.classificacao}</div>
+          ${isToday ? '<div style="color:#fbbf24;font-size:8px;font-weight:800;margin-top:2px">HOJE</div>' : ''}
+        </button>
+      `;
+    }).join('');
+  } catch(e) { console.error('score-semana:', e); }
+}
+
+function ssemAbrirDia(idx){
+  const d = window._SSEM_DATA?.semana?.[idx];
+  if (!d) return;
+  const el = document.getElementById('ssem-detalhe-dia');
+  const cor = d.cor;
+  let html = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+    <span style="background:${cor}22;color:${cor};padding:4px 10px;border-radius:6px;font-size:11px;font-weight:800">${d.dow} ${d.data.slice(8,10)}/${d.data.slice(5,7)}</span>
+    <strong style="color:#fff;font-size:18px">${d.total}<span style="font-size:11px;color:#888">/100</span></strong>
+    <span style="color:${cor};font-weight:800;font-size:12px">${d.classificacao}</span>
+  </div>`;
+  // Breakdown
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-bottom:10px">';
+  for (const [key, b] of Object.entries(d.breakdown)) {
+    const pct = (b.pts / b.max) * 100;
+    const corBar = pct >= 80 ? '#22c55e' : pct >= 50 ? '#fbbf24' : pct >= 25 ? '#f97316' : '#ef4444';
+    html += `
+      <div style="background:#161b22;border:1px solid #30363D;border-radius:6px;padding:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="color:#fff;font-size:11px;font-weight:700">${b.label}</span>
+          <span style="color:${corBar};font-size:13px;font-weight:800">${b.pts}/${b.max}</span>
+        </div>
+        <div style="height:5px;background:#0d0d0d;border-radius:2px;overflow:hidden;margin-bottom:4px">
+          <div style="height:100%;background:${corBar};width:${pct}%;transition:width .4s"></div>
+        </div>
+        <div style="color:#888;font-size:10px">${b.detalhe}</div>
+      </div>
+    `;
+  }
+  html += '</div>';
+  // Alertas
+  if (d.alertas?.length) {
+    html += '<div style="margin-top:8px">' + d.alertas.map(a => `
+      <div style="background:#3a0a0a;border:1px solid #ef4444;border-left:3px solid #ef4444;border-radius:4px;padding:6px 10px;margin-bottom:4px;color:#fca5a5;font-size:11px">⚠️ ${a}</div>
+    `).join('') + '</div>';
+  }
+  el.innerHTML = html;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function renderCockpit(url, closerUsername) {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('cockpit-content').style.opacity = '0';
+  document.getElementById('error').style.display = 'none';
+
+  const hour = new Date().getHours();
+  let greet = 'Bom dia';
+  if (hour >= 12 && hour < 18) greet = 'Boa tarde';
+  else if (hour >= 18) greet = 'Boa noite';
+  document.getElementById('greeting').textContent = `${greet}, ${userName}!`;
+
+  try {
+    const res = await fetch(url || '/cockpit/data');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('cockpit-content').style.opacity = '1';
+    document.getElementById('error').style.display = 'none';
+    const viewLabel = d.viewingAs ? `Visualizando: ${d.viewingAs}` : `Pipeline: ${d.pipeline.total} deals ativos`;
+    document.getElementById('subtitle').textContent = `${viewLabel} | Time: ${d.team}`;
+
+    // KPIs (with Bebedouro vs Filtro split)
+    const k = d.kpis;
+    document.getElementById('kpis').innerHTML = `
+      <div class="kpi-card">
+        <div class="kpi-value" style="color:#2EA043;">${k.vendas}</div>
+        <div class="kpi-label">Vendas no Mes</div>
+        <div class="kpi-sub" style="color:${k.pctVendas>=100?'#2EA043':'#D29922'};">${k.pctVendas}% da meta (${d.meta.vendas})</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color:#58A6FF;">R$ ${(k.faturamento/1000).toFixed(1)}k</div>
+        <div class="kpi-label">Faturamento Total</div>
+        <div class="kpi-sub" style="color:${k.pctFaturamento>=100?'#2EA043':'#D29922'};">${k.pctFaturamento}% da meta</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color:#F0C040;">R$ ${(k.fatBebedouro/1000).toFixed(1)}k</div>
+        <div class="kpi-label">Bebedouro</div>
+        <div class="kpi-sub">${k.vendasBebedouro} vendas</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color:#A371F7;">R$ ${(k.fatFiltro/1000).toFixed(1)}k</div>
+        <div class="kpi-label">Filtro Entrada</div>
+        <div class="kpi-sub">${k.vendasFiltro} vendas</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color:#f97316;">R$ ${((k.fatLoja||0)/1000).toFixed(1)}k</div>
+        <div class="kpi-label">Loja/PDV</div>
+        <div class="kpi-sub">${k.vendasLoja||0} vendas</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">R$ ${k.ticketMedio.toLocaleString('pt-BR')}</div>
+        <div class="kpi-label">Ticket Medio</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color:${k.faltaVendas<=3?'#2EA043':'#F85149'};">${k.faltaVendas}</div>
+        <div class="kpi-label">Vendas p/ Meta</div>
+        <div class="kpi-sub">R$ ${(k.faltaFaturamento/1000).toFixed(1)}k faltando</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">${d.pipeline.total}</div>
+        <div class="kpi-label">Pipeline Ativo</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color:#F85149;">${k.perdidos}</div>
+        <div class="kpi-label">Perdidos</div>
+      </div>
+    `;
+
+    // Comparativo
+    if (d.comparativo) {
+      const comp = d.comparativo;
+      const diffColor = comp.diffFatMesPassado >= 0 ? '#22c55e' : '#ef4444';
+      const diffSign = comp.diffFatMesPassado >= 0 ? '+' : '';
+      document.getElementById('kpis').innerHTML += `
+        <div class="kpi-card" style="border:1px solid ${diffColor};">
+          <div class="kpi-value" style="color:${diffColor};">${comp.pctVsMesPassado >= 0 ? '+' : ''}${comp.pctVsMesPassado}%</div>
+          <div class="kpi-label">vs Mes Passado</div>
+          <div class="kpi-sub">Mes anterior: R$ ${(comp.mesPassado.fat/1000).toFixed(0)}k (${comp.mesPassado.vendas}v) ate dia ${comp.mesPassado.mesmoDia?.slice(8)}</div>
+        </div>
+      `;
+    }
+
+    // Meta progress
+    document.getElementById('meta-section').innerHTML = `
+      <h3 style="color:#E6EDF3;margin:0 0 14px 0;font-size:1rem;">Meta do Mes</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:0.85rem;color:#8B949E;">
+            <span>Vendas: ${k.vendas}/${d.meta.vendas}</span>
+            <span style="color:${k.pctVendas>=100?'#2EA043':'#F0C040'};">${k.pctVendas}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${Math.min(k.pctVendas,100)}%;background:${k.pctVendas>=100?'#2EA043':k.pctVendas>=70?'#F0C040':'#F85149'};"></div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:0.85rem;color:#8B949E;">
+            <span>Faturamento: R$ ${(k.faturamento/1000).toFixed(1)}k / R$ ${(d.meta.faturamento/1000).toFixed(0)}k</span>
+            <span style="color:${k.pctFaturamento>=100?'#2EA043':'#F0C040'};">${k.pctFaturamento}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${Math.min(k.pctFaturamento,100)}%;background:${k.pctFaturamento>=100?'#2EA043':k.pctFaturamento>=70?'#F0C040':'#F85149'};"></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Deals list
+    const tierEmoji = { 'Diamante': '&#128142;', 'Ouro': '&#129351;', 'Prata': '&#129352;', 'Bronze': '&#129353;' };
+    const tierClass = { 'Diamante': 'diamante', 'Ouro': 'ouro', 'Prata': 'prata', 'Bronze': 'bronze' };
+    const urgentes = d.deals.filter(dl => dl.tierPriority <= 1 || dl.hoursAgo > 24);
+    document.getElementById('urgente-count').textContent = urgentes.length + ' urgentes';
+
+    // Guarda deals + popula select de etapas (uma vez)
+    window._FA_DEALS = d.deals || [];
+    const stageSel = document.getElementById('fa-stage');
+    if (stageSel && stageSel.options.length <= 1) {
+      const stages = [...new Set(window._FA_DEALS.map(x => x.stage).filter(Boolean))];
+      const counts = {};
+      stages.forEach(s => counts[s] = window._FA_DEALS.filter(x => x.stage === s).length);
+      stages.sort((a,b) => counts[b] - counts[a]);
+      stageSel.innerHTML = '<option value="">📋 Todas as etapas (' + window._FA_DEALS.length + ')</option>' +
+        stages.map(s => '<option value="' + s + '">' + s + ' (' + counts[s] + ')</option>').join('');
+    }
+    renderDealsList();
+
+    // Stages
+    document.getElementById('stages-box').innerHTML = `
+      <h3 style="color:#E6EDF3;margin:0 0 12px 0;font-size:1rem;">Por Etapa</h3>
+      ${Object.entries(d.pipeline.stages).sort((a,b)=>b[1]-a[1]).map(([s,c]) =>
+        `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.85rem;color:#E6EDF3;border-bottom:1px solid #21262D;">
+          <span>${s}</span><span style="font-weight:700;">${c}</span>
+        </div>`
+      ).join('')}
+    `;
+
+    // Premiacao
+    if (d.premiacao) {
+      const pm = d.premiacao;
+      const faixaAtualHtml = pm.faixaAtual
+        ? `<div style="background:#0d2818;border:1px solid #2EA043;border-radius:10px;padding:12px;margin-bottom:8px;">
+            <span style="color:#2EA043;font-weight:700;">Faixa atual: R$ ${(pm.faixaAtual.faturamento/1000).toFixed(0)}k</span>
+            <span style="color:#F0C040;font-weight:700;margin-left:12px;">Premio: R$ ${pm.premioAtual.toLocaleString()}</span>
+            ${pm.bonusAtual > 0 ? '<span style="color:#A371F7;margin-left:12px;">+'+pm.bonusAtual+'% bonus alta margem</span>' : ''}
+          </div>`
+        : '<div style="color:#eab308;margin-bottom:8px;">Abaixo da primeira faixa (R$ 75k)</div>';
+      const proxHtml = pm.faixaProxima
+        ? `<div style="background:#21262D;border-radius:10px;padding:12px;">
+            <span style="color:#8B949E;">Proxima faixa: R$ ${(pm.faixaProxima.faturamento/1000).toFixed(0)}k</span>
+            <span style="color:#F0C040;margin-left:8px;">Premio: R$ ${pm.faixaProxima.premio.toLocaleString()}</span>
+            <span style="color:#ef4444;margin-left:8px;font-weight:700;">Falta R$ ${(pm.faixaProxima.falta/1000).toFixed(1)}k</span>
+            <div class="progress-bar" style="margin-top:6px;">
+              <div class="progress-fill" style="width:${Math.round((1-pm.faixaProxima.falta/pm.faixaProxima.faturamento)*100)}%;background:#2EA043;"></div>
+            </div>
+          </div>`
+        : '<div style="color:#F0C040;">Faixa maxima atingida!</div>';
+      document.getElementById('premiacao-content').innerHTML = faixaAtualHtml + proxHtml;
+    }
+
+    // Leads Parados (with action plan)
+    renderParados(d.deals);
+
+    // Leads by Source (tabs + expandable)
+    const srcColors = {'Google Ads':'#4285F4','Meta / Instagram':'#E1306C','CTWA WhatsApp':'#25D366','Indicacao':'#F0C040','Organico':'#2EA043','Base Ativa':'#8B949E','Site':'#00AAFF'};
+    const bs = d.dealsBySource || {};
+    const srcKeys = Object.keys(bs).sort((a,b) => bs[b].length - bs[a].length);
+
+    // Render source tabs
+    document.getElementById('source-tabs').innerHTML =
+      `<button class="src-tab active" onclick="filterSource('all',this)" style="background:#1F6FEB;color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Todos (${d.deals.length})</button>` +
+      srcKeys.map(s => {
+        const color = srcColors[s] || '#6b7280';
+        return `<button class="src-tab" onclick="filterSource('${s}',this)" style="background:#21262D;color:${color};border:1px solid ${color};padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">${s} (${bs[s].length})</button>`;
+      }).join('');
+
+    // Store deals globally for filtering
+    window._allSourceDeals = bs;
+    window._allDeals = d.deals;
+    filterSource('all');
+
+    // Tiers (clickable - expand to show deals)
+    const tierColors = { 'Diamante': '#A371F7', 'Ouro': '#F0C040', 'Prata': '#8B949E', 'Bronze': '#87592A', '-': '#484F58' };
+    const tg = d.pipeline.tierGroups || {};
+    document.getElementById('tiers-box').innerHTML = `
+      <h3 style="color:#E6EDF3;margin:0 0 12px 0;font-size:1rem;">Por Tier (clique pra expandir)</h3>
+      ${Object.entries(tg).sort((a,b)=>b[1].length-a[1].length).map(([t,deals]) => {
+        const color = tierColors[t]||'#E6EDF3';
+        const dealsHtml = deals.slice(0,15).map(dl => {
+          const hc = dl.hoursAgo>48?'#F85149':dl.hoursAgo>12?'#D29922':'#6b7280';
+          const hl = dl.hoursAgo<1?'agora':dl.hoursAgo<24?Math.round(dl.hoursAgo)+'h':Math.round(dl.hoursAgo/24)+'d';
+          return `<div style="display:flex;justify-content:space-between;padding:4px 8px;font-size:12px;border-bottom:1px solid #1a1a1a;">
+            <a href="${dl.crmLink}" target="_blank" style="color:#58A6FF;text-decoration:none;flex:1;">${dl.name}</a>
+            <span style="color:${hc};width:40px;text-align:right;">${hl}</span>
+            <span style="color:#8B949E;width:60px;text-align:right;">sc:${dl.score}</span>
+          </div>`;
+        }).join('');
+        return `<div style="border-bottom:1px solid #21262D;">
+          <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'" style="display:flex;justify-content:space-between;padding:8px 0;cursor:pointer;">
+            <span style="color:${color};font-weight:600;">${t} ${tierEmoji[t]||''}</span>
+            <span style="color:#E6EDF3;font-weight:700;">${deals.length} ▸</span>
+          </div>
+          <div style="display:none;background:#0D1117;border-radius:8px;margin-bottom:8px;max-height:300px;overflow-y:auto;">${dealsHtml}</div>
+        </div>`;
+      }).join('')}
+    `;
+
+    // Propostas em dia
+    const pd = d.propostas || {};
+    document.getElementById('prop-dia-cnt').textContent = (pd.emDia||[]).length;
+    // Render proposal with full action buttons
+    function renderProposta(p, atrasada) {
+      const hl = p.hoursAgo<1?'agora':p.hoursAgo<24?Math.round(p.hoursAgo)+'h':Math.round(p.hoursAgo/24)+'d';
+      const phoneClean = p.phone ? String(p.phone).replace(/\D/g,'') : '';
+      const goto = phoneClean ? 'https://app.goto.com/calls?phoneNumber='+encodeURIComponent('+'+phoneClean) : '';
+      const nameColor = atrasada ? '#F85149' : '#58A6FF';
+      const nomeEsc = (p.name||'').replace(/'/g,"\\'");
+      return `<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid #21262D;flex-wrap:wrap;">
+        <a href="${p.crmLink}" target="_blank" style="color:${nameColor};text-decoration:none;flex:1;font-weight:600;min-width:120px;">${p.name}</a>
+        <span style="color:${atrasada?'#fff':'#2EA043'};font-weight:700;font-size:12px;">R$ ${(parseFloat(p.amount)||0).toLocaleString('pt-BR')}</span>
+        <span style="color:${atrasada?'#F85149':'#8B949E'};font-size:11px;font-weight:${atrasada?'700':'400'};">${hl}</span>
+        <div style="display:flex;gap:4px;">
+          ${phoneClean?`<button onclick="window.abrirChat&&abrirChat('${p.id||''}','${phoneClean}','${nomeEsc}')" style="color:#22c55e;font-size:10px;background:#0d2818;border:1px solid #22c55e;padding:2px 6px;border-radius:4px;cursor:pointer;font-weight:700">💬 Chat</button>`:''}
+          ${phoneClean?`<a href="tel:+${phoneClean}" style="color:#5ba3f5;font-size:10px;text-decoration:none;background:#0d1520;padding:2px 6px;border-radius:4px;">📞 Ligar</a>`:''}
+          ${goto?`<a href="${goto}" target="_blank" style="color:#F0C040;font-size:10px;text-decoration:none;background:#2d2513;padding:2px 6px;border-radius:4px;">GoTo</a>`:''}
+          <a href="${p.crmLink}" target="_blank" style="color:#58A6FF;font-size:10px;text-decoration:none;background:#0d1520;padding:2px 6px;border-radius:4px;">CRM</a>
+        </div>
+      </div>`;
+    }
+
+    document.getElementById('prop-dia-list').innerHTML = (pd.emDia||[]).length === 0
+      ? '<div style="color:#4ade80;">Nenhuma proposta em dia</div>'
+      : (pd.emDia||[]).map(p => renderProposta(p, false)).join('');
+
+    document.getElementById('prop-atraso-cnt').textContent = (pd.atrasadas||[]).length;
+    document.getElementById('prop-atraso-valor').textContent = pd.valorAtrasado ? 'R$ '+(pd.valorAtrasado/1000).toFixed(1)+'k parado' : '';
+    document.getElementById('prop-atraso-list').innerHTML = (pd.atrasadas||[]).length === 0
+      ? '<div style="color:#4ade80;">Nenhuma proposta atrasada</div>'
+      : (pd.atrasadas||[]).map(p => renderProposta(p, true)).join('');
+
+    // Won deals (with product + CRM link)
+    document.getElementById('won-section').innerHTML = `
+      <h3 style="color:#2EA043;margin:0 0 12px 0;font-size:1rem;">&#127942; Vendas do Mes (${k.vendas}) — R$ ${(k.faturamento/1000).toFixed(1)}k</h3>
+      ${d.wonDeals.length === 0 ? '<div style="color:#8B949E;font-size:0.85rem;">Nenhuma venda ainda este mes.</div>' :
+        d.wonDeals.map(w => {
+          const link = w.id ? 'https://crmplus.zoho.com/tudodefiltro3711/index.do/cxapp/crm/org856385701/tab/Potentials/'+w.id : '#';
+          const prod = w.Produto_Vendido || '';
+          return `<div class="won-row" style="display:flex;align-items:center;gap:8px;">
+            <a href="${link}" target="_blank" style="color:#58A6FF;text-decoration:none;flex:1;font-weight:500;">${w.Deal_Name || '?'}</a>
+            ${prod ? '<span style="color:#8B949E;font-size:11px;background:#21262D;padding:2px 6px;border-radius:4px;">'+prod+'</span>' : ''}
+            <span style="color:#2EA043;font-weight:700;white-space:nowrap;">R$ ${(parseFloat(w.Amount)||0).toLocaleString('pt-BR')}</span>
+          </div>`;
+        }).join('')}
+    `;
+
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error').style.display = 'block';
+    document.getElementById('error').innerHTML = '<div style="font-size:40px;margin-bottom:16px;">&#9888;</div><div>Erro: ' + err.message + '</div><pre style="text-align:left;max-width:600px;margin:12px auto;font-size:11px;color:#8B949E;overflow:auto;">' + (err.stack||'') + '</pre>';
+    console.error('Cockpit error:', err);
+  }
+}
+
+// Load Score + Checklist + Metas
+async function loadScore() {
+  const sel = document.getElementById('closer-select');
+  const closer = sel ? sel.value : '';
+  const url = closer ? `/cockpit/score?closer=${closer}` : '/cockpit/score';
+  try {
+    const res = await fetch(url);
+    const s = await res.json();
+    if (s.error) return;
+
+    // Score card
+    const sc = s.score;
+    document.getElementById('score-value').textContent = sc.total;
+    document.getElementById('score-value').style.color = sc.classificacaoCor;
+    document.getElementById('score-class').innerHTML = `<span style="color:${sc.classificacaoCor};font-weight:700;">${sc.classificacao}</span>`;
+
+    // Breakdown bars
+    const bd = sc.breakdown;
+    document.getElementById('score-breakdown').innerHTML = Object.values(bd).map(b => {
+      const pct = Math.round(b.pts / b.max * 100);
+      const color = pct >= 80 ? '#22c55e' : pct >= 50 ? '#eab308' : '#ef4444';
+      return `<div style="margin-bottom:6px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#8B949E;">
+          <span>${b.label}</span><span style="color:${color};font-weight:700;">${b.pts}/${b.max}</span>
+        </div>
+        <div style="height:4px;background:#21262D;border-radius:2px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${color};border-radius:2px;"></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Checklist
+    document.getElementById('check-count').innerHTML =
+      `<span style="color:${s.checklistDone===s.checklistTotal?'#22c55e':'#eab308'};">${s.checklistDone}/${s.checklistTotal}</span>`;
+    document.getElementById('checklist-items').innerHTML = s.checklist.map(c => {
+      const icon = c.done ? '<span style="color:#22c55e;">&#9989;</span>' : '<span style="color:#ef4444;">&#10060;</span>';
+      return `<div style="display:flex;align-items:flex-start;gap:8px;font-size:13px;">
+        ${icon}
+        <div>
+          <div style="color:#E6EDF3;font-weight:600;">${c.item}</div>
+          <div style="color:#8B949E;font-size:11px;">${c.detail}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Metas diarias
+    const m = s.metasDiarias;
+    document.getElementById('metas-diarias').innerHTML = `
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#E6EDF3;padding:6px 0;border-bottom:1px solid #21262D;">
+        <span>Meta faturamento/dia</span>
+        <span style="font-weight:700;color:#F0C040;">R$ ${(m.fatDiario/1000).toFixed(1)}k</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#E6EDF3;padding:6px 0;border-bottom:1px solid #21262D;">
+        <span>Vendas necessarias/dia</span>
+        <span style="font-weight:700;color:#F0C040;">${m.vendasDiarias}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#E6EDF3;padding:6px 0;border-bottom:1px solid #21262D;">
+        <span>Vendas hoje</span>
+        <span style="font-weight:700;color:${m.vendasHoje>0?'#22c55e':'#ef4444'};">${m.vendasHoje} (R$ ${(m.fatHoje/1000).toFixed(1)}k)</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#E6EDF3;padding:6px 0;border-bottom:1px solid #21262D;">
+        <span>Dias sem venda</span>
+        <span style="font-weight:700;color:${m.diasSemVenda>2?'#ef4444':m.diasSemVenda>0?'#eab308':'#22c55e'};">${m.diasSemVenda}d</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#E6EDF3;padding:6px 0;border-bottom:1px solid #21262D;">
+        <span>Dias restantes no mes</span>
+        <span style="font-weight:700;">${m.diasRestantes}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#E6EDF3;padding:6px 0;border-bottom:1px solid #21262D;">
+        <span>Ligacoes minimas</span>
+        <span style="font-weight:700;color:#58A6FF;">${m.ligacoesMinimas}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#E6EDF3;padding:6px 0;">
+        <span>Follow-ups minimos</span>
+        <span style="font-weight:700;color:#58A6FF;">${m.followupsMinimos}</span>
+      </div>
+    `;
+  } catch(e) {
+    console.error('Score error:', e);
+  }
+}
+
+// Leads Parados with action plan
+function renderParados(deals) {
+  // Filter deals parados >4h
+  const parados = deals.filter(dl => dl.hoursAgo >= 4).sort((a,b) => {
+    const tp = {Diamante:0,Ouro:1,Prata:2,Bronze:3};
+    if ((tp[a.tier]??4) !== (tp[b.tier]??4)) return (tp[a.tier]??4) - (tp[b.tier]??4);
+    return b.hoursAgo - a.hoursAgo;
+  });
+  window._paradosAll = parados;
+
+  const valorParado = parados.reduce((s,d) => s + (parseFloat(d.amount)||0), 0);
+  document.getElementById('parados-cnt').textContent = parados.length + ' leads';
+  document.getElementById('parados-valor').textContent = valorParado > 0 ? 'R$ '+(valorParado/1000).toFixed(1)+'k parado' : '';
+
+  filterParados('all');
+}
+
+function fmtPhoneBR(p){
+  if (!p) return '';
+  const c = String(p).replace(/\D/g,'');
+  // 5511999999999 → +55 11 99999-9999  |  11999999999 → (11) 99999-9999
+  if (c.length === 13 && c.startsWith('55')) return `+55 ${c.slice(2,4)} ${c.slice(4,9)}-${c.slice(9)}`;
+  if (c.length === 11) return `(${c.slice(0,2)}) ${c.slice(2,7)}-${c.slice(7)}`;
+  if (c.length === 10) return `(${c.slice(0,2)}) ${c.slice(2,6)}-${c.slice(6)}`;
+  return p;
+}
+
+function renderDealsList(){
+  const all = window._FA_DEALS || [];
+  const stage = document.getElementById('fa-stage')?.value || '';
+  const tier = document.getElementById('fa-tier')?.value || '';
+  const filtered = all.filter(d => {
+    if (stage && d.stage !== stage) return false;
+    if (tier && d.tier !== tier) return false;
+    return true;
+  }).slice(0, 30);
+
+  const tierEmoji = { 'Diamante': '💎', 'Ouro': '🥇', 'Prata': '🥈', 'Bronze': '🥉' };
+  const tierClass = { 'Diamante': 'diamante', 'Ouro': 'ouro', 'Prata': 'prata', 'Bronze': 'bronze' };
+  const list = document.getElementById('deals-list');
+  const empty = document.getElementById('deals-empty');
+
+  if (!filtered.length) {
+    list.innerHTML = '';
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = filtered.map(dl => {
+    const emoji = tierEmoji[dl.tier] || '⚪';
+    const cls = tierClass[dl.tier] || '';
+    const hrsLabel = dl.hoursAgo < 1 ? 'agora' : dl.hoursAgo < 24 ? Math.round(dl.hoursAgo) + 'h' : Math.round(dl.hoursAgo/24) + 'd';
+    const hrsColor = dl.hoursAgo > 48 ? '#F85149' : dl.hoursAgo > 12 ? '#D29922' : '#8B949E';
+    const wppLink = dl.phone ? 'https://live-2708.wati.io/2708/teamInbox/' + String(dl.phone).replace(/\D/g,'') : '#';
+    const ativColor = (dl.atividadesCount||0) === 0 ? '#F85149' : dl.atividadesCount < 3 ? '#D29922' : '#22c55e';
+    const tipoAguaTag = dl.tipoAgua ? `<span style="display:inline-block;padding:1px 8px;background:#1e3a5f;color:#7cb9f5;border-radius:4px;font-size:10px;font-weight:700;margin-right:4px;">💧 ${dl.tipoAgua}</span>` : '';
+    const stageColor = /Proposta/.test(dl.stage) ? '#F0C040' : /Qualificad/.test(dl.stage) ? '#A371F7' : /Primeiro Contato|Etapa IA|IA sem/i.test(dl.stage) ? '#ef4444' : '#8B949E';
+    const fone = dl.phone ? fmtPhoneBR(dl.phone) : '';
+    const ownerTag = dl.owner ? `<span style="display:inline-block;padding:1px 8px;background:rgba(167,113,247,.12);color:#c084fc;border-radius:4px;font-size:10px;font-weight:700;margin-right:4px" title="Dono do lead no Zoho">👤 ${dl.owner}</span>` : '';
+    const nomeEsc = dl.name.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    return `
+      <div class="deal-card ${cls}">
+        <div class="deal-tier">${emoji}</div>
+        <div class="deal-info">
+          <div class="deal-name">${dl.name}</div>
+          <div class="deal-meta">
+            ${ownerTag}${dl.tier} · sc:${dl.score}
+            · <span style="color:${stageColor};font-weight:700">${dl.stage}</span>
+            · <span style="color:${ativColor};font-weight:700;" title="atividades registradas">📋 ${dl.atividadesCount||0} ativ.</span>
+            · <span style="color:${hrsColor};">${hrsLabel} sem ação</span>
+          </div>
+          <div class="deal-meta" style="margin-top:4px;">
+            ${fone ? `<span style="display:inline-flex;align-items:center;gap:4px;margin-right:6px"><span onclick="event.stopPropagation();window.copyTel&&copyTel('${dl.phone.replace(/'/g,"\\'")}',this)" title="Click pra copiar" style="color:#22c55e;font-weight:700;font-family:monospace;font-size:12px;background:rgba(34,197,94,.1);padding:2px 8px;border-radius:4px;cursor:pointer;user-select:all">📞 ${fone}</span><button onclick="event.stopPropagation();window.copyTel&&copyTel('${dl.phone.replace(/'/g,"\\'")}',this)" style="background:transparent;border:1px solid #30363D;color:#9ca3af;border-radius:4px;padding:1px 5px;font-size:10px;cursor:pointer" title="Copiar">📋</button></span>` : '<span style="color:#666;font-size:11px;font-style:italic;margin-right:6px">sem telefone</span>'}
+            ${tipoAguaTag}
+            ${dl.cidade ? '<span style="color:#8B949E;font-size:11px;">📍 ' + dl.cidade + '</span>' : ''}
+            ${dl.produto ? '<span style="color:#8B949E;font-size:11px;margin-left:6px;">🛠️ ' + dl.produto + '</span>' : ''}
+          </div>
+        </div>
+        <div class="deal-actions">
+          <button onclick="sugerirAcao('${dl.id}','${nomeEsc}',this)" class="deal-btn" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#000;border:none;cursor:pointer;font-weight:800" title="IA sugere próximos passos + template">💡 Sugerir</button>
+          ${dl.phone ? `<a href="tel:${dl.phone}" class="deal-btn btn-call">📞 Ligar</a>` : ''}
+          ${dl.phone ? `<button onclick="window.abrirChat&&abrirChat('${dl.id}','${String(dl.phone).replace(/\D/g,'')}','${nomeEsc}')" class="deal-btn btn-wpp" style="cursor:pointer;border:none">💬 Chat</button>` : ''}
+          <a href="${dl.crmLink}" target="_blank" class="deal-btn btn-crm">📋 CRM</a>
+          <button onclick="acionarNubia('${dl.id}','${nomeEsc}',this)" class="deal-btn" style="background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;border:none;cursor:pointer;font-weight:700;">🤖 Núbia</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// === SUGESTÃO DE PRÓXIMOS PASSOS (IA) ===
+async function sugerirAcao(dealId, dealName, btn){
+  const orig = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '⏳ Pensando...';
+  // Cria modal se não existe
+  if (!document.getElementById('sg-modal')) {
+    const m = document.createElement('div');
+    m.id = 'sg-modal';
+    m.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)';
+    m.innerHTML = `
+      <div style="background:linear-gradient(135deg,#0d1117,#1a0e2a);border:2px solid #fbbf24;border-radius:14px;padding:0;max-width:680px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(251,191,36,.3)">
+        <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #30363D;background:rgba(251,191,36,.05)">
+          <span style="font-size:24px">💡</span>
+          <div style="flex:1">
+            <div style="color:#fbbf24;font-size:14px;font-weight:800">Sugestão de Próximos Passos · IA</div>
+            <div id="sg-modal-deal" style="color:#aaa;font-size:11px;margin-top:2px"></div>
+          </div>
+          <button onclick="document.getElementById('sg-modal').style.display='none'" style="background:transparent;border:none;color:#888;font-size:22px;cursor:pointer;padding:0 8px">×</button>
+        </div>
+        <div id="sg-modal-body" style="flex:1;overflow-y:auto;padding:16px 18px;color:#e5e7eb"></div>
+        <div id="sg-modal-actions" style="padding:12px 18px;border-top:1px solid #30363D;background:rgba(0,0,0,.3);display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"></div>
+      </div>
+    `;
+    document.body.appendChild(m);
+  }
+  const modal = document.getElementById('sg-modal');
+  modal.style.display = 'flex';
+  document.getElementById('sg-modal-deal').textContent = dealName;
+  document.getElementById('sg-modal-body').innerHTML = '<div style="text-align:center;padding:30px;color:#888">⏳ IA analisando contexto do lead<br><span style="font-size:11px">timeline + CRM + WATI + templates</span></div>';
+  document.getElementById('sg-modal-actions').innerHTML = '';
+  try {
+    const r = await fetch('/cockpit/sugerir-acao', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ dealId })
+    });
+    const d = await r.json();
+    if (d.error) {
+      document.getElementById('sg-modal-body').innerHTML = '<div style="color:#ef4444;padding:20px">❌ '+d.error+'</div>';
+      return;
+    }
+    const estrategiaHtml = Array.isArray(d.proximos_passos)
+      ? '<ol style="margin:6px 0;padding-left:22px;color:#e5e7eb">'+d.proximos_passos.map(p => '<li style="margin-bottom:4px">'+String(p).replace(/</g,'&lt;')+'</li>').join('')+'</ol>'
+      : '<div style="color:#aaa;font-size:12px;line-height:1.6">'+(d.proximos_passos||'').replace(/</g,'&lt;')+'</div>';
+    document.getElementById('sg-modal-body').innerHTML = `
+      <div style="background:rgba(251,191,36,.06);border:1px solid #fbbf24;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="color:#fbbf24;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">📍 Diagnóstico</div>
+        <div style="color:#e5e7eb;font-size:12.5px;line-height:1.55">${(d.diagnostico||'').replace(/</g,'&lt;')}</div>
+      </div>
+      <div style="background:rgba(167,113,247,.06);border:1px solid #a371f7;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="color:#c084fc;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">🎯 Próximos passos</div>
+        ${estrategiaHtml}
+      </div>
+      ${d.template_sugerido ? `
+      <div style="background:rgba(34,197,94,.06);border:1px solid #22c55e;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="color:#22c55e;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">📨 Template recomendado</div>
+        <div style="color:#fff;font-weight:700;font-size:13px;margin-bottom:6px">${d.template_sugerido.nome}</div>
+        <div style="color:#aaa;font-size:11px;font-style:italic;line-height:1.5;background:rgba(0,0,0,.2);padding:8px;border-radius:5px">"${(d.template_sugerido.preview||'').replace(/</g,'&lt;')}"</div>
+        ${d.template_sugerido.por_que ? `<div style="color:#9ca3af;font-size:11px;margin-top:6px">↳ <strong>Por quê:</strong> ${d.template_sugerido.por_que.replace(/</g,'&lt;')}</div>` : ''}
+      </div>
+      ` : ''}
+      ${d.mensagem_pronta ? `
+      <div style="background:rgba(31,111,235,.06);border:1px solid #1f6feb;border-radius:8px;padding:12px">
+        <div style="color:#7cb9f5;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">💬 Mensagem pronta (nutrição/abordagem)</div>
+        <div style="color:#fff;font-size:12.5px;line-height:1.6;background:rgba(0,0,0,.2);padding:10px;border-radius:5px;white-space:pre-wrap">${d.mensagem_pronta.replace(/</g,'&lt;')}</div>
+      </div>
+      ` : ''}
+    `;
+    // Botões de ação
+    const acts = [];
+    if (d.template_sugerido?.nome && d.phone) {
+      acts.push(`<button onclick="sgEnviarTemplate('${d.template_sugerido.nome}','${d.phone}')" style="background:#22c55e;color:#000;border:none;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:800;cursor:pointer">📨 Enviar template "${d.template_sugerido.nome}"</button>`);
+    }
+    if (d.mensagem_pronta && d.phone) {
+      acts.push(`<button onclick="sgUsarMensagem('${dealId}','${d.phone}',\`${d.mensagem_pronta.replace(/`/g,'\\`').replace(/\$/g,'\\$')}\`)" style="background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:800;cursor:pointer">💬 Abrir chat com mensagem pronta</button>`);
+    }
+    if (d.phone) {
+      acts.push(`<a href="tel:${d.phone}" style="background:#10b981;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:800;text-decoration:none">📞 Ligar</a>`);
+    }
+    acts.push(`<button onclick="document.getElementById('sg-modal').style.display='none'" style="background:#222;color:#aaa;border:1px solid #444;border-radius:6px;padding:8px 16px;font-size:12px;cursor:pointer">Fechar</button>`);
+    document.getElementById('sg-modal-actions').innerHTML = acts.join('');
+  } catch(e) {
+    document.getElementById('sg-modal-body').innerHTML = '<div style="color:#ef4444;padding:20px">❌ '+e.message+'</div>';
+  } finally {
+    btn.disabled = false; btn.innerHTML = orig;
+  }
+}
+
+async function sgEnviarTemplate(templateName, phone){
+  const v = prompt(`Algum parâmetro pra preencher no template "${templateName}"? (separa por | se mais de um, ou vazio se não tem)`, '');
+  const params = v ? v.split('|').map(s => s.trim()) : [];
+  try {
+    const r = await fetch('/inbox/template', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ phone, templateName, params })});
+    const d = await r.json();
+    if (d.error) { alert('Erro: '+d.error); return; }
+    alert('✅ Template enviado!');
+    document.getElementById('sg-modal').style.display='none';
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+function sgUsarMensagem(dealId, phone, msg){
+  document.getElementById('sg-modal').style.display='none';
+  if (window.abrirChat) {
+    window.abrirChat(dealId, phone, '');
+    setTimeout(() => {
+      const wins = document.querySelectorAll('.tdf-chat-win');
+      const w = Array.from(wins).find(x => x.dataset.dealId === dealId);
+      if (w) {
+        const ta = w.querySelector('textarea');
+        if (ta) { ta.value = msg; ta.focus(); }
+      }
+    }, 200);
+  }
+}
+
+async function acionarNubia(dealId, dealName, btn) {
+  if (!dealId) { alert('Lead sem ID'); return; }
+  if (!confirm(`Pedir pra Núbia entrar em contato com "${dealName}" via WhatsApp?\n\nA Núbia vai enviar uma mensagem automática de reengajamento.`)) return;
+  const orig = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '⏳ Disparando...';
+  try {
+    const res = await fetch('/cockpit/nubia-meu-lead', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ dealId })
+    });
+    const r = await res.json();
+    if (r.error) { alert('Erro: ' + r.error); btn.innerHTML = orig; btn.disabled = false; return; }
+    btn.innerHTML = '✓ Enviado';
+    btn.style.background = '#22c55e';
+    setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; btn.style.background = ''; }, 3000);
+  } catch(e) {
+    alert('Erro: ' + e.message);
+    btn.innerHTML = orig; btn.disabled = false;
+  }
+}
+
+function filterParados(filter, btn) {
+  if (btn) {
+    document.querySelectorAll('.par-filter').forEach(b => { b.style.background='#21262D'; b.classList.remove('active'); });
+    btn.style.background = filter==='all' ? '#F85149' : '#2d2d3d';
+    btn.classList.add('active');
+  }
+
+  let deals = window._paradosAll || [];
+  if (filter === 'Diamante' || filter === 'Ouro' || filter === 'Prata') {
+    deals = deals.filter(d => d.tier === filter);
+  } else if (filter === 'poco') {
+    deals = deals.filter(d => /po[cç]o|mina|nascente|artesian/i.test(d.tipoAgua || d.pipeline));
+  } else if (filter === 'estacao') {
+    deals = deals.filter(d => /esta[cç][aã]o|concession|tratada|sabesp/i.test(d.tipoAgua || d.pipeline) || (!d.tipoAgua && !/po[cç]o/i.test(d.pipeline)));
+  }
+
+  const tierEmoji = {Diamante:'&#128142;',Ouro:'&#129351;',Prata:'&#129352;',Bronze:'&#129353;'};
+  const tierColors = {Diamante:'#A371F7',Ouro:'#F0C040',Prata:'#8B949E',Bronze:'#87592A'};
+
+  document.getElementById('parados-list').innerHTML = deals.length === 0
+    ? '<div style="color:#4ade80;padding:12px;">Nenhum lead parado neste filtro</div>'
+    : deals.slice(0,40).map(dl => {
+      const emoji = tierEmoji[dl.tier] || '&#9898;';
+      const tc = tierColors[dl.tier] || '#6b7280';
+      const hrsLabel = dl.hoursAgo < 24 ? Math.round(dl.hoursAgo)+'h' : Math.round(dl.hoursAgo/24)+'d';
+      const hrsColor = dl.hoursAgo > 72 ? '#ef4444' : dl.hoursAgo > 24 ? '#eab308' : '#8B949E';
+      const phoneClean = dl.phone ? String(dl.phone).replace(/\D/g,'') : '';
+      const goto = phoneClean ? 'https://app.goto.com/calls?phoneNumber='+encodeURIComponent('+'+phoneClean) : '';
+      const nomeEsc = (dl.name||'').replace(/'/g,"\\'");
+
+      // Smart action plan based on context
+      let plano = '';
+      if (dl.hoursAgo > 72 && (dl.tier === 'Diamante' || dl.tier === 'Ouro')) {
+        plano = '<span style="color:#ef4444;font-weight:700;">URGENTE: Ligar AGORA. Lead quente esfriando ha '+hrsLabel+'</span>';
+      } else if (/Proposta/i.test(dl.stage)) {
+        plano = '<span style="color:#F0C040;">Follow-up de proposta. Perguntar se viu os valores e tirar duvidas.</span>';
+      } else if (/Qualifica/i.test(dl.stage)) {
+        plano = '<span style="color:#58A6FF;">Retomar qualificacao. Confirmar interesse e agendar proximo passo.</span>';
+      } else if (/Analise|vazao/i.test(dl.stage)) {
+        plano = '<span style="color:#c084fc;">Cobrar analise de agua. Se nao fez, oferecer lab proximo ou visita.</span>';
+      } else if (/Primeiro Contato/i.test(dl.stage)) {
+        plano = '<span style="color:#2EA043;">Fazer primeiro contato real: ligar + WhatsApp + criar tarefa retorno.</span>';
+      } else {
+        plano = '<span style="color:#8B949E;">Verificar situacao e definir proximo passo no CRM.</span>';
+      }
+
+      // Agua type badge
+      const aguaBadge = dl.tipoAgua
+        ? (/po[cç]o|mina|nascente/i.test(dl.tipoAgua)
+            ? '<span style="background:#1e3a5f;color:#58A6FF;padding:1px 6px;border-radius:4px;font-size:10px;">Poco</span>'
+            : '<span style="background:#0d2818;color:#4ade80;padding:1px 6px;border-radius:4px;font-size:10px;">Estacao</span>')
+        : (/po[cç]o/i.test(dl.pipeline)
+            ? '<span style="background:#1e3a5f;color:#58A6FF;padding:1px 6px;border-radius:4px;font-size:10px;">Poco</span>'
+            : '');
+
+      return `<div style="background:#0D1117;border:1px solid #21262D;border-left:4px solid ${tc};border-radius:10px;padding:12px 14px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:16px;">${emoji}</span>
+          <a href="${dl.crmLink}" target="_blank" style="color:#58A6FF;text-decoration:none;font-weight:700;font-size:14px;flex:1;">${dl.name}</a>
+          <span style="color:${tc};font-size:11px;font-weight:700;">${dl.tier}</span>
+          <span style="color:#8B949E;font-size:11px;">sc:${dl.score}</span>
+          ${dl.amount ? '<span style="color:#2EA043;font-size:11px;font-weight:600;">R$ '+(parseFloat(dl.amount)||0).toLocaleString('pt-BR')+'</span>' : ''}
+          <span style="color:${hrsColor};font-size:11px;font-weight:700;">${hrsLabel} parado</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;font-size:11px;color:#8B949E;">
+          <span>${dl.stage}</span>
+          <span style="color:#58A6FF;">${dl.pipeline}</span>
+          ${aguaBadge}
+          ${dl.cidade ? '<span>&#128205; '+dl.cidade+'</span>' : ''}
+          ${dl.prazo ? '<span>&#9200; '+dl.prazo+'</span>' : ''}
+          ${dl.produto ? '<span>&#127919; '+dl.produto+'</span>' : ''}
+        </div>
+        <div style="margin-top:6px;font-size:12px;">&#127919; ${plano}</div>
+        <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">
+          ${phoneClean?`<button onclick="window.sugerirAcao&&sugerirAcao('${dl.id}','${nomeEsc}',this)" style="color:#000;font-size:10px;background:linear-gradient(135deg,#f59e0b,#fbbf24);border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-weight:800">💡 Sugerir</button>`:''}
+          ${phoneClean?`<button onclick="window.abrirChat&&abrirChat('${dl.id}','${phoneClean}','${nomeEsc}')" style="color:#22c55e;font-size:10px;background:#0d2818;border:1px solid #22c55e;padding:3px 8px;border-radius:4px;cursor:pointer;font-weight:700">💬 Chat</button>`:''}
+          ${phoneClean?`<a href="tel:+${phoneClean}" style="color:#5ba3f5;font-size:10px;text-decoration:none;background:#0d1520;padding:3px 8px;border-radius:4px;font-weight:600;">📞 Ligar</a>`:''}
+          ${goto?`<a href="${goto}" target="_blank" style="color:#F0C040;font-size:10px;text-decoration:none;background:#2d2513;padding:3px 8px;border-radius:4px;font-weight:600;">GoTo</a>`:''}
+          <a href="${dl.crmLink}" target="_blank" style="color:#58A6FF;font-size:10px;text-decoration:none;background:#0d1520;padding:3px 8px;border-radius:4px;font-weight:600;">CRM</a>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+// Filter leads by source
+function filterSource(src, btn) {
+  // Update active tab
+  if (btn) {
+    document.querySelectorAll('.src-tab').forEach(t => {
+      t.style.background = '#21262D';
+      t.classList.remove('active');
+    });
+    btn.style.background = src === 'all' ? '#1F6FEB' : '#2d2d3d';
+    btn.classList.add('active');
+  }
+
+  const deals = src === 'all' ? (window._allDeals || []) : (window._allSourceDeals[src] || []);
+  const tierEmoji = {Diamante:'&#128142;',Ouro:'&#129351;',Prata:'&#129352;',Bronze:'&#129353;'};
+  const tierColors = {Diamante:'#A371F7',Ouro:'#F0C040',Prata:'#8B949E',Bronze:'#87592A'};
+
+  document.getElementById('source-deals').innerHTML = deals.length === 0
+    ? '<div style="color:#8B949E;padding:8px;">Nenhum lead nesta fonte</div>'
+    : deals.slice(0, 40).map(dl => {
+      const tc = tierColors[dl.tier] || '#6b7280';
+      const emoji = tierEmoji[dl.tier] || '&#9898;';
+      const hrsLabel = dl.hoursAgo < 1 ? 'agora' : dl.hoursAgo < 24 ? Math.round(dl.hoursAgo) + 'h' : Math.round(dl.hoursAgo/24) + 'd';
+      const hrsColor = dl.hoursAgo > 48 ? '#F85149' : dl.hoursAgo > 12 ? '#D29922' : '#6b7280';
+      const wpp = dl.phone ? 'https://live-2708.wati.io/2708/teamInbox/' + dl.phone.replace(/\D/g,'') : '';
+      return `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px;border-bottom:1px solid #21262D;transition:background 0.2s;" onmouseover="this.style.background='#1a1a2e'" onmouseout="this.style.background='transparent'">
+        <span style="font-size:16px;min-width:22px;">${emoji}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <a href="${dl.crmLink}" target="_blank" style="color:#58A6FF;text-decoration:none;font-weight:700;font-size:14px;">${dl.name}</a>
+            <span style="color:${tc};font-size:11px;font-weight:700;">${dl.tier}</span>
+            <span style="color:#8B949E;font-size:11px;">sc:${dl.score}</span>
+            ${dl.amount ? '<span style="color:#2EA043;font-size:11px;font-weight:600;">R$ '+(parseFloat(dl.amount)||0).toLocaleString('pt-BR')+'</span>' : ''}
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;font-size:12px;color:#8B949E;">
+            <span>${dl.stage}</span>
+            <span style="color:#58A6FF;">${dl.pipeline}</span>
+            ${dl.cidade ? '<span>&#128205; '+dl.cidade+'</span>' : ''}
+            ${dl.prazo ? '<span>&#9200; '+dl.prazo+'</span>' : ''}
+            ${dl.tipoAgua ? '<span>&#128167; '+dl.tipoAgua+'</span>' : ''}
+            ${dl.produto ? '<span>&#127919; '+dl.produto+'</span>' : ''}
+            <span>${dl.leadSource}</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;min-width:60px;">
+          <span style="color:${hrsColor};font-size:11px;font-weight:700;">${hrsLabel}</span>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
+            ${dl.phone ? '<button onclick="window.abrirChat&&abrirChat(\''+dl.id+'\',\''+dl.phone.replace(/\\D/g,'')+'\',\''+(dl.name||'').replace(/'/g,"\\'")+'\')" style="color:#22c55e;font-size:11px;background:#0d2818;border:1px solid #22c55e;padding:2px 6px;border-radius:4px;cursor:pointer;font-weight:700">💬 Chat</button>' : ''}
+            ${dl.phone ? '<a href="tel:+'+dl.phone.replace(/\\D/g,'')+'" style="color:#5ba3f5;font-size:11px;text-decoration:none;background:#0d1520;padding:2px 6px;border-radius:4px;">📞</a>' : ''}
+            ${dl.phone ? '<a href="https://app.goto.com/calls?phoneNumber='+encodeURIComponent('+'+dl.phone.replace(/\\D/g,''))+'" target="_blank" style="color:#F0C040;font-size:11px;text-decoration:none;background:#2d2513;padding:2px 6px;border-radius:4px;">GoTo</a>' : ''}
+            <a href="${dl.crmLink}" target="_blank" style="color:#58A6FF;font-size:11px;text-decoration:none;background:#0d1520;padding:2px 6px;border-radius:4px;">CRM</a>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+// Coach IA
+async function loadCoach() {
+  const sel = document.getElementById('closer-select');
+  const closer = sel ? sel.value : '';
+  const url = closer ? `/cockpit/coach?closer=${closer}` : '/cockpit/coach';
+  document.getElementById('coach-loading').style.display = 'inline';
+  document.getElementById('coach-content').innerHTML = '<span style="color:#8B949E">Analisando seu pipeline com IA...</span>';
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    // Parse markdown-like ## headers
+    let html = data.coach
+      .replace(/## (.*)/g, '<h3 style="color:#c084fc;font-size:15px;margin:16px 0 8px;">$1</h3>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#fff">$1</strong>')
+      .replace(/\n- /g, '\n• ')
+      .replace(/\n(\d+)\. /g, '\n<strong style="color:#c084fc">$1.</strong> ');
+    document.getElementById('coach-content').innerHTML = html;
+  } catch(e) {
+    document.getElementById('coach-content').innerHTML = '<span style="color:#F85149">Erro ao carregar coach: '+e.message+'</span>';
+  }
+  document.getElementById('coach-loading').style.display = 'none';
+}
+
+// Load gamificacao
+async function loadGamificacao() {
+  const sel = document.getElementById('closer-select');
+  const closer = sel ? sel.value : '';
+  const url = closer ? `/cockpit/gamificacao?closer=${closer}` : '/cockpit/gamificacao';
+  try {
+    const res = await fetch(url);
+    const g = await res.json();
+    if (g.error) { document.getElementById('gamificacao-content').innerHTML = '<span style="color:#8B949E;">Sem dados</span>'; return; }
+
+    const rankColors = ['#F0C040','#C0C0C0','#CD7F32'];
+    const medals = (g.medals||[]).map(m => `<span style="font-size:18px;" title="${m.label}">${m.emoji}</span>`).join(' ');
+
+    document.getElementById('gamificacao-content').innerHTML = `
+      <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+        <div style="text-align:center;">
+          <div style="font-size:2.5rem;font-weight:800;color:${g.posicao<=3?rankColors[g.posicao-1]:'#E6EDF3'};">#${g.posicao}</div>
+          <div style="font-size:11px;color:#8B949E;">de ${g.totalClosers} closers</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:13px;color:#8B949E;">
+            ${g.posicao > 1 ? `Falta R$ ${(g.diffParaAcima/1000).toFixed(1)}k pro #${g.posicao-1} | R$ ${(g.diffParaPrimeiro/1000).toFixed(1)}k pro #1` : 'Voce e o lider!'}
+          </div>
+          <div style="font-size:13px;margin-top:4px;">
+            <span style="color:#2EA043;">${g.meusDados.vendas} vendas</span> &middot;
+            <span style="color:#58A6FF;">R$ ${(g.meusDados.faturamento/1000).toFixed(1)}k</span> &middot;
+            <span>Ticket R$ ${(g.meusDados.ticketMedio||0).toLocaleString()}</span> &middot;
+            <span>${g.meusDados.diasComVenda||0} dias com venda</span> &middot;
+            <span style="color:${g.diasSemVenda>2?'#ef4444':g.diasSemVenda>0?'#eab308':'#22c55e'};">${g.diasSemVenda}d sem venda</span>
+            ${g.meusDados.melhorDia ? ` &middot; <span style="color:#F0C040;">Melhor dia: ${g.meusDados.melhorDia} (R$ ${(g.meusDados.melhorDiaValor/1000).toFixed(1)}k)</span>` : ''}
+          </div>
+          ${medals ? `<div style="margin-top:6px;">${medals}</div>` : ''}
+        </div>
+      </div>
+      <div style="max-height:250px;overflow-y:auto;">
+        ${(g.ranking||[]).map((r,i) => {
+          const isMe = r.pos === g.posicao;
+          const bg = isMe ? 'background:#1e3a5f;' : '';
+          const rc = i<3 ? rankColors[i] : '#8B949E';
+          const maxFat = g.ranking[0]?.faturamento || 1;
+          const pct = Math.round(r.faturamento / maxFat * 100);
+          return `<div style="display:flex;align-items:center;gap:10px;padding:6px 8px;border-bottom:1px solid #21262D;border-radius:6px;${bg}">
+            <span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:12px;font-weight:700;background:#21262D;color:${rc};">${r.pos}</span>
+            <span style="flex:1;font-weight:600;font-size:13px;">${r.name}</span>
+            <span style="font-size:12px;color:#8B949E;width:40px;text-align:right;">${r.vendas}</span>
+            <div style="width:100px;"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${rc};"></div></div></div>
+            <span style="font-size:13px;font-weight:700;color:#E6EDF3;width:70px;text-align:right;">R$ ${(r.faturamento/1000).toFixed(0)}k</span>
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+  } catch(e) { console.error('Gamificacao error:', e); }
+}
+
+// Load Annual Competition
+async function loadAnual() {
+  const sel = document.getElementById('closer-select');
+  const closer = sel ? sel.value : '';
+  const url = closer ? `/cockpit/anual?closer=${closer}` : '/cockpit/anual';
+  try {
+    const res = await fetch(url);
+    const a = await res.json();
+    if (a.error || !a.metas) { document.getElementById('anual-content').innerHTML = '<span style="color:#8B949E;">Sem dados de competicao</span>'; return; }
+
+    const riscoColor = a.risco==='alto'?'#ef4444':a.risco==='medio'?'#eab308':'#22c55e';
+    const mesesHtml = (a.meses||[]).map(m => {
+      const label = m.mes.split('-')[1] + '/' + m.mes.split('-')[0].slice(2);
+      return `<div style="text-align:center;min-width:60px;">
+        <div style="font-size:12px;color:#8B949E;">${label}</div>
+        <div style="font-size:14px;font-weight:700;color:#2EA043;">R$ ${(m.faturamento/1000).toFixed(0)}k</div>
+        <div style="font-size:10px;color:#8B949E;">${m.vendas} vendas</div>
+      </div>`;
+    }).join('');
+
+    document.getElementById('anual-content').innerHTML = `
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
+        <div style="flex:1;min-width:200px;">
+          <div style="font-size:12px;color:#8B949E;text-transform:uppercase;">Acumulado (${a.tipo})</div>
+          <div style="font-size:2rem;font-weight:800;color:#2EA043;">R$ ${(a.acumulado/1000).toFixed(0)}k</div>
+          <div style="font-size:12px;color:#8B949E;">${a.vendasTotal} vendas | ${a.periodo.diasPassados}d passados | ${a.periodo.diasRestantes}d restantes</div>
+          <div style="font-size:12px;color:${riscoColor};margin-top:4px;">Ritmo: R$ ${(a.ritmoAtual/1000).toFixed(0)}k/mes | Projecao: R$ ${(a.projecaoAnual/1000).toFixed(0)}k</div>
+        </div>
+        <div style="flex:1;min-width:250px;">
+          <div style="margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;">
+              <span style="color:#F0C040;">&#128241; iPhone 17 Pro — R$ ${(a.metas.iphone.meta/1000).toFixed(0)}k</span>
+              <span style="color:${a.metas.iphone.atingiu?'#22c55e':'#F0C040'};font-weight:700;">${a.metas.iphone.pct}%</span>
+            </div>
+            <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:${Math.min(a.metas.iphone.pct,100)}%;background:${a.metas.iphone.atingiu?'#22c55e':'#F0C040'};"></div></div>
+            <div style="font-size:11px;color:#8B949E;margin-top:2px;">Falta R$ ${(a.metas.iphone.falta/1000).toFixed(0)}k</div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;">
+              <span style="color:#C0C0C0;">&#9201; Apple Watch — R$ ${(a.metas.watch.meta/1000).toFixed(0)}k</span>
+              <span style="color:${a.metas.watch.atingiu?'#22c55e':'#C0C0C0'};font-weight:700;">${a.metas.watch.pct}%</span>
+            </div>
+            <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:${Math.min(a.metas.watch.pct,100)}%;background:${a.metas.watch.atingiu?'#22c55e':'#C0C0C0'};"></div></div>
+            <div style="font-size:11px;color:#8B949E;margin-top:2px;">Falta R$ ${(a.metas.watch.falta/1000).toFixed(0)}k</div>
+          </div>
+        </div>
+      </div>
+      ${mesesHtml ? '<div style="display:flex;gap:8px;overflow-x:auto;padding:8px 0;border-top:1px solid #21262D;margin-top:8px;">'+mesesHtml+'</div>' : ''}
+    `;
+  } catch(e) { console.error('Anual error:', e); }
+}
+
+// Load GoTo Calls
+async function loadCalls() {
+  const sel = document.getElementById('closer-select');
+  const closer = sel ? sel.value : '';
+  const url = closer ? `/cockpit/calls?closer=${closer}` : '/cockpit/calls';
+  try {
+    const res = await fetch(url);
+    const c = await res.json();
+    if (c.error || !c.stats) { document.getElementById('calls-content').innerHTML = '<span style="color:#8B949E;">GoTo nao disponivel</span>'; return; }
+    
+    const stats = c.stats;
+    if (stats.length === 1) {
+      const s = stats[0];
+      const meta25 = s.total >= 25;
+      document.getElementById('calls-content').innerHTML = `
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div style="text-align:center;"><div style="font-size:1.8rem;font-weight:800;color:${meta25?'#22c55e':'#eab308'};">${s.total}</div><div style="font-size:11px;color:#8B949E;">Total</div></div>
+          <div style="text-align:center;"><div style="font-size:1.8rem;font-weight:800;color:#58A6FF;">${s.outbound}</div><div style="font-size:11px;color:#8B949E;">Saidas</div></div>
+          <div style="text-align:center;"><div style="font-size:1.8rem;font-weight:800;">${s.inbound}</div><div style="font-size:11px;color:#8B949E;">Entradas</div></div>
+          <div style="text-align:center;"><div style="font-size:1.8rem;font-weight:800;color:#2EA043;">${s.answered}</div><div style="font-size:11px;color:#8B949E;">Atendidas</div></div>
+          <div style="text-align:center;"><div style="font-size:1.8rem;font-weight:800;color:#ef4444;">${s.missed}</div><div style="font-size:11px;color:#8B949E;">Perdidas</div></div>
+          <div style="text-align:center;"><div style="font-size:1.8rem;font-weight:800;">${s.avgDurMin}m</div><div style="font-size:11px;color:#8B949E;">Duracao Media</div></div>
+        </div>
+        ${!meta25 ? '<div style="color:#eab308;font-size:12px;margin-top:8px;">Meta: 25 ligacoes/dia. Faltam '+(25-s.total)+'.</div>' : '<div style="color:#22c55e;font-size:12px;margin-top:8px;">Meta de 25 ligacoes atingida!</div>'}
+      `;
+    } else {
+      document.getElementById('calls-content').innerHTML = stats.map(s =>
+        `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #21262D;font-size:13px;">
+          <span style="font-weight:600;">${s.nome||s.owner}</span>
+          <span style="color:${s.total>=25?'#22c55e':'#eab308'};font-weight:700;">${s.total} ligacoes</span>
+          <span style="color:#2EA043;">${s.answered} atend</span>
+          <span style="color:#ef4444;">${s.missed} perd</span>
+          <span style="color:#8B949E;">${s.avgDurMin}m avg</span>
+        </div>`
+      ).join('');
+    }
+  } catch(e) { document.getElementById('calls-content').innerHTML = '<span style="color:#8B949E;">GoTo indisponivel</span>'; }
+}
+
+// Load Patente
+async function loadPatente() {
+  const sel = document.getElementById('closer-select');
+  const closer = sel ? sel.value : '';
+  const url = closer ? '/cockpit/patente?closer='+closer : '/cockpit/patente';
+  try {
+    const res = await fetch(url);
+    const p = await res.json();
+    if (p.error) { document.getElementById('patente-content').innerHTML = '<span style="color:#8B949E;">Sem dados</span>'; return; }
+    // patente data loaded above
+    const lt = p.lifetime;
+    const an = p.anual;
+    const a = lt.atual;
+    const prox2 = lt.proxima;
+    const anAtual = an.atual;
+    const anProx = an.proxima;
+
+    // Legado badges
+    const legadoHtml = (p.legado||[]).map(b => {
+      const style = b.desbloqueado ? 'opacity:1;' : 'opacity:0.3;filter:grayscale(1);';
+      return '<span title="'+(b.desbloqueado?b.nome:'Falta R$ '+(b.falta/1000).toFixed(0)+'k')+'" style="font-size:20px;'+style+'">'+b.icon+'</span>';
+    }).join(' ');
+
+    document.getElementById('patente-content').innerHTML = `
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:2rem;">${a.icon}</span>
+            <div>
+              <div style="font-size:14px;font-weight:800;color:${a.cor};">${a.nome}</div>
+              <div style="font-size:11px;color:#8B949E;">Lifetime: R$ ${(lt.fatTotal/1000).toFixed(0)}k (${lt.vendasTotal} vendas)</div>
+            </div>
+          </div>
+          ${prox2 ? '<div style="font-size:11px;color:#8B949E;">Proxima: '+prox2.icon+' '+prox2.nome+' | Falta R$ '+(lt.faltaProxima/1000).toFixed(0)+'k</div><div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:'+lt.pctProxima+'%;background:'+prox2.cor+';"></div></div>' : ''}
+          <div style="margin-top:8px;">${legadoHtml}</div>
+        </div>
+        <div style="flex:1;min-width:200px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:2rem;">${anAtual.icon}</span>
+            <div>
+              <div style="font-size:14px;font-weight:800;color:${anAtual.cor};">${anAtual.nome}</div>
+              <div style="font-size:11px;color:#8B949E;">2026: R$ ${(an.fatAnual/1000).toFixed(0)}k (${an.vendasAnual} vendas)</div>
+            </div>
+          </div>
+          ${anProx ? '<div style="font-size:11px;color:#8B949E;">Proxima: '+anProx.icon+' '+anProx.nome+' | Falta R$ '+(an.falta/1000).toFixed(0)+'k</div><div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:'+an.pct+'%;background:'+anProx.cor+';"></div></div>' : '<div style="color:#F0C040;font-size:12px;font-weight:700;">Patente maxima!</div>'}
+          ${an.meses && an.meses.length > 0 ? '<div style="display:flex;gap:4px;margin-top:6px;overflow-x:auto;">'+an.meses.map(m => '<div style="text-align:center;min-width:40px;"><div style="font-size:9px;color:#6b7280;">'+m.mes.slice(5)+'</div><div style="font-size:11px;color:#2EA043;font-weight:700;">'+Math.round(m.fat/1000)+'k</div></div>').join('')+'</div>' : ''}
+        </div>
+      </div>
+    `;
+  } catch(e) { console.error('Patente error:', e); }
+}
+
+// Load Score Detalhado + Anti-Malandragem + Coach
+async function loadScoreDetalhado() {
+  const sel = document.getElementById('closer-select');
+  const closer = sel ? sel.value : '';
+  const url = closer ? '/cockpit/score-detalhado?closer='+closer : '/cockpit/score-detalhado';
+  try {
+    const res = await fetch(url);
+    const d = await res.json();
+    if (d.error) return;
+    
+    // Score total
+    document.getElementById('score-det-total').innerHTML = '<span style="color:'+d.score.nivelCor+';">'+d.score.total+' pts ('+d.score.nivel+')</span>';
+    
+    // Entries
+    document.getElementById('score-det-entries').innerHTML = d.score.entries.map(e => {
+      const color = e.pts >= 0 ? '#22c55e' : '#ef4444';
+      const sign = e.pts >= 0 ? '+' : '';
+      return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #21262D;"><span style="color:#E6EDF3;">'+e.desc+(e.deal?' <span style="color:#8B949E;">'+e.deal+'</span>':'')+'</span><span style="color:'+color+';font-weight:700;">'+sign+e.pts+'</span></div>';
+    }).join('');
+
+    // Anti-malandragem
+    const alertas = d.antiMalandragem || [];
+    document.getElementById('alert-count').textContent = alertas.length;
+    document.getElementById('anti-malandragem').innerHTML = alertas.length === 0
+      ? '<div style="color:#22c55e;">Nenhum alerta. Jogo limpo!</div>'
+      : alertas.map(a => {
+        const gc = a.gravidade==='alto'?'#ef4444':'#eab308';
+        return '<div style="margin-bottom:8px;padding:8px;background:#0D1117;border-left:3px solid '+gc+';border-radius:4px;"><div style="color:'+gc+';font-weight:700;font-size:12px;">'+a.tipo.toUpperCase()+' ('+a.gravidade+')</div><div style="color:#E6EDF3;">'+a.desc+'</div><div style="color:#8B949E;font-size:11px;">Acao: '+a.acao+'</div><div style="color:#6b7280;font-size:10px;">Evidencia: '+a.evidencia+'</div></div>';
+      }).join('');
+
+    // Coach messages
+    const msgs = d.coachMessages || [];
+    const tipoIcons = {positive:'&#128170;',warning:'&#9888;&#65039;',urgent:'&#128680;',hard:'&#128165;',competitive:'&#127942;'};
+    const tipoCores = {positive:'#22c55e',warning:'#eab308',urgent:'#ef4444',hard:'#ef4444',competitive:'#F0C040'};
+    document.getElementById('coach-msgs').innerHTML = msgs.length === 0
+      ? '<div style="color:#8B949E;">Nenhuma mensagem agora</div>'
+      : msgs.map(m => '<div style="padding:6px 0;border-bottom:1px solid #21262D;color:'+(tipoCores[m.tipo]||'#E6EDF3')+';">'+(tipoIcons[m.tipo]||'')+ ' '+m.msg+'</div>').join('');
+  } catch(e) { console.error('ScoreDet error:', e); }
+}
+
+// Load Bonzão/Rei destaques
+async function loadDestaques() {
+  try {
+    const res = await fetch('/cockpit/rankings-especiais');
+    const d = await res.json();
+    if (d.error || (!d.bonzao && !d.rei)) return;
+
+    const el = document.getElementById('destaque-top');
+    el.style.display = 'block';
+
+    let html = '<div style="display:flex;gap:16px;flex-wrap:wrap;">';
+
+    if (d.bonzao) {
+      html += `<div style="flex:1;min-width:280px;background:linear-gradient(135deg,#2d2513,#1a1a2e);border:2px solid #F0C040;border-radius:16px;padding:20px;text-align:center;">
+        <div style="font-size:36px;">👑</div>
+        <div style="font-size:18px;font-weight:800;color:#F0C040;">Bonzao da Semana</div>
+        <div style="font-size:22px;font-weight:800;color:#E6EDF3;margin:6px 0;">${d.bonzao.name}</div>
+        <div style="font-size:13px;color:#8B949E;">${d.bonzao.vendasWeek} vendas | R$ ${(d.bonzao.fatWeek/1000).toFixed(0)}k | Score ${d.bonzao.scoreWeek}</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:4px;">Semana: ${d.weekRange}</div>
+      </div>`;
+    }
+
+    if (d.rei) {
+      html += `<div style="flex:1;min-width:280px;background:linear-gradient(135deg,#1e1225,#1a1a2e);border:2px solid #A371F7;border-radius:16px;padding:20px;text-align:center;">
+        <div style="font-size:36px;">🏅</div>
+        <div style="font-size:18px;font-weight:800;color:#A371F7;">Rei do Mes</div>
+        <div style="font-size:22px;font-weight:800;color:#E6EDF3;margin:6px 0;">${d.rei.name}</div>
+        <div style="font-size:13px;color:#8B949E;">Score ${d.rei.scoreRei} | Fat ${Math.round(d.rei.fat/1000)}k | Conv ${d.rei.conversao}% | Proc ${d.rei.processo}%</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:4px;">40% fat + 20% conv + 15% proc + 15% vel + 10% disc</div>
+      </div>`;
+    }
+
+    html += '</div>';
+
+    // Coach messages
+    if (d.coachMsgs && d.coachMsgs.length > 0) {
+      const tipoCores = {positive:'#22c55e',competitive:'#F0C040',warning:'#eab308'};
+      html += '<div style="margin-top:12px;">' + d.coachMsgs.slice(0,4).map(m =>
+        '<div style="padding:4px 0;font-size:12px;color:'+(tipoCores[m.tipo]||'#8B949E')+';">'+m.msg+'</div>'
+      ).join('') + '</div>';
+    }
+
+    el.innerHTML = html;
+  } catch(e) { console.error('Destaques error:', e); }
+}
+
+// Refresh all data (clears cache)
+async function refreshAll() {
+  const btn = document.getElementById('refresh-btn');
+  btn.textContent = '⏳ Atualizando...';
+  btn.disabled = true;
+  
+  // Clear server cache
+  try { await fetch('/cache-clear'); } catch(e) {}
+  
+  // Reload all sections
+  const sel = document.getElementById('closer-select');
+  const closer = sel ? sel.value : '';
+  const url = closer ? '/cockpit/data?closer='+closer : '/cockpit/data';
+  
+  await renderCockpit(url, closer);
+  
+  // Reload all parallel sections
+  await Promise.all([
+    loadScore(),
+    loadAnual(),
+    loadPatente(),
+    loadDestaques(),
+    loadCalls(),
+    loadScoreDetalhado(),
+    loadChecklistFunil(),
+    loadGamificacao(),
+  ]);
+  
+  btn.innerHTML = '&#128260; Atualizar';
+  btn.disabled = false;
+  document.getElementById('refresh-time').textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR');
+}
+
+// Load Checklist Funil
+async function loadChecklistFunil() {
+  const sel = document.getElementById('closer-select');
+  const closer = sel ? sel.value : '';
+  const url = closer ? '/cockpit/checklist-funil?closer='+closer : '/cockpit/checklist-funil';
+  try {
+    const res = await fetch(url);
+    const d = await res.json();
+    if (d.error) return;
+
+    const s = d.stats;
+    const pctColor = s.pctCompleto >= 80 ? '#22c55e' : s.pctCompleto >= 50 ? '#eab308' : '#ef4444';
+    document.getElementById('funil-pct').innerHTML = '<span style="color:'+pctColor+';">'+s.pctCompleto+'% completo ('+s.completos+'/'+s.totalDeals+') | +'+s.pontosGanhos+' / -'+s.pontosPerdidos+' pts</span>';
+
+    // Stage summary cards
+    const stageColors = {'Primeiro Contato':'#3b82f6','Em Qualificação':'#8b5cf6','Proposta':'#f97316','Qualificado':'#22c55e'};
+    document.getElementById('funil-summary').innerHTML = Object.entries(d.stageSummary).map(([stage, data]) => {
+      const cor = stageColors[stage] || '#8B949E';
+      const pct = data.total > 0 ? Math.round(data.completos/data.total*100) : 0;
+      return '<div style="background:#0D1117;border:1px solid '+cor+';border-radius:10px;padding:10px 14px;flex:1;min-width:130px;text-align:center;">' +
+        '<div style="color:'+cor+';font-weight:700;font-size:13px;">'+stage+'</div>' +
+        '<div style="font-size:11px;color:#8B949E;">'+data.completos+'/'+data.total+' completos ('+pct+'%)</div>' +
+        '<div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:'+pct+'%;background:'+cor+';"></div></div>' +
+        '</div>';
+    }).join('');
+
+    // Urgentes (incompletos)
+    document.getElementById('funil-urgentes').innerHTML = d.urgentes.length === 0
+      ? '<div style="color:#22c55e;font-size:13px;padding:8px;">Todos os checklists completos!</div>'
+      : d.urgentes.map(deal => {
+        const tierColors = {Diamante:'#A371F7',Ouro:'#F0C040',Prata:'#8B949E',Bronze:'#CD7F32'};
+        const tc = tierColors[deal.tier] || '#6b7280';
+        return '<div style="background:#0D1117;border-left:3px solid '+(deal.pct<30?'#ef4444':'#eab308')+';border-radius:8px;padding:10px 12px;margin-bottom:6px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+            '<a href="'+deal.crmLink+'" target="_blank" style="color:#58A6FF;text-decoration:none;font-weight:700;font-size:13px;flex:1;">'+deal.name+'</a>' +
+            '<span style="color:'+tc+';font-size:11px;font-weight:700;">'+deal.tier+'</span>' +
+            '<span style="color:#8B949E;font-size:11px;">'+deal.stage+'</span>' +
+            '<span style="color:'+(deal.pct<30?'#ef4444':'#eab308')+';font-size:11px;font-weight:700;">'+deal.done+'/'+deal.total+' ('+deal.pct+'%)</span>' +
+          '</div>' +
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">' +
+            deal.items.map(item => {
+              const icon = item.done ? '<span style="color:#22c55e;">&#9989;</span>' : '<span style="color:#ef4444;">&#10060;</span>';
+              return '<span style="font-size:11px;color:'+(item.done?'#8B949E':'#E6EDF3')+';">'+icon+' '+item.label+'</span>';
+            }).join(' ') +
+          '</div>' +
+        '</div>';
+      }).join('');
+  } catch(e) { console.error('Funil error:', e); }
+}
+
+// Load Closy scores
+async function loadClosy() {
+  const sel = document.getElementById('closer-select');
+  const closer = sel ? sel.value : '';
+  const url = closer ? '/cockpit/closy?closer='+closer : '/cockpit/closy';
+  try {
+    const res = await fetch(url);
+    const d = await res.json();
+    if (d.error || (!d.mySeller && d.allSellers?.length === 0)) {
+      document.getElementById('closy-content').innerHTML = '<span style="color:#8B949E;">Closy indisponivel ou sem dados</span>';
+      return;
+    }
+
+    if (d.mySeller) {
+      const s = d.mySeller;
+      const scoreColor = s.avgScore >= 80 ? '#22c55e' : s.avgScore >= 60 ? '#eab308' : '#ef4444';
+      document.getElementById('closy-content').innerHTML = `
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+          <div style="text-align:center;"><div style="font-size:2rem;font-weight:800;color:${scoreColor};">${s.avgScore}/100</div><div style="font-size:11px;color:#8B949E;">Score Medio</div></div>
+          <div style="text-align:center;"><div style="font-size:1.5rem;font-weight:700;">${s.calls}</div><div style="font-size:11px;color:#8B949E;">Ligacoes</div></div>
+          <div style="text-align:center;"><div style="font-size:1.5rem;font-weight:700;color:#22c55e;">${s.bestScore}</div><div style="font-size:11px;color:#8B949E;">Melhor</div></div>
+          <div style="text-align:center;"><div style="font-size:1.5rem;font-weight:700;color:#ef4444;">${s.worstScore}</div><div style="font-size:11px;color:#8B949E;">Pior</div></div>
+        </div>
+        <div style="font-size:12px;color:#8B949E;">Ultimas ligacoes:</div>
+        ${(s.scores||[]).map(sc => {
+          const c2 = sc.score>=80?'#22c55e':sc.score>=60?'#eab308':'#ef4444';
+          return '<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #21262D;font-size:12px;"><span style="color:'+c2+';font-weight:700;width:40px;">'+sc.score+'/100</span><span style="color:#E6EDF3;flex:1;">'+((sc.leadName||'')+'').slice(0,25)+'</span><span style="color:#8B949E;">'+((sc.summary||'')+'').slice(0,60)+'...</span></div>';
+        }).join('')}
+      `;
+    } else if (d.allSellers?.length > 0) {
+      document.getElementById('closy-content').innerHTML = d.allSellers.map(s => {
+        const c2 = s.avgScore>=80?'#22c55e':s.avgScore>=60?'#eab308':'#ef4444';
+        return '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #21262D;font-size:13px;"><span style="flex:1;font-weight:600;">'+s.name+'</span><span style="color:'+c2+';font-weight:700;">'+s.avgScore+'/100</span><span style="color:#8B949E;">'+s.calls+' calls</span></div>';
+      }).join('');
+    }
+  } catch(e) { document.getElementById('closy-content').innerHTML = '<span style="color:#8B949E;">Closy indisponivel</span>'; }
+}
+
+// Load Forecast
+async function loadForecast() {
+  const sel = document.getElementById('closer-select');
+  const closer = sel ? sel.value : '';
+  const url = closer ? '/cockpit/forecast?closer='+closer : '/cockpit/forecast';
+  try {
+    const res = await fetch(url);
+    const f = await res.json();
+    if (f.error) { document.getElementById('forecast-content').innerHTML = '<span style="color:#8B949E;">Sem dados</span>'; return; }
+
+    const riscoColor = f.risco==='alto'?'#ef4444':f.risco==='medio'?'#eab308':'#22c55e';
+    const trendColor = f.trend.diffVsMedia >= 0 ? '#22c55e' : '#ef4444';
+    const trendSign = f.trend.diffVsMedia >= 0 ? '+' : '';
+
+    document.getElementById('forecast-content').innerHTML = `
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;">
+        <div style="text-align:center;min-width:80px;"><div style="font-size:1.5rem;font-weight:800;color:#06b6d4;">R$ ${(f.projecao/1000).toFixed(0)}k</div><div style="font-size:10px;color:#8B949E;">Projecao</div></div>
+        <div style="text-align:center;min-width:80px;"><div style="font-size:1.5rem;font-weight:800;color:${riscoColor};">${f.risco.toUpperCase()}</div><div style="font-size:10px;color:#8B949E;">Risco</div></div>
+        <div style="text-align:center;min-width:80px;"><div style="font-size:1.5rem;font-weight:800;">R$ ${(f.mediaDia/1000).toFixed(1)}k</div><div style="font-size:10px;color:#8B949E;">Media/dia</div></div>
+        <div style="text-align:center;min-width:80px;"><div style="font-size:1.5rem;font-weight:800;color:#F0C040;">R$ ${(f.necessarioDia/1000).toFixed(1)}k</div><div style="font-size:10px;color:#8B949E;">Necessario/dia</div></div>
+        <div style="text-align:center;min-width:80px;"><div style="font-size:1.5rem;font-weight:800;color:#A371F7;">R$ ${(f.propostas.valor/1000).toFixed(0)}k</div><div style="font-size:10px;color:#8B949E;">Em propostas (${f.propostas.total})</div></div>
+        <div style="text-align:center;min-width:80px;"><div style="font-size:1.5rem;font-weight:800;color:${trendColor};">${trendSign}${f.trend.diffVsMedia}%</div><div style="font-size:10px;color:#8B949E;">vs media 2 meses</div></div>
+      </div>
+      <div style="display:flex;gap:8px;overflow-x:auto;">
+        ${f.meses.map(m => '<div style="text-align:center;min-width:70px;background:#0D1117;border-radius:8px;padding:8px;"><div style="font-size:10px;color:#6b7280;">'+m.label+'</div><div style="font-size:14px;font-weight:700;color:#2EA043;">R$ '+(m.fat/1000).toFixed(0)+'k</div><div style="font-size:10px;color:#8B949E;">'+m.vendas+'v</div></div>').join('')}
+      </div>
+    `;
+  } catch(e) { console.error('Forecast error:', e); }
+}
+
+// Load on page init
+renderCockpit('/cockpit/data');
+// Score + Gamificacao in parallel
+loadScore();
+loadGamificacao();
+// Coach loads on button click only (faster page load)
+</script>
+
+</body>
+</html>

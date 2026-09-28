@@ -1,0 +1,154 @@
+<% const activePage = 'admin'; const pageTitle = 'Metas Individuais por Closer × Produto'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.mp-wrap{max-width:1400px;margin:0 auto;padding:24px;color:var(--text)}
+.mp-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #10b981;border-radius:12px;padding:18px;margin-bottom:18px}
+.mp-header h1{color:#10b981;margin:0;font-size:20px}
+.mp-card{background:#161725;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.mp-closer-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.mp-closer-name{font-weight:800;font-size:14px;color:var(--text);flex:1}
+.mp-team-pill{background:rgba(167,113,247,.15);color:#c084fc;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase}
+.mp-add-btn{background:#10b981;color:#000;border:none;border-radius:5px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer}
+.mp-meta-row{display:flex;gap:6px;align-items:center;background:#0a0a0f;border:1px solid var(--border);border-radius:5px;padding:6px;margin-bottom:5px;flex-wrap:wrap}
+.mp-meta-row select, .mp-meta-row input{background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:5px 8px;font-size:11px}
+.mp-meta-row .label{color:#9ca3af;font-size:10px;font-weight:700}
+.mp-del{background:#ef4444;color:#fff;border:none;border-radius:4px;padding:4px 9px;font-size:10px;cursor:pointer;font-weight:800}
+</style>
+
+<div class="mp-wrap">
+  <div class="mp-header">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:24px">🎯</span>
+      <h1>Metas Individuais — Closer × Produto</h1>
+    </div>
+    <p style="color:var(--text-muted);font-size:12px;margin:6px 0 0;line-height:1.5">
+      Cada closer pode ter <strong>múltiplas metas</strong> diferentes (ex: 🚰 Bebedouro R$ 30k + 🔄 Refil R$ 8k +
+      💧 Filtro de Entrada R$ 25k). Útil pra separar quem trabalha <strong>poço</strong> (Iron Free) de quem trabalha
+      só <strong>filtro de entrada</strong> (água tratada de estação).
+      Closer vê seu progresso em tempo real em <a href="/cockpit/minhas-metas-page" style="color:#10b981">/cockpit/minhas-metas</a>.
+    </p>
+  </div>
+
+  <div id="mp-list"><div style="text-align:center;color:var(--text-muted);padding:30px">⏳ Carregando...</div></div>
+</div>
+
+<script>
+let _MP_DATA = { metas: {}, closers: [], produtos: [] };
+
+async function mpCarregar(){
+  try {
+    const r = await fetch('/admin/metas-closer-produto');
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    _MP_DATA = d;
+    mpRender();
+  } catch(e) {
+    document.getElementById('mp-list').innerHTML = `<div style="color:#ef4444;padding:20px">${e.message}</div>`;
+  }
+}
+
+function mpRender(){
+  const cont = document.getElementById('mp-list');
+  let html = '';
+  _MP_DATA.closers.forEach(c => {
+    const minhas = _MP_DATA.metas[c.username] || {};
+    const totalMetas = Object.keys(minhas).length;
+    const totalRs = Object.values(minhas).reduce((s,m) => s + (m.meta_rs||0), 0);
+    html += `
+      <div class="mp-card">
+        <div class="mp-closer-head">
+          <span class="mp-closer-name">${c.name}</span>
+          <span class="mp-team-pill">${c.team||'?'}</span>
+          <span style="color:#9ca3af;font-size:11px">${totalMetas} meta${totalMetas!==1?'s':''} · R$ ${Math.round(totalRs).toLocaleString('pt-BR')}</span>
+          <button class="mp-add-btn" onclick="mpAdicionar('${c.username}')">+ Nova meta</button>
+        </div>
+        <div id="mp-rows-${c.username}">
+    `;
+    if (totalMetas === 0) {
+      html += '<div style="color:#666;font-size:11px;padding:10px;text-align:center;font-style:italic">Sem metas cadastradas</div>';
+    } else {
+      Object.entries(minhas).forEach(([prod, cfg]) => {
+        const def = _MP_DATA.produtos.find(p => p.id === prod);
+        html += `
+          <div class="mp-meta-row" id="mp-row-${c.username}-${prod}">
+            <span style="font-weight:800;color:#fff;min-width:200px">${def?.label || prod}</span>
+            <span class="label">QTD</span>
+            <input type="number" min="0" value="${cfg.meta_qtd||0}" id="mp-q-${c.username}-${prod}" style="width:70px">
+            <span class="label">R$</span>
+            <input type="number" min="0" step="100" value="${cfg.meta_rs||0}" id="mp-r-${c.username}-${prod}" style="width:120px">
+            <button onclick="mpSalvar('${c.username}','${prod}')" style="background:#22c55e;color:#000;border:none;border-radius:4px;padding:5px 10px;font-size:10px;font-weight:800;cursor:pointer">💾 Salvar</button>
+            <button class="mp-del" onclick="mpExcluir('${c.username}','${prod}')">🗑</button>
+          </div>
+        `;
+      });
+    }
+    html += '</div></div>';
+  });
+  cont.innerHTML = html;
+}
+
+function mpAdicionar(username){
+  const cont = document.getElementById('mp-rows-'+username);
+  const minhas = _MP_DATA.metas[username] || {};
+  const usados = Object.keys(minhas);
+  const disponiveis = _MP_DATA.produtos.filter(p => !usados.includes(p.id));
+  if (!disponiveis.length) { alert('Todos os produtos já têm meta cadastrada pra esse closer'); return; }
+  const tmpId = 'novo-'+Date.now();
+  const div = document.createElement('div');
+  div.className = 'mp-meta-row';
+  div.id = 'mp-row-'+username+'-'+tmpId;
+  div.innerHTML = `
+    <select id="mp-p-${tmpId}" style="min-width:220px">
+      ${disponiveis.map(p => `<option value="${p.id}">${p.label}</option>`).join('')}
+    </select>
+    <span class="label">QTD</span>
+    <input type="number" min="0" id="mp-qn-${tmpId}" placeholder="0" style="width:70px">
+    <span class="label">R$</span>
+    <input type="number" min="0" step="100" id="mp-rn-${tmpId}" placeholder="0" style="width:120px">
+    <button onclick="mpSalvarNovo('${username}','${tmpId}',this)" style="background:#22c55e;color:#000;border:none;border-radius:4px;padding:5px 10px;font-size:10px;font-weight:800;cursor:pointer">💾 Salvar</button>
+    <button onclick="this.closest('.mp-meta-row').remove()" style="background:#666;color:#fff;border:none;border-radius:4px;padding:5px 10px;font-size:10px;cursor:pointer">✕</button>
+  `;
+  cont.appendChild(div);
+}
+
+async function mpSalvar(username, produto){
+  const qtd = parseInt(document.getElementById('mp-q-'+username+'-'+produto).value, 10) || 0;
+  const rs = parseFloat(document.getElementById('mp-r-'+username+'-'+produto).value) || 0;
+  try {
+    const r = await fetch('/admin/metas-closer-produto', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, produto, meta_qtd: qtd, meta_rs: rs }),
+    });
+    const d = await r.json();
+    if (d.error) { alert(d.error); return; }
+    mpCarregar();
+  } catch(e) { alert(e.message); }
+}
+
+async function mpSalvarNovo(username, tmpId, btn){
+  const produto = document.getElementById('mp-p-'+tmpId).value;
+  const qtd = parseInt(document.getElementById('mp-qn-'+tmpId).value, 10) || 0;
+  const rs = parseFloat(document.getElementById('mp-rn-'+tmpId).value) || 0;
+  if (qtd === 0 && rs === 0) { alert('Defina QTD ou R$ pelo menos'); return; }
+  try {
+    const r = await fetch('/admin/metas-closer-produto', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, produto, meta_qtd: qtd, meta_rs: rs }),
+    });
+    const d = await r.json();
+    if (d.error) { alert(d.error); return; }
+    mpCarregar();
+  } catch(e) { alert(e.message); }
+}
+
+async function mpExcluir(username, produto){
+  if (!confirm('Excluir essa meta?')) return;
+  try {
+    await fetch('/admin/metas-closer-produto/'+encodeURIComponent(username)+'/'+encodeURIComponent(produto), { method: 'DELETE' });
+    mpCarregar();
+  } catch(e) { alert(e.message); }
+}
+
+mpCarregar();
+</script>

@@ -1,0 +1,164 @@
+<% var pageTitle = 'Área Técnica'; var activePage = 'area-tecnica'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+<style>
+.at-wrap{max-width:1080px;margin:0 auto;padding:0 16px 80px;color:#c9d4de}
+.at-h1{color:var(--text);font-size:1.6rem;margin:16px 0 2px}
+.at-sub{color:#8899AA;margin:0 0 12px}
+.at-card{background:var(--bg);border:1px solid #1f2b3a;border-radius:14px;padding:18px;margin:16px 0}
+.at-card h2{color:#00AAFF;font-size:1.2rem;margin:0 0 12px;border-left:3px solid #00AAFF;padding-left:10px}
+.at-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.at-grid{grid-template-columns:1fr}}
+.at-lbl{font-size:.82rem;color:#8899AA;display:block;margin-bottom:4px}
+.at-in,.at-sel{width:100%;background:#0b1220;border:1px solid #2a3a4d;color:#dbe7f0;border-radius:9px;padding:10px 12px;font-family:inherit;font-size:.92rem}
+.at-modes{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.at-mode{background:#0b1220;border:1px solid #2a3a4d;color:#c9d4de;border-radius:20px;padding:8px 14px;cursor:pointer;font-size:.85rem}
+.at-mode.on{border-color:#00AAFF;color:#00AAFF;background:rgba(0,170,255,.08)}
+.at-out{margin-top:14px}
+.at-layer{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#0b1220;border:1px solid #1f2b3a;border-radius:10px;padding:11px 13px;margin:7px 0;flex-wrap:wrap}
+.at-layer .nm{font-weight:700;color:var(--text)}
+.at-layer .vals{color:#00AAFF;font-weight:800;font-variant-numeric:tabular-nums}
+.at-layer .dens{display:flex;align-items:center;gap:5px;font-size:.75rem;color:#5b7c99}
+.at-layer .dens input{width:60px;background:var(--bg);border:1px solid #2a3a4d;color:#dbe7f0;border-radius:6px;padding:4px 6px;font-size:.8rem}
+.at-total{background:rgba(0,170,255,.07);border:1px solid #00AAFF44;border-radius:10px;padding:11px 13px;margin-top:8px;font-size:.95rem;color:#dbe7f0}
+.at-table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:6px}
+.at-table th,.at-table td{border:1px solid #1f2b3a;padding:8px 10px;text-align:left}
+.at-table th{background:#0b1725;color:#00AAFF}
+.at-callout{border-radius:10px;padding:11px 13px;margin:10px 0;font-size:.86rem}
+.at-warn{background:rgba(245,158,11,.08);border:1px solid #F59E0B55;color:#f0d9a8}
+.at-danger{background:rgba(239,68,68,.08);border:1px solid #ef444455;color:#f2c4c4}
+.at-ts{border:1px solid #1f2b3a;border-radius:10px;margin:8px 0;overflow:hidden}
+.at-ts summary{cursor:pointer;padding:11px 13px;background:#0b1220;color:#fff;font-weight:700;list-style:none}
+.at-ts summary::-webkit-details-marker{display:none}
+.at-ts .body{padding:11px 13px;border-top:1px solid #1f2b3a}
+.at-ts .body b{color:#00AAFF}
+.at-ts ul{margin:4px 0 10px;padding-left:18px}.at-ts li{margin:3px 0}
+.at-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(46,160,67,.15);color:#3FB950;border:1px solid #3FB95044}
+.at-src{color:#5b7c99;font-size:.78rem;margin-top:10px}
+.at-src a{color:#00AAFF}
+</style>
+<div class="at-wrap">
+  <h1 class="at-h1">🛠️ Área Técnica <span class="at-tag">estoque + vendedor</span></h1>
+  <p class="at-sub">Dimensionamento de tanque/mídia e base técnica de válvulas. Ferramenta de apoio — os valores de referência podem ser ajustados; confirme sempre com a ficha do produto e a análise da água.</p>
+
+  <!-- ================= CALCULADORA ================= -->
+  <div class="at-card">
+    <h2>🧮 Calculadora de dimensionamento (tanque → mídia)</h2>
+    <div class="at-grid">
+      <div>
+        <label class="at-lbl">Tanque (FRP)</label>
+        <select id="atTank" class="at-sel">
+          <% TANQUES.forEach(function(t){ %><option value="<%= t.code %>"><%= t.code %> — <%= t.d %>"×<%= t.h %>" · <%= t.mediaL %> L (<%= t.mediaFt3 %> ft³)</option><% }) %>
+        </select>
+      </div>
+      <div>
+        <label class="at-lbl">Underbed de quartzo/seixo (% do leito)</label>
+        <input id="atUnder" class="at-in" type="number" min="0" max="60" value="25">
+      </div>
+    </div>
+    <div class="at-modes" id="atModes">
+      <div class="at-mode on" data-mode="particulas">Filtro de partículas (barro/limo/lodo)</div>
+      <div class="at-mode" data-mode="carvao">Carvão</div>
+      <div class="at-mode" data-mode="resina">Resina (abrandador)</div>
+      <div class="at-mode" data-mode="hyperscale">HyperScaleX</div>
+    </div>
+    <div id="atUnderRow" style="margin-top:8px"></div>
+    <div class="at-out" id="atOut"></div>
+    <div class="at-callout at-warn">⚠️ Volumes de mídia dos tanques = <b>referência de engenharia</b> (padrão Structural/Pentair, já com freeboard de retrolavagem). Densidades = valores típicos, editáveis nas camadas acima. Resina de abrandador e HyperScaleX dependem <b>também</b> de dureza/vazão — ver as fichas.</div>
+  </div>
+
+  <!-- ================= TABELA DE TANQUES ================= -->
+  <div class="at-card">
+    <h2>📋 Tanques FRP — referência</h2>
+    <div style="overflow-x:auto"><table class="at-table">
+      <thead><tr><th>Código</th><th>Diâmetro × Altura</th><th>Mídia (ft³)</th><th>Mídia (L)</th></tr></thead>
+      <tbody><% TANQUES.forEach(function(t){ %><tr><td><b><%= t.code %></b></td><td><%= t.d %>" × <%= t.h %>"</td><td><%= t.mediaFt3 %></td><td><%= t.mediaL %></td></tr><% }) %></tbody>
+    </table></div>
+    <div class="at-src">Fonte de referência: <a href="https://www.pentair.com/content/dam/extranet/web/nam/structural/spec-sheets/english/41422-structural-frp-spec-sheet.pdf" target="_blank">Structural/Pentair FRP spec sheet</a>. Ajustar ao tanque real da TDF se divergir.</div>
+  </div>
+
+  <!-- ================= MÍDIAS ================= -->
+  <div class="at-card">
+    <h2>🧱 Mídias — densidade e papel</h2>
+    <div style="overflow-x:auto"><table class="at-table">
+      <thead><tr><th>Mídia</th><th>Densidade (kg/L)*</th><th>Papel</th></tr></thead>
+      <tbody><% MIDIAS.forEach(function(m){ %><tr><td><b><%= m.nome %></b></td><td><%= m.densidade %></td><td style="color:#8899AA"><%= m.papel %></td></tr><% }) %></tbody>
+    </table></div>
+    <div class="at-src">* Densidade de referência (kg/L). HyperScaleX = 0,77 (ficha oficial). Confirmar as demais com a ficha da mídia.</div>
+  </div>
+
+  <!-- ================= VÁLVULAS ================= -->
+  <div class="at-card">
+    <h2>🎛️ Válvula automática × manual</h2>
+    <div style="overflow-x:auto"><table class="at-table">
+      <thead><tr><th>Critério</th><th>Manual</th><th>Automática</th></tr></thead>
+      <tbody><% VALVULAS.comparativo.forEach(function(c){ %><tr><td><b><%= c.criterio %></b></td><td><%= c.manual %></td><td><%= c.automatica %></td></tr><% }) %></tbody>
+    </table></div>
+    <div class="at-callout at-danger">🔧 Faixa de pressão de trabalho: <b><%= VALVULAS.faixaPressao %></b> — fora disso a válvula não opera bem (não aspira salmoura, baixa vazão).</div>
+
+    <h2 style="margin-top:18px">🩺 Problemas e soluções (válvula)</h2>
+    <% VALVULAS.troubleshooting.forEach(function(t){ %>
+      <details class="at-ts">
+        <summary>⚠️ <%= t.problema %></summary>
+        <div class="body">
+          <b>Possíveis causas</b>
+          <ul><% t.causas.forEach(function(c){ %><li><%= c %></li><% }) %></ul>
+          <b>Soluções</b>
+          <ul><% t.solucoes.forEach(function(s){ %><li><%= s %></li><% }) %></ul>
+        </div>
+      </details>
+    <% }) %>
+    <div class="at-src">Compilado de manuais Runxin: <a href="https://manuals.plus/ae/1005008734162045" target="_blank">Softening/Filtering Valve Manual</a> · <a href="https://www.run-xin.com/en/content7_379.htm" target="_blank">Runxin (oficial)</a> · <a href="https://www.allmech.co.za/wp-content/uploads/2019/10/F63-F68-Autoamtic-softener-valve-series.pdf" target="_blank">Série F63–F68</a>. Sempre conferir o manual do modelo específico.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var TANQUES = <%- JSON.stringify(TANQUES) %>;
+  var MIDIAS = {}; <% MIDIAS.forEach(function(m){ %>MIDIAS['<%= m.id %>']=<%- JSON.stringify(m) %>;<% }) %>
+  var RECEITA = <%- JSON.stringify(RECEITA_PARTICULAS) %>;
+  var mode='particulas';
+  var densOverride={}, pctOverride={};
+  function dens(id){ return densOverride[id]!=null?densOverride[id]:(MIDIAS[id]?MIDIAS[id].densidade:1); }
+  function pct(id, def){ return pctOverride[id]!=null?pctOverride[id]:def; }
+  // linha de camada com % (opcional) e densidade editáveis -> volume + kg
+  function layerRow(id, litros, pctVal){ var m=MIDIAS[id]; var kg=litros*dens(id);
+    return '<div class="at-layer"><span class="nm">'+m.nome+'</span>'+
+      (pctVal!=null?'<span class="dens">% <input type="number" step="1" min="0" value="'+pctVal+'" data-pct="'+id+'"></span>':'')+
+      '<span class="dens">dens <input type="number" step="0.01" value="'+dens(id)+'" data-dens="'+id+'"> kg/L</span>'+
+      '<span class="vals">'+litros.toFixed(1)+' L · '+kg.toFixed(1)+' kg</span></div>';
+  }
+  function calc(){
+    var t=TANQUES.find(function(x){return x.code===document.getElementById('atTank').value;});
+    var mediaL=t.mediaL, out='', totalKg=0, underRow='';
+    var showUnder = (mode==='carvao');
+    document.getElementById('atUnderRow').innerHTML = '';
+    document.getElementById('atUnder').closest('div').style.display = showUnder?'block':'none';
+
+    if(mode==='particulas'){
+      var somaPct=0;
+      RECEITA.camadas.forEach(function(c){ var p=pct(c.id,c.pct); somaPct+=p; var L=mediaL*p/100; out+=layerRow(c.id,L,p); totalKg+=L*dens(c.id); });
+      if(Math.round(somaPct)!==100) out+='<div class="at-callout at-danger" style="margin-top:6px">⚠️ As camadas somam <b>'+somaPct+'%</b> (o ideal é 100% do leito). Ajuste as %.</div>';
+      out+='<div class="at-callout at-warn" style="margin-top:6px">Ordem de carregamento (fundo → topo): quartzo/seixo → areia grossa → média → fina → zeólita. % e densidades são referência — calibre pela receita da TDF.</div>';
+    } else if(mode==='carvao'){
+      var under=Math.max(0,Math.min(60,+document.getElementById('atUnder').value||0));
+      var underL=mediaL*under/100, carvL=mediaL-underL;
+      if(underL>0){ out+=layerRow('quartzo',underL,null); totalKg+=underL*dens('quartzo'); }
+      out+=layerRow('carvao',carvL,null); totalKg+=carvL*dens('carvao');
+    } else if(mode==='resina'){
+      out+=layerRow('resina',mediaL,null); totalKg+=mediaL*dens('resina');
+      out+='<div class="at-callout at-warn" style="margin-top:6px">Resina de abrandador dimensiona TAMBÉM pela dureza e vazão (capacidade em ciclos de troca). Este é o volume que o tanque comporta — confirme a capacidade pela dureza da análise.</div>';
+    } else if(mode==='hyperscale'){
+      out+=layerRow('hyperscale',mediaL,null); totalKg+=mediaL*dens('hyperscale');
+      out+='<div class="at-callout at-warn" style="margin-top:6px">HyperScaleX dimensiona por VAZÃO (ficha: 500 L/h→1,5 L … 8000 L/h→25 L), não pelo volume do tanque. Use este número só como capacidade máxima do vaso.</div>';
+    }
+    out+='<div class="at-total">Leito total: <b>'+mediaL.toFixed(1)+' L</b> ('+t.mediaFt3+' ft³) · peso aprox. <b>'+totalKg.toFixed(1)+' kg</b> · tanque '+t.code+' ('+t.d+'"×'+t.h+'")</div>';
+    document.getElementById('atOut').innerHTML=out;
+    document.querySelectorAll('[data-dens]').forEach(function(inp){ inp.oninput=function(){ densOverride[inp.dataset.dens]=parseFloat(inp.value)||0; calc(); }; });
+    document.querySelectorAll('[data-pct]').forEach(function(inp){ inp.oninput=function(){ pctOverride[inp.dataset.pct]=parseFloat(inp.value)||0; calc(); }; });
+  }
+  document.querySelectorAll('.at-mode').forEach(function(b){ b.onclick=function(){ document.querySelectorAll('.at-mode').forEach(function(x){x.classList.remove('on');}); b.classList.add('on'); mode=b.dataset.mode; calc(); }; });
+  document.getElementById('atTank').addEventListener('input',calc);
+  document.getElementById('atUnder').addEventListener('input',calc);
+  document.getElementById('atTank').value='1054'; calc();
+})();
+</script>

@@ -1,0 +1,233 @@
+<% const activePage = 'admin-score-leads'; const pageTitle = 'Score de Leads — Painel de Distribuição'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.lsd-wrap{max-width:1500px;margin:0 auto;padding:24px;color:var(--text)}
+.lsd-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #06b6d4;border-radius:12px;padding:18px;margin-bottom:14px}
+.lsd-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.lsd-tab{background:transparent;color:#9ca3af;border:none;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;text-decoration:none}
+.lsd-tab.active{color:#67e8f9;border-bottom-color:#06b6d4}
+.lsd-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px}
+.lsd-card{background:#161725;border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;border-top:3px solid var(--c,#06b6d4)}
+.lsd-card .n{font-size:30px;font-weight:900;color:var(--text);line-height:1.1}
+.lsd-card .k{font-size:11px;color:#9ca3af;text-transform:uppercase;font-weight:700;margin-top:4px}
+.lsd-card.warn{--c:#fbbf24}
+.lsd-card.danger{--c:#ef4444}
+.lsd-card.ok{--c:#10b981}
+.lsd-card.purple{--c:#a371f7}
+.lsd-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.lsd-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+@media (max-width:1000px){.lsd-grid2,.lsd-grid3{grid-template-columns:1fr}}
+.lsd-panel{background:#161725;border:1px solid var(--border);border-radius:10px;padding:14px}
+.lsd-panel h3{margin:0 0 10px;font-size:13px;color:#67e8f9;text-transform:uppercase;letter-spacing:.4px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.lsd-panel h3 .count{background:#0a0a0f;color:#fff;padding:2px 9px;border-radius:6px;font-size:11px}
+.lsd-row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:7px 10px;background:#0a0a0f;border:1px solid var(--border);border-radius:6px;margin-bottom:4px;align-items:center;font-size:12px}
+.lsd-row .left{color:var(--text)}
+.lsd-row .right{color:#fbbf24;font-weight:800;font-variant-numeric:tabular-nums}
+.lsd-row.bad .right{color:#ef4444}
+.lsd-row.good .right{color:#10b981}
+.lsd-row .bar{height:5px;background:#1a1a2a;border-radius:3px;margin-top:5px;overflow:hidden}
+.lsd-row .bar div{height:100%;background:linear-gradient(90deg,#06b6d4,#1f6feb);border-radius:3px}
+.lsd-banner{background:rgba(245,158,11,.1);border:1px solid #f59e0b;border-radius:8px;padding:12px;margin-bottom:14px;color:#fbbf24}
+.lsd-banner h3{margin:0 0 6px;color:#fbbf24}
+.lsd-banner .actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.lsd-btn{background:#06b6d4;color:#000;border:none;border-radius:5px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer}
+.lsd-btn.g{background:#374151;color:#fff}
+.lsd-btn.d{background:#ef4444;color:#fff}
+.lsd-btn.s{background:#10b981;color:#000}
+.lsd-btn:disabled{opacity:.5;cursor:wait}
+</style>
+
+<div class="lsd-wrap">
+  <div class="lsd-header">
+    <h1 style="color:#67e8f9;margin:0;font-size:20px">📊 Painel de Distribuição de Leads</h1>
+    <p style="color:#9ca3af;font-size:12px;margin:8px 0 0;line-height:1.5">
+      Snapshot ao vivo de quem está recebendo leads, quem está bloqueado e o estado das cadências.
+      Em DRY_RUN, mostra "quem ia receber" como se o sistema estivesse live. Refresh manual a cada 30s.
+    </p>
+  </div>
+
+  <div class="lsd-tabs">
+    <a class="lsd-tab" href="/admin/score-leads">📋 Critérios</a>
+    <a class="lsd-tab" href="/admin/score-leads/cadencia">⏱️ Cadência</a>
+    <a class="lsd-tab active" href="/admin/score-leads/distribuicao">📊 Distribuição</a>
+    <a class="lsd-tab" href="/admin/score-leads/redistribuir">🔄 Parados</a>
+    <a class="lsd-tab" href="/admin/score-leads/atrasos">🚨 Atrasos</a>
+    <a class="lsd-tab" href="/admin/score-leads/auditoria-atividades">🛡️ Auditoria</a>
+  </div>
+
+  <div id="lsd-banner-area"></div>
+
+  <div class="lsd-cards" id="lsd-cards-status">
+    <div class="lsd-card"><div class="n">…</div><div class="k">Carregando</div></div>
+  </div>
+
+  <div class="lsd-grid2">
+    <div class="lsd-panel">
+      <h3>🎯 Quem RECEBERIA tasks <span class="count" id="lsd-target-total">—</span></h3>
+      <div id="lsd-target-list"></div>
+    </div>
+    <div class="lsd-panel">
+      <h3>👤 Owner atual dos deals <span class="count" id="lsd-owner-total">—</span></h3>
+      <div id="lsd-owner-list"></div>
+    </div>
+  </div>
+
+  <div class="lsd-grid2">
+    <div class="lsd-panel">
+      <h3>🚫 OWNER_INVALIDO_PARA_PRODUTO <span class="count" id="lsd-blocked-total">—</span></h3>
+      <div id="lsd-blocked-list"></div>
+    </div>
+    <div class="lsd-panel">
+      <h3>❓ OWNER_NOT_MAPPED <span class="count" id="lsd-notmapped-total">—</span></h3>
+      <div id="lsd-notmapped-list"></div>
+    </div>
+  </div>
+
+  <div class="lsd-grid2">
+    <div class="lsd-panel">
+      <h3>🏃 Runs ativos por TIER <span class="count" id="lsd-tier-total">—</span></h3>
+      <div id="lsd-tier-list"></div>
+    </div>
+    <div class="lsd-panel">
+      <h3>📦 Runs ativos por PRODUTO</h3>
+      <div id="lsd-product-list"></div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:18px">
+    <button class="lsd-btn" onclick="lsdLoad()">🔄 Atualizar</button>
+    <span style="color:#9ca3af;font-size:11px;margin-left:10px" id="lsd-updated"></span>
+  </div>
+</div>
+
+<script>
+function _rowHtml(label, count, total, cls){
+  const pct = total ? (count*100/total).toFixed(1) : 0;
+  return `<div class="lsd-row ${cls||''}">
+    <div class="left">${escapeHtml(label)}<div class="bar"><div style="width:${pct}%"></div></div></div>
+    <div class="right">${count}</div>
+  </div>`;
+}
+
+async function lsdLoad(){
+  try {
+    const r = await fetch('/api/lead-score/admin/distribution?limit=1000').then(r=>r.json());
+    if (!r.ok) { alert(r.error); return; }
+
+    // Banner se tem marketing/dry_run
+    let bannerHtml = '';
+    const mktCount = r.not_mapped?.marketing || 0;
+    if (r.env_dry_run || mktCount > 0) {
+      bannerHtml = `<div class="lsd-banner">
+        <h3>⚠️ Atenção</h3>
+        <div>
+          ${r.env_dry_run ? '🟣 <strong>DRY_RUN ativo</strong> — sistema valida mas não cria task no Zoho.<br>' : ''}
+          ${mktCount > 0 ? `📍 <strong>${mktCount} atividades bloqueadas</strong> com Owner = "marketing" (deals genéricos no Zoho).<br>` : ''}
+        </div>
+        ${mktCount > 0 ? `<div class="actions">
+          <button class="lsd-btn g" onclick="lsdRedistribute('marketing', true)">🧪 Preview redistribuir 'marketing'</button>
+          <button class="lsd-btn s" onclick="lsdRedistribute('marketing', false)">✅ Redistribuir 'marketing' por team produto</button>
+        </div>` : ''}
+      </div>`;
+    }
+    document.getElementById('lsd-banner-area').innerHTML = bannerHtml;
+
+    // Status cards
+    document.getElementById('lsd-cards-status').innerHTML = `
+      <div class="lsd-card purple"><div class="n">${r.runs_active_total||0}</div><div class="k">Runs ativos</div></div>
+      <div class="lsd-card"><div class="n">${r.history_last_hour||0}</div><div class="k">Recalcs (1h)</div></div>
+      <div class="lsd-card"><div class="n">${r.audit_last_hour||0}</div><div class="k">Audit (1h)</div></div>
+      <div class="lsd-card ${r.env_dry_run?'warn':'ok'}"><div class="n">${r.env_dry_run?'ON':'OFF'}</div><div class="k">DRY_RUN</div></div>
+      <div class="lsd-card ${r.env_disabled?'danger':'ok'}"><div class="n">${r.env_disabled?'YES':'NO'}</div><div class="k">Disabled</div></div>
+      <div class="lsd-card warn"><div class="n">${r.by_status?.DRY_RUN||0}</div><div class="k">DRY_RUN amostra</div></div>
+      <div class="lsd-card danger"><div class="n">${(r.by_status?.OWNER_INVALIDO_PARA_PRODUTO||0)+(r.by_status?.OWNER_NOT_MAPPED||0)}</div><div class="k">Bloqueadas</div></div>
+      <div class="lsd-card ok"><div class="n">${r.by_status?.DUPLICATED||0}</div><div class="k">Duplicadas evitadas</div></div>
+    `;
+
+    // Target users (quem ia receber)
+    const targets = Object.entries(r.by_target||{}).sort((a,b)=>b[1]-a[1]);
+    const targetTotal = targets.reduce((s,[,n])=>s+n, 0);
+    document.getElementById('lsd-target-total').textContent = targetTotal;
+    document.getElementById('lsd-target-list').innerHTML = targets.slice(0, 15).map(([k,v]) => {
+      const dry = r.by_target_dry?.[k] || 0;
+      return _rowHtml(`${k} ${dry>0?'<small style="color:#a371f7">('+dry+' DRY)</small>':''}`, v, targetTotal, k==='(sem mapping)'?'bad':'');
+    }).join('');
+
+    // Owners Zoho
+    const owners = Object.entries(r.by_owner||{}).sort((a,b)=>b[1]-a[1]);
+    const ownerTotal = owners.reduce((s,[,n])=>s+n, 0);
+    document.getElementById('lsd-owner-total').textContent = ownerTotal;
+    document.getElementById('lsd-owner-list').innerHTML = owners.slice(0, 15).map(([k,v]) => {
+      const isMkt = k === 'marketing';
+      return _rowHtml(k + (isMkt?' ⚠️':''), v, ownerTotal, isMkt?'bad':'');
+    }).join('');
+
+    // Bloqueados por produto
+    const blocked = Object.entries(r.blocked_by_product||{}).sort((a,b)=>b[1]-a[1]);
+    const blockedTotal = blocked.reduce((s,[,n])=>s+n, 0);
+    document.getElementById('lsd-blocked-total').textContent = blockedTotal;
+    document.getElementById('lsd-blocked-list').innerHTML = blocked.slice(0, 15).map(([k,v]) => {
+      const [owner, prod] = k.split('|');
+      return _rowHtml(`<strong>${escapeHtml(owner)}</strong> × ${escapeHtml(prod)}`, v, blockedTotal, 'bad');
+    }).join('') || '<div style="color:#10b981;padding:10px;text-align:center">✅ Nenhum bloqueio por produto</div>';
+
+    // Not mapped
+    const notmap = Object.entries(r.not_mapped||{}).sort((a,b)=>b[1]-a[1]);
+    const notmapTotal = notmap.reduce((s,[,n])=>s+n, 0);
+    document.getElementById('lsd-notmapped-total').textContent = notmapTotal;
+    document.getElementById('lsd-notmapped-list').innerHTML = notmap.slice(0, 15).map(([k,v]) =>
+      _rowHtml(`${escapeHtml(k)} <small style="color:#9ca3af">(adicionar em USERS portal)</small>`, v, notmapTotal, 'bad')
+    ).join('') || '<div style="color:#10b981;padding:10px;text-align:center">✅ Todos owners mapeados</div>';
+
+    // Tiers
+    const tiers = Object.entries(r.by_tier_runs||{}).sort((a,b)=>b[1]-a[1]);
+    const tierTotal = tiers.reduce((s,[,n])=>s+n, 0);
+    document.getElementById('lsd-tier-total').textContent = tierTotal;
+    document.getElementById('lsd-tier-list').innerHTML = tiers.map(([k,v]) =>
+      _rowHtml(`${escapeHtml(k)}`, v, tierTotal)
+    ).join('');
+
+    // Produtos
+    const prods = Object.entries(r.by_product_runs||{}).sort((a,b)=>b[1]-a[1]);
+    const prodTotal = prods.reduce((s,[,n])=>s+n, 0);
+    document.getElementById('lsd-product-list').innerHTML = prods.map(([k,v]) =>
+      _rowHtml(`${escapeHtml(k)}`, v, prodTotal)
+    ).join('');
+
+    document.getElementById('lsd-updated').textContent = '⏱️ atualizado ' + new Date().toLocaleTimeString('pt-BR');
+  } catch (e) {
+    alert('erro: ' + e.message);
+  }
+}
+
+async function lsdRedistribute(ownerName, dryRun){
+  if (!dryRun) {
+    if (!confirm(`Vai REDISTRIBUIR todos os deals com Owner="${ownerName}" entre os closers via round-robin por team do produto.\n\nO Owner do deal no Zoho será atualizado.\n\nConfirma?`)) return;
+  }
+  const btn = event.target; btn.disabled = true; btn.textContent = '⏳';
+  try {
+    const r = await fetch('/api/lead-score/admin/redistribute-by-owner', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ owner_name: ownerName, dry_run: !!dryRun, limit: 200 })
+    }).then(r=>r.json());
+    if (!r.ok) { alert(r.error||'erro'); return; }
+    const byTeam = r.by_team ? '\n\nPor team:\n' + Object.entries(r.by_team).map(([k,v])=>`  ${k}: ${v}`).join('\n') : '';
+    if (dryRun) {
+      const sample = (r.plan_sample||[]).slice(0,5).map(p => `  ${p.name||p.deal_id} → ${p.target_username} (team=${p.team})`).join('\n');
+      alert(`🧪 PREVIEW\n\nEncontrados: ${r.total_found}\nVai processar: ${r.will_process}${byTeam}\n\nAmostra:\n${sample}`);
+    } else {
+      alert(`✅ APLICADO\n\nEncontrados: ${r.total_found}\nProcessados: ${r.processed}\nAplicado no Zoho: ${r.applied}\nErros: ${r.errors||0}${byTeam}`);
+      lsdLoad();
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = dryRun ? "🧪 Preview redistribuir 'marketing'" : "✅ Redistribuir 'marketing' por team produto";
+  }
+}
+
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+lsdLoad();
+setInterval(lsdLoad, 30000);
+</script>

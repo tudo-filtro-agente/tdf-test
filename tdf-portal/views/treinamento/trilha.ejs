@@ -1,0 +1,99 @@
+<% var pageTitle = 'Trilha de Onboarding'; var activePage = 'treinamento'; %>
+<%- include('../layout', { user, activePage, pageTitle }) %>
+
+<div class="page-header">
+  <h1>🧗 Trilha de Onboarding</h1>
+  <p class="subtitle">Chegou agora? Escolhe a sua trilha e assiste NA ORDEM. Cada passo existe por um motivo — marque como concluído e o portal guarda seu progresso.</p>
+</div>
+
+<div class="container">
+  <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;">
+    <% Object.entries(trilhas).forEach(function([key, t]){ %>
+      <button class="trilha-tab" data-trilha="<%= key %>" style="flex:1;min-width:220px;cursor:pointer;background:#0D1117;border:2px solid <%= t.cor %>55;border-radius:12px;padding:14px 18px;color:#E6EDF3;text-align:left;transition:all .15s;">
+        <div style="font-size:1.05rem;font-weight:800;color:<%= t.cor %>;"><%= t.emoji %> <%= t.nome %></div>
+        <div style="font-size:.78rem;color:#8899AA;margin-top:4px;">
+          <span id="cnt-<%= key %>"><%= t.passos.filter(p=>p.feito).length %></span>/<%= t.passos.length %> concluídos
+        </div>
+        <div style="height:6px;background:#161B22;border-radius:3px;margin-top:8px;overflow:hidden;">
+          <div id="bar-<%= key %>" style="height:6px;background:<%= t.cor %>;border-radius:3px;width:<%= Math.round(100*t.passos.filter(p=>p.feito).length/t.passos.length) %>%;transition:width .3s;"></div>
+        </div>
+      </button>
+    <% }); %>
+  </div>
+
+  <% Object.entries(trilhas).forEach(function([key, t]){ %>
+    <div class="trilha-lista" id="trilha-<%= key %>" style="display:none;margin-top:22px;">
+      <p style="color:#8899AA;font-size:.9rem;border-left:3px solid <%= t.cor %>;padding-left:10px;"><%= t.sub %></p>
+      <% t.passos.forEach(function(p, i){ %>
+        <div style="display:flex;gap:14px;align-items:flex-start;background:#0D1117;border:1px solid <%= p.feito ? t.cor : '#21262D' %>;border-radius:12px;padding:14px 16px;margin-top:10px;<%= p.feito ? 'opacity:.75;' : '' %>" id="passo-<%= key %>-<%= i %>">
+          <div style="min-width:34px;height:34px;border-radius:50%;background:<%= p.feito ? t.cor : '#161B22' %>;border:2px solid <%= t.cor %>;display:flex;align-items:center;justify-content:center;font-weight:800;color:<%= p.feito ? '#0D1117' : t.cor %>;font-size:.95rem;">
+            <%= p.feito ? '✓' : (i+1) %>
+          </div>
+          <div style="flex:1;">
+            <div style="font-weight:700;color:#E6EDF3;"><%= p.titulo %>
+              <span style="font-size:9px;padding:2px 7px;border-radius:8px;margin-left:6px;vertical-align:2px;background:<%= p.tipo==='video'?'rgba(0,170,255,.15)':'rgba(239,68,68,.12)' %>;color:<%= p.tipo==='video'?'#00AAFF':'#f87171' %>;text-transform:uppercase;font-weight:800;"><%= p.tipo %></span>
+            </div>
+            <div style="color:#8899AA;font-size:.82rem;margin-top:3px;"><%= p.porque %></div>
+            <div style="margin-top:8px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+              <% if (p.existe) { %>
+                <a href="/biblioteca-files/<%= p.arq %>" target="_blank" style="color:<%= t.cor %>;font-weight:700;font-size:.85rem;text-decoration:none;"><%= p.tipo==='video' ? '▶ Assistir' : '📄 Abrir PDF' %> →</a>
+                <label style="display:flex;align-items:center;gap:6px;color:#8899AA;font-size:.82rem;cursor:pointer;">
+                  <input type="checkbox" class="chk-passo" data-trilha="<%= key %>" data-arq="<%= p.arq %>" <%= p.feito ? 'checked' : '' %> style="width:16px;height:16px;accent-color:<%= t.cor %>;cursor:pointer;">
+                  concluído
+                </label>
+              <% } else { %>
+                <span style="color:#566;font-size:.82rem;">⏳ em breve — este material está sendo produzido</span>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+      <div style="margin-top:16px;background:#0a1a1f;border:1px dashed <%= t.cor %>66;border-radius:12px;padding:14px 16px;color:#8899AA;font-size:.85rem;">
+        🏁 Terminou a trilha? Avisa seu gestor e marca um roleplay — a trilha te dá o mapa, o jogo se aprende jogando.
+      </div>
+    </div>
+  <% }); %>
+
+  <div style="margin:34px 0;text-align:center;">
+    <a href="/treinamento/biblioteca" style="color:#00AAFF;text-decoration:none;">📚 Ver a Biblioteca completa</a>
+    &nbsp;·&nbsp;
+    <a href="/treinamento" style="color:#00AAFF;text-decoration:none;">← Voltar pro Treinamento</a>
+  </div>
+</div>
+
+<script>
+(function(){
+  var tabs = document.querySelectorAll('.trilha-tab');
+  var listas = document.querySelectorAll('.trilha-lista');
+  function mostrar(key){
+    listas.forEach(function(l){ l.style.display = (l.id === 'trilha-' + key) ? 'block' : 'none'; });
+    tabs.forEach(function(b){
+      var ativo = b.dataset.trilha === key;
+      b.style.background = ativo ? '#101922' : '#0D1117';
+      b.style.borderWidth = ativo ? '2px' : '2px';
+      b.style.boxShadow = ativo ? '0 0 18px rgba(0,170,255,.12)' : 'none';
+    });
+    try { localStorage.setItem('trilha-escolhida', key); } catch(e){}
+  }
+  tabs.forEach(function(b){ b.addEventListener('click', function(){ mostrar(b.dataset.trilha); }); });
+  var inicial = 'sdr';
+  try { inicial = localStorage.getItem('trilha-escolhida') || 'sdr'; } catch(e){}
+  mostrar(inicial);
+
+  document.querySelectorAll('.chk-passo').forEach(function(chk){
+    chk.addEventListener('change', function(){
+      fetch('/api/trilha/check', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ trilha: chk.dataset.trilha, arq: chk.dataset.arq, done: chk.checked })
+      }).then(function(r){ return r.json(); }).then(function(j){
+        if (!j.ok) return;
+        var k = chk.dataset.trilha;
+        var cnt = document.getElementById('cnt-' + k);
+        var bar = document.getElementById('bar-' + k);
+        if (cnt) cnt.textContent = j.feitos;
+        if (bar) bar.style.width = Math.round(100 * j.feitos / j.total) + '%';
+      }).catch(function(){});
+    });
+  });
+})();
+</script>

@@ -1,0 +1,194 @@
+<% var pageTitle = 'Treinamentos'; var activePage = 'treinamento'; %>
+<%- include('../layout', { user, activePage, pageTitle }) %>
+
+<div class="page-header">
+  <h1>Treinamento de Vendas</h1>
+  <p class="subtitle">Domine cada etapa do processo comercial. Pratique, aplique, evolua.</p>
+</div>
+
+<div class="container">
+
+  <div class="treino-progress-bar">
+    <div class="treino-progress-fill" id="progressFill" style="width: 0%"></div>
+    <span class="treino-progress-text" id="progressText">0 de 7 concluidos</span>
+  </div>
+
+  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:16px; margin-top:24px;">
+
+    <a href="/treinamento/rapport" style="display:block;background:#0D1117;border:1px solid #00AAFF40;border-radius:12px;padding:20px;text-decoration:none;color:#E6EDF3;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='#00AAFF';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#00AAFF40';this.style.transform='none'">
+      <div style="font-size:1.5rem;margin-bottom:8px;">🤝</div>
+      <div style="font-weight:700;font-size:1.1rem;color:#00AAFF;">1. Rapport</div>
+      <div style="color:#8899AA;font-size:0.85rem;margin-top:6px;">Tecnicas de conexao e espelhamento</div>
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(46,160,67,0.15);color:#3FB950;border:1px solid rgba(46,160,67,0.3);">SDR</span>
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(0,102,204,0.15);color:#00AAFF;border:1px solid rgba(0,102,204,0.3);">CLOSER</span>
+      </div>
+      <div style="color:#00AAFF;font-size:0.75rem;margin-top:12px;" id="status-rapport">Disponivel →</div>
+    </a>
+
+    <a href="/treinamento/sondagem" style="display:block;background:#0D1117;border:1px solid #00AAFF40;border-radius:12px;padding:20px;text-decoration:none;color:#E6EDF3;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='#00AAFF';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#00AAFF40';this.style.transform='none'">
+      <div style="font-size:1.5rem;margin-bottom:8px;">🔍</div>
+      <div style="font-weight:700;font-size:1.1rem;color:#00AAFF;">2. Sondagem (SPIN)</div>
+      <div style="color:#8899AA;font-size:0.85rem;margin-top:6px;">Perguntas que fazem o cliente vender pra si mesmo</div>
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(46,160,67,0.15);color:#3FB950;border:1px solid rgba(46,160,67,0.3);">SDR</span>
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(0,102,204,0.15);color:#00AAFF;border:1px solid rgba(0,102,204,0.3);">CLOSER</span>
+      </div>
+      <div style="color:#00AAFF;font-size:0.75rem;margin-top:12px;" id="status-sondagem">Disponivel →</div>
+    </a>
+
+    <a href="/treinamento/gatilhos" style="display:block;background:#0D1117;border:1px solid #00AAFF40;border-radius:12px;padding:20px;text-decoration:none;color:#E6EDF3;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='#00AAFF';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#00AAFF40';this.style.transform='none'">
+      <div style="font-size:1.5rem;margin-bottom:8px;">🧠</div>
+      <div style="font-weight:700;font-size:1.1rem;color:#00AAFF;">3. Gatilhos Mentais</div>
+      <div style="color:#8899AA;font-size:0.85rem;margin-top:6px;">Urgencia, escassez, autoridade, prova social</div>
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(0,102,204,0.15);color:#00AAFF;border:1px solid rgba(0,102,204,0.3);">CLOSER</span>
+      </div>
+      <div style="color:#00AAFF;font-size:0.75rem;margin-top:12px;" id="status-gatilhos">Disponivel →</div>
+    </a>
+
+    <a href="/treinamento/objecoes" style="display:block;background:#0D1117;border:1px solid #00AAFF40;border-radius:12px;padding:20px;text-decoration:none;color:#E6EDF3;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='#00AAFF';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#00AAFF40';this.style.transform='none'">
+      <div style="font-size:1.5rem;margin-bottom:8px;">🛡️</div>
+      <div style="font-weight:700;font-size:1.1rem;color:#00AAFF;">4. Quebra de Objecoes</div>
+      <div style="color:#8899AA;font-size:0.85rem;margin-top:6px;">"Ta caro", "Vou pensar", framework LAER</div>
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(0,102,204,0.15);color:#00AAFF;border:1px solid rgba(0,102,204,0.3);">CLOSER</span>
+      </div>
+      <div style="color:#00AAFF;font-size:0.75rem;margin-top:12px;" id="status-objecoes">Disponivel →</div>
+    </a>
+
+    <a href="/treinamento/fechamento" style="display:block;background:#0D1117;border:1px solid #00AAFF40;border-radius:12px;padding:20px;text-decoration:none;color:#E6EDF3;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='#00AAFF';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#00AAFF40';this.style.transform='none'">
+      <div style="font-size:1.5rem;margin-bottom:8px;">🎯</div>
+      <div style="font-weight:700;font-size:1.1rem;color:#00AAFF;">5. Fechamento</div>
+      <div style="color:#8899AA;font-size:0.85rem;margin-top:6px;">Presumido, alternativo, urgencia, consequencia</div>
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(0,102,204,0.15);color:#00AAFF;border:1px solid rgba(0,102,204,0.3);">CLOSER</span>
+      </div>
+      <div style="color:#00AAFF;font-size:0.75rem;margin-top:12px;" id="status-fechamento">Disponivel →</div>
+    </a>
+
+    <a href="/treinamento/pos-venda" style="display:block;background:#0D1117;border:1px solid #00AAFF40;border-radius:12px;padding:20px;text-decoration:none;color:#E6EDF3;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='#00AAFF';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#00AAFF40';this.style.transform='none'">
+      <div style="font-size:1.5rem;margin-bottom:8px;">⭐</div>
+      <div style="font-weight:700;font-size:1.1rem;color:#00AAFF;">6. Pos-Venda e Indicacao</div>
+      <div style="color:#8899AA;font-size:0.85rem;margin-top:6px;">Follow-up, NPS, upsell, frase de ouro</div>
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(46,160,67,0.15);color:#3FB950;border:1px solid rgba(46,160,67,0.3);">SDR</span>
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(0,102,204,0.15);color:#00AAFF;border:1px solid rgba(0,102,204,0.3);">CLOSER</span>
+      </div>
+      <div style="color:#00AAFF;font-size:0.75rem;margin-top:12px;" id="status-pos-venda">Disponivel →</div>
+    </a>
+
+    <a href="/treinamento/whatsapp" style="display:block;background:#0D1117;border:1px solid #00AAFF40;border-radius:12px;padding:20px;text-decoration:none;color:#E6EDF3;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='#00AAFF';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#00AAFF40';this.style.transform='none'">
+      <div style="font-size:1.5rem;margin-bottom:8px;">📱</div>
+      <div style="font-weight:700;font-size:1.1rem;color:#00AAFF;">7. WhatsApp</div>
+      <div style="color:#8899AA;font-size:0.85rem;margin-top:6px;">Vendas por texto, tempo de resposta, follow-up</div>
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(46,160,67,0.15);color:#3FB950;border:1px solid rgba(46,160,67,0.3);">SDR</span>
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(0,102,204,0.15);color:#00AAFF;border:1px solid rgba(0,102,204,0.3);">CLOSER</span>
+      </div>
+      <div style="color:#00AAFF;font-size:0.75rem;margin-top:12px;" id="status-whatsapp">Disponivel →</div>
+    </a>
+
+    <a href="/treinamento/qualificacao" style="display:block;background:#0D1117;border:1px solid #F59E0B40;border-radius:12px;padding:20px;text-decoration:none;color:#E6EDF3;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='#F59E0B';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#F59E0B40';this.style.transform='none'">
+      <div style="font-size:1.5rem;margin-bottom:8px;">🎯</div>
+      <div style="font-weight:700;font-size:1.1rem;color:#F59E0B;">Bonus: Qualificacao de Leads</div>
+      <div style="color:#8899AA;font-size:0.85rem;margin-top:6px;">SPIN + CHAMP + BANT</div>
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(46,160,67,0.15);color:#3FB950;border:1px solid rgba(46,160,67,0.3);">SDR</span>
+      </div>
+      <div style="color:#F59E0B;font-size:0.75rem;margin-top:12px;">Disponivel →</div>
+    </a>
+
+    <!-- ⭐ DESTAQUE: Scripts RAV (NOVO 06/Mai/2026) -->
+    <a href="/treinamento/scripts-rav" style="display:block;background:linear-gradient(135deg,#1a0e2a,#0D1117);border:2px solid #A371F7;border-radius:12px;padding:20px;text-decoration:none;color:#E6EDF3;transition:transform 0.2s;box-shadow:0 0 24px rgba(167,113,247,.18);grid-column:span 2" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:1.6rem">📚</span>
+        <span style="background:rgba(167,113,247,.15);color:#c084fc;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:800;text-transform:uppercase">⭐ NOVO</span>
+      </div>
+      <div style="font-weight:700;font-size:1.15rem;color:#A371F7;">Scripts RAV — adaptados TDF (110+ scripts)</div>
+      <div style="color:#8899AA;font-size:0.9rem;margin-top:6px;line-height:1.5">Princípios + Funil WhatsApp 4 etapas + Qualificação SPIN + Oferta/Venda + <strong style="color:#F59E0B">15 Quebras de Objeção</strong> ("Tá caro", "Vou pensar", "Esposa", "Síndico"...). Tudo copy-paste, com busca.</div>
+      <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(46,160,67,0.15);color:#3FB950;border:1px solid rgba(46,160,67,0.3);">SDR</span>
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(0,102,204,0.15);color:#00AAFF;border:1px solid rgba(0,102,204,0.3);">CLOSER</span>
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(167,113,247,.15);color:#c084fc;border:1px solid rgba(167,113,247,.3);">📖 5 módulos</span>
+      </div>
+      <div style="color:#A371F7;font-size:0.8rem;margin-top:12px;font-weight:700">📖 Abrir scripts →</div>
+    </a>
+
+    <!-- 📚 BIBLIOTECA DE PRODUTOS (vídeos + PDFs) -->
+    <a href="/treinamento/trilha" style="display:block;background:linear-gradient(135deg,#1a0f1f,#0D1117);border:2px solid #c084fc;border-radius:12px;padding:20px;text-decoration:none;color:#E6EDF3;transition:transform 0.2s;box-shadow:0 0 24px rgba(192,132,252,.18);grid-column:span 2" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:1.6rem">🧗</span>
+        <span style="background:rgba(192,132,252,.15);color:#c084fc;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:800;text-transform:uppercase">⭐ COMECE AQUI</span>
+      </div>
+      <div style="font-weight:700;font-size:1.15rem;color:#c084fc;">Trilha de Onboarding — SDR e Closer, na ordem certa</div>
+      <div style="color:#8899AA;font-size:0.9rem;margin-top:6px;line-height:1.5">Chegou agora na TDF? A trilha diz <strong style="color:#E6EDF3">o que assistir primeiro</strong>, passo a passo, com progresso salvo. <strong style="color:#c084fc">SDR</strong>: qualificação e poço. <strong style="color:#00AAFF">Closer</strong>: filtro de entrada, preço e fechamento.</div>
+      <div style="color:#c084fc;font-size:0.8rem;margin-top:12px;font-weight:700">🧗 Começar minha trilha →</div>
+    </a>
+    <a href="/treinamento/biblioteca" style="display:block;background:linear-gradient(135deg,#0a1a1f,#0D1117);border:2px solid #00AAFF;border-radius:12px;padding:20px;text-decoration:none;color:#E6EDF3;transition:transform 0.2s;box-shadow:0 0 24px rgba(0,170,255,.18);grid-column:span 2" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:1.6rem">📚</span>
+        <span style="background:rgba(0,170,255,.15);color:#00AAFF;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:800;text-transform:uppercase">⭐ NOVO</span>
+      </div>
+      <div style="font-weight:700;font-size:1.15rem;color:#00AAFF;">Biblioteca de Produtos — vídeos + materiais técnicos</div>
+      <div style="color:#8899AA;font-size:0.9rem;margin-top:6px;line-height:1.5">Água de Poço, <strong style="color:#3FB950">Iron Free</strong>, Scale Stop/TAC, Condomínio, American Filter inox + os <strong style="color:#c084fc">Playbooks SDR oficiais</strong>. Vídeos pra assistir e PDFs pra consultar.</div>
+      <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(46,160,67,0.15);color:#3FB950;border:1px solid rgba(46,160,67,0.3);">SDR</span>
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(0,102,204,0.15);color:#00AAFF;border:1px solid rgba(0,102,204,0.3);">CLOSER</span>
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(0,170,255,.15);color:#00AAFF;border:1px solid rgba(0,170,255,.3);">🎬 6 vídeos + 8 PDFs</span>
+      </div>
+      <div style="color:#00AAFF;font-size:0.8rem;margin-top:12px;font-weight:700">📚 Abrir biblioteca →</div>
+    </a>
+
+  </div>
+
+  <div style="text-align:center;margin:40px 0;">
+    <a href="https://closy-app-production.up.railway.app/dashboard/training" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#4F8CFF,#8B5CF6);color:white;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:700;">Praticar no Simulador (IA)</a>
+  </div>
+
+</div>
+
+<style>
+.treino-progress-bar {
+  background: #161B22;
+  border: 1px solid #30363D;
+  border-radius: 12px;
+  height: 48px;
+  position: relative;
+  overflow: hidden;
+}
+.treino-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0066CC, #00AAFF);
+  border-radius: 12px;
+  transition: width 0.6s ease;
+}
+.treino-progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: 700;
+  font-size: 14px;
+  color: #E6EDF3;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+</style>
+
+<script>
+(function() {
+  var modules = ['rapport','sondagem','gatilhos','objecoes','fechamento','pos-venda','whatsapp'];
+  var done = 0;
+  modules.forEach(function(m) {
+    var completed = localStorage.getItem('treino_' + m) === '1';
+    if (completed) {
+      done++;
+      var el = document.getElementById('status-' + m);
+      if (el) { el.textContent = 'Concluido ✓'; el.style.color = '#3FB950'; }
+    }
+  });
+  var pct = Math.round((done / modules.length) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = done + ' de ' + modules.length + ' concluidos';
+})();
+</script>

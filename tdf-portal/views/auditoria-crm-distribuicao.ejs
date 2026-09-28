@@ -1,0 +1,272 @@
+<% const activePage = 'auditoria-crm'; const pageTitle = 'Auditoria · Distribuição'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.aud-wrap{max-width:1500px;margin:0 auto;padding:20px}
+.aud-head h1{font-size:22px;color:var(--text);margin:0;display:flex;align-items:center;gap:10px}
+.aud-head .sub{color:var(--text-muted);font-size:13px;margin-top:2px}
+.aud-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin:18px 0}
+.aud-tab{padding:10px 18px;color:var(--text-muted);text-decoration:none;border-bottom:3px solid transparent;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.aud-tab:hover{color:var(--text)}
+.aud-tab.active{color:#00AAFF;border-bottom-color:#00AAFF}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.card .label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px}
+.card .value{font-size:24px;font-weight:800;color:var(--text);line-height:1}
+.row-2{display:grid;grid-template-columns:1fr 2fr;gap:14px}
+@media(max-width:1024px){.row-2{grid-template-columns:1fr}}
+.box{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:18px}
+.box h3{margin:0 0 12px;color:var(--text);font-size:14px}
+.bar-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed var(--bg-hover)}
+.bar-row:last-child{border-bottom:none}
+.bar-row .name{font-size:12px;width:120px;color:var(--text);flex-shrink:0}
+.bar-row .bar-c{flex:1;height:12px;background:var(--bg);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.bar-row .bar{height:100%;background:linear-gradient(90deg,#3399FF,#00AAFF);border-radius:3px}
+.bar-row .num{font-size:12px;font-weight:700;color:#3399FF;width:50px;text-align:right;flex-shrink:0}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+.tbl th{padding:9px;text-align:left;font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:700;border-bottom:1px solid var(--border);background:var(--bg);letter-spacing:.4px}
+.tbl td{padding:9px;border-bottom:1px solid var(--bg-hover);color:var(--text)}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase}
+.badge.claude{background:rgba(51,153,255,.15);color:#3399FF}
+.badge.nubia{background:rgba(163,113,247,.15);color:#A371F7}
+.badge.n8n{background:rgba(139,148,158,.15);color:var(--text-muted)}
+.filters{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.filters select{padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px}
+
+/* Matriz vendedor × tier */
+.matrix-wrap{overflow-x:auto;margin-top:6px}
+.matrix{width:100%;border-collapse:collapse;font-size:12px;min-width:640px}
+.matrix th{padding:10px 8px;text-align:center;font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:700;border-bottom:1px solid var(--border);background:var(--bg);letter-spacing:.4px;white-space:nowrap}
+.matrix th.left, .matrix td.left{text-align:left}
+.matrix td{padding:8px;border-bottom:1px solid var(--bg-hover);color:var(--text);text-align:center;font-weight:600}
+.matrix tr:hover td{background:var(--bg-hover)}
+.matrix .vendedor-name{font-weight:700;color:var(--text)}
+.matrix .total-cell{font-weight:800;color:#00AAFF;background:rgba(0,170,255,.05)}
+.matrix .heat-0{color:#3a3f47}
+.matrix .heat-1{color:var(--text-muted)}
+.matrix .heat-2{color:var(--text)}
+.matrix .heat-3{color:var(--text);background:rgba(0,170,255,.08)}
+.matrix .heat-4{color:var(--text);background:rgba(0,170,255,.18);font-weight:800}
+.matrix .heat-5{color:var(--text);background:rgba(0,170,255,.30);font-weight:800}
+.tier-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px}
+.tier-pill.diamante{background:linear-gradient(135deg,#67e8f9,#06b6d4);color:var(--bg)}
+.tier-pill.ouro{background:linear-gradient(135deg,#F0C040,#D29922);color:var(--bg)}
+.tier-pill.prata{background:linear-gradient(135deg,#cbd5e1,#94a3b8);color:var(--bg)}
+.tier-pill.bronze{background:linear-gradient(135deg,#A0522D,#7d3a18);color:#fff}
+.tier-pill.sem-tier{background:var(--border);color:var(--text-muted)}
+.origin-mini{display:inline-flex;gap:4px;font-size:10px;color:var(--text-muted);margin-left:6px}
+.origin-mini span{padding:1px 6px;border-radius:8px;background:var(--bg);border:1px solid var(--border)}
+.origin-mini .c{color:#3399FF;border-color:#3399FF55}
+.origin-mini .n{color:#A371F7;border-color:#A371F755}
+.origin-mini .a{color:var(--text-muted)}
+.origin-mini .m{color:#F0C040;border-color:#F0C04055}
+</style>
+
+<div class="aud-wrap">
+  <div>
+    <h1>🎯 Distribuição de leads</h1>
+    <div class="sub">Quem recebeu, com qual regra, e o que aconteceu depois.</div>
+  </div>
+
+  <nav class="aud-tabs">
+    <a class="aud-tab" href="/auditoria-crm">Visão geral</a>
+    <a class="aud-tab" href="/auditoria-crm/influencia-ia">Influência da IA</a>
+    <a class="aud-tab active" href="/auditoria-crm/distribuicao-leads">Distribuição</a>
+    <a class="aud-tab" href="/auditoria-crm/vendedores">Vendedores</a>
+    <a class="aud-tab" href="/auditoria-crm/sistemica-ia">🔬 Sistêmica IA</a>
+  </nav>
+
+  <div class="filters">
+    <label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px">Período:</label>
+    <select id="f-period" onchange="reload()">
+      <option value="today">Hoje</option>
+      <option value="yesterday">Ontem</option>
+      <option value="last7">7 dias</option>
+      <option value="last30" selected>30 dias</option>
+      <option value="last90">90 dias</option>
+    </select>
+    <span style="color:var(--text-muted);font-size:11px;margin-left:auto">Conta TODAS as atribuições no período (IA, automação, gestor, vendedor) — independente da origem.</span>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <!-- MATRIZ VENDEDOR × TIER -->
+  <div class="box" style="margin-bottom:14px">
+    <h3>🏆 Matriz vendedor × tier <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:8px">TODAS as negociações criadas no período · 1 lead = 1 linha</span></h3>
+    <div style="font-size:11px;color:var(--text-muted);margin:-6px 0 10px;line-height:1.5">
+      Inclui leads sem owner atribuído (linha "(sem owner)") e leads sem tier classificado ("Tier indisponível"). Owner = mais recente atribuído (Claude, n8n, gestor ou vendedor).
+    </div>
+    <div class="matrix-wrap">
+      <table class="matrix" id="matrix-tier">
+        <thead><tr id="matrix-head"></tr></thead>
+        <tbody id="matrix-body"><tr><td colspan="10" style="padding:20px;text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="row-2">
+    <div class="box">
+      <h3>📊 Leads por vendedor <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:6px">por origem</span></h3>
+      <div id="bars"></div>
+    </div>
+    <div class="box">
+      <h3>📋 Atribuições recentes</h3>
+      <div style="max-height:60vh;overflow:auto">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Quando</th>
+              <th>Lead</th>
+              <th>Origem</th>
+              <th>Vendedor</th>
+              <th>Regra</th>
+              <th>Tier</th>
+              <th>Cidade</th>
+            </tr>
+          </thead>
+          <tbody id="detail-tbody"><tr><td colspan="7" style="padding:20px;text-align:center;color:var(--text-muted)">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+function fmtMoney(n) { return 'R$ ' + Number(n||0).toLocaleString('pt-BR', { maximumFractionDigits: 0 }); }
+
+const ORIGIN_LABEL = { claude_director_ia: 'Claude', nubia_sdr_ia: 'Núbia', n8n_automation: 'n8n', system: 'Sistema', manager_manual: 'Gestor', seller_manual: 'Vendedor', wati: 'WATI', zapi: 'Z-API', goto: 'GoTo' };
+
+function tierClass(t) {
+  return ({ 'Diamante':'diamante','Ouro':'ouro','Prata':'prata','Bronze':'bronze' })[t] || 'sem-tier';
+}
+
+function heatClass(n, max) {
+  if (!n) return 'heat-0';
+  const r = n / max;
+  if (r >= 0.75) return 'heat-5';
+  if (r >= 0.5) return 'heat-4';
+  if (r >= 0.25) return 'heat-3';
+  if (r >= 0.1) return 'heat-2';
+  return 'heat-1';
+}
+
+async function reload() {
+  const period = document.getElementById('f-period').value;
+  const r = await fetch('/api/auditoria-crm/distribuicao-leads?period=' + period).then(r => r.json());
+  if (!r.ok) return;
+
+  const ns = r.negotiations_summary || {};
+  const totalIA = r.by_seller.reduce((s, x) => s + Number(x.por_claude||0) + Number(x.por_nubia||0) + Number(x.por_n8n||0), 0);
+  const totalManual = r.by_seller.reduce((s, x) => s + Number(x.por_manual||0), 0);
+  const cards = [
+    { label: 'Negociações no período', value: ns.total || 0, sub: '1 lead = 1 negociação' },
+    { label: 'Com owner', value: ns.com_owner || 0 },
+    { label: 'Sem owner', value: ns.sem_owner || 0 },
+    { label: 'Sem tier classificado', value: ns.sem_tier || 0 },
+    { label: 'Atribuições por IA', value: totalIA },
+    { label: 'Atribuições manuais', value: totalManual },
+    { label: 'Valor potencial total', value: fmtMoney(ns.valor_total || 0) },
+  ];
+  document.getElementById('cards').innerHTML = cards.map(c => `
+    <div class="card"><div class="label">${c.label}</div><div class="value">${c.value}</div>${c.sub ? `<div style="font-size:10px;color:#8B949E;margin-top:3px">${c.sub}</div>` : ''}</div>
+  `).join('');
+
+  /* MATRIZ VENDEDOR × TIER */
+  const m = r.by_seller_tier || { matrix: {}, value_matrix: {}, tiers: [] };
+  const tiers = m.tiers;
+  const headEl = document.getElementById('matrix-head');
+  const bodyEl = document.getElementById('matrix-body');
+
+  if (!Object.keys(m.matrix).length) {
+    headEl.innerHTML = '';
+    bodyEl.innerHTML = '<tr><td colspan="10" style="padding:20px;text-align:center;color:#8B949E">Sem distribuições no período</td></tr>';
+  } else {
+    headEl.innerHTML = `<th class="left">Vendedor</th>` +
+      tiers.map(t => `<th><span class="tier-pill ${tierClass(t)}">${t}</span></th>`).join('') +
+      `<th>TOTAL</th><th>Valor potencial</th>`;
+
+    // ordenar vendedores por total decrescente
+    const sellers = Object.entries(m.matrix).map(([v, tiersObj]) => {
+      const total = Object.values(tiersObj).reduce((s,n) => s+Number(n||0), 0);
+      const valor = Object.values(m.value_matrix[v]||{}).reduce((s,n) => s+Number(n||0), 0);
+      return { vendedor: v, tiers: tiersObj, total, valor };
+    }).sort((a,b) => b.total - a.total);
+
+    // max por tier para heatmap
+    const maxByTier = {};
+    for (const t of tiers) maxByTier[t] = Math.max(1, ...sellers.map(s => Number(s.tiers[t]||0)));
+
+    bodyEl.innerHTML = sellers.map(s => `
+      <tr>
+        <td class="left vendedor-name">${s.vendedor}</td>
+        ${tiers.map(t => {
+          const n = Number(s.tiers[t] || 0);
+          return `<td class="${heatClass(n, maxByTier[t])}">${n || '·'}</td>`;
+        }).join('')}
+        <td class="total-cell">${s.total}</td>
+        <td style="color:#3FB950;font-size:11px">${fmtMoney(s.valor)}</td>
+      </tr>
+    `).join('');
+
+    // Linha total
+    const totals = {};
+    for (const t of tiers) totals[t] = sellers.reduce((s, x) => s + Number(x.tiers[t] || 0), 0);
+    const totalGeral = sellers.reduce((s, x) => s + x.total, 0);
+    const totalValor = sellers.reduce((s, x) => s + x.valor, 0);
+    bodyEl.innerHTML += `
+      <tr style="border-top:2px solid #30363D">
+        <td class="left" style="color:#8B949E;font-size:11px;text-transform:uppercase;letter-spacing:.3px;font-weight:700">Total</td>
+        ${tiers.map(t => `<td class="total-cell" style="color:#00AAFF">${totals[t]}</td>`).join('')}
+        <td class="total-cell" style="font-size:14px">${totalGeral}</td>
+        <td style="color:#3FB950;font-weight:800">${fmtMoney(totalValor)}</td>
+      </tr>
+    `;
+  }
+
+  /* BARRAS POR VENDEDOR — agora com breakdown por origem */
+  const max = Math.max(1, ...r.by_seller.map(x => x.recebidos));
+  document.getElementById('bars').innerHTML = r.by_seller.map(x => {
+    const orig = [];
+    if (x.por_claude) orig.push(`<span class="c">Claude ${x.por_claude}</span>`);
+    if (x.por_nubia) orig.push(`<span class="n">Núbia ${x.por_nubia}</span>`);
+    if (x.por_n8n) orig.push(`<span class="a">n8n ${x.por_n8n}</span>`);
+    if (x.por_manual) orig.push(`<span class="m">Manual ${x.por_manual}</span>`);
+    return `
+      <div style="padding:6px 0;border-bottom:1px dashed #1C2128">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="name" style="font-size:12px;width:120px;color:#E6EDF3;flex-shrink:0">${x.vendedor || '(sem owner)'}</span>
+          <div class="bar-c" style="flex:1"><div class="bar" style="width:${100 * x.recebidos / max}%"></div></div>
+          <span class="num">${x.recebidos}</span>
+        </div>
+        ${orig.length ? `<div class="origin-mini" style="margin-top:4px;margin-left:130px">${orig.join('')}</div>` : ''}
+      </div>
+    `;
+  }).join('') || '<div style="padding:20px;text-align:center;color:#8B949E">Sem dados</div>';
+
+  // Detalhe
+  if (!r.detail.length) {
+    document.getElementById('detail-tbody').innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:#8B949E">Sem atribuições no período</td></tr>';
+    return;
+  }
+  document.getElementById('detail-tbody').innerHTML = r.detail.slice(0, 100).map(d => {
+    const md = d.metadata_json || {};
+    const origCls = d.action_origin === 'claude_director_ia' ? 'claude' : (d.action_origin === 'nubia_sdr_ia' ? 'nubia' : 'n8n');
+    return `<tr>
+      <td style="color:#8B949E">${fmtDate(d.occurred_at)}</td>
+      <td>${(d.crm_record_name || '—').slice(0, 30)}</td>
+      <td><span class="badge ${origCls}">${ORIGIN_LABEL[d.action_origin] || d.action_origin}</span></td>
+      <td><strong>${d.seller_responsible_after || '(sem owner)'}</strong></td>
+      <td style="color:#8B949E"><code>${d.rule_triggered || '—'}</code></td>
+      <td>${md.tier || '—'}</td>
+      <td>${md.cidade || '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', reload);
+</script>

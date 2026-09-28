@@ -1,0 +1,102 @@
+<%- include('../../layout', { user, activePage, pageTitle }) %>
+<%- include('_shared') %>
+<%
+  // próximo módulo não concluído (para "Continuar")
+  let proximo = MODULOS.find(m => !(prog.modulos[m.slug] && prog.modulos[m.slug].concluido)) || MODULOS[0];
+  function hhmm(min){ const h=Math.floor(min/60), m=min%60; return (h?h+'h':'')+(m?(h?' ':'')+m+'min':(h?'':'0min')); }
+%>
+<div class="tb-wrap">
+
+  <div class="tb-hero">
+    <img src="/img/treinamento-bebedouros/hero.webp" alt="Bebedouros industriais Tudo de Filtro" onerror="this.style.display='none'">
+    <div style="flex:1;min-width:260px">
+      <div class="tb-pill">🎓 Treinamento oficial</div>
+      <h1><%= META.titulo %></h1>
+      <p><%= META.subtitulo %></p>
+      <div class="tb-badges">
+        <span class="tb-tag sdr">SDR</span>
+        <span class="tb-tag closer">CLOSER</span>
+        <span class="tb-tag sup">SUPERVISOR</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tb-stats">
+    <div class="tb-stat"><b><%= R.pct %>%</b><span>concluído</span></div>
+    <div class="tb-stat"><b><%= R.concluidos %>/<%= R.total %></b><span>módulos</span></div>
+    <div class="tb-stat"><b><%= hhmm(META.cargaHoraria) %></b><span>carga horária</span></div>
+    <div class="tb-stat"><b><%= R.notaMedia==null ? '—' : R.notaMedia+'%' %></b><span>nota média</span></div>
+    <div class="tb-stat"><b><%= prog.prova.aprovado ? '✅' : (prog.prova.melhorNota||0)+'%' %></b><span>prova (mín <%= META.notaMinimaProva %>%)</span></div>
+    <div class="tb-stat"><b><%= prog.certificado ? '🎓' : '—' %></b><span>certificação</span></div>
+  </div>
+
+  <div class="tb-prog"><i style="width:<%= R.pct %>%"></i></div>
+
+  <div class="tb-navrow">
+    <a class="tb-btn" href="<%= base %>/modulo/<%= proximo.slug %>"><%= R.concluidos ? '▶ Continuar treinamento' : '▶ Começar treinamento' %></a>
+    <a class="tb-btn ghost" href="<%= base %>/modulo/<%= MODULOS[0].slug %>">↻ Revisar conteúdo</a>
+    <a class="tb-btn" href="<%= base %>/playbook" style="background:#c084fc">🎯 Playbook Prático</a>
+    <% if (R.podeCertificar || prog.certificado) { %><a class="tb-btn green" href="<%= base %>/certificado">🎓 Certificado</a><% } %>
+    <a class="tb-btn ghost" href="<%= base %>/prova">📝 Prova do closer</a>
+  </div>
+
+  <h2 class="tb-h2" style="margin-top:28px">Módulos</h2>
+  <div class="tb-grid">
+    <% MODULOS.forEach(function(m){ var done = prog.modulos[m.slug] && prog.modulos[m.slug].concluido; %>
+      <a class="tb-card <%= done?'done':'' %>" href="<%= base %>/modulo/<%= m.slug %>">
+        <span class="n"><%= m.num %></span>
+        <div class="ic"><%= m.icon %></div>
+        <div class="t"><%= m.titulo %></div>
+        <div class="d"><%= (contentPreview && contentPreview[m.slug]) || '' %></div>
+        <div class="foot">
+          <span><% m.publico.forEach(function(p){ %><span class="tb-tag <%= p==='SDR'?'sdr':(p==='CLOSER'?'closer':'sup') %>"><%= p %></span> <% }) %></span>
+          <span style="color:#5b7c99">⏱ <%= m.tempoMin %>min</span>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+
+  <div class="tb-grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));margin-top:22px">
+    <a class="tb-card" href="<%= base %>/playbook" style="border-color:#c084fc88;background:linear-gradient(135deg,#0D1117,#1a1030)">
+      <div class="ic">🎯</div><div class="t">Playbook Prático do Closer <span class="tb-badge" style="background:#c084fc;color:#1a0a2e;font-size:9px;padding:1px 6px;border-radius:8px">NOVO</span></div>
+      <div class="d">Fluxo de 18 etapas, scripts diretos, cartões de bolso pro celular, exemplos bom×ruim e prova prática. Sai da teoria e vai pro atendimento.</div>
+    </a>
+    <a class="tb-card" href="<%= base %>/prova-pratica" style="border-color:#F59E0B44">
+      <div class="ic">🎬</div><div class="t">Prova Prática</div>
+      <div class="d">3 etapas — qualificação, apresentação e fechamento + upsell. Mínimo 85%. Exigida para o certificado.</div>
+    </a>
+    <a class="tb-card" href="<%= base %>/script" style="border-color:#25D36644">
+      <div class="ic">💬</div><div class="t">Script de Venda</div>
+      <div class="d">Roteiro completo WhatsApp + ligação, com fechamentos, técnicas avançadas e objeções — pronto pra copiar.</div>
+    </a>
+    <a class="tb-card" href="<%= base %>/prova" style="border-color:#F59E0B44">
+      <div class="ic">📝</div><div class="t">Prova do Closer</div>
+      <div class="d"><%= META.questoesProva %> questões sorteadas de um banco de <%= META.bancoMinimo %>+. Mínimo <%= META.notaMinimaProva %>%.</div>
+    </a>
+    <% if (ROLEPLAYS && ROLEPLAYS.length) { %>
+    <a class="tb-card" href="<%= base %>/roleplay/<%= ROLEPLAYS[0].id %>" style="border-color:#c084fc44">
+      <div class="ic">🎭</div><div class="t">Roleplays</div>
+      <div class="d"><%= ROLEPLAYS.length %> cenários interativos: academia, indústria, obra, licitação, revenda e mais.</div>
+    </a>
+    <% } %>
+    <% if (isGestorView) { %>
+    <a class="tb-card" href="<%= base %>/gestor" style="border-color:#3FB95044">
+      <div class="ic">📊</div><div class="t">Painel do Gestor</div>
+      <div class="d">Progresso, notas, certificados e áreas de erro por vendedor.</div>
+    </a>
+    <% } %>
+  </div>
+
+  <% if (prog.atividades && prog.atividades.length) { %>
+  <h2 class="tb-h2" style="margin-top:30px">Últimas atividades</h2>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <% prog.atividades.slice(0,8).forEach(function(a){ %>
+      <div style="background:#0b1220;border:1px solid #1f2b3a;border-radius:9px;padding:9px 13px;display:flex;justify-content:space-between;font-size:.85rem;color:#c9d4de">
+        <span><%= a.texto %></span>
+        <span style="color:#5b7c99"><%= new Date(a.at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) %></span>
+      </div>
+    <% }) %>
+  </div>
+  <% } %>
+
+</div>

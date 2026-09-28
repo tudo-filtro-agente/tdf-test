@@ -1,0 +1,562 @@
+<% const activePage = 'auditoria-crm'; const pageTitle = 'Auditoria CRM'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.aud-wrap{max-width:1600px;margin:0 auto;padding:20px}
+.aud-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+.aud-head h1{font-size:22px;color:var(--text);margin:0;display:flex;align-items:center;gap:10px}
+.aud-head .sub{color:var(--text-muted);font-size:13px;margin-top:2px}
+.aud-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:18px;flex-wrap:wrap}
+.aud-tab{padding:10px 18px;color:var(--text-muted);text-decoration:none;border-bottom:3px solid transparent;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.aud-tab:hover{color:var(--text)}
+.aud-tab.active{color:#00AAFF;border-bottom-color:#00AAFF}
+.aud-filters{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.aud-filters label{font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:700;letter-spacing:.5px;display:block;margin-bottom:5px}
+.aud-input,.aud-select{width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;font-family:inherit}
+.aud-input:focus,.aud-select:focus{outline:none;border-color:#00AAFF}
+.aud-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
+.aud-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:transform .12s,border-color .12s}
+.aud-card:hover{transform:translateY(-1px);border-color:#00AAFF}
+.aud-card .label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px}
+.aud-card .value{font-size:24px;font-weight:800;color:var(--text);line-height:1;margin-bottom:4px}
+.aud-card .sub{font-size:11px;color:var(--text-muted)}
+.aud-card.claude{border-color:#3399FF33}.aud-card.claude .value{color:#3399FF}
+.aud-card.nubia{border-color:#A371F733}.aud-card.nubia .value{color:#A371F7}
+.aud-card.auto{border-color:#8B949E33}.aud-card.auto .value{color:var(--text-muted)}
+.aud-card.manual{border-color:#F0C04033}.aud-card.manual .value{color:#F0C040}
+.aud-card.ok{border-color:#3FB95033}.aud-card.ok .value{color:#3FB950}
+.aud-card.warn{border-color:#D2992233}.aud-card.warn .value{color:#D29922}
+.aud-card.danger{border-color:#F8514933}.aud-card.danger .value{color:#F85149}
+.aud-card.active{border-color:#00AAFF;background:#0D1F33}
+.aud-table-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.aud-table-head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)}
+.aud-table-head h3{margin:0;color:var(--text);font-size:14px;font-weight:700}
+.aud-actions{display:flex;gap:8px}
+.aud-btn{padding:7px 14px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.aud-btn:hover{background:var(--bg-hover);border-color:#00AAFF}
+.aud-btn.primary{background:#0066CC;border-color:#0066CC;color:#fff}
+.aud-btn.primary:hover{background:#004C99}
+.aud-btn.danger{border-color:#F85149;color:#F85149}
+.aud-btn.danger:hover{background:rgba(248,81,73,.1)}
+.aud-table{width:100%;border-collapse:collapse;font-size:12px}
+.aud-table th{padding:10px;text-align:left;font-size:10px;text-transform:uppercase;color:var(--text-muted);font-weight:700;letter-spacing:.4px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0}
+.aud-table td{padding:10px;border-bottom:1px solid var(--bg-hover);color:var(--text);vertical-align:middle;font-size:12px}
+.aud-table tr:hover td{background:var(--bg-hover);cursor:pointer}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.badge.claude{background:rgba(51,153,255,.15);color:#3399FF}
+.badge.nubia{background:rgba(163,113,247,.15);color:#A371F7}
+.badge.n8n{background:rgba(139,148,158,.15);color:var(--text-muted)}
+.badge.zoho{background:rgba(139,148,158,.15);color:var(--text-muted)}
+.badge.wati{background:rgba(63,185,80,.15);color:#3FB950}
+.badge.zapi{background:rgba(63,185,80,.15);color:#3FB950}
+.badge.goto{background:rgba(0,170,255,.15);color:#00AAFF}
+.badge.salesiq{background:rgba(0,170,255,.15);color:#00AAFF}
+.badge.seller{background:rgba(240,192,64,.15);color:#F0C040}
+.badge.manager{background:rgba(163,113,247,.15);color:#A371F7}
+.badge.system{background:rgba(139,148,158,.15);color:var(--text-muted)}
+.badge.valid{background:rgba(63,185,80,.15);color:#3FB950}
+.badge.suspicious{background:rgba(248,81,73,.15);color:#F85149}
+.badge.error{background:rgba(248,81,73,.2);color:#F85149}
+.badge.pending_review{background:rgba(210,153,34,.15);color:#D29922}
+.badge.positive{background:rgba(63,185,80,.15);color:#3FB950}
+.badge.negative{background:rgba(248,81,73,.15);color:#F85149}
+.badge.neutral{background:rgba(139,148,158,.15);color:var(--text-muted)}
+.badge.unknown{background:rgba(139,148,158,.15);color:var(--text-muted)}
+.badge.critical{background:rgba(248,81,73,.2);color:#F85149;border:1px solid #F85149}
+.badge.high{background:rgba(248,81,73,.15);color:#F85149}
+.badge.medium{background:rgba(210,153,34,.15);color:#D29922}
+.badge.low{background:rgba(139,148,158,.15);color:var(--text-muted)}
+.aud-paginator{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted)}
+.aud-pag-btns{display:flex;gap:6px}
+.aud-alerts{background:linear-gradient(180deg,#1a0d0d,var(--bg-card));border:1px solid #F85149;border-radius:10px;padding:14px 16px;margin-bottom:18px}
+.aud-alerts h3{margin:0 0 10px;color:#F85149;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:8px}
+.aud-alerts ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.aud-alerts li{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;transition:border-color .12s}
+.aud-alerts li:hover{border-color:#F85149}
+.aud-alerts li .left{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.aud-alerts li .desc{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aud-alerts li .right{display:flex;gap:6px;flex-shrink:0;margin-left:10px}
+.aud-alerts li .right button{padding:4px 10px;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:6px;font-size:10px;text-transform:uppercase;font-weight:700;cursor:pointer;letter-spacing:.3px}
+.aud-alerts li .right button:hover{border-color:#00AAFF}
+.aud-alerts li .right button.resolve{border-color:#3FB950;color:#3FB950}
+.aud-alerts li .right button.resolve:hover{background:rgba(63,185,80,.1)}
+
+/* Modal lateral */
+.aud-modal{position:fixed;top:0;right:0;height:100vh;width:560px;max-width:95vw;background:var(--bg-card);border-left:1px solid var(--border);z-index:9999;transform:translateX(100%);transition:transform .25s ease;overflow-y:auto;box-shadow:-10px 0 30px rgba(0,0,0,.5)}
+.aud-modal.open{transform:translateX(0)}
+.aud-modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--bg-card);z-index:1}
+.aud-modal-head h2{margin:0;font-size:16px;color:var(--text)}
+.aud-modal-body{padding:20px}
+.aud-modal-section{margin-bottom:22px}
+.aud-modal-section h3{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin:0 0 10px;border-bottom:1px solid var(--border);padding-bottom:6px}
+.aud-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--bg-hover);font-size:12px;gap:14px}
+.aud-row .k{color:var(--text-muted);flex-shrink:0;min-width:120px}
+.aud-row .v{color:var(--text);text-align:right;word-break:break-word}
+.aud-close{background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;padding:0 4px}
+.aud-close:hover{color:var(--text)}
+.aud-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9998;display:none}
+.aud-overlay.show{display:block}
+.aud-meta-pre{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:'Monaco','Menlo',monospace;font-size:11px;color:#3FB950;white-space:pre-wrap;word-break:break-word;max-height:240px;overflow:auto}
+.empty{padding:40px 20px;text-align:center;color:var(--text-muted);font-size:13px}
+@media(max-width:768px){
+  .aud-cards{grid-template-columns:repeat(2,1fr)}
+  .aud-table th:nth-child(5),.aud-table td:nth-child(5){display:none}
+  .aud-table th:nth-child(7),.aud-table td:nth-child(7){display:none}
+  .aud-table th:nth-child(8),.aud-table td:nth-child(8){display:none}
+  .aud-table th:nth-child(9),.aud-table td:nth-child(9){display:none}
+}
+</style>
+
+<div class="aud-wrap">
+  <div class="aud-head">
+    <div>
+      <h1>🛡️ Auditoria CRM</h1>
+      <div class="sub">Quem fez o quê, quando, por quê — e o impacto comercial real.</div>
+    </div>
+    <div class="aud-actions">
+      <button class="aud-btn" onclick="exportCsv()">⬇️ Exportar CSV</button>
+      <button class="aud-btn" onclick="runRulesNow()">⚡ Rodar regras agora</button>
+      <button class="aud-btn primary" onclick="openSeed()">🌱 Seed mock</button>
+    </div>
+  </div>
+
+  <nav class="aud-tabs">
+    <a class="aud-tab active" href="/auditoria-crm">Visão geral</a>
+    <a class="aud-tab" href="/auditoria-crm/influencia-ia">Influência da IA</a>
+    <a class="aud-tab" href="/auditoria-crm/distribuicao-leads">Distribuição de leads</a>
+    <a class="aud-tab" href="/auditoria-crm/vendedores">Vendedores</a>
+    <a class="aud-tab" href="/auditoria-crm/sistemica-ia">🔬 Sistêmica IA</a>
+  </nav>
+
+  <!-- FILTROS -->
+  <div class="aud-filters">
+    <div>
+      <label>Período</label>
+      <select class="aud-select" id="f-period" onchange="reload()">
+        <option value="today">Hoje</option>
+        <option value="yesterday">Ontem</option>
+        <option value="last7">Últimos 7 dias</option>
+        <option value="last30" selected>Últimos 30 dias</option>
+        <option value="last90">Últimos 90 dias</option>
+      </select>
+    </div>
+    <div>
+      <label>Origem</label>
+      <select class="aud-select" id="f-origin" onchange="reload()">
+        <option value="">Todas</option>
+        <option value="claude_director_ia">Claude (Diretor IA)</option>
+        <option value="nubia_sdr_ia">Núbia (SDR IA)</option>
+        <option value="n8n_automation">n8n</option>
+        <option value="zoho_flow">Zoho Flow</option>
+        <option value="wati">WATI</option>
+        <option value="zapi">Z-API</option>
+        <option value="goto">GoTo</option>
+        <option value="salesiq">SalesIQ</option>
+        <option value="seller_manual">Vendedor</option>
+        <option value="manager_manual">Gestor</option>
+        <option value="system">Sistema</option>
+      </select>
+    </div>
+    <div>
+      <label>Vendedor</label>
+      <input type="text" class="aud-input" id="f-seller" placeholder="ex: Guilherme" onchange="reload()">
+    </div>
+    <div>
+      <label>Tipo de ação</label>
+      <select class="aud-select" id="f-action-type" onchange="reload()">
+        <option value="">Todas</option>
+        <option value="lead_created">lead_created</option>
+        <option value="lead_assigned">lead_assigned</option>
+        <option value="lead_qualified">lead_qualified</option>
+        <option value="owner_changed">owner_changed</option>
+        <option value="stage_changed">stage_changed</option>
+        <option value="task_created">task_created</option>
+        <option value="task_completed">task_completed</option>
+        <option value="call_logged">call_logged</option>
+        <option value="whatsapp_message_sent">whatsapp_message_sent</option>
+        <option value="proposal_created">proposal_created</option>
+        <option value="deal_won">deal_won</option>
+        <option value="deal_lost">deal_lost</option>
+        <option value="ia_recommendation_created">ia_recommendation_created</option>
+        <option value="ia_action_executed">ia_action_executed</option>
+        <option value="automation_triggered">automation_triggered</option>
+      </select>
+    </div>
+    <div>
+      <label>Módulo CRM</label>
+      <select class="aud-select" id="f-module" onchange="reload()">
+        <option value="">Todos</option>
+        <option>Leads</option>
+        <option>Deals</option>
+        <option>Contacts</option>
+        <option>Tasks</option>
+        <option>Quotes</option>
+        <option>Calls</option>
+        <option>Notes</option>
+      </select>
+    </div>
+    <div>
+      <label>Validação</label>
+      <select class="aud-select" id="f-status" onchange="reload()">
+        <option value="">Todas</option>
+        <option value="valid">Válido</option>
+        <option value="suspicious">Suspeito</option>
+        <option value="error">Erro</option>
+        <option value="pending_review">Pendente</option>
+      </select>
+    </div>
+    <div>
+      <label>Impacto</label>
+      <select class="aud-select" id="f-impact" onchange="reload()">
+        <option value="">Todos</option>
+        <option value="positive">Positivo</option>
+        <option value="neutral">Neutro</option>
+        <option value="negative">Negativo</option>
+        <option value="unknown">Desconhecido</option>
+      </select>
+    </div>
+    <div>
+      <label>Buscar (lead/motivo)</label>
+      <input type="text" class="aud-input" id="f-q" placeholder="texto livre" onchange="reload()">
+    </div>
+  </div>
+
+  <!-- ALERTAS CRÍTICOS -->
+  <div class="aud-alerts" id="alerts-block" style="display:none">
+    <h3>⚠️ Alertas críticos abertos</h3>
+    <ul id="alerts-list"></ul>
+  </div>
+
+  <!-- CARDS -->
+  <div class="aud-cards" id="cards"></div>
+
+  <!-- TABELA -->
+  <div class="aud-table-wrap">
+    <div class="aud-table-head">
+      <h3 id="table-title">Logs auditados</h3>
+      <div class="aud-actions">
+        <span id="table-count" style="color:var(--text-muted);font-size:12px"></span>
+      </div>
+    </div>
+    <div style="max-height:60vh;overflow:auto">
+      <table class="aud-table">
+        <thead>
+          <tr>
+            <th>Quando</th>
+            <th>Origem</th>
+            <th>Responsável</th>
+            <th>Ação</th>
+            <th>Módulo</th>
+            <th>Lead/Deal</th>
+            <th>Antes → Depois</th>
+            <th>Validação</th>
+            <th>Impacto</th>
+          </tr>
+        </thead>
+        <tbody id="logs-tbody"><tr><td colspan="9" class="empty">Carregando…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="aud-paginator">
+      <span id="pag-info">—</span>
+      <div class="aud-pag-btns">
+        <button class="aud-btn" onclick="paginate(-1)">‹ Anterior</button>
+        <button class="aud-btn" onclick="paginate(1)">Próximo ›</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal lateral -->
+<div class="aud-overlay" id="overlay" onclick="closeModal()"></div>
+<div class="aud-modal" id="modal">
+  <div class="aud-modal-head">
+    <h2 id="modal-title">Detalhe da ação</h2>
+    <button class="aud-close" onclick="closeModal()">×</button>
+  </div>
+  <div class="aud-modal-body" id="modal-body"></div>
+</div>
+
+<script>
+const STATE = { offset: 0, limit: 50, total: 0, activeCard: null };
+
+const ORIGIN_LABEL = {
+  claude_director_ia: 'Claude IA', nubia_sdr_ia: 'Núbia IA',
+  n8n_automation: 'n8n', zoho_flow: 'Zoho Flow', wati: 'WATI', zapi: 'Z-API',
+  goto: 'GoTo', salesiq: 'SalesIQ', seller_manual: 'Vendedor',
+  manager_manual: 'Gestor', system: 'Sistema'
+};
+
+function originBadge(origin) {
+  const k = origin || 'system';
+  const cls = k.replace('_director_ia','').replace('_sdr_ia','').replace('_automation','').replace('_flow','').replace('_manual','');
+  return `<span class="badge ${cls}">${ORIGIN_LABEL[origin] || origin}</span>`;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function fmtAmount(n) {
+  return 'R$ ' + Number(n || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+}
+
+function getFilters() {
+  const period = document.getElementById('f-period').value;
+  const params = new URLSearchParams({ period });
+  const fields = ['origin', 'seller', 'action-type', 'module', 'status', 'impact', 'q'];
+  const map = { 'origin': 'action_origin', 'seller': 'seller', 'action-type': 'action_type', 'module': 'crm_module', 'status': 'validation_status', 'impact': 'impact_type', 'q': 'q' };
+  for (const f of fields) {
+    const v = document.getElementById('f-' + f).value;
+    if (v) params.set(map[f], v);
+  }
+  if (STATE.activeCard) params.set(STATE.activeCard.key, STATE.activeCard.value);
+  return params;
+}
+
+async function loadOverview() {
+  const params = getFilters();
+  const r = await fetch('/api/auditoria-crm/overview?' + params).then(r => r.json());
+  if (!r.ok) return;
+  const o = r.overview;
+  const a = r.alerts;
+  const cards = [
+    { k: 'total', label: 'Total auditado', value: o.total, cls: '' },
+    { k: 'claude', label: 'Claude (IA)', value: o.claude, cls: 'claude', filter: { key: 'action_origin', value: 'claude_director_ia' } },
+    { k: 'nubia', label: 'Núbia (IA)', value: o.nubia, cls: 'nubia', filter: { key: 'action_origin', value: 'nubia_sdr_ia' } },
+    { k: 'auto', label: 'Automações', value: o.automacoes, cls: 'auto' },
+    { k: 'manual', label: 'Vendedores/Gestores', value: o.manuais, cls: 'manual' },
+    { k: 'distrib', label: 'Leads distribuídos IA', value: o.leads_distribuidos_ia, cls: 'claude' },
+    { k: 'redist', label: 'Redistribuições', value: o.leads_redistribuidos, cls: 'warn' },
+    { k: 'tasks_ia', label: 'Tasks criadas IA', value: o.tasks_ia, cls: 'claude' },
+    { k: 'tasks_susp', label: 'Tasks sem prova', value: o.tasks_suspeitas, cls: 'danger', filter: { key: 'validation_status', value: 'suspicious' } },
+    { k: 'stage_man', label: 'Etapas movidas manual', value: o.stage_manual, cls: 'warn' },
+    { k: 'props', label: 'Propostas criadas', value: o.propostas, cls: 'ok' },
+    { k: 'props_par', label: 'Propostas paradas', value: o.propostas_paradas, cls: 'warn' },
+    { k: 'won_ia', label: 'Ganhos com IA', value: o.won_ia, cls: 'ok' },
+    { k: 'lost_falha', label: 'Perdas suspeitas', value: o.lost_falha, cls: 'danger' },
+    { k: 'alertas', label: 'Alertas críticos', value: (a.critical + a.high), cls: 'danger' },
+    { k: 'cumpr', label: 'Cumprimento processo', value: (o.taxa_cumprimento || 0) + '%', cls: 'ok' },
+  ];
+  document.getElementById('cards').innerHTML = cards.map(c => {
+    const active = STATE.activeCard && c.filter && STATE.activeCard.key === c.filter.key && STATE.activeCard.value === c.filter.value ? 'active' : '';
+    return `<div class="aud-card ${c.cls} ${active}" onclick='cardClick(${JSON.stringify(c.filter || null)})'>
+      <div class="label">${c.label}</div>
+      <div class="value">${c.value}</div>
+    </div>`;
+  }).join('');
+}
+
+function cardClick(filter) {
+  if (!filter) { STATE.activeCard = null; }
+  else if (STATE.activeCard && STATE.activeCard.key === filter.key && STATE.activeCard.value === filter.value) {
+    STATE.activeCard = null;
+  } else {
+    STATE.activeCard = filter;
+  }
+  STATE.offset = 0;
+  reload();
+}
+
+async function loadLogs() {
+  const params = getFilters();
+  params.set('limit', STATE.limit);
+  params.set('offset', STATE.offset);
+  const r = await fetch('/api/auditoria-crm/logs?' + params).then(r => r.json());
+  if (!r.ok) {
+    document.getElementById('logs-tbody').innerHTML = `<tr><td colspan="9" class="empty">Erro: ${r.error}</td></tr>`;
+    return;
+  }
+  STATE.total = r.total;
+  document.getElementById('table-count').textContent = `${r.total.toLocaleString('pt-BR')} registros`;
+  document.getElementById('pag-info').textContent =
+    r.total === 0 ? '—' : `${STATE.offset + 1}–${Math.min(STATE.offset + STATE.limit, r.total)} de ${r.total}`;
+
+  if (!r.rows.length) {
+    document.getElementById('logs-tbody').innerHTML = `<tr><td colspan="9" class="empty">Sem logs no filtro atual.</td></tr>`;
+    return;
+  }
+  document.getElementById('logs-tbody').innerHTML = r.rows.map(row => {
+    const before = row.seller_responsible_before || row.old_value || '—';
+    const after = row.seller_responsible_after || row.new_value || '—';
+    return `<tr onclick="openLog(${row.id})">
+      <td style="color:#8B949E">${fmtDate(row.occurred_at)}</td>
+      <td>${originBadge(row.action_origin)}</td>
+      <td>${row.actor_name || '—'}</td>
+      <td><code style="color:#00AAFF">${row.action_type}</code></td>
+      <td style="color:#8B949E">${row.crm_module}</td>
+      <td>${(row.crm_record_name || '—').slice(0, 40)}</td>
+      <td style="color:#8B949E">${before} → <span style="color:#E6EDF3">${after}</span></td>
+      <td><span class="badge ${row.validation_status}">${row.validation_status}</span></td>
+      <td><span class="badge ${row.impact_type}">${row.impact_type}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadAlerts() {
+  const r = await fetch('/api/auditoria-crm/alerts?status=open&limit=8').then(r => r.json());
+  if (!r.ok || !r.rows.length) {
+    document.getElementById('alerts-block').style.display = 'none';
+    return;
+  }
+  const top = r.rows.filter(a => a.severity === 'critical' || a.severity === 'high').slice(0, 8);
+  if (!top.length) { document.getElementById('alerts-block').style.display = 'none'; return; }
+  document.getElementById('alerts-block').style.display = 'block';
+  document.getElementById('alerts-list').innerHTML = top.map(a => `
+    <li>
+      <div class="left">
+        <span class="badge ${a.severity}">${a.severity}</span>
+        <span class="desc"><strong>${a.seller_name || '—'}</strong> · ${a.description}</span>
+      </div>
+      <div class="right">
+        <button onclick="event.stopPropagation();resolveAlert(${a.id}, false)" class="resolve">✓ Resolver</button>
+        <button onclick="event.stopPropagation();resolveAlert(${a.id}, true)">⊘ Ignorar</button>
+      </div>
+    </li>
+  `).join('');
+}
+
+async function resolveAlert(id, ignore) {
+  const url = `/api/auditoria-crm/alerts/${id}/${ignore ? 'ignore' : 'resolve'}`;
+  await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({}) });
+  loadAlerts();
+  loadOverview();
+}
+
+async function openLog(id) {
+  const r = await fetch('/api/auditoria-crm/logs/' + id).then(r => r.json());
+  if (!r.ok) return alert('Erro: ' + r.error);
+  const log = r.log;
+  document.getElementById('modal-title').textContent = `${log.action_type} · ${log.crm_module}`;
+  const md = log.metadata_json && Object.keys(log.metadata_json).length ? JSON.stringify(log.metadata_json, null, 2) : null;
+
+  // Carrega timeline do mesmo registro
+  let timeline = [];
+  if (log.crm_record_id) {
+    const tr = await fetch(`/api/auditoria-crm/timeline/${log.crm_record_id}?module=${encodeURIComponent(log.crm_module)}`).then(r => r.json());
+    if (tr.ok) timeline = tr.events;
+  }
+
+  document.getElementById('modal-body').innerHTML = `
+    <div class="aud-modal-section">
+      <h3>Resumo</h3>
+      <div class="aud-row"><span class="k">Quando</span><span class="v">${fmtDate(log.occurred_at)}</span></div>
+      <div class="aud-row"><span class="k">Origem</span><span class="v">${originBadge(log.action_origin)}</span></div>
+      <div class="aud-row"><span class="k">Responsável</span><span class="v">${log.actor_name || '—'}</span></div>
+      <div class="aud-row"><span class="k">Lead/Deal</span><span class="v">${log.crm_record_name || '—'}</span></div>
+      <div class="aud-row"><span class="k">Ação</span><span class="v"><code style="color:#00AAFF">${log.action_type}</code></span></div>
+      <div class="aud-row"><span class="k">Antes</span><span class="v">${log.seller_responsible_before || log.old_value || '—'}</span></div>
+      <div class="aud-row"><span class="k">Depois</span><span class="v">${log.seller_responsible_after || log.new_value || '—'}</span></div>
+      <div class="aud-row"><span class="k">Campo</span><span class="v">${log.field_changed || '—'}</span></div>
+      <div class="aud-row"><span class="k">Canal</span><span class="v">${log.related_channel || '—'}</span></div>
+    </div>
+
+    ${log.action_origin === 'claude_director_ia' || log.action_origin === 'nubia_sdr_ia' ? `
+    <div class="aud-modal-section">
+      <h3>Decisão da IA</h3>
+      <div class="aud-row"><span class="k">Motivo</span><span class="v">${log.reason || '—'}</span></div>
+      <div class="aud-row"><span class="k">Regra aplicada</span><span class="v"><code>${log.rule_triggered || '—'}</code></span></div>
+      <div class="aud-row"><span class="k">Confiança</span><span class="v">${log.confidence_score != null ? log.confidence_score + '%' : '—'}</span></div>
+    </div>` : ''}
+
+    <div class="aud-modal-section">
+      <h3>Auditoria</h3>
+      <div class="aud-row"><span class="k">Validação</span><span class="v"><span class="badge ${log.validation_status}">${log.validation_status}</span></span></div>
+      <div class="aud-row"><span class="k">Impacto</span><span class="v"><span class="badge ${log.impact_type}">${log.impact_type}</span></span></div>
+      <div class="aud-row"><span class="k">Impacto comercial</span><span class="v">${log.commercial_impact || '—'}</span></div>
+      <div class="aud-row"><span class="k">Motivo informado</span><span class="v">${log.reason || '—'}</span></div>
+    </div>
+
+    ${log.crm_record_url ? `
+    <div class="aud-modal-section">
+      <a class="aud-btn primary" href="${log.crm_record_url}" target="_blank" style="display:inline-block;text-decoration:none">↗ Abrir no CRM</a>
+    </div>` : ''}
+
+    ${md ? `
+    <div class="aud-modal-section">
+      <h3>Metadata</h3>
+      <pre class="aud-meta-pre">${md}</pre>
+    </div>` : ''}
+
+    ${timeline.length > 1 ? `
+    <div class="aud-modal-section">
+      <h3>Timeline do registro (${timeline.length})</h3>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${timeline.map(e => `
+          <div style="padding:8px 10px;background:#0D1117;border:1px solid #30363D;border-radius:6px;font-size:11px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+              <div>
+                ${originBadge(e.action_origin)}
+                <code style="color:#00AAFF;margin-left:4px">${e.action_type}</code>
+              </div>
+              <span style="color:#8B949E;font-size:10px">${fmtDate(e.occurred_at)}</span>
+            </div>
+            ${e.reason ? `<div style="color:#8B949E;margin-top:4px">${e.reason}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+  `;
+
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('modal').classList.remove('open');
+}
+
+function paginate(dir) {
+  const newOffset = STATE.offset + dir * STATE.limit;
+  if (newOffset < 0) return;
+  if (newOffset >= STATE.total) return;
+  STATE.offset = newOffset;
+  loadLogs();
+}
+
+async function reload() {
+  STATE.offset = 0;
+  await Promise.all([loadOverview(), loadLogs(), loadAlerts()]);
+}
+
+async function exportCsv() {
+  const params = getFilters();
+  params.set('limit', '500');
+  params.set('offset', '0');
+  const r = await fetch('/api/auditoria-crm/logs?' + params).then(r => r.json());
+  if (!r.ok) return alert('Erro');
+  const cols = ['id','occurred_at','action_origin','actor_name','action_type','crm_module','crm_record_name','seller_responsible_before','seller_responsible_after','field_changed','old_value','new_value','reason','validation_status','impact_type','commercial_impact'];
+  const csv = [cols.join(',')].concat(r.rows.map(row => cols.map(c => {
+    const v = row[c]; if (v == null) return '';
+    return '"' + String(v).replace(/"/g, '""') + '"';
+  }).join(','))).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `auditoria-crm-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+async function runRulesNow() {
+  const r = await fetch('/api/auditoria-crm/admin/run-rules', { method: 'POST' }).then(r => r.json());
+  if (r.ok) {
+    alert(`Regras: ${r.summary.alerts_emitted} novos alertas (${r.summary.rules_run} regras rodadas)`);
+    reload();
+  } else alert('Erro: ' + r.error);
+}
+
+async function openSeed() {
+  if (!confirm('Plantar dados mock (apenas se DB vazio)?')) return;
+  const r = await fetch('/api/auditoria-crm/admin/seed', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({ force: false })
+  }).then(r => r.json());
+  if (r.ok) { alert(`Seed: ${JSON.stringify(r.seed)}\nRegras: ${r.rules ? r.rules.alerts_emitted : 0} alertas`); reload(); }
+  else alert('Erro: ' + r.error);
+}
+
+document.addEventListener('DOMContentLoaded', reload);
+</script>

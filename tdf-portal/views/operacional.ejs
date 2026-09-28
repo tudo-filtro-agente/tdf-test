@@ -1,0 +1,2883 @@
+<% const activePage = 'operacional'; const pageTitle = 'Operacional · GIR + POS'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://unpkg.com/intro.js@7.2.0/minified/introjs.min.css">
+<style>
+  .introjs-tooltip { background: var(--bg-card) !important; color: var(--text) !important; border: 1px solid var(--border) !important; border-radius: 10px !important; min-width: 320px; }
+  .introjs-tooltiptext { line-height: 1.55; font-size: 13px; }
+  .introjs-tooltip-title { color: var(--text) !important; font-size: 14px; }
+  .introjs-button { background: var(--border) !important; border: 1px solid var(--border) !important; color: var(--text) !important; text-shadow: none !important; border-radius: 6px !important; }
+  .introjs-button.introjs-nextbutton { background: #25D366 !important; color: #000 !important; border-color: #25D366 !important; font-weight: 700; }
+  .introjs-helperLayer { background: rgba(37, 211, 102, 0.06) !important; border: 2px solid #25D366 !important; box-shadow: rgba(0,0,0,.5) 0 0 0 9999px !important; border-radius: 10px !important; }
+  .introjs-bullets ul li a { background: var(--border) !important; }
+  .introjs-bullets ul li a.active { background: #25D366 !important; }
+</style>
+
+<style>
+  .op-shell { padding: 16px 20px 40px; max-width: 1640px; margin: 0 auto; }
+  .op-h { display: flex; align-items: baseline; gap: 16px; margin-bottom: 12px; }
+  .op-h h1 { margin: 0; font-size: 20px; color: var(--text); }
+  .op-h .sub { color: var(--text-muted); font-size: 12px; }
+  .op-kpis { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 14px; }
+  @media (max-width: 1200px) { .op-kpis { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 700px) { .op-kpis { grid-template-columns: repeat(2, 1fr); } }
+  .op-kpi { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: all .15s; border-top: 3px solid var(--c, var(--border)) }
+  .op-kpi:hover { transform: translateY(-1px); border-color: var(--c, #1f6feb) }
+  .op-kpi.active-filter { box-shadow: 0 0 0 2px var(--c, #1f6feb) inset }
+  .op-kpi.active-filter::after { content: ' (filtrando)'; font-size: 9px; color: var(--c); }
+  .op-kpi .v { font-size: 20px; font-weight: 800; color: var(--text); }
+  .op-kpi .l { font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); margin-top: 2px; }
+  .op-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+  .op-tab { padding: 8px 14px; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; font-size: 13px; }
+  .op-tab.active { color: var(--text); border-bottom-color: #25D366; }
+  .op-tab .badge { background: #1f6feb; color:#fff; font-size: 10px; padding: 1px 6px; border-radius: 8px; margin-left: 6px; }
+  .op-grid { display: grid; grid-template-columns: 320px 1fr 380px; gap: 12px; height: calc(100vh - 220px); min-height: 560px; }
+  @media (max-width: 1280px) { .op-grid { grid-template-columns: 280px 1fr 340px; } }
+  @media (max-width: 1024px) { .op-grid { grid-template-columns: 1fr; height: auto; } }
+  .op-col { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+  .op-col h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin: 0; padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .op-col h3 .count { background: var(--border); color: var(--text); padding: 2px 8px; border-radius: 8px; font-size: 11px; }
+  .op-list { flex: 1; overflow-y: auto; padding: 4px; }
+  .op-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin: 4px; cursor: pointer; transition: all .15s; }
+  .op-card:hover { border-color: #1f6feb; transform: translateY(-1px); }
+  .op-card.selected { border-color: #25D366; background: rgba(37, 211, 102, .05); }
+  .op-card .name { color: var(--text); font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .op-card .meta { color: var(--text-muted); font-size: 11px; line-height: 1.5; }
+  .op-card .badge { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 6px; margin-right: 4px; font-weight: 700; }
+  .b-urgent { background: rgba(239,68,68,.18); color: #f87171; border: 1px solid #ef4444; }
+  .b-high   { background: rgba(234,179,8,.15); color: #fbbf24; border: 1px solid #eab308; }
+  .b-normal { background: rgba(148,163,184,.15); color: #cbd5e1; border: 1px solid #475569; }
+  .b-bebed  { background: rgba(99,102,241,.15); color: #a5b4fc; }
+  .b-tecnica{ background: rgba(16,185,129,.15); color: #34d399; }
+  .b-manut  { background: rgba(245,158,11,.15); color: #fbbf24; }
+  .b-envio  { background: rgba(96,165,250,.15); color: #93c5fd; }
+  #map { height: 100%; min-height: 400px; background: var(--bg); }
+  .panel-body { padding: 14px; overflow-y: auto; flex: 1; }
+  .panel-empty { color: var(--text-muted); text-align: center; padding: 40px 20px; font-size: 13px; }
+  .sug-score { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+  .sug-score .ring { width: 64px; height: 64px; border-radius: 50%; background: conic-gradient(#25D366 var(--p), var(--border) 0); display: flex; align-items: center; justify-content: center; position: relative; }
+  .sug-score .ring::before { content: ''; position: absolute; inset: 6px; background: var(--bg-card); border-radius: 50%; }
+  .sug-score .ring .v { position: relative; color: var(--text); font-weight: 800; font-size: 16px; }
+  .sug-score .info { flex: 1; }
+  .sug-score .info .t { color: var(--text); font-weight: 700; font-size: 13px; }
+  .sug-score .info .d { color: var(--text-muted); font-size: 11px; }
+  .sug-rationale { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin: 12px 0; color: var(--text); font-size: 12.5px; line-height: 1.55; white-space: pre-wrap; }
+  .sug-signals { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 12px 0; }
+  .sug-sig { background: var(--bg); padding: 6px 8px; border-radius: 6px; font-size: 11px; color: var(--text-muted); }
+  .sug-sig b { color: var(--text); }
+  .sug-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 14px; }
+  .btn { padding: 9px 12px; border-radius: 8px; border: 1px solid; font-size: 12px; font-weight: 700; cursor: pointer; background: transparent; }
+  .btn-pri { background: #25D366; color: #000; border-color: #25D366; }
+  .btn-sec { color: #93c5fd; border-color: #1f6feb; }
+  .btn-warn { color: #fbbf24; border-color: #eab308; }
+  .btn-ghost { color: var(--text-muted); border-color: var(--border); }
+  .btn:hover { filter: brightness(1.1); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-wa { background: #25D366; color: #000; border-color: #25D366; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--bg-card); border: 1px solid var(--border); padding: 12px 16px; border-radius: 8px; color: var(--text); font-size: 13px; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+  .toast.success { border-color: #25D366; }
+  .toast.error { border-color: #ef4444; }
+  .stale { opacity: .55; }
+  .pendente-aba { padding: 60px 20px; text-align: center; color: var(--text-muted); font-size: 14px; }
+</style>
+
+<!-- F8 — Alert Engine drawer -->
+<style>
+  #alerts-drawer { display:none; position:fixed; top:0; right:0; bottom:0; width:420px; max-width:92vw; background:var(--bg); border-left:1px solid var(--border); z-index:9500; flex-direction:column; box-shadow:-8px 0 24px rgba(0,0,0,.55); transform:translateX(100%); transition:transform .25s ease; }
+  #alerts-drawer.open { transform:translateX(0); }
+  #alerts-drawer header { padding:14px 16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  #alerts-drawer header h3 { margin:0; font-size:14px; color:var(--text); font-weight:700; }
+  #alerts-drawer-filter { background:var(--bg-card); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:5px; font-size:11px; }
+  #alerts-drawer-body { flex:1; overflow-y:auto; }
+  #alerts-drawer .close-btn { background:transparent; border:none; color:var(--text-muted); font-size:18px; cursor:pointer; padding:0 4px; }
+  #alerts-drawer-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:9490; }
+  #alerts-drawer.open + #alerts-drawer-backdrop { display:block; }
+</style>
+<div id="alerts-drawer" role="dialog" aria-label="Central de alertas">
+  <header>
+    <h3>🔔 Central de Alertas</h3>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select id="alerts-drawer-filter" onchange="loadAlertsList()">
+        <option value="open">Abertos</option>
+        <option value="acked">Vistos</option>
+        <option value="resolved">Resolvidos</option>
+        <option value="all">Todos</option>
+      </select>
+      <button class="close-btn" onclick="closeAlertsDrawer()" aria-label="Fechar">✕</button>
+    </div>
+  </header>
+  <div id="alerts-drawer-body"></div>
+  <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted)">
+    <span>Scan a cada 5min</span>
+    <a href="/operacional/feed" style="color:#58a6ff;text-decoration:none">ver feed completo ↗</a>
+  </div>
+</div>
+<div id="alerts-drawer-backdrop" onclick="closeAlertsDrawer()"></div>
+
+<div class="op-shell">
+  <div class="op-h" style="justify-content:space-between">
+    <div>
+      <h1>🛠 Operacional</h1>
+      <span class="sub">GIR (rotas) + POS (pós-venda) — backend tdf-ops • <a href="<%= tdfOpsUrl %>/docs" target="_blank" style="color:var(--text-muted)">/docs ↗</a></span>
+    </div>
+    <div style="display:flex;gap:8px" id="header-actions">
+      <div style="position:relative">
+        <input id="op-search" type="text" placeholder="🔍 Buscar cliente, SIGE, placa, técnico…" autocomplete="off" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:6px;font-size:12px;width:280px;outline:none">
+        <div id="op-search-results" style="display:none;position:absolute;top:36px;right:0;width:420px;max-height:60vh;overflow-y:auto;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:9000"></div>
+      </div>
+      <button id="btn-tutorial" onclick="startTutorial()" style="color:#25D366;border:1px solid #25D366;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;background:transparent;cursor:pointer">❓ Tutorial</button>
+      <a href="/operacional/mapa" id="link-mapa" style="color:#22c55e;border:1px solid #22c55e;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none">🗺 Mapa</a>
+      <a href="/operacional/gantt" id="link-gantt" style="color:#22d3ee;border:1px solid #22d3ee;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none">📅 Gantt</a>
+      <a href="/operacional/dashboard" id="link-dashboard" style="color:#1f6feb;border:1px solid #1f6feb;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none">📊 Dashboard</a>
+      <a href="/operacional/expedicao" id="link-expedicao" style="color:#fb923c;border:1px solid #fb923c;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none">📦 Expedição</a>
+      <a href="/operacional/triagem" id="link-triagem" style="color:#ef4444;border:1px solid #ef4444;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none">🩺 Triagem</a>
+      <button type="button" id="link-feed" onclick="openAlertsDrawer()" title="Abrir alertas (ou clique direito pra ir ao feed)" oncontextmenu="event.preventDefault();window.location='/operacional/feed';return false;" style="position:relative;color:#fbbf24;border:1px solid #fbbf24;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;background:transparent;cursor:pointer">
+        🔔 <span id="bell-count" style="display:none;position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:800;min-width:18px;text-align:center"></span>
+      </button>
+      <a href="/operacional/onboarding" id="link-onboarding" style="color:#25D366;border:1px solid #25D366;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none">👋 Onboarding</a>
+      <a href="/operacional/intakes" id="link-intakes" style="color:#fbbf24;border:1px solid #fbbf24;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none">🤖 Agendamento Núbia</a>
+      <a href="/operacional/config" id="link-config" style="color:#a371f7;border:1px solid #a371f7;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none">⚙️ Configurações</a>
+      <a href="/operacional/auditoria" id="link-auditoria" style="color:#fbbf24;border:1px solid #eab308;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none">📊 Auditoria</a>
+      <a href="/operacional/cadastros" id="link-cadastros" style="color:#a371f7;border:1px solid #a371f7;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none">⚙ Cadastros</a>
+    </div>
+  </div>
+
+  <div class="op-kpis" id="kpis">
+    <div class="op-kpi" style="--c:#fbbf24" onclick="kpiClickPending()" title="Filtra a fila por Aguardando rota"><div class="v" id="k-pending">—</div><div class="l">Aguardando rota</div></div>
+    <div class="op-kpi" style="--c:#22c55e" onclick="kpiClickEncaixe()" title="Abre Sugestões IA de encaixe"><div class="v" id="k-encaixe">—</div><div class="l">Sugestões "encaixe"</div></div>
+    <div class="op-kpi" style="--c:#a371f7" onclick="kpiClickNovaRota()" title="Criar rota manual"><div class="v" id="k-novarota">—</div><div class="l">Sugere nova rota</div></div>
+    <div class="op-kpi" style="--c:#22c55e" onclick="kpiClickAgendados()" title="Ver agendados"><div class="v" id="k-agendados">—</div><div class="l">📅 Agendados</div></div>
+    <div class="op-kpi" style="--c:#25D366;cursor:pointer" onclick="manualServiceOpen()" title="Cadastrar serviço avulso"><div class="v" style="font-size:18px">➕</div><div class="l">Novo serviço manual</div></div>
+    <div class="op-kpi" style="--c:#1f6feb" onclick="kpiClickTechs()" title="Ver disponibilidade técnicos"><div class="v" id="k-techs">—</div><div class="l">Técnicos com janela</div></div>
+    <div class="op-kpi" style="--c:#22d3ee" onclick="kpiClickRoutes()" title="Rotas próximos 14 dias"><div class="v" id="k-routes">—</div><div class="l">Rotas próximos 14d</div></div>
+  </div>
+
+  <div class="op-tabs" id="tabs">
+    <div class="op-tab active" data-tab="instalacoes">🔧 Instalações <span class="badge" id="t-instalacoes">0</span></div>
+    <div class="op-tab" data-tab="bebedouros">🚚 Entregas TDF <span class="badge" id="t-bebedouros">0</span></div>
+    <div class="op-tab" data-tab="envios">📦 Transportadora <span class="badge" id="t-envios">0</span></div>
+    <div class="op-tab" data-tab="manutencao">🔄 Manutenção <span class="badge" id="t-manutencao">0</span></div>
+    <div class="op-tab" data-tab="posvenda">📞 Pós-venda <span class="badge" id="t-posvenda">0</span></div>
+  </div>
+
+  <!-- Aba 1: Instalações -->
+  <div id="aba-instalacoes" class="aba">
+    <div class="op-grid">
+      <div class="op-col">
+        <h3>FILA <span class="count" id="queue-count">0</span></h3>
+        <div class="op-list" id="sale-list"><div class="panel-empty">Carregando…</div></div>
+      </div>
+      <div class="op-col">
+        <h3>MAPA</h3>
+        <div id="map"></div>
+      </div>
+      <div class="op-col">
+        <h3>SUGESTÃO IA</h3>
+        <div class="panel-body" id="suggestion-panel">
+          <div class="panel-empty">Selecione uma venda à esquerda</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="aba-envios" class="aba" hidden>
+    <style>
+      .kb-shell { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+      .kb-toolbar { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
+      .kb-toolbar .kb-info { font-size: 11px; color: var(--text-muted); }
+      .kb-grid { display: flex; gap: 8px; overflow-x: auto; overflow-y: auto; padding-bottom: 8px; min-height: 70vh; max-height: calc(100vh - 220px); scroll-behavior: smooth; }
+      .kb-grid::-webkit-scrollbar { height: 10px; width: 10px; }
+      .kb-grid::-webkit-scrollbar-track { background: var(--bg); border-radius: 4px; }
+      .kb-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+      .kb-grid::-webkit-scrollbar-thumb:hover { background: #1f6feb; }
+      .kb-col { flex: 0 0 240px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; max-height: calc(100vh - 240px); }
+      .kb-col.dragover { border-color: #25D366; background: rgba(37,211,102,.05); }
+      .kb-col-h { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
+      .kb-col-h .count { background: var(--border); padding: 1px 7px; border-radius: 8px; color: var(--text); font-size: 11px; }
+      .kb-col-body { flex: 1; overflow-y: auto; padding: 6px; }
+      .kb-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; margin: 4px 0; cursor: grab; font-size: 12px; transition: all .15s; }
+      .kb-card:hover { border-color: #1f6feb; }
+      .kb-card:active { cursor: grabbing; }
+      .kb-card.dragging { opacity: .4; }
+      .kb-card .kc-name { color: var(--text); font-weight: 700; margin-bottom: 3px; }
+      .kb-card .kc-meta { color: var(--text-muted); font-size: 10px; line-height: 1.5; }
+      .kb-card .kc-meta b { color: var(--text); }
+      .kb-stage-aguardando_separacao { border-left: 3px solid #475569; }
+      .kb-stage-em_separacao { border-left: 3px solid #fbbf24; }
+      .kb-stage-aguardando_coleta, .kb-stage-transportadora_acionada { border-left: 3px solid #93c5fd; }
+      .kb-stage-coletado, .kb-stage-em_transito { border-left: 3px solid #a371f7; }
+      .kb-stage-saiu_para_entrega { border-left: 3px solid #fb923c; }
+      .kb-stage-entregue { border-left: 3px solid #22c55e; }
+      .kb-stage-problema_entrega { border-left: 3px solid #ef4444; }
+      .kb-stage-finalizado { border-left: 3px solid #94a3b8; opacity: .65; }
+      .kb-empty { color: var(--text-muted); text-align: center; padding: 14px; font-size: 11px; }
+      /* Modal Gerenciar Etapas */
+      .kbm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 9999; align-items: center; justify-content: center; }
+      .kbm-overlay.show { display: flex; }
+      .kbm-modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; width: 720px; max-width: 95vw; max-height: 90vh; display: flex; flex-direction: column; }
+      .kbm-h { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+      .kbm-h h3 { margin: 0; font-size: 14px; }
+      .kbm-body { flex: 1; overflow-y: auto; padding: 14px 18px; }
+      .kbm-foot { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+      .kbm-row { display: grid; grid-template-columns: 28px 1fr 90px 38px 38px; gap: 8px; align-items: center; padding: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 6px; cursor: grab; }
+      .kbm-row.dragging { opacity: .4; }
+      .kbm-row.dragover { border-color: #25D366; }
+      .kbm-row .handle { color: var(--text-muted); cursor: grab; user-select: none; text-align: center; font-size: 14px; }
+      .kbm-row input[type=text] { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 6px 8px; border-radius: 4px; font-size: 12px; width: 100%; }
+      .kbm-row input[type=color] { width: 100%; height: 30px; padding: 2px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); cursor: pointer; }
+      .kbm-row .badge-flag { font-size: 9px; padding: 2px 5px; border-radius: 3px; background: var(--border); color: var(--text-muted); }
+      .kbm-row .btn-del { background: var(--border); border: 1px solid var(--border); color: #ef4444; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+      .kbm-row .btn-del:hover { background: #ef4444; color:#fff; }
+      .kbm-row .btn-del:disabled { opacity: .3; cursor: not-allowed; }
+      .kbm-row .btn-save { background: var(--border); border: 1px solid var(--border); color: #25D366; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+      .kbm-add { width: 100%; padding: 10px; background: var(--bg); border: 1px dashed var(--border); color: var(--text-muted); border-radius: 6px; cursor: pointer; font-size: 12px; }
+      .kbm-add:hover { border-color: #1f6feb; color: var(--text); }
+    </style>
+    <div class="kb-shell">
+      <div class="kb-toolbar">
+        <button class="btn btn-sec" onclick="loadKanban()">🔄 Atualizar</button>
+        <button class="btn btn-sec" onclick="kbmOpen()">⚙️ Gerenciar etapas</button>
+        <span class="kb-info">Arraste o card entre colunas pra mover de etapa. Mensagem WATI dispara automático em 5 etapas (Em separação · Coletado · Saiu p/entrega · Entregue · Problema).</span>
+      </div>
+      <div class="kb-grid" id="kb-grid"><div class="kb-empty">Carregando…</div></div>
+    </div>
+    <!-- Modal Gerenciar Etapas -->
+    <div class="kbm-overlay" id="kbm-overlay" onclick="if(event.target===this)kbmClose()">
+      <div class="kbm-modal">
+        <div class="kbm-h">
+          <h3>⚙️ Gerenciar etapas do kanban Envios</h3>
+          <button class="btn btn-sec" onclick="kbmClose()">✕</button>
+        </div>
+        <div class="kbm-body" id="kbm-body"><div class="kb-empty">Carregando…</div></div>
+        <div class="kbm-foot">
+          <span class="kb-info">Arraste pelo ☰ para reordenar. Inicial/final não podem ser excluídas.</span>
+          <button class="btn btn-sec" onclick="kbmClose()">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- F-DELIVERY-2 — Entregas TDF (equipe própria, encaixe em rota) -->
+  <div id="aba-bebedouros" class="aba" hidden>
+    <style>
+      .rf-panel { background:var(--bg-card); border:1px solid #f59e0b; border-left:4px solid #f59e0b; border-radius:8px; padding:10px 14px; margin-bottom:12px }
+      .rf-head { display:flex; justify-content:space-between; align-items:center; cursor:pointer }
+      .rf-head h4 { margin:0; font-size:13px; color:#fbbf24 }
+      .rf-body { margin-top:10px; display:none }
+      .rf-body.show { display:block }
+      .rf-card { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:10px 12px; margin:6px 0; display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center }
+      .rf-card .info .name { color:var(--text); font-weight:700; font-size:13px }
+      .rf-card .info .meta { color:var(--text-muted); font-size:11px; margin-top:3px }
+      .rf-card .info .ratio { color:#cbd5e1; font-size:11px; margin-top:3px }
+      .rf-card .score { display:flex; align-items:center; gap:8px }
+      .rf-card .score .pts { background:#22c55e; color:#000; font-weight:800; padding:4px 10px; border-radius:6px; font-size:12px }
+      .rf-card .score .pts.med { background:#fbbf24 }
+      .rf-card .score .pts.low { background:#f87171; color:#fff }
+      .rf-card .actions { display:flex; gap:4px; flex-direction:column }
+    </style>
+
+    <!-- F-DELIVERY-ROUTE — Sugestões IA -->
+    <div class="rf-panel" id="rf-panel">
+      <div class="rf-head" onclick="rfToggle()">
+        <h4>💡 Sugestões IA de encaixe em rota <span id="rf-count" style="background:var(--border);padding:2px 8px;border-radius:8px;color:var(--text);font-size:11px;margin-left:6px">0</span></h4>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="rf-max-km" type="number" value="10" min="1" max="100" style="width:55px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:11px" title="km máx">
+          <span style="color:var(--text-muted);font-size:10px">km</span>
+          <input id="rf-days" type="number" value="7" min="1" max="30" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:11px" title="dias à frente">
+          <span style="color:var(--text-muted);font-size:10px">dias</span>
+          <button class="btn btn-warn" onclick="event.stopPropagation();loadRouteFits()">🔍 Buscar</button>
+          <span id="rf-arrow" style="color:#fbbf24">▼</span>
+        </div>
+      </div>
+      <div class="rf-body" id="rf-body"></div>
+    </div>
+
+    <div class="kb-shell">
+      <div class="kb-toolbar">
+        <button class="btn btn-sec" onclick="loadDeliveries()">🔄 Atualizar</button>
+        <button class="btn btn-warn" onclick="dlvOpenCreate()">+ Nova entrega</button>
+        <button class="btn btn-sec" onclick="kbmOpen('delivery')">⚙️ Gerenciar etapas</button>
+        <button class="btn btn-sec" onclick="dlvBackfill()">📥 Backfill Sales</button>
+        <span class="kb-info">Arraste cards entre colunas. Click no card abre detalhes. Botão 🛣 vincula rota. 📷 anexa comprovante.</span>
+      </div>
+      <div class="kb-grid" id="dlv-grid"><div class="kb-empty">Carregando…</div></div>
+    </div>
+
+    <!-- Modal Nova Entrega -->
+    <div class="dlv-modal" id="dlv-create-modal" onclick="if(event.target===this)dlvCloseCreate()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9300;align-items:center;justify-content:center">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px;width:540px;max-width:95vw">
+        <h3 style="margin:0 0 14px;font-size:14px">📦 Nova Entrega TDF</h3>
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:8px;align-items:center;font-size:12px">
+          <label>Sale ID</label><input id="dlv-c-sale" type="number" placeholder="ID da venda (Sale)" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px;border-radius:4px">
+          <label>Produto</label><input id="dlv-c-product" type="text" placeholder="Descrição do produto" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px;border-radius:4px">
+          <label>Tipo</label>
+          <select id="dlv-c-type" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px;border-radius:4px">
+            <option value="entrega_propria">Entrega própria</option>
+            <option value="instalacao_propria">Instalação própria</option>
+          </select>
+          <label>Data ideal</label><input id="dlv-c-date" type="date" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px;border-radius:4px">
+          <label>Janela</label>
+          <select id="dlv-c-window" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px;border-radius:4px">
+            <option value="">— qualquer —</option>
+            <option value="manha">Manhã</option>
+            <option value="tarde">Tarde</option>
+            <option value="noite">Noite</option>
+          </select>
+          <label>Responsável</label><input id="dlv-c-resp" type="text" placeholder="Email/nome" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px;border-radius:4px">
+          <label>Observação</label><textarea id="dlv-c-notes" rows="2" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px;border-radius:4px"></textarea>
+        </div>
+        <div style="margin-top:14px;display:flex;justify-content:flex-end;gap:8px">
+          <button class="btn btn-sec" onclick="dlvCloseCreate()">Cancelar</button>
+          <button class="btn btn-warn" onclick="dlvDoCreate()">Criar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Detalhe + Comprovante + Rota -->
+    <div class="dlv-modal" id="dlv-detail-modal" onclick="if(event.target===this)dlvCloseDetail()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9300;align-items:center;justify-content:center">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px;width:600px;max-width:95vw;max-height:90vh;overflow-y:auto">
+        <div id="dlv-detail-body"></div>
+      </div>
+    </div>
+  </div>
+  <div id="aba-manutencao" class="aba" hidden><div class="pendente-aba">🔄 Aba Manutenção — refis pendentes (em planejamento)</div></div>
+  <div id="aba-posvenda" class="aba" hidden><div class="pendente-aba">📞 Aba Pós-venda — satisfação + upsell (F7 em planejamento)</div></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+
+<script>
+const State = {
+  sales: [],
+  routes: [],
+  selectedSaleId: null,
+  selectedSale: null,
+  suggestion: null,
+  map: null,
+  saleMarker: null,
+  routeMarkers: [],
+};
+
+function toast(msg, kind='success') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function fmtDate(s) {
+  if (!s) return '—';
+  const d = new Date(s);
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+}
+
+function priorityBadge(p) {
+  const map = { urgent: 'urgent', high: 'high', normal: 'normal', low: 'normal' };
+  const cls = 'b-' + (map[p] || 'normal');
+  return `<span class="badge ${cls}">${p || 'normal'}</span>`;
+}
+function queueBadge(q) {
+  const map = { tecnica: 'b-tecnica', bebedouro: 'b-bebed', manutencao: 'b-manut', envio: 'b-envio', retirada: 'b-normal' };
+  return `<span class="badge ${map[q] || 'b-normal'}">${q || '?'}</span>`;
+}
+
+async function api(path, opts={}) {
+  const r = await fetch(path, {
+    method: opts.method || 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+    credentials: 'same-origin',
+  });
+  if (r.status === 401) {
+    showSessionExpired();
+    // Devolve objeto vazio pra não quebrar listas/kanbans visualmente
+    throw new SessionExpiredError();
+  }
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`${r.status} ${r.statusText} — ${t.substring(0,200)}`);
+  }
+  return r.json();
+}
+
+class SessionExpiredError extends Error {
+  constructor() { super('Sessão expirada'); this.name = 'SessionExpiredError'; this.silent = true; }
+}
+
+// Modal de re-login não-bloqueante (não quebra layout)
+let _sessExpShown = false;
+function showSessionExpired() {
+  if (_sessExpShown) return;
+  _sessExpShown = true;
+  // Preserva aba ativa pra restaurar após login
+  try {
+    const activeTab = document.querySelector('.op-tab.active')?.dataset?.tab;
+    if (activeTab) localStorage.setItem('op-last-tab', activeTab);
+  } catch {}
+  const div = document.createElement('div');
+  div.id = 'sess-exp-modal';
+  div.style.cssText = 'position:fixed;top:16px;right:16px;background:#1f2937;border:1px solid #f59e0b;border-left:4px solid #f59e0b;border-radius:8px;padding:14px 18px;z-index:99999;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:380px;font-size:13px;color:#fff';
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:start;gap:12px">
+      <div>
+        <div style="font-weight:700;color:#fbbf24;margin-bottom:4px">⚠ Sessão expirada</div>
+        <div style="color:#cbd5e1;font-size:12px;margin-bottom:10px">Sua sessão acabou. Refaça o login pra continuar — sua aba atual ficará salva.</div>
+        <button onclick="window.location.href='/login?next='+encodeURIComponent(window.location.pathname)" style="background:#1f6feb;color:#fff;border:0;padding:7px 14px;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer">Fazer login</button>
+        <button onclick="document.getElementById('sess-exp-modal').remove();_sessExpShown=false" style="background:transparent;color:#888;border:0;padding:7px 10px;font-size:11px;cursor:pointer">Depois</button>
+      </div>
+      <button onclick="document.getElementById('sess-exp-modal').remove();_sessExpShown=false" style="background:transparent;border:0;color:#888;cursor:pointer;font-size:16px;line-height:1">×</button>
+    </div>
+  `;
+  document.body.appendChild(div);
+}
+
+// Restaurar última aba após login
+window.addEventListener('DOMContentLoaded', () => {
+  let restored = false;
+  try {
+    const last = localStorage.getItem('op-last-tab');
+    if (last && document.querySelector(`.op-tab[data-tab="${last}"]`)) {
+      document.querySelector(`.op-tab[data-tab="${last}"]`)?.click();
+      localStorage.removeItem('op-last-tab');
+      restored = true;
+    }
+  } catch {}
+  // F8 — primeira carga sem aba restaurada: dispara insight da aba ativa
+  if (!restored) {
+    const activeTab = document.querySelector('.op-tab.active')?.dataset?.tab;
+    if (activeTab && typeof loadAbaInsight === 'function') loadAbaInsight(activeTab);
+  }
+});
+
+async function loadSales() {
+  try {
+    const data = await api('/operacional/api/sales?status=aguardando_rota&page_size=100');
+    State.sales = data.items || [];
+    renderQueue();
+  } catch (e) {
+    document.getElementById('sale-list').innerHTML = `<div class="panel-empty" style="color:${e.silent?'#888':'#f87171'}">${e.silent?'⏸ aguardando login…':e.message}</div>`;
+  }
+  // Try fetching sugestao_aberta too
+  try {
+    const data2 = await api('/operacional/api/sales?status=sugestao_aberta&page_size=100');
+    State.sales = State.sales.concat(data2.items || []);
+    renderQueue();
+  } catch {}
+}
+
+function renderQueue() {
+  const list = document.getElementById('sale-list');
+  const tecnica = State.sales.filter(s => s.queue === 'tecnica' || s.queue === 'bebedouro' || s.queue === 'manutencao');
+  document.getElementById('queue-count').textContent = tecnica.length;
+  document.getElementById('t-instalacoes').textContent = State.sales.filter(s=>s.queue==='tecnica').length;
+  document.getElementById('t-envios').textContent = State.sales.filter(s=>s.queue==='envio').length;
+  document.getElementById('t-bebedouros').textContent = State.sales.filter(s=>s.queue==='bebedouro').length;
+  document.getElementById('t-manutencao').textContent = State.sales.filter(s=>s.queue==='manutencao').length;
+  document.getElementById('k-pending').textContent = State.sales.filter(s=>s.status==='aguardando_rota').length;
+
+  if (!tecnica.length) {
+    list.innerHTML = '<div class="panel-empty">Nenhuma venda aguardando rota</div>';
+    return;
+  }
+  list.innerHTML = tecnica.map(s => {
+    const cls = s.id === State.selectedSaleId ? 'selected' : '';
+    const stale = s.status !== 'aguardando_rota' && s.status !== 'sugestao_aberta' ? 'stale' : '';
+    return `
+      <div class="op-card ${cls} ${stale}" data-sale-id="${s.id}">
+        <div class="name">${s.customer_name || '—'}</div>
+        <div class="meta">
+          ${queueBadge(s.queue)} ${priorityBadge(s.service_priority)}
+          <br>${(s.product_line || '').substring(0, 40)}${(s.product_line||'').length>40?'…':''}
+          <br>📍 ${s.address?.city || '—'}/${s.address?.state || ''}
+          <br>💰 R$ ${(parseFloat(s.amount)||0).toLocaleString('pt-BR', {minimumFractionDigits:2})}
+        </div>
+      </div>
+    `;
+  }).join('');
+  list.querySelectorAll('[data-sale-id]').forEach(card => {
+    card.addEventListener('click', () => selectSale(parseInt(card.dataset.saleId, 10)));
+  });
+}
+
+async function selectSale(id) {
+  State.selectedSaleId = id;
+  State.selectedSale = State.sales.find(s => s.id === id);
+  document.querySelectorAll('.op-card').forEach(c => c.classList.toggle('selected', parseInt(c.dataset.saleId,10) === id));
+
+  const panel = document.getElementById('suggestion-panel');
+  panel.innerHTML = '<div class="panel-empty">Carregando sugestão…</div>';
+  try {
+    const sugs = await api(`/operacional/api/sales/${id}/suggestions`);
+    State.suggestion = sugs[0] || null;
+    renderSuggestion();
+    drawMap();
+  } catch (e) {
+    panel.innerHTML = `<div class="panel-empty" style="color:${e.silent?'#888':'#f87171'}">${e.silent?'⏸ aguardando login…':e.message}</div>`;
+  }
+}
+
+function renderSuggestion() {
+  const panel = document.getElementById('suggestion-panel');
+  const sale = State.selectedSale;
+  const sug = State.suggestion;
+  if (!sug) {
+    panel.innerHTML = `
+      <div class="panel-empty">Sem sugestão IA ainda</div>
+      <button class="btn btn-sec" style="width:100%" onclick="reanalyze(${sale.id})">⚡ Gerar sugestão agora</button>
+    `;
+    return;
+  }
+  const score = parseFloat(sug.match_score || 0);
+  const top = (sug.signals || {}).top || {};
+  const dist = parseFloat(sug.distance_km || 0);
+  const tipoMap = { encaixe: '🎯 Encaixe limpo', analise_manual: '⚠ Análise manual', nova_rota: '🆕 Nova rota' };
+  panel.innerHTML = `
+    <div style="margin-bottom:8px;color:#888;font-size:11px">${tipoMap[sug.suggestion_type] || sug.suggestion_type}</div>
+    <div class="sug-score">
+      <div class="ring" style="--p: ${score*3.6}deg"><span class="v">${score.toFixed(0)}</span></div>
+      <div class="info">
+        <div class="t">${top.technician_name || '—'}</div>
+        <div class="d">${top.route_date || '—'} • ${dist.toFixed(2)} km${top.distance_source==='google_routes' ? ' (estrada)' : ''}</div>
+        <div class="d">+${sug.added_time_min || '?'} min na rota</div>
+      </div>
+    </div>
+    <div class="sug-rationale">${(sug.rationale || '').replace(/</g,'&lt;')}</div>
+    <div class="sug-signals">
+      <div class="sug-sig">📏 Distância <b>${dist.toFixed(2)} km</b></div>
+      <div class="sug-sig">🎯 Score <b>${score.toFixed(0)}/100</b></div>
+      <div class="sug-sig">🪟 Janela <b>${top.has_window ? 'livre ✓' : 'lotada ✗'}</b></div>
+      <div class="sug-sig">📦 Vagas <b>${top.free_capacity ?? '—'}</b></div>
+    </div>
+    <div class="sug-actions">
+      <button class="btn btn-pri" onclick="decide(${sug.id}, 'adicionar')">✓ Adicionar à rota</button>
+      <button class="btn btn-sec" onclick="decide(${sug.id}, 'analise_manual')">👁 Análise</button>
+      <button class="btn btn-warn" onclick="decide(${sug.id}, 'nova_rota')">+ Nova rota</button>
+      <button class="btn btn-ghost" onclick="decide(${sug.id}, 'ignorar')">✗ Ignorar</button>
+    </div>
+    <div style="margin-top:14px;border-top:1px solid #21262D;padding-top:12px">
+      <div style="font-size:11px;color:#888;margin-bottom:6px">📱 Falar com cliente</div>
+      <button class="btn-wa" onclick="openWhatsapp(${sale.id})">📱 Abrir WhatsApp</button>
+    </div>
+  `;
+}
+
+async function reanalyze(saleId) {
+  toast('Gerando sugestão IA…');
+  try {
+    await api(`/operacional/api/sales/${saleId}/reanalyze?regeocode=true`, { method: 'POST' });
+    await selectSale(saleId);
+    toast('Sugestão gerada ✓', 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function decide(sugId, decision) {
+  if (decision === 'ignorar' && !confirm('Ignorar esta sugestão?')) return;
+  try {
+    await api(`/operacional/api/suggestions/${sugId}/decide`, {
+      method: 'POST',
+      body: { decision }
+    });
+    toast(`Decisão registrada: ${decision} ✓`, 'success');
+    await loadSales();
+    if (State.selectedSaleId) selectSale(State.selectedSaleId);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function openWhatsapp(saleId) {
+  const sale = State.sales.find(s => s.id === saleId);
+  if (!sale) return;
+  const msg = prompt('Mensagem pré-preenchida (opcional):', `Olá ${sale.customer_name?.split(' ')[0] || ''}, aqui é da Tudo de Filtro sobre seu pedido ${sale.product_line || ''}.`);
+  if (msg === null) return;
+  try {
+    const r = await api('/operacional/api/whatsapp/manual-link', {
+      method: 'POST',
+      body: { sale_id: saleId, body: msg, mode: 'manual' }
+    });
+    window.open(r.link, '_blank');
+    toast('WhatsApp aberto + log registrado', 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// MAP
+function initMap() {
+  if (State.map) return;
+  State.map = L.map('map').setView([-23.5505, -46.6333], 7);  // SP region
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19
+  }).addTo(State.map);
+}
+
+async function drawMap() {
+  if (!State.map) initMap();
+  // Clear previous
+  if (State.saleMarker) State.map.removeLayer(State.saleMarker);
+  State.routeMarkers.forEach(m => State.map.removeLayer(m));
+  State.routeMarkers = [];
+
+  const sale = State.selectedSale;
+  if (!sale || !sale.address || !sale.address.lat) return;
+  const lat = parseFloat(sale.address.lat);
+  const lng = parseFloat(sale.address.lng);
+  State.saleMarker = L.marker([lat, lng], {
+    icon: L.divIcon({ html: '🏠', className: 'sale-pin', iconSize: [30,30] })
+  }).addTo(State.map).bindPopup(`<b>${sale.customer_name}</b><br>${sale.address.raw_address || ''}`);
+
+  // Recommended route stops
+  const sug = State.suggestion;
+  if (sug && sug.recommended_route_id) {
+    try {
+      const route = await api(`/operacional/api/routes/${sug.recommended_route_id}`);
+      const bounds = [[lat, lng]];
+      (route.stops || []).forEach((s, i) => {
+        // need address — but stops out doesn't include lat/lng directly
+        // Skip; only show sale marker. Future: include in API.
+      });
+      State.map.setView([lat, lng], 13);
+    } catch {}
+  } else {
+    State.map.setView([lat, lng], 13);
+  }
+}
+
+// TABS
+document.getElementById('tabs').addEventListener('click', (e) => {
+  if (!e.target.dataset.tab) return;
+  const tab = e.target.dataset.tab;
+  document.querySelectorAll('.op-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.aba').forEach(a => a.hidden = a.id !== `aba-${tab}`);
+  if (tab === 'instalacoes') initMap();
+  if (tab === 'envios') loadKanban();
+  if (tab === 'bebedouros') loadDeliveries();
+  if (tab === 'manutencao') loadManutencao();
+  if (tab === 'posvenda') loadPosvenda();
+  // F8 IA por aba — injeta card de insight no topo da aba ativa
+  loadAbaInsight(tab);
+});
+
+// F8 — IA por aba (Claude insight + ações)
+async function loadAbaInsight(tab, force=false) {
+  const aba = document.getElementById(`aba-${tab}`);
+  if (!aba) return;
+  let card = aba.querySelector('.ia-insight-card');
+  if (!card) {
+    card = document.createElement('div');
+    card.className = 'ia-insight-card';
+    card.style.cssText = 'margin:0 0 12px;padding:12px 14px;border:1px solid #30363D;border-left:3px solid #a371f7;border-radius:6px;background:linear-gradient(135deg,#161B22,#1f1626);font-size:12px;color:#e6edf3';
+    card.innerHTML = '<div style="color:#a371f7;font-size:10px;letter-spacing:1px;font-weight:800;margin-bottom:4px">🤖 INSIGHT IA</div><div class="ia-insight-body">Carregando…</div>';
+    aba.insertBefore(card, aba.firstChild);
+  }
+  const body = card.querySelector('.ia-insight-body');
+  if (force) body.innerHTML = 'Atualizando…';
+  try {
+    const r = await api(`/operacional/api/aba/${tab}/insight${force?'?refresh=true':''}`);
+    const acoes = (r.acoes || []).map(a => `<li>${escapeHTML(a)}</li>`).join('');
+    const cached = r.from_cache ? '<span style="color:#666;font-size:10px;margin-left:8px">(cache)</span>' : '';
+    body.innerHTML = `
+      <div style="line-height:1.45">${escapeHTML(r.insight || '—')} ${cached}</div>
+      ${acoes ? `<ul style="margin:6px 0 0 18px;padding:0;color:#aaa">${acoes}</ul>` : ''}
+      <div style="margin-top:6px"><a href="javascript:loadAbaInsight('${tab}', true)" style="color:#a371f7;font-size:10px;text-decoration:none">↻ atualizar agora</a></div>
+    `;
+  } catch (e) {
+    body.innerHTML = `<span style="color:#888">IA indisponível: ${escapeHTML(e.message || '?')}</span>`;
+  }
+}
+
+// ===== ABA 2 — KANBAN ENVIOS =====
+// Fallback estático caso /kanban/stages falhe; substituído após primeiro load.
+let STAGE_LABELS = {
+  aguardando_separacao: '📋 Aguardando Separação',
+  em_separacao: '📦 Em Separação',
+  aguardando_coleta: '🕐 Aguard. Coleta',
+  transportadora_acionada: '📞 Transp. Acionada',
+  coletado: '✅ Coletado',
+  em_transito: '🚚 Em Trânsito',
+  saiu_para_entrega: '🛵 Saiu p/ Entrega',
+  entregue: '✓ Entregue',
+  problema_entrega: '⚠ Problema',
+  finalizado: '🏁 Finalizado',
+};
+let STAGE_COLORS = {};
+let _kanbanData = {};
+let _stagesConfig = []; // array vindo de /kanban/stages
+
+async function loadStagesConfig() {
+  try {
+    _stagesConfig = await api('/operacional/api/kanban/stages?kanban=shipment&active=true');
+    const newLabels = {}; const newColors = {};
+    for (const s of _stagesConfig) { newLabels[s.code] = s.label; newColors[s.code] = s.color; }
+    if (Object.keys(newLabels).length) { STAGE_LABELS = newLabels; STAGE_COLORS = newColors; }
+  } catch (e) { console.warn('stages config falhou, usando fallback', e); }
+}
+
+async function loadKanban() {
+  try {
+    await loadStagesConfig();
+    _kanbanData = await api('/operacional/api/shipments/kanban');
+    renderKanban();
+  } catch (e) {
+    document.getElementById('kb-grid').innerHTML = `<div class="kb-empty" style="color:${e.silent?'#888':'#f87171'}">${e.silent?'⏸ aguardando login…':e.message}</div>`;
+  }
+}
+
+function renderKanban() {
+  const grid = document.getElementById('kb-grid');
+  // união entre stages config + stages presentes em _kanbanData (não perde card de stage removido)
+  const seen = new Set();
+  const stageOrder = [];
+  for (const code of Object.keys(STAGE_LABELS)) { stageOrder.push(code); seen.add(code); }
+  for (const code of Object.keys(_kanbanData)) { if (!seen.has(code)) { stageOrder.push(code); seen.add(code); } }
+
+  grid.innerHTML = stageOrder.map(stage => {
+    const items = _kanbanData[stage] || [];
+    const label = STAGE_LABELS[stage] || stage;
+    const color = STAGE_COLORS[stage] || '#475569';
+    return `
+      <div class="kb-col" data-stage="${stage}" ondragover="kbDragOver(event)" ondragleave="kbDragLeave(event)" ondrop="kbDrop(event)" style="border-top:3px solid ${color}">
+        <div class="kb-col-h">
+          <span>${label}</span>
+          <span class="count">${items.length}</span>
+        </div>
+        <div class="kb-col-body">
+          ${items.length === 0 ? '<div class="kb-empty">—</div>' : items.map(it => `
+            <div class="kb-card" draggable="true" ondragstart="kbDragStart(event,${it.id},'${stage}')" ondragend="kbDragEnd(event)" data-id="${it.id}" onclick="kbDetails(${it.id})" style="border-left:3px solid ${color}">
+              <div class="kc-name">${it.customer_name || '—'}</div>
+              <div class="kc-meta">
+                ${it.product ? `<b>${it.product.substring(0,40)}</b><br>` : ''}
+                ${it.tracking_code ? `📮 <code>${it.tracking_code}</code><br>` : ''}
+                ${it.carrier_name ? `🚚 ${it.carrier_name}<br>` : ''}
+                ${it.expected_delivery ? `📅 ${it.expected_delivery}<br>` : ''}
+                ${it.amount ? `💰 R$ ${parseFloat(it.amount).toLocaleString('pt-BR',{minimumFractionDigits:2})}` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== F-KANBAN-EDIT — Modal Gerenciar Etapas (multi-kanban) =====
+let _kbmActiveKanban = 'shipment';
+async function kbmOpen(kanban = 'shipment') {
+  _kbmActiveKanban = kanban;
+  document.getElementById('kbm-overlay').classList.add('show');
+  // header dinâmico
+  const h = document.querySelector('#kbm-overlay .kbm-h h3');
+  if (h) h.textContent = `⚙️ Gerenciar etapas — kanban "${kanban}"`;
+  await kbmReload();
+}
+function kbmClose() { document.getElementById('kbm-overlay').classList.remove('show'); }
+
+function reloadActiveKanban() {
+  if (_kbmActiveKanban === 'delivery') return loadDeliveries();
+  return loadKanban();
+}
+
+async function kbmReload() {
+  const body = document.getElementById('kbm-body');
+  body.innerHTML = '<div class="kb-empty">Carregando…</div>';
+  try {
+    const stages = await api(`/operacional/api/kanban/stages?kanban=${_kbmActiveKanban}`);
+    _stagesConfig = stages;
+    body.innerHTML = stages.map(s => kbmRowHtml(s)).join('') +
+      `<button class="kbm-add" onclick="kbmAddNew()">+ Nova etapa</button>`;
+  } catch (e) {
+    body.innerHTML = `<div class="kb-empty" style="color:${e.silent?'#888':'#f87171'}">${e.silent?'⏸ aguardando login…':e.message}</div>`;
+  }
+}
+
+function kbmRowHtml(s) {
+  const flag = s.is_initial ? '<span class="badge-flag">INICIAL</span>' : (s.is_terminal ? '<span class="badge-flag">FINAL</span>' : '');
+  return `
+    <div class="kbm-row" draggable="true" data-id="${s.id}"
+         ondragstart="kbmDragStart(event,${s.id})"
+         ondragend="kbmDragEnd(event)"
+         ondragover="kbmDragOver(event)"
+         ondragleave="kbmDragLeave(event)"
+         ondrop="kbmDrop(event,${s.id})">
+      <span class="handle" title="Arrastar para reordenar">☰</span>
+      <div>
+        <input type="text" id="kbm-label-${s.id}" value="${(s.label||'').replace(/"/g,'&quot;')}" placeholder="Label da etapa" />
+        <div style="font-size:10px;color:#666;margin-top:2px">code: <code>${s.code}</code> ${flag}</div>
+      </div>
+      <input type="color" id="kbm-color-${s.id}" value="${s.color || '#475569'}" />
+      <button class="btn-save" onclick="kbmSaveRow(${s.id})" title="Salvar">💾</button>
+      <button class="btn-del" onclick="kbmDelete(${s.id})" title="Excluir" ${s.is_initial||s.is_terminal?'disabled':''}>🗑</button>
+    </div>
+  `;
+}
+
+async function kbmSaveRow(id) {
+  const s = _stagesConfig.find(x => x.id === id); if (!s) return;
+  const label = document.getElementById(`kbm-label-${id}`).value.trim();
+  const color = document.getElementById(`kbm-color-${id}`).value;
+  if (!label) return toast('Label não pode ser vazio', 'error');
+  try {
+    await api(`/operacional/api/kanban/stages/${id}`, { method: 'PUT', body: { ...s, label, color } });
+    toast('Etapa atualizada ✓');
+    await kbmReload();
+    await reloadActiveKanban();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function kbmDelete(id) {
+  const s = _stagesConfig.find(x => x.id === id); if (!s) return;
+  if (s.is_initial || s.is_terminal) return toast('Etapas inicial/final não podem ser excluídas', 'error');
+  if (!confirm(`Excluir etapa "${s.label}"?\nObs: cards já nessa etapa permanecem visíveis até serem movidos.`)) return;
+  try {
+    await api(`/operacional/api/kanban/stages/${id}`, { method: 'DELETE' });
+    toast('Etapa excluída ✓');
+    await kbmReload();
+    await reloadActiveKanban();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function kbmAddNew() {
+  const label = prompt('Nome da nova etapa:'); if (!label) return;
+  const code = (prompt('Código interno (snake_case, sem espaços):', label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')) || '').trim();
+  if (!code) return;
+  const maxSeq = Math.max(0, ..._stagesConfig.map(s => s.sequence || 0));
+  try {
+    await api('/operacional/api/kanban/stages', { method: 'POST', body: {
+      kanban: _kbmActiveKanban, code, label, sequence: maxSeq + 10,
+      color: '#475569', is_initial: false, is_terminal: false, active: true
+    }});
+    toast('Etapa criada ✓');
+    await kbmReload();
+    await reloadActiveKanban();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// reorder via drag
+let _kbmDragId = null;
+function kbmDragStart(ev, id) { _kbmDragId = id; ev.currentTarget.classList.add('dragging'); }
+function kbmDragEnd(ev) { ev.currentTarget.classList.remove('dragging'); _kbmDragId = null; }
+function kbmDragOver(ev) { ev.preventDefault(); ev.currentTarget.classList.add('dragover'); }
+function kbmDragLeave(ev) { ev.currentTarget.classList.remove('dragover'); }
+async function kbmDrop(ev, targetId) {
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('dragover');
+  if (!_kbmDragId || _kbmDragId === targetId) return;
+  const ids = _stagesConfig.map(s => s.id);
+  const fromIdx = ids.indexOf(_kbmDragId);
+  const toIdx = ids.indexOf(targetId);
+  if (fromIdx < 0 || toIdx < 0) return;
+  ids.splice(toIdx, 0, ids.splice(fromIdx, 1)[0]);
+  try {
+    await api('/operacional/api/kanban/stages/reorder', { method: 'POST', body: { kanban: _kbmActiveKanban, stage_ids: ids } });
+    toast('Reordenado ✓');
+    await kbmReload();
+    await reloadActiveKanban();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function kbDragStart(ev, id, fromStage) {
+  ev.dataTransfer.setData('text/plain', JSON.stringify({ id, fromStage }));
+  ev.dataTransfer.effectAllowed = 'move';
+  ev.target.classList.add('dragging');
+}
+function kbDragEnd(ev) { ev.target.classList.remove('dragging'); }
+function kbDragOver(ev) { ev.preventDefault(); ev.currentTarget.classList.add('dragover'); }
+function kbDragLeave(ev) { ev.currentTarget.classList.remove('dragover'); }
+
+async function kbDrop(ev) {
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('dragover');
+  const toStage = ev.currentTarget.dataset.stage;
+  let payload;
+  try { payload = JSON.parse(ev.dataTransfer.getData('text/plain')); } catch { return; }
+  if (payload.fromStage === toStage) return;
+  try {
+    await api(`/operacional/api/shipments/${payload.id}/transition`, {
+      method: 'POST',
+      body: { to_stage: toStage }
+    });
+    toast(`Movido pra ${STAGE_LABELS[toStage]} ✓`);
+    await loadKanban();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+// ===== ABA 2/3 — ENTREGAS TDF (F-DELIVERY-2) =====
+let _dlvData = {}; let _dlvStages = []; let _dlvColors = {}; let _dlvLabels = {};
+
+async function loadDeliveries() {
+  try {
+    // Stages config + data em paralelo
+    const [stages, data] = await Promise.all([
+      api('/operacional/api/kanban/stages?kanban=delivery&active=true'),
+      api('/operacional/api/deliveries/kanban'),
+    ]);
+    _dlvStages = stages;
+    _dlvLabels = {}; _dlvColors = {};
+    for (const s of stages) { _dlvLabels[s.code] = s.label; _dlvColors[s.code] = s.color; }
+    _dlvData = data;
+    renderDeliveries();
+    // Atualiza badge da aba com total
+    const total = Object.values(data).reduce((a, b) => a + (Array.isArray(b)?b.length:0), 0);
+    const badge = document.getElementById('t-bebedouros');
+    if (badge) badge.textContent = total;
+  } catch (e) {
+    document.getElementById('dlv-grid').innerHTML = `<div class="kb-empty" style="color:${e.silent?'#888':'#f87171'}">${e.silent?'⏸ aguardando login…':e.message}</div>`;
+  }
+}
+
+function renderDeliveries() {
+  const grid = document.getElementById('dlv-grid');
+  const seen = new Set();
+  const order = [];
+  for (const s of _dlvStages) { order.push(s.code); seen.add(s.code); }
+  for (const code of Object.keys(_dlvData)) if (!seen.has(code)) { order.push(code); seen.add(code); }
+
+  grid.innerHTML = order.map(stage => {
+    const items = _dlvData[stage] || [];
+    const label = _dlvLabels[stage] || stage;
+    const color = _dlvColors[stage] || '#475569';
+    return `
+      <div class="kb-col" data-stage="${stage}" ondragover="dlvDragOver(event)" ondragleave="dlvDragLeave(event)" ondrop="dlvDrop(event)" style="border-top:3px solid ${color}">
+        <div class="kb-col-h">
+          <span>${label}</span>
+          <span class="count">${items.length}</span>
+        </div>
+        <div class="kb-col-body">
+          ${items.length === 0 ? '<div class="kb-empty">—</div>' : items.map(it => `
+            <div class="kb-card" draggable="true" ondragstart="dlvDragStart(event,${it.id},'${stage}')" ondragend="dlvDragEnd(event)" onclick="dlvOpenDetail(${it.id})" style="border-left:3px solid ${color}">
+              <div class="kc-name">${it.customer_name || '—'}</div>
+              <div class="kc-meta">
+                ${it.product ? `<b>${(it.product||'').substring(0,40)}</b><br>` : ''}
+                ${it.city ? `📍 ${it.city}<br>` : ''}
+                ${it.technician_name ? `👷 ${it.technician_name}<br>` : ''}
+                ${it.ideal_delivery_date ? `📅 ${new Date(it.ideal_delivery_date).toLocaleDateString('pt-BR')}` : ''}
+                ${it.delivery_window ? ` · ${it.delivery_window}` : ''}
+                ${it.route_id ? `<br>🛣 Rota #${it.route_id}` : ''}
+                ${it.proof_url ? `<br><a href="${it.proof_url}" target="_blank" style="color:#22c55e" onclick="event.stopPropagation()">📷 Comprovante</a>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function dlvDragStart(ev, id, fromStage) {
+  ev.dataTransfer.setData('text/plain', JSON.stringify({ id, fromStage }));
+  ev.dataTransfer.effectAllowed = 'move';
+  ev.target.classList.add('dragging');
+}
+function dlvDragEnd(ev) { ev.target.classList.remove('dragging'); }
+function dlvDragOver(ev) { ev.preventDefault(); ev.currentTarget.classList.add('dragover'); }
+function dlvDragLeave(ev) { ev.currentTarget.classList.remove('dragover'); }
+async function dlvDrop(ev) {
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('dragover');
+  const toStage = ev.currentTarget.dataset.stage;
+  let payload; try { payload = JSON.parse(ev.dataTransfer.getData('text/plain')); } catch { return; }
+  if (payload.fromStage === toStage) return;
+  try {
+    await api(`/operacional/api/deliveries/${payload.id}/transition`, { method: 'POST', body: { to_stage: toStage } });
+    toast(`Movido pra ${_dlvLabels[toStage] || toStage} ✓`);
+    await loadDeliveries();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// Nova entrega
+function dlvOpenCreate() { document.getElementById('dlv-create-modal').style.display = 'flex'; }
+function dlvCloseCreate() { document.getElementById('dlv-create-modal').style.display = 'none'; }
+async function dlvDoCreate() {
+  const saleId = parseInt(document.getElementById('dlv-c-sale').value);
+  if (!saleId) return toast('Sale ID obrigatório', 'error');
+  const body = {
+    sale_id: saleId,
+    product_description: document.getElementById('dlv-c-product').value || null,
+    delivery_type: document.getElementById('dlv-c-type').value,
+    ideal_delivery_date: document.getElementById('dlv-c-date').value || null,
+    delivery_window: document.getElementById('dlv-c-window').value || null,
+    responsible_user: document.getElementById('dlv-c-resp').value || null,
+    internal_notes: document.getElementById('dlv-c-notes').value || null,
+  };
+  try {
+    await api('/operacional/api/deliveries', { method: 'POST', body });
+    toast('Entrega criada ✓');
+    dlvCloseCreate();
+    await loadDeliveries();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// Detalhe
+async function dlvOpenDetail(id) {
+  document.getElementById('dlv-detail-modal').style.display = 'flex';
+  const body = document.getElementById('dlv-detail-body');
+  body.innerHTML = '<div class="kb-empty">Carregando…</div>';
+  try {
+    const d = await api(`/operacional/api/deliveries/${id}`);
+    const ed = (lbl, val) => `<div style="display:grid;grid-template-columns:140px 1fr;gap:8px;padding:5px 0;border-bottom:1px solid #21262D"><div style="color:#888;font-size:11px">${lbl}</div><div style="color:#fff;font-size:12px">${val||'—'}</div></div>`;
+    const fmt = (s) => s ? new Date(s).toLocaleString('pt-BR') : '';
+    const fmtDay = (s) => s ? new Date(s).toLocaleDateString('pt-BR') : '';
+    body.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:14px">
+        <div>
+          <div style="font-weight:800;font-size:15px;color:#fff">${d.customer_name}</div>
+          <div style="color:#888;font-size:11px">Delivery #${d.id} · Sale #${d.sale_id}</div>
+        </div>
+        <button class="btn btn-sec" onclick="dlvCloseDetail()">✕</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+        <a href="/operacional/cliente/${d.sale_id}" target="_blank" class="btn btn-sec">📋 Card completo</a>
+        ${d.customer_phone ? `<a href="https://wa.me/55${(d.customer_phone||'').replace(/\\D/g,'')}" target="_blank" class="btn" style="color:#25D366;border-color:#25D366">📱 WhatsApp</a>` : ''}
+        <button class="btn btn-warn" onclick="dlvAssignRoute(${d.id})">🛣 Vincular rota</button>
+        <button class="btn btn-warn" onclick="dlvAttachProof(${d.id})">📷 Comprovante</button>
+      </div>
+      <div style="background:#0D1117;border-radius:6px;padding:10px;margin-bottom:10px">
+        ${ed('Stage atual', _dlvLabels[d.stage] || d.stage)}
+        ${ed('Produto', d.product)}
+        ${ed('Tipo', d.delivery_type)}
+        ${ed('Data ideal', fmtDay(d.ideal_delivery_date))}
+        ${ed('Janela', d.delivery_window)}
+        ${ed('Responsável', d.responsible_user)}
+        ${ed('Técnico', d.technician_name)}
+        ${ed('Rota', d.route_id ? `#${d.route_id}` : '')}
+        ${ed('Endereço', d.address)}
+        ${ed('Cidade', d.city)}
+        ${ed('Comprovante', d.proof_url ? `<a href="${d.proof_url}" target="_blank" style="color:#22c55e">📷 Abrir</a>` : '')}
+        ${ed('Entregue em', fmt(d.delivered_at))}
+      </div>
+      <div style="background:#0D1117;border-radius:6px;padding:10px">
+        <div style="font-size:11px;color:#93c5fd;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Histórico (${d.history?.length || 0})</div>
+        ${(d.history||[]).map(h => `
+          <div style="font-size:11px;color:#aaa;padding:4px 0;border-bottom:1px solid #21262D">
+            <span style="color:#888">${fmt(h.at)}</span> · ${h.from ? _dlvLabels[h.from]||h.from : '—'} → <b style="color:#fff">${_dlvLabels[h.to]||h.to}</b>
+            ${h.by ? ` · ${h.by}` : ''}
+            ${h.source ? ` · <span style="color:#fbbf24">${h.source}</span>` : ''}
+            ${h.notes ? `<div style="color:#cbd5e1;margin-top:2px">${h.notes}</div>` : ''}
+          </div>
+        `).join('') || '<div style="color:#666;font-size:11px">Sem eventos</div>'}
+      </div>
+    `;
+  } catch (e) {
+    body.innerHTML = `<div style="color:${e.silent?'#888':'#f87171'};padding:20px">${e.silent?'⏸ aguardando login…':e.message}</div>`;
+  }
+}
+function dlvCloseDetail() { document.getElementById('dlv-detail-modal').style.display = 'none'; }
+
+async function dlvAssignRoute(id) {
+  const rid = prompt('Route ID a vincular:');
+  if (!rid) return;
+  const tid = prompt('Technician ID (opcional, deixe vazio pra pegar da rota):') || null;
+  try {
+    await api(`/operacional/api/deliveries/${id}/assign-route`, { method: 'POST', body: { route_id: parseInt(rid), technician_id: tid ? parseInt(tid) : null } });
+    toast('Rota vinculada ✓');
+    await dlvOpenDetail(id);
+    await loadDeliveries();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function dlvAttachProof(id) {
+  const url = prompt('URL do comprovante (foto/link):');
+  if (!url) return;
+  const notes = prompt('Observação (opcional):') || '';
+  try {
+    await api(`/operacional/api/deliveries/${id}/proof`, { method: 'POST', body: { proof_url: url, notes } });
+    toast('Comprovante anexado ✓');
+    await dlvOpenDetail(id);
+    await loadDeliveries();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// F-DELIVERY-ROUTE — Sugestões IA de encaixe em rota
+let _rfData = [];
+function rfToggle() {
+  const body = document.getElementById('rf-body');
+  const arrow = document.getElementById('rf-arrow');
+  body.classList.toggle('show');
+  arrow.textContent = body.classList.contains('show') ? '▲' : '▼';
+  if (body.classList.contains('show') && _rfData.length === 0) loadRouteFits();
+}
+async function loadRouteFits() {
+  const body = document.getElementById('rf-body');
+  body.classList.add('show');
+  document.getElementById('rf-arrow').textContent = '▲';
+  body.innerHTML = '<div style="color:#888;text-align:center;padding:14px">Calculando…</div>';
+  const max_km = document.getElementById('rf-max-km').value || 10;
+  const days_ahead = document.getElementById('rf-days').value || 7;
+  try {
+    const r = await api(`/operacional/api/deliveries/route-fits?max_km=${max_km}&days_ahead=${days_ahead}&min_score=30`);
+    _rfData = r.items || [];
+    document.getElementById('rf-count').textContent = _rfData.length;
+    if (!_rfData.length) {
+      body.innerHTML = '<div style="color:#888;text-align:center;padding:14px">Nenhum encaixe encontrado dentro dos parâmetros. Aumente o raio ou os dias.</div>';
+      return;
+    }
+    // Agrupa por delivery
+    const byDelivery = {};
+    for (const s of _rfData) {
+      if (!byDelivery[s.delivery_id]) byDelivery[s.delivery_id] = [];
+      byDelivery[s.delivery_id].push(s);
+    }
+    body.innerHTML = Object.values(byDelivery).map(group => {
+      const top = group[0];
+      return group.map((s, idx) => {
+        const cls = s.score >= 70 ? '' : (s.score >= 50 ? 'med' : 'low');
+        return `
+          <div class="rf-card">
+            <div class="info">
+              <div class="name">${idx === 0 ? `📦 ${s.delivery_customer}` : '↳ alternativa'} ${idx === 0 ? `<span style="color:#888;font-size:11px;font-weight:400">— ${s.delivery_product || ''}</span>` : ''}</div>
+              <div class="meta">📍 ${s.delivery_city || '—'} ${s.delivery_ideal_date ? `· ideal ${new Date(s.delivery_ideal_date).toLocaleDateString('pt-BR')}` : ''}</div>
+              <div class="ratio">→ Rota #${s.route_id} (${new Date(s.route_date).toLocaleDateString('pt-BR')}) · ${s.rationale}</div>
+              <div style="color:#94a3b8;font-size:10px;margin-top:2px">⏱ +${s.added_time_min} min · ${s.distance_km} km</div>
+            </div>
+            <div class="score">
+              <div class="pts ${cls}">${s.score}</div>
+              <div class="actions">
+                <button class="btn btn-warn" style="padding:5px 10px;font-size:11px" onclick="rfAccept(${s.delivery_id}, ${s.route_id}, ${s.technician_id || 'null'})">Aceitar</button>
+                <button class="btn btn-sec" style="padding:5px 10px;font-size:11px" onclick="dlvOpenDetail(${s.delivery_id})">Detalhes</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }).join('');
+  } catch (e) {
+    body.innerHTML = `<div style="color:${e.silent?'#888':'#f87171'};padding:14px">${e.silent?'⏸ aguardando login…':e.message}</div>`;
+  }
+}
+async function rfAccept(deliveryId, routeId, techId) {
+  if (!confirm(`Vincular delivery #${deliveryId} à rota #${routeId}?`)) return;
+  try {
+    await api(`/operacional/api/deliveries/${deliveryId}/assign-route`, {
+      method:'POST', body:{ route_id: routeId, technician_id: techId || null }
+    });
+    toast('Encaixe aceito ✓');
+    await Promise.all([loadDeliveries(), loadRouteFits()]);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function dlvBackfill() {
+  if (!confirm('Rodar backfill — cria Delivery a partir de Sales com delivery_type=entrega_propria|instalacao_propria que ainda não tenham Delivery. Continuar?')) return;
+  try {
+    const r = await api('/operacional/api/deliveries/backfill', { method: 'POST', body: {} });
+    toast(`Backfill: ${r.created} criadas, ${r.skipped} já existiam`);
+    await loadDeliveries();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ===== ABA 4 — MANUTENÇÃO + FORECAST =====
+async function loadManutencao() {
+  const aba = document.getElementById('aba-manutencao');
+  if (!aba.querySelector('.maintained')) {
+    aba.innerHTML = `
+      <style>
+        .mt-grid { display: grid; grid-template-columns: 1fr 1.3fr; gap: 12px; }
+        @media (max-width: 1100px) { .mt-grid { grid-template-columns: 1fr; } }
+        .mt-col { background: #161B22; border: 1px solid #30363D; border-radius: 10px; min-height: 60vh; display: flex; flex-direction: column; }
+        .mt-col h3 { padding: 12px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: #aaa; margin: 0; border-bottom: 1px solid #30363D; display: flex; justify-content: space-between; }
+        .mt-col h3 .ct { background:#21262D;padding:2px 8px;border-radius:8px;color:#fff;font-size:11px }
+        .mt-list { flex:1; overflow-y: auto; padding: 4px; }
+        .mt-toolbar { padding: 8px 12px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid #21262D; }
+        .fc-row { display: grid; grid-template-columns: 1fr 90px 80px 70px; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #21262D; cursor: pointer; }
+        .fc-row:hover { background: rgba(163,113,247,.05); }
+        .fc-row .fc-cust { color: #fff; font-weight: 600; font-size: 12px; }
+        .fc-row .fc-prod { color: #888; font-size: 10px; }
+        .fc-row .fc-cat { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(163,113,247,.15); color: #c4b5fd; text-align: center; text-transform: uppercase; }
+        .fc-row .fc-due { font-size: 11px; color: #aaa; text-align: right; }
+        .fc-row .fc-days { font-weight: 700; text-align: right; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+        .fc-days.normal  { color: #cbd5e1; }
+        .fc-days.atencao { color: #fbbf24; background: rgba(234,179,8,.1); }
+        .fc-days.urgente { color: #fb923c; background: rgba(249,115,22,.15); }
+        .fc-days.critico { color: #f87171; background: rgba(239,68,68,.18); }
+      </style>
+      <div class="mt-toolbar maintained">
+        <button class="btn btn-sec" onclick="reloadForecast()">🔄 Recalcular forecasts</button>
+        <span style="font-size:11px;color:#888">Cron diário 06:00 BRT · ciclos: AcquaBios 90d · Filtro/Bebedouro 180d · Iron Free/Scale Stop 365d</span>
+      </div>
+      <div class="mt-grid">
+        <div class="mt-col">
+          <h3>🔄 Manutenções pendentes <span class="ct" id="mt-c-pending">0</span></h3>
+          <div class="mt-list" id="mt-pending"><div class="bb-empty">Carregando…</div></div>
+        </div>
+        <div class="mt-col">
+          <h3>📅 Próximas previstas <span class="ct" id="mt-c-fc">0</span></h3>
+          <div class="mt-list" id="mt-fc"><div class="bb-empty">Carregando…</div></div>
+        </div>
+      </div>
+    `;
+  }
+
+  try {
+    const [salesRes, forecasts] = await Promise.all([
+      api('/operacional/api/sales?queue=manutencao&page_size=200'),
+      api('/operacional/api/maintenance/forecasts?limit=200'),
+    ]);
+    const sales = salesRes.items || [];
+    document.getElementById('mt-c-pending').textContent = sales.length;
+    const pendingEl = document.getElementById('mt-pending');
+    pendingEl.innerHTML = sales.length ? sales.map(s => `
+      <div class="bb-card" onclick="selectSale(${s.id});document.querySelector('[data-tab=instalacoes]').click()">
+        <div class="name">${s.customer_name || '—'}</div>
+        <div class="meta">${priorityBadge(s.service_priority)} ${(s.product_line||'').substring(0,50)}<br>📍 ${s.address?.city || '—'}<br>${s.amount ? '💰 R$ '+parseFloat(s.amount).toLocaleString('pt-BR',{minimumFractionDigits:2}) : ''}</div>
+      </div>
+    `).join('') : '<div class="bb-empty">Sem manutenções pendentes</div>';
+
+    document.getElementById('mt-c-fc').textContent = forecasts.length;
+    const fcEl = document.getElementById('mt-fc');
+    if (!forecasts.length) {
+      fcEl.innerHTML = '<div class="bb-empty">Sem forecasts — clique "Recalcular"</div>';
+    } else {
+      fcEl.innerHTML = forecasts.map(f => `
+        <div class="fc-row" onclick="if(${f.sale_id}){selectSale(${f.sale_id});document.querySelector('[data-tab=instalacoes]').click()}">
+          <div>
+            <div class="fc-cust">${f.customer_name || '—'} ${f.city ? `<span style="color:#888;font-size:10px">· ${f.city}</span>` : ''}</div>
+            <div class="fc-prod">${(f.product_line||'').substring(0, 60)}</div>
+          </div>
+          <div class="fc-cat">${f.product_category}</div>
+          <div class="fc-due">${new Date(f.next_due_at).toLocaleDateString('pt-BR')}</div>
+          <div class="fc-days ${f.urgency}">${f.days_until_due >= 0 ? '+'+f.days_until_due : f.days_until_due}d</div>
+        </div>
+      `).join('');
+    }
+  } catch (e) {
+    document.querySelectorAll('#aba-manutencao .mt-list').forEach(el => el.innerHTML = `<div class="bb-empty" style="color:${e.silent?'#888':'#f87171'}">${e.silent?'⏸ aguardando login…':e.message}</div>`);
+  }
+}
+
+async function reloadForecast() {
+  toast('Recalculando forecasts…');
+  try {
+    const r = await api('/operacional/api/maintenance/forecast/run', { method: 'POST' });
+    toast(`Forecast: ${r.forecasts_upserted}/${r.sales_scanned} sales analisadas`);
+    loadManutencao();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ===== ABA 5 — PÓS-VENDA (F7 sync módulo P_s_Venda Zoho) =====
+// ===== ABA 5 — PÓS-VENDA REAL (F-POSVENDA-REAL) =====
+let _pvData = [];
+
+async function loadPosvenda() {
+  const aba = document.getElementById('aba-posvenda');
+  if (!aba.querySelector('.pv-grid')) {
+    aba.innerHTML = `
+      <style>
+        .pv-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px }
+        @media (max-width:900px) { .pv-kpis { grid-template-columns:1fr 1fr } }
+        .pv-kpi { background:#161B22; border:1px solid #30363D; border-radius:10px; padding:12px 14px; border-top:3px solid var(--c) }
+        .pv-kpi .lbl { font-size:10px; color:#888; text-transform:uppercase; letter-spacing:.6px }
+        .pv-kpi .val { font-size:24px; font-weight:900; color:#fff; line-height:1.1; margin-top:4px }
+        .pv-kpi .sub { font-size:11px; color:#aaa; margin-top:2px }
+
+        .pv-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px }
+        @media (max-width:1300px) { .pv-grid { grid-template-columns:1fr 1fr } }
+        @media (max-width:700px)  { .pv-grid { grid-template-columns:1fr } }
+        .pv-col { background:#161B22; border:1px solid #30363D; border-top:3px solid var(--c); border-radius:10px; min-height:60vh; display:flex; flex-direction:column }
+        .pv-col h3 { padding:10px 14px; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:#aaa; margin:0; border-bottom:1px solid #21262D; display:flex; justify-content:space-between }
+        .pv-col h3 .ct { background:#21262D; padding:2px 8px; border-radius:8px; color:#fff; font-size:11px }
+        .pv-list { flex:1; overflow-y:auto; padding:6px }
+        .pv-card { background:#0D1117; border:1px solid #21262D; border-radius:6px; padding:10px 12px; margin:4px; transition:all .15s; cursor:pointer; border-left:3px solid var(--c) }
+        .pv-card:hover { border-color:#1f6feb; transform:translateY(-1px) }
+        .pv-card .name { color:#fff; font-weight:700; font-size:12px; margin-bottom:4px }
+        .pv-card .meta { color:#888; font-size:11px; line-height:1.5 }
+        .pv-card .stars { color:#fbbf24; font-size:12px; letter-spacing:1px }
+        .pv-card .actions { margin-top:6px; display:flex; gap:4px; flex-wrap:wrap }
+        .pv-card .actions button { background:#21262D; border:1px solid #30363D; color:#fff; padding:3px 7px; border-radius:4px; font-size:10px; cursor:pointer }
+        .pv-card .actions button:hover { background:#1f6feb }
+        .pv-empty { color:#666; text-align:center; padding:30px 14px; font-size:11px }
+        .pv-toolbar { padding:0 0 10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+
+        /* Drawer */
+        .pvd-overlay { position:fixed; right:-560px; top:0; bottom:0; width:540px; max-width:95vw; background:#0D1117; border-left:1px solid #30363D; z-index:9000; transition:right .25s; display:flex; flex-direction:column; box-shadow:-4px 0 30px rgba(0,0,0,.6) }
+        .pvd-overlay.show { right:0 }
+        .pvd-h { padding:14px 18px; border-bottom:1px solid #30363D; display:flex; justify-content:space-between; align-items:flex-start; gap:10px }
+        .pvd-h .name { font-size:16px; font-weight:800; color:#fff }
+        .pvd-h .meta { font-size:11px; color:#888; margin-top:4px }
+        .pvd-body { flex:1; overflow-y:auto; padding:14px 18px }
+        .pvd-section { margin-bottom:14px }
+        .pvd-section h4 { font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:#93c5fd; margin:0 0 8px; padding-bottom:4px; border-bottom:1px solid #21262D }
+        .pvd-row { display:grid; grid-template-columns:120px 1fr; gap:8px; padding:5px 0; align-items:center }
+        .pvd-row .lbl { color:#888; font-size:11px }
+        .pvd-row .val { color:#fff; font-size:12px }
+        .pvd-row input, .pvd-row select, .pvd-row textarea { width:100%; background:#0D1117; border:1px solid #30363D; color:#fff; padding:5px 8px; border-radius:4px; font-size:12px; font-family:inherit; box-sizing:border-box }
+        .pvd-row textarea { min-height:50px; resize:vertical }
+      </style>
+
+      <div class="pv-toolbar">
+        <button class="btn btn-sec" onclick="syncPosvenda()">🔄 Sync Zoho P_s_Venda</button>
+        <span style="font-size:11px;color:#888">Sync automático 30min · fonte: módulo P_s_Venda do Zoho · match por Pedido_SIGE</span>
+      </div>
+
+      <div class="pv-kpis">
+        <div class="pv-kpi" style="--c:#fb923c">
+          <div class="lbl">📞 Aguardando contato</div>
+          <div class="val" id="pvk-cont">0</div>
+          <div class="sub" id="pvk-cont-sub">—</div>
+        </div>
+        <div class="pv-kpi" style="--c:#fbbf24">
+          <div class="lbl">⭐ NPS médio</div>
+          <div class="val" id="pvk-nps">—</div>
+          <div class="sub" id="pvk-nps-sub">—</div>
+        </div>
+        <div class="pv-kpi" style="--c:#22c55e">
+          <div class="lbl">💰 Upsell ativo</div>
+          <div class="val" id="pvk-up">0</div>
+          <div class="sub" id="pvk-up-sub">—</div>
+        </div>
+        <div class="pv-kpi" style="--c:#ef4444">
+          <div class="lbl">🛠 Precisa suporte</div>
+          <div class="val" id="pvk-sup">0</div>
+          <div class="sub" id="pvk-sup-sub">—</div>
+        </div>
+      </div>
+
+      <div class="pv-grid">
+        <div class="pv-col" style="--c:#fb923c">
+          <h3>📞 Aguardando contato <span class="ct" id="pv-c-cont">0</span></h3>
+          <div class="pv-list" id="pv-cont"><div class="pv-empty">Carregando…</div></div>
+        </div>
+        <div class="pv-col" style="--c:#fbbf24">
+          <h3>⭐ Satisfação NPS <span class="ct" id="pv-c-sat">0</span></h3>
+          <div class="pv-list" id="pv-sat"><div class="pv-empty">Carregando…</div></div>
+        </div>
+        <div class="pv-col" style="--c:#22c55e">
+          <h3>💰 Oportunidades upsell <span class="ct" id="pv-c-up">0</span></h3>
+          <div class="pv-list" id="pv-up"><div class="pv-empty">Carregando…</div></div>
+        </div>
+        <div class="pv-col" style="--c:#ef4444">
+          <h3>🛠 Suporte técnico <span class="ct" id="pv-c-sup">0</span></h3>
+          <div class="pv-list" id="pv-sup"><div class="pv-empty">Carregando…</div></div>
+        </div>
+      </div>
+
+      <!-- Drawer -->
+      <div class="pvd-overlay" id="pvd-overlay">
+        <div class="pvd-h">
+          <div>
+            <div class="name" id="pvd-name">—</div>
+            <div class="meta" id="pvd-meta">—</div>
+          </div>
+          <button class="dr-close" onclick="pvdClose()" style="background:#21262D;border:1px solid #30363D;color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer">✕</button>
+        </div>
+        <div class="pvd-body" id="pvd-body"></div>
+      </div>
+    `;
+  }
+
+  try {
+    const all = await api('/operacional/api/post-sale?limit=200');
+    _pvData = all;
+
+    const cont = all.filter(r => (r.status === 'aguardando_contato' || r.status === 'em_andamento' || r.status === 'escalado') && !r.needs_tech_support);
+    const sat = all.filter(r => r.satisfaction_score != null);
+    const up = all.filter(r => r.upsell_opportunity);
+    const sup = all.filter(r => r.needs_tech_support);
+
+    // KPIs
+    document.getElementById('pvk-cont').textContent = cont.length;
+    const escalados = cont.filter(r => r.status === 'escalado').length;
+    document.getElementById('pvk-cont-sub').textContent = escalados ? `${escalados} escalado(s)` : 'sem escalação';
+
+    if (sat.length) {
+      const avg = sat.reduce((a, r) => a + r.satisfaction_score, 0) / sat.length;
+      document.getElementById('pvk-nps').textContent = avg.toFixed(1) + '⭐';
+      const promotores = sat.filter(r => r.satisfaction_score >= 4).length;
+      const detratores = sat.filter(r => r.satisfaction_score <= 2).length;
+      document.getElementById('pvk-nps-sub').textContent = `${promotores} promotor(es) · ${detratores} detrator(es)`;
+    } else {
+      document.getElementById('pvk-nps').textContent = '—';
+      document.getElementById('pvk-nps-sub').textContent = 'sem avaliações';
+    }
+
+    document.getElementById('pvk-up').textContent = up.length;
+    const upValue = up.reduce((a, r) => a + parseFloat(r.upsell_value_estimated || 0), 0);
+    document.getElementById('pvk-up-sub').textContent = upValue ? `R$ ${upValue.toLocaleString('pt-BR',{minimumFractionDigits:2})} estimado` : 'sem valor estimado';
+
+    document.getElementById('pvk-sup').textContent = sup.length;
+    document.getElementById('pvk-sup-sub').textContent = sup.length ? '⚠ ação urgente' : 'tudo ok';
+
+    document.getElementById('pv-c-cont').textContent = cont.length;
+    document.getElementById('pv-c-sat').textContent = sat.length;
+    document.getElementById('pv-c-up').textContent = up.length;
+    document.getElementById('pv-c-sup').textContent = sup.length;
+
+    pvRender('pv-cont', cont);
+    pvRender('pv-sat', sat);
+    pvRender('pv-up', up);
+    pvRender('pv-sup', sup);
+
+    // Badge da aba
+    const badge = document.getElementById('t-posvenda');
+    if (badge) badge.textContent = cont.length + sup.length;
+  } catch (e) {
+    document.querySelectorAll('#aba-posvenda .pv-list').forEach(el => el.innerHTML = `<div class="pv-empty" style="color:${e.silent?'#888':'#f87171'}">${e.silent?'⏸ aguardando login…':e.message}</div>`);
+  }
+}
+
+function pvRender(elId, items) {
+  const el = document.getElementById(elId);
+  if (!items.length) {
+    el.innerHTML = '<div class="pv-empty">Sem itens</div>';
+    return;
+  }
+  el.innerHTML = items.map(r => {
+    const stars = r.satisfaction_score ? '⭐'.repeat(r.satisfaction_score) + '☆'.repeat(5 - r.satisfaction_score) : '';
+    const statusBadge = r.status === 'escalado' ? '<span style="background:#ef4444;color:#fff;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700">ESCALADO</span>' : '';
+    return `
+      <div class="pv-card" onclick="pvdOpen(${r.id})">
+        <div class="name">${r.customer_name || '—'} ${statusBadge}</div>
+        <div class="meta">
+          ${stars ? `<div class="stars">${stars} ${r.satisfaction_score}/5</div>` : ''}
+          ${r.current_stage ? `🏷 ${r.current_stage}<br>` : ''}
+          ${r.next_action ? `🎯 ${r.next_action.substring(0,60)}<br>` : ''}
+          ${r.upsell_opportunity ? `💰 ${r.upsell_opportunity}${r.upsell_value_estimated ? ' (R$ ' + parseFloat(r.upsell_value_estimated).toLocaleString('pt-BR',{minimumFractionDigits:0}) + ')' : ''}<br>` : ''}
+          ${r.pendencies ? `⚠ ${r.pendencies.substring(0,60)}<br>` : ''}
+          ${r.internal_owner ? `👤 ${r.internal_owner}<br>` : ''}
+          ${r.last_contact_at
+            ? `📅 ${new Date(r.last_contact_at).toLocaleDateString('pt-BR')}`
+            : '<span style="color:#fb923c">📅 sem contato</span>'
+          }
+        </div>
+        <div class="actions">
+          <button onclick="event.stopPropagation();pvContact(${r.id})" title="Marcar contato feito agora">📞 Contato</button>
+          ${r.status !== 'escalado' ? `<button onclick="event.stopPropagation();pvEscalate(${r.id})" style="border-color:#ef4444;color:#ef4444">🚨 Escalar</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== Drawer Pós-Venda — F-POSVENDA-REAL =====
+let _pvdCurrent = null;
+async function pvdOpen(id) {
+  document.getElementById('pvd-overlay').classList.add('show');
+  document.getElementById('pvd-name').textContent = 'Carregando…';
+  document.getElementById('pvd-body').innerHTML = '<div style="color:#666;padding:20px;text-align:center">Carregando…</div>';
+  try {
+    const r = await api(`/operacional/api/post-sale/${id}`);
+    _pvdCurrent = r;
+    pvdRender();
+  } catch (e) {
+    document.getElementById('pvd-body').innerHTML = `<div style="color:${e.silent?'#888':'#f87171'};padding:20px">${e.silent?'⏸ aguardando login…':e.message}</div>`;
+  }
+}
+function pvdClose() { document.getElementById('pvd-overlay').classList.remove('show'); _pvdCurrent = null; }
+
+function pvdRender() {
+  const r = _pvdCurrent;
+  if (!r) return;
+  const stars = r.satisfaction_score ? '⭐'.repeat(r.satisfaction_score) + '☆'.repeat(5 - r.satisfaction_score) : '—';
+  document.getElementById('pvd-name').textContent = r.customer_name || `Pós-venda #${r.id}`;
+  document.getElementById('pvd-meta').innerHTML = `Sale #${r.sale_id} · ${r.status || 'sem status'} · ${stars}`;
+
+  const ed = (key, label, type='text', val=null) => {
+    const v = val !== null ? val : (r[key] ?? '');
+    return `
+      <div class="pvd-row">
+        <div class="lbl">${label}</div>
+        <div class="val">
+          ${type === 'textarea' ? `<textarea data-field="${key}">${v||''}</textarea>` :
+            type === 'select-status' ? `
+              <select data-field="${key}">
+                <option value="">—</option>
+                <option value="aguardando_contato" ${v==='aguardando_contato'?'selected':''}>Aguardando contato</option>
+                <option value="em_andamento" ${v==='em_andamento'?'selected':''}>Em andamento</option>
+                <option value="concluido" ${v==='concluido'?'selected':''}>Concluído</option>
+                <option value="escalado" ${v==='escalado'?'selected':''}>Escalado</option>
+              </select>` :
+            type === 'select-score' ? `
+              <select data-field="${key}">
+                <option value="">—</option>
+                ${[1,2,3,4,5].map(n => `<option value="${n}" ${parseInt(v)===n?'selected':''}>${'⭐'.repeat(n)} (${n})</option>`).join('')}
+              </select>` :
+            type === 'checkbox' ? `<input type="checkbox" data-field="${key}" ${v ? 'checked' : ''}>` :
+            type === 'datetime' ? `<input type="datetime-local" data-field="${key}" value="${v ? new Date(v).toISOString().slice(0,16) : ''}">` :
+            `<input type="${type}" data-field="${key}" value="${(v||'').toString().replace(/"/g,'&quot;')}">`
+          }
+        </div>
+      </div>`;
+  };
+
+  document.getElementById('pvd-body').innerHTML = `
+    <div class="pvd-section">
+      <h4>📋 Status</h4>
+      ${ed('status', 'Status', 'select-status')}
+      ${ed('current_stage', 'Etapa atual')}
+      ${ed('internal_owner', 'Responsável')}
+      <div class="pvd-row"><div class="lbl">Último contato</div><div class="val">${r.last_contact_at ? new Date(r.last_contact_at).toLocaleString('pt-BR') : '—'}</div></div>
+    </div>
+
+    <div class="pvd-section">
+      <h4>⭐ Satisfação</h4>
+      ${ed('satisfaction_score', 'Nota (1-5)', 'select-score')}
+    </div>
+
+    <div class="pvd-section">
+      <h4>🎯 Próxima ação</h4>
+      ${ed('next_action', 'Ação', 'textarea')}
+      ${ed('next_action_at', 'Data/hora', 'datetime')}
+    </div>
+
+    <div class="pvd-section">
+      <h4>💰 Upsell</h4>
+      ${ed('upsell_opportunity', 'Oportunidade')}
+      ${ed('upsell_value_estimated', 'Valor estimado (R$)', 'number')}
+    </div>
+
+    <div class="pvd-section">
+      <h4>🛠 Suporte técnico</h4>
+      ${ed('needs_tech_support', 'Precisa suporte?', 'checkbox')}
+      ${ed('pendencies', 'Pendências', 'textarea')}
+      ${ed('observations', 'Observações', 'textarea')}
+    </div>
+
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-pri" onclick="pvdSave()" style="background:#1f6feb;color:#fff;border-color:#1f6feb">💾 Salvar alterações</button>
+      <button class="btn btn-sec" onclick="pvContact(${r.id});pvdClose()">📞 Marcar contato agora</button>
+      ${r.status !== 'escalado' ? `<button class="btn btn-danger" style="border-color:#ef4444;color:#ef4444" onclick="pvEscalate(${r.id});pvdClose()">🚨 Escalar</button>` : ''}
+      <a href="/operacional/cliente/${r.sale_id}" target="_blank" class="btn btn-sec" style="text-decoration:none">📋 Card cliente</a>
+    </div>
+  `;
+}
+
+async function pvdSave() {
+  if (!_pvdCurrent) return;
+  const fields = {};
+  document.querySelectorAll('#pvd-body [data-field]').forEach(el => {
+    const k = el.dataset.field;
+    let v = el.type === 'checkbox' ? el.checked : el.value;
+    if (v === '') v = null;
+    if (k === 'satisfaction_score' || k === 'upsell_value_estimated') v = v ? parseFloat(v) : null;
+    if (k === 'next_action_at' && v) v = new Date(v).toISOString();
+    fields[k] = v;
+  });
+  try {
+    await api(`/operacional/api/post-sale/${_pvdCurrent.id}`, { method: 'PATCH', body: fields });
+    toast('Alterações salvas ✓');
+    await loadPosvenda();
+    pvdClose();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function syncPosvenda() {
+  toast('Sincronizando com Zoho P_s_Venda…');
+  try {
+    const r = await api('/operacional/api/post-sale/sync', { method: 'POST' });
+    toast(`Sync: ${r.matched} novos / ${r.fetched} fetched`, 'success');
+    loadPosvenda();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function pvContact(id) {
+  try {
+    await api(`/operacional/api/post-sale/${id}/contact`, { method: 'POST' });
+    toast('Contato registrado ✓');
+    loadPosvenda();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function pvEscalate(id) {
+  if (!confirm('Escalar esse pós-venda?')) return;
+  try {
+    await api(`/operacional/api/post-sale/${id}/escalate`, { method: 'POST' });
+    toast('Escalado 🚨', 'success');
+    loadPosvenda();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function kbDetails(shipId) {
+  try {
+    const hist = await api(`/operacional/api/shipments/${shipId}/history`);
+    const lines = hist.map(h => `${new Date(h.created_at).toLocaleString('pt-BR')} • ${h.from_stage || '(início)'} → ${h.to_stage} ${h.changed_by ? '(' + h.changed_by + ')' : ''}${h.notes ? ' — '+h.notes : ''}`).join('\n');
+    alert(`Histórico do envio ${shipId}:\n\n${lines}`);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// KPIs auxiliares
+// F8 — Alert Engine: badge usa /alerts/summary (persistido + dedup + ack)
+async function loadBellCount() {
+  try {
+    const r = await api('/operacional/api/alerts/summary');
+    const el = document.getElementById('bell-count');
+    if (!el) return;
+    const total = r.total_open || 0;
+    if (total > 0) {
+      el.style.display = 'inline-block';
+      el.textContent = total > 99 ? '99+' : total;
+      const crit = r.by_severity?.critical || 0;
+      const warn = r.by_severity?.warning || 0;
+      if (crit > 0) { el.style.background = '#ef4444'; el.style.color = '#fff'; }
+      else if (warn > 0) { el.style.background = '#fb923c'; el.style.color = '#fff'; }
+      else { el.style.background = '#fbbf24'; el.style.color = '#000'; }
+    } else {
+      el.style.display = 'none';
+    }
+  } catch {}
+}
+setInterval(loadBellCount, 30000);
+loadBellCount();
+
+// F8 — Alert Engine: drawer lateral
+const ALERT_TYPE_LABEL = {
+  intake_awaiting: '🤖 Intake aguardando',
+  sale_unrouted_48h: '📦 Venda sem rota',
+  shipment_stuck: '🚚 Envio parado',
+  visit_pending_creation: '🔧 Visit pendente AUVO',
+  refill_overdue: '💧 Refil vencido',
+  postsale_low_sat: '😞 Satisfação baixa',
+  route_overrun: '⚠️ Rota fora do plano',
+  geofence_violation: '📍 Geofence violada',
+  speed_excess: '🏎 Excesso de velocidade',
+};
+const SEV_COLOR = { critical: '#ef4444', warning: '#fb923c', info: '#fbbf24' };
+const SEV_RANK = { critical: 0, warning: 1, info: 2 };
+
+async function openAlertsDrawer() {
+  const dr = document.getElementById('alerts-drawer');
+  if (!dr) return;
+  dr.style.display = 'flex';
+  setTimeout(() => dr.classList.add('open'), 10);
+  await loadAlertsList();
+}
+function closeAlertsDrawer() {
+  const dr = document.getElementById('alerts-drawer');
+  if (!dr) return;
+  dr.classList.remove('open');
+  setTimeout(() => { dr.style.display = 'none'; }, 250);
+}
+async function loadAlertsList() {
+  const body = document.getElementById('alerts-drawer-body');
+  if (!body) return;
+  body.innerHTML = '<div style="padding:20px;color:#888;text-align:center">Carregando…</div>';
+  try {
+    const filter = document.getElementById('alerts-drawer-filter')?.value || 'open';
+    const r = await api(`/operacional/api/alerts?status=${filter}&limit=200`);
+    const alerts = r.alerts || [];
+    if (alerts.length === 0) {
+      body.innerHTML = '<div style="padding:30px;color:#22c55e;text-align:center;font-size:13px">✅ Nenhum alerta nesse filtro.</div>';
+      return;
+    }
+    alerts.sort((a, b) => (SEV_RANK[a.severity] ?? 9) - (SEV_RANK[b.severity] ?? 9));
+    let html = '';
+    let lastSev = null;
+    for (const a of alerts) {
+      if (a.severity !== lastSev) {
+        html += `<div style="padding:10px 14px 4px;font-size:10px;font-weight:800;letter-spacing:1px;color:${SEV_COLOR[a.severity]||'#888'};text-transform:uppercase">${a.severity}</div>`;
+        lastSev = a.severity;
+      }
+      const label = ALERT_TYPE_LABEL[a.alert_type] || a.alert_type;
+      const ts = a.last_seen_at ? new Date(a.last_seen_at).toLocaleString('pt-BR') : '';
+      const link = a.link ? `<a href="${a.link}" style="color:#58a6ff;font-size:11px;text-decoration:none">abrir ↗</a>` : '';
+      const acked = a.status === 'acked';
+      const resolved = a.status === 'resolved';
+      const ackBtn = !acked && !resolved
+        ? `<button onclick="ackAlert(${a.id})" style="background:transparent;border:1px solid #444;color:#aaa;padding:3px 8px;border-radius:4px;font-size:10px;cursor:pointer">marcar visto</button>`
+        : (acked ? `<span style="font-size:10px;color:#888">✓ visto por ${a.acked_by||'?'}</span>` : '');
+      const resBtn = !resolved
+        ? `<button onclick="resolveAlert(${a.id})" style="background:transparent;border:1px solid #22c55e;color:#22c55e;padding:3px 8px;border-radius:4px;font-size:10px;cursor:pointer">resolver</button>`
+        : `<span style="font-size:10px;color:#22c55e">✓ resolvido</span>`;
+      html += `<div style="padding:10px 14px;border-bottom:1px solid #21262D;display:flex;flex-direction:column;gap:6px${resolved?';opacity:0.55':''}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <span style="font-size:11px;font-weight:700;color:${SEV_COLOR[a.severity]||'#fff'}">${label}</span>
+          ${link}
+        </div>
+        <div style="font-size:12px;color:#e6edf3;line-height:1.35">${escapeHTML(a.message)}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-size:10px;color:#666">${ts}</span>
+          <div style="display:flex;gap:6px">${ackBtn} ${resBtn}</div>
+        </div>
+      </div>`;
+    }
+    body.innerHTML = html;
+  } catch (e) {
+    body.innerHTML = `<div style="padding:20px;color:#ef4444">Erro: ${escapeHTML(e.message||String(e))}</div>`;
+  }
+}
+async function ackAlert(id) {
+  try {
+    await api(`/operacional/api/alerts/${id}/ack`, { method: 'POST' });
+    await loadAlertsList();
+    await loadBellCount();
+  } catch (e) { toast(e.message, 'error'); }
+}
+async function resolveAlert(id) {
+  try {
+    await api(`/operacional/api/alerts/${id}/resolve`, { method: 'POST' });
+    await loadAlertsList();
+    await loadBellCount();
+  } catch (e) { toast(e.message, 'error'); }
+}
+function escapeHTML(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function loadKpis() {
+  try {
+    const pend = await api('/operacional/api/sales?status=aguardando_rota&page_size=200');
+    document.getElementById('k-pending').textContent = (pend.items||[]).length;
+  } catch {}
+  try {
+    const ag = await api('/operacional/api/sales?status=agendado&page_size=200');
+    document.getElementById('k-agendados').textContent = (ag.items||[]).length;
+  } catch {}
+  try {
+    // F-DELIVERY-ROUTE: usa endpoint route-fits pra contar sugestões reais
+    const r = await api('/operacional/api/deliveries/route-fits?max_km=10&days_ahead=7&min_score=30');
+    document.getElementById('k-encaixe').textContent = r.count || 0;
+    // "Sugere nova rota" = sales aguardando rota sem encaixe possível (estimativa: pending - count com sale_id)
+    const pend = await api('/operacional/api/sales?status=aguardando_rota&page_size=200');
+    const pendCount = (pend.items||[]).length;
+    const fitSaleIds = new Set((r.items||[]).map(x => x.delivery_id));
+    document.getElementById('k-novarota').textContent = Math.max(0, pendCount - fitSaleIds.size);
+  } catch {}
+  try {
+    const techs = await api('/operacional/api/technicians/availability');
+    document.getElementById('k-techs').textContent = techs.filter(t => t.has_window).length;
+  } catch {}
+  try {
+    const routes = await api('/operacional/api/routes');
+    document.getElementById('k-routes').textContent = routes.length;
+  } catch {}
+}
+
+// ============ F-COUNTERS — Handlers clicáveis ============
+function kpiClickPending() {
+  document.querySelectorAll('.op-kpi').forEach(el => el.classList.remove('active-filter'));
+  document.querySelector('[onclick="kpiClickPending()"]')?.classList.add('active-filter');
+  pendingMenuOpen();
+}
+
+// ============ Menu Aguardando Rota — igual Agendados ============
+const PEND = { items: [], selected: new Set() };
+
+async function pendingMenuOpen() {
+  let modal = document.getElementById('pd-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'pd-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9500;display:flex;align-items:center;justify-content:center;padding:14px';
+    modal.onclick = (e) => { if (e.target===modal) modal.remove(); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div style="background:#161B22;border:1px solid #30363D;border-radius:12px;width:880px;max-width:100%;max-height:92vh;display:flex;flex-direction:column" onclick="event.stopPropagation()">
+      <div style="padding:14px 18px;border-bottom:1px solid #30363D;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0;font-size:14px;color:#fff">⏳ Sales aguardando rota</h3>
+        <button onclick="document.getElementById('pd-modal').remove()" style="background:#21262D;border:1px solid #30363D;color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer">✕</button>
+      </div>
+      <div style="padding:10px 18px;border-bottom:1px solid #21262D;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input id="pd-search" placeholder="Buscar cliente, cidade, produto…" oninput="pdFilter()" style="flex:1;background:#0D1117;border:1px solid #30363D;color:#fff;padding:6px 10px;border-radius:4px;font-size:12px;min-width:200px">
+        <span style="font-size:11px;color:#888"><b id="pd-sel">0</b> selecionada(s)</span>
+        <button class="btn btn-warn" onclick="pdActSelectAll()">Marcar todas</button>
+        <button class="btn btn-warn" onclick="pdActCreateRoute()">🛣 Criar rota</button>
+        <button class="btn btn-pri" style="background:#22c55e;color:#000;border-color:#22c55e" onclick="pdActAutoDist()">🤖 Auto-distribuir tudo</button>
+      </div>
+      <div style="flex:1;overflow-y:auto" id="pd-list"><div style="padding:30px;text-align:center;color:#666">Carregando…</div></div>
+    </div>
+  `;
+  PEND.selected = new Set();
+  await pdLoad();
+}
+
+async function pdLoad() {
+  try {
+    const r = await api('/operacional/api/sales?status=aguardando_rota&page_size=300');
+    PEND.items = r.items || [];
+    pdRender();
+  } catch (e) {
+    document.getElementById('pd-list').innerHTML = `<div style="padding:30px;text-align:center;color:${e.silent?'#888':'#f87171'}">${e.silent?'⏸ aguardando login…':e.message}</div>`;
+  }
+}
+
+function pdFilter() { pdRender(); }
+
+function pdRender() {
+  const q = (document.getElementById('pd-search')?.value || '').toLowerCase();
+  const filtered = q
+    ? PEND.items.filter(s => (s.customer_name||'').toLowerCase().includes(q) || (s.address?.city||'').toLowerCase().includes(q) || (s.product_line||'').toLowerCase().includes(q))
+    : PEND.items;
+  const c = document.getElementById('pd-list');
+  if (!PEND.items.length) {
+    c.innerHTML = '<div style="padding:30px;text-align:center;color:#666;font-size:12px">🎉 Nenhuma sale aguardando rota</div>';
+    return;
+  }
+  if (!filtered.length) { c.innerHTML = '<div style="padding:30px;text-align:center;color:#666;font-size:12px">Nenhum resultado pra essa busca</div>'; return; }
+  c.innerHTML = filtered.map(s => {
+    const prio = s.service_priority || 'normal';
+    const prioColor = { urgent:'#ef4444', high:'#fb923c', normal:'#888', low:'#666' }[prio] || '#888';
+    return `
+      <label style="display:grid;grid-template-columns:24px 1fr auto;gap:10px;padding:10px 14px;border-bottom:1px solid #21262D;cursor:pointer;align-items:center">
+        <input type="checkbox" data-sale="${s.id}" ${PEND.selected.has(s.id)?'checked':''} onchange="pdToggle(${s.id}, this.checked)">
+        <div>
+          <div style="color:#fff;font-size:13px;font-weight:700">${s.customer_name||'—'} ${s.is_condominio?'🏢':''} ${s.requires_material_pickup?'📦':''} ${s.required_skill_key?'🎯':''}</div>
+          <div style="color:#888;font-size:11px;margin-top:2px">${(s.product_line||'').substring(0,60)} · <span style="color:${prioColor}">${prio}</span> · 📍 ${s.address?.city||'sem cidade'}${s.amount?' · 💰 R$ '+parseFloat(s.amount).toLocaleString('pt-BR',{minimumFractionDigits:2}):''}</div>
+          ${s.requested_date ? `<div style="color:#22d3ee;font-size:10px;margin-top:2px">📅 Data solicitada: ${new Date(s.requested_date).toLocaleDateString('pt-BR')} ${s.date_flexible?'(flexível)':'(fixa)'}</div>` : ''}
+        </div>
+        <a href="/operacional/cliente/${s.id}" target="_blank" style="color:#93c5fd;text-decoration:none;font-size:11px;padding:4px 8px" onclick="event.stopPropagation()">→ Card</a>
+      </label>
+    `;
+  }).join('');
+  document.getElementById('pd-sel').textContent = PEND.selected.size;
+}
+
+function pdToggle(saleId, checked) {
+  if (checked) PEND.selected.add(saleId); else PEND.selected.delete(saleId);
+  document.getElementById('pd-sel').textContent = PEND.selected.size;
+}
+
+function pdActSelectAll() {
+  const q = (document.getElementById('pd-search')?.value || '').toLowerCase();
+  const visible = q
+    ? PEND.items.filter(s => (s.customer_name||'').toLowerCase().includes(q) || (s.address?.city||'').toLowerCase().includes(q) || (s.product_line||'').toLowerCase().includes(q))
+    : PEND.items;
+  visible.forEach(s => PEND.selected.add(s.id));
+  pdRender();
+}
+
+async function pdActCreateRoute() {
+  if (!PEND.selected.size) return toast('Selecione ao menos 1', 'error');
+  document.getElementById('pd-modal').remove();
+  await newRouteOpen();
+  _newRoute.saleIds = new Set(PEND.selected);
+  setTimeout(() => newRouteRender(), 100);
+  toast(`${PEND.selected.size} sales pré-selecionadas. Ajuste data/técnico e salve.`);
+}
+
+function pdActAutoDist() {
+  document.getElementById('pd-modal').remove();
+  autoDistOpen();
+}
+
+function kpiClickEncaixe() {
+  // Vai pra aba Entregas TDF e abre o drawer de sugestões IA (já existente, F-DELIVERY-ROUTE)
+  document.querySelectorAll('.op-kpi').forEach(el => el.classList.remove('active-filter'));
+  document.querySelector('[onclick="kpiClickEncaixe()"]')?.classList.add('active-filter');
+  const tab = document.querySelector('[data-tab=bebedouros]');
+  if (tab) tab.click();
+  setTimeout(() => {
+    const body = document.getElementById('rf-body');
+    if (body && !body.classList.contains('show')) {
+      // expandir
+      body.classList.add('show');
+      const arrow = document.getElementById('rf-arrow'); if (arrow) arrow.textContent = '▲';
+    }
+    if (typeof loadRouteFits === 'function') loadRouteFits();
+    document.getElementById('rf-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 200);
+}
+
+function kpiClickNovaRota() {
+  document.querySelectorAll('.op-kpi').forEach(el => el.classList.remove('active-filter'));
+  document.querySelector('[onclick="kpiClickNovaRota()"]')?.classList.add('active-filter');
+  // Mostra menu: criar manual OU auto-distribuir
+  if (confirm('Criar rota:\n\nOK = Manual (escolho sales 1 a 1)\nCancelar = Auto-distribuir (IA divide entre técnicos)')) {
+    newRouteOpen();
+  } else {
+    autoDistOpen();
+  }
+}
+
+// ============ F-MANUAL-SERVICE — novo serviço avulso ============
+async function manualServiceOpen() {
+  let modal = document.getElementById('ms-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'ms-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9600;display:flex;align-items:center;justify-content:center;padding:14px';
+    modal.onclick = (e) => { if (e.target===modal) modal.remove(); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div style="background:#161B22;border:1px solid #30363D;border-radius:12px;width:780px;max-width:100%;max-height:95vh;display:flex;flex-direction:column" onclick="event.stopPropagation()">
+      <div style="padding:14px 18px;border-bottom:1px solid #30363D;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0;font-size:14px;color:#fff">➕ Novo serviço avulso (manual)</h3>
+        <button onclick="document.getElementById('ms-modal').remove()" style="background:#21262D;border:1px solid #30363D;color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer">✕</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:14px 18px">
+        ${msFormHTML()}
+      </div>
+      <div style="padding:12px 18px;border-top:1px solid #30363D;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <span id="ms-status" style="font-size:11px;color:#666"></span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sec" onclick="document.getElementById('ms-modal').remove()">Cancelar</button>
+          <button class="btn btn-pri" style="background:#25D366;color:#000;border-color:#25D366" onclick="msSubmit()">💾 Criar + ver opções</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function msFormHTML() {
+  return `
+    <style>
+      .ms-section { margin-bottom:16px }
+      .ms-section h4 { margin:0 0 8px; font-size:11px; color:#93c5fd; text-transform:uppercase; letter-spacing:.5px; font-weight:700 }
+      .ms-grid { display:grid; gap:8px }
+      .ms-grid.cols-2 { grid-template-columns:1fr 1fr }
+      .ms-grid.cols-3 { grid-template-columns:1fr 1fr 1fr }
+      .ms-grid label { display:flex; flex-direction:column; gap:3px; font-size:11px; color:#cbd5e1 }
+      .ms-grid input, .ms-grid select, .ms-grid textarea {
+        background:#0D1117; border:1px solid #30363D; color:#fff;
+        padding:6px 9px; border-radius:4px; font-size:12px; font-family:inherit;
+      }
+      .ms-grid textarea { min-height:50px; resize:vertical }
+      .ms-chk { display:flex; align-items:center; gap:6px; font-size:12px; color:#cbd5e1; cursor:pointer }
+    </style>
+
+    <div class="ms-section">
+      <h4>👤 Cliente</h4>
+      <div class="ms-grid cols-3">
+        <label>Nome*<input id="ms-name" type="text" placeholder="Maria Silva"></label>
+        <label>Telefone<input id="ms-phone" type="text" placeholder="12996240914"></label>
+        <label>Email<input id="ms-email" type="email" placeholder="opcional"></label>
+      </div>
+    </div>
+
+    <div class="ms-section">
+      <h4>📍 Endereço</h4>
+      <div class="ms-grid">
+        <label>Endereço completo*<input id="ms-addr" type="text" placeholder="Av. Brasil 100, Centro, SJC/SP"></label>
+      </div>
+      <div class="ms-grid cols-3" style="margin-top:6px">
+        <label>Cidade<input id="ms-city" type="text" placeholder="São José dos Campos"></label>
+        <label>Estado<input id="ms-state" type="text" placeholder="SP" maxlength="2"></label>
+        <label>CEP<input id="ms-cep" type="text" placeholder="12243-000"></label>
+      </div>
+      <div style="margin-top:6px;display:flex;gap:14px;flex-wrap:wrap">
+        <label class="ms-chk"><input id="ms-condo" type="checkbox"> 🏢 É condomínio</label>
+        <label class="ms-chk" id="ms-condo-time-wrap" style="display:none">Até <input id="ms-condo-time" type="time" value="16:00" style="background:#0D1117;border:1px solid #30363D;color:#fff;padding:3px 6px;border-radius:3px;font-size:12px;margin-left:4px"></label>
+      </div>
+      <input id="ms-condo-notes" type="text" placeholder="Regras do condomínio (porteiro pede CPF, sem furadeira após 14h...)" style="width:100%;margin-top:6px;background:#0D1117;border:1px solid #30363D;color:#fff;padding:6px 9px;border-radius:4px;font-size:12px;display:none" id="ms-condo-notes-input">
+    </div>
+
+    <div class="ms-section">
+      <h4>🛠 Serviço</h4>
+      <div class="ms-grid cols-2">
+        <label>Produto*<input id="ms-product" type="text" placeholder="Iron Free 1000"></label>
+        <label>SKU<input id="ms-sku" type="text" placeholder="opcional"></label>
+      </div>
+      <div class="ms-grid cols-3" style="margin-top:6px">
+        <label>Tipo serviço<select id="ms-stype">
+          <option value="instalacao">Instalação</option>
+          <option value="entrega">Entrega</option>
+          <option value="manutencao">Manutenção</option>
+          <option value="retirada">Retirada</option>
+        </select></label>
+        <label>Fila<select id="ms-queue">
+          <option value="tecnica">Técnica</option>
+          <option value="bebedouro">Bebedouro</option>
+          <option value="manutencao">Manutenção</option>
+          <option value="envio">Envio</option>
+        </select></label>
+        <label>Prioridade<select id="ms-prio">
+          <option value="normal" selected>Normal</option>
+          <option value="high">Alta</option>
+          <option value="urgent">Urgente</option>
+          <option value="low">Baixa</option>
+        </select></label>
+      </div>
+      <div class="ms-grid cols-2" style="margin-top:6px">
+        <label>Skill obrigatória<select id="ms-skill"><option value="">— qualquer técnico —</option></select></label>
+        <label class="ms-chk" style="margin-top:18px"><input id="ms-pickup" type="checkbox"> 📦 Precisa pegar material no estoque (Cristiano)</label>
+      </div>
+      <textarea id="ms-obs" placeholder="Observações pra equipe (acesso, ponto referência, materiais especiais...)" style="width:100%;margin-top:6px;background:#0D1117;border:1px solid #30363D;color:#fff;padding:6px 9px;border-radius:4px;font-size:12px;min-height:50px"></textarea>
+    </div>
+
+    <div class="ms-section">
+      <h4>💰 Pagamento</h4>
+      <div class="ms-grid cols-3">
+        <label>Valor (R$)<input id="ms-amount" type="number" step="0.01" placeholder="0,00"></label>
+        <label>Forma pgto<select id="ms-paym">
+          <option value="">— a definir —</option>
+          <option value="pix">PIX</option>
+          <option value="cartao">Cartão crédito</option>
+          <option value="debito">Cartão débito</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="boleto">Boleto</option>
+          <option value="parcelado">Parcelado</option>
+          <option value="link">Link pagamento</option>
+        </select></label>
+        <label>Parcelas<input id="ms-installments" type="number" min="1" max="24" placeholder="ex 3"></label>
+      </div>
+      <div class="ms-grid cols-2" style="margin-top:6px">
+        <label>Status pagamento<select id="ms-pstatus">
+          <option value="pendente">Pendente</option>
+          <option value="parcial">Parcial</option>
+          <option value="pago">Pago</option>
+          <option value="aguardando_link">Aguardando link</option>
+        </select></label>
+      </div>
+    </div>
+
+    <div class="ms-section">
+      <h4>📅 Agendamento</h4>
+      <div class="ms-grid cols-2">
+        <label>Data solicitada (opcional)<input id="ms-rdate" type="date"></label>
+        <label class="ms-chk" style="margin-top:18px"><input id="ms-flex" type="checkbox" checked> Data flexível (IA pode encaixar em outra data)</label>
+      </div>
+      <div style="font-size:11px;color:#888;margin-top:6px">
+        💡 Se marcar uma data fixa e desmarcar "flexível", só será agendado no dia escolhido.<br>
+        Se deixar flexível, a IA tenta encaixar na rota mais próxima/conveniente.
+      </div>
+    </div>
+  `;
+}
+
+// Liga dinâmicos do form
+setTimeout(() => {
+  document.addEventListener('change', (e) => {
+    if (e.target.id === 'ms-condo') {
+      document.getElementById('ms-condo-time-wrap').style.display = e.target.checked ? 'flex' : 'none';
+      document.getElementById('ms-condo-notes-input').style.display = e.target.checked ? 'block' : 'none';
+    }
+  });
+}, 100);
+
+async function msSubmit() {
+  const name = document.getElementById('ms-name').value.trim();
+  const addr = document.getElementById('ms-addr').value.trim();
+  const product = document.getElementById('ms-product').value.trim();
+  if (!name || !addr || !product) {
+    document.getElementById('ms-status').textContent = '❌ Preencha cliente, endereço e produto';
+    document.getElementById('ms-status').style.color = '#f87171';
+    return;
+  }
+  document.getElementById('ms-status').textContent = '⏳ criando…';
+  document.getElementById('ms-status').style.color = '#888';
+  const body = {
+    customer_name: name,
+    customer_phone: document.getElementById('ms-phone').value.trim() || null,
+    customer_email: document.getElementById('ms-email').value.trim() || null,
+    raw_address: addr,
+    city: document.getElementById('ms-city').value.trim() || null,
+    state: document.getElementById('ms-state').value.trim().toUpperCase() || null,
+    cep: document.getElementById('ms-cep').value.trim() || null,
+    is_condominio: document.getElementById('ms-condo').checked,
+    condominio_deadline_time: document.getElementById('ms-condo').checked ? document.getElementById('ms-condo-time').value || null : null,
+    condominio_notes: document.getElementById('ms-condo').checked ? document.getElementById('ms-condo-notes-input').value.trim() || null : null,
+    product_line: product,
+    product_sku: document.getElementById('ms-sku').value.trim() || null,
+    service_type: document.getElementById('ms-stype').value,
+    queue: document.getElementById('ms-queue').value,
+    service_priority: document.getElementById('ms-prio').value,
+    required_skill_key: document.getElementById('ms-skill').value || null,
+    requires_material_pickup: document.getElementById('ms-pickup').checked,
+    observations: document.getElementById('ms-obs').value.trim() || null,
+    amount: parseFloat(document.getElementById('ms-amount').value) || null,
+    payment_method: document.getElementById('ms-paym').value || null,
+    payment_status: document.getElementById('ms-pstatus').value || 'pendente',
+    payment_installments: parseInt(document.getElementById('ms-installments').value) || null,
+    requested_date: document.getElementById('ms-rdate').value || null,
+    date_flexible: document.getElementById('ms-flex').checked,
+  };
+  try {
+    const r = await api('/operacional/api/sales/manual', { method:'POST', body });
+    msShowPostCreate(r);
+  } catch (e) {
+    document.getElementById('ms-status').textContent = '❌ ' + e.message;
+    document.getElementById('ms-status').style.color = '#f87171';
+  }
+}
+
+async function msShowPostCreate(r) {
+  // Carrega route-fits
+  document.getElementById('ms-status').textContent = `✅ Sale #${r.sale_id} criada · buscando rotas compatíveis…`;
+  document.getElementById('ms-status').style.color = '#22c55e';
+  let fits = null;
+  try { fits = await api(`/operacional/api/sales/${r.sale_id}/route-fits?max_km=15&days_ahead=7`); } catch {}
+
+  const modal = document.getElementById('ms-modal');
+  const body = modal.querySelector('div[style*="overflow-y:auto"]');
+  body.innerHTML = `
+    <div style="text-align:center;padding:14px 0">
+      <div style="font-size:36px">✅</div>
+      <div style="color:#22c55e;font-weight:800;font-size:16px;margin-top:4px">Serviço cadastrado</div>
+      <div style="color:#888;font-size:12px;margin-top:4px">Sale #${r.sale_id} · status: <code>${r.status}</code></div>
+    </div>
+
+    <div style="background:#0D1117;border:1px solid #21262D;border-radius:8px;padding:14px;margin-bottom:14px">
+      <div style="color:#93c5fd;font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:10px">3 opções pra continuar</div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="btn btn-warn" onclick="msActionRouteSolo(${r.sale_id})">🛣 Criar rota só com esse serviço</button>
+        <button class="btn btn-sec" onclick="msActionLeaveWaiting(${r.sale_id})">⏸ Deixar em aguardando_rota (auto-distribute encaixa)</button>
+      </div>
+
+      <div style="font-size:11px;color:#93c5fd;margin-bottom:8px;font-weight:700">🤖 Sugestões IA — rotas compatíveis</div>
+      ${fits && fits.fits?.length ? fits.fits.map(f => `
+        <div style="background:#161B22;border:1px solid #21262D;border-left:3px solid #22c55e;border-radius:6px;padding:10px 12px;margin-bottom:6px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center">
+          <div>
+            <div style="color:#fff;font-weight:700;font-size:12px">Rota #${f.route_id} · ${f.technician_name||'sem técnico'}</div>
+            <div style="color:#888;font-size:10px;margin-top:2px">${f.rationale}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="background:#22c55e;color:#000;font-weight:800;padding:3px 8px;border-radius:4px;font-size:11px">${f.score}</span>
+            <button class="btn btn-warn" style="padding:5px 10px;font-size:11px" onclick="msActionAddToRoute(${r.sale_id}, ${f.route_id})">+ Encaixar</button>
+          </div>
+        </div>
+      `).join('') : '<div style="color:#666;font-size:11px;padding:8px">Nenhuma rota compatível encontrada nos próximos 7 dias.</div>'}
+    </div>
+
+    <div style="text-align:center;font-size:11px;color:#666">
+      <a href="/operacional/cliente/${r.sale_id}" target="_blank" style="color:#93c5fd">→ Abrir card do cliente</a>
+    </div>
+  `;
+  const foot = modal.querySelector('div[style*="border-top"]');
+  foot.innerHTML = `<button class="btn btn-prim" onclick="document.getElementById('ms-modal').remove();loadKpis();loadSales()" style="margin-left:auto;background:#1f6feb;color:#fff;border-color:#1f6feb">✓ Fechar</button>`;
+}
+
+async function msActionAddToRoute(saleId, routeId) {
+  try {
+    await api(`/operacional/api/routes/${routeId}/stops`, { method:'POST', body:{ sale_ids:[saleId] } });
+    toast(`Sale #${saleId} encaixada na rota #${routeId} ✓`);
+    document.getElementById('ms-modal').remove();
+    loadKpis(); loadSales();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function msActionRouteSolo(saleId) {
+  const date = prompt('Data da rota (YYYY-MM-DD):', new Date(Date.now()+86400000).toISOString().slice(0,10));
+  if (!date) return;
+  const techId = prompt('Technician ID (deixe vazio pra escolher depois):');
+  if (!techId) return toast('Técnico obrigatório', 'error');
+  try {
+    const r = await api('/operacional/api/routes', { method:'POST', body:{ route_date: date, technician_id: parseInt(techId), sale_ids:[saleId], status:'pendente' } });
+    toast(`Rota #${r.route_id} criada ✓`);
+    document.getElementById('ms-modal').remove();
+    loadKpis(); loadSales();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function msActionLeaveWaiting(saleId) {
+  toast(`Sale #${saleId} fica em aguardando_rota; o auto-distribute vai pegar depois.`);
+  document.getElementById('ms-modal').remove();
+  loadKpis(); loadSales();
+}
+
+// Popular skills no select assim que modal abrir
+async function msPopulateSkills() {
+  try {
+    const skills = await api('/operacional/api/skills?active=true');
+    const sel = document.getElementById('ms-skill');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— qualquer técnico —</option>' + skills.map(s => `<option value="${s.key}">${s.label}${s.requires_certification?' 🎓':''}</option>`).join('');
+  } catch {}
+}
+// Quando modal abre, popula skills
+const _origManualOpen = window.manualServiceOpen;
+window.manualServiceOpen = async function() {
+  await _origManualOpen();
+  setTimeout(msPopulateSkills, 100);
+};
+
+function kpiClickAgendados() {
+  document.querySelectorAll('.op-kpi').forEach(el => el.classList.remove('active-filter'));
+  document.querySelector('[onclick="kpiClickAgendados()"]')?.classList.add('active-filter');
+  agendadosMenuOpen();
+}
+
+// ============ Menu Agendados (F-AGENDADO-MENU) ============
+async function agendadosMenuOpen() {
+  let modal = document.getElementById('ag-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'ag-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9500;display:flex;align-items:center;justify-content:center;padding:14px';
+    modal.onclick = (e) => { if (e.target===modal) modal.remove(); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div style="background:#161B22;border:1px solid #30363D;border-radius:12px;width:780px;max-width:100%;max-height:90vh;display:flex;flex-direction:column" onclick="event.stopPropagation()">
+      <div style="padding:14px 18px;border-bottom:1px solid #30363D;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0;font-size:14px;color:#fff">📅 Agendados</h3>
+        <button onclick="document.getElementById('ag-modal').remove()" style="background:#21262D;border:1px solid #30363D;color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer">✕</button>
+      </div>
+      <div style="padding:10px 18px;border-bottom:1px solid #21262D;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input id="ag-search" placeholder="Buscar por cliente, cidade…" oninput="agFilter()" style="flex:1;background:#0D1117;border:1px solid #30363D;color:#fff;padding:6px 10px;border-radius:4px;font-size:12px;min-width:200px">
+        <span id="ag-selected-count" style="font-size:11px;color:#888"><b id="ag-sel">0</b> selecionado(s)</span>
+        <button class="btn btn-warn" onclick="agCreateRoute()">🛣 Criar rota com selecionados</button>
+      </div>
+      <div style="flex:1;overflow-y:auto" id="ag-list"><div style="padding:30px;text-align:center;color:#666">Carregando…</div></div>
+    </div>
+  `;
+  AG.selected = new Set();
+  await agLoad();
+}
+
+const AG = { items: [], selected: new Set() };
+
+async function agLoad() {
+  try {
+    const r = await api('/operacional/api/sales?status=agendado&page_size=200');
+    AG.items = r.items || [];
+    agRender();
+  } catch (e) {
+    document.getElementById('ag-list').innerHTML = `<div style="padding:14px;color:${e.silent?'#888':'#f87171'}">${e.silent?'⏸':e.message}</div>`;
+  }
+}
+
+function agFilter() { agRender(); }
+
+function agRender() {
+  const q = (document.getElementById('ag-search')?.value || '').toLowerCase();
+  const filtered = q
+    ? AG.items.filter(s => (s.customer_name||'').toLowerCase().includes(q) || (s.address?.city||'').toLowerCase().includes(q) || (s.product_line||'').toLowerCase().includes(q))
+    : AG.items;
+  const c = document.getElementById('ag-list');
+  if (!filtered.length) { c.innerHTML = '<div style="padding:30px;text-align:center;color:#666;font-size:12px">Nenhum agendado</div>'; return; }
+  c.innerHTML = filtered.map(s => `
+    <label style="display:grid;grid-template-columns:24px 1fr auto;gap:8px;padding:8px 14px;border-bottom:1px solid #21262D;cursor:pointer;align-items:center">
+      <input type="checkbox" data-sale="${s.id}" ${AG.selected.has(s.id)?'checked':''} onchange="agToggle(${s.id}, this.checked)">
+      <div>
+        <div style="color:#fff;font-size:12px;font-weight:700">${s.customer_name||'—'} ${s.is_condominio?'🏢':''} ${s.requires_material_pickup?'📦':''}</div>
+        <div style="color:#888;font-size:10px">${(s.product_line||'').substring(0,60)} · 📍 ${s.address?.city||'—'} · ${s.service_priority||'normal'}</div>
+      </div>
+      <a href="/operacional/cliente/${s.id}" target="_blank" style="color:#93c5fd;text-decoration:none;font-size:11px">→ Card</a>
+    </label>
+  `).join('');
+  document.getElementById('ag-sel').textContent = AG.selected.size;
+}
+
+function agToggle(saleId, checked) {
+  if (checked) AG.selected.add(saleId); else AG.selected.delete(saleId);
+  document.getElementById('ag-sel').textContent = AG.selected.size;
+}
+
+async function agCreateRoute() {
+  if (!AG.selected.size) return toast('Selecione ao menos 1 agendado', 'error');
+  // Abre modal Criar Rota com pré-seleção
+  document.getElementById('ag-modal')?.remove();
+  await newRouteOpen();
+  // Sobrescreve seleção
+  _newRoute.saleIds = new Set(AG.selected);
+  // Marca os checkboxes no modal Criar Rota (lá ele filtra status=aguardando_rota, mas como nossos
+  // selecionados são status=agendado, precisamos forçar carga via fetch direto)
+  toast(`${AG.selected.size} agendados pré-selecionados. Ajuste data/técnico e salve.`);
+  // Re-renderiza o nr-sales pra que apareça com os selecionados
+  setTimeout(() => newRouteRender(), 100);
+}
+
+// ============ Auto-Distribute (F-AUTO-DISTRIBUTE) ============
+const AD = { preview: null, date: null };
+
+async function autoDistOpen() {
+  let modal = document.getElementById('ad-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'ad-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9500;display:flex;align-items:center;justify-content:center;padding:14px';
+    modal.onclick = (e) => { if (e.target===modal) modal.remove(); };
+    document.body.appendChild(modal);
+  }
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0,10);
+  modal.innerHTML = `
+    <div style="background:#161B22;border:1px solid #30363D;border-radius:12px;width:880px;max-width:100%;max-height:92vh;display:flex;flex-direction:column" onclick="event.stopPropagation()">
+      <div style="padding:14px 18px;border-bottom:1px solid #30363D;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0;font-size:14px;color:#fff">🤖 Auto-distribuição de rotas</h3>
+        <button onclick="document.getElementById('ad-modal').remove()" style="background:#21262D;border:1px solid #30363D;color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer">✕</button>
+      </div>
+      <div style="padding:14px 18px;border-bottom:1px solid #21262D;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <label style="color:#aaa;font-size:11px">Data alvo: <input id="ad-date" type="date" value="${tomorrow}" style="background:#0D1117;border:1px solid #30363D;color:#fff;padding:5px 8px;border-radius:4px;margin-left:5px"></label>
+        <label style="color:#aaa;font-size:11px">Máx/técnico: <input id="ad-max" type="number" placeholder="auto" style="width:70px;background:#0D1117;border:1px solid #30363D;color:#fff;padding:5px 8px;border-radius:4px;margin-left:5px"></label>
+        <button class="btn btn-warn" onclick="adPreview()">🤖 Calcular preview</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:14px 18px" id="ad-preview"></div>
+      <div style="padding:12px 18px;border-top:1px solid #30363D;display:flex;justify-content:flex-end;gap:8px">
+        <button class="btn btn-sec" onclick="document.getElementById('ad-modal').remove()">Cancelar</button>
+        <button class="btn btn-pri" style="background:#22c55e;color:#000;border-color:#22c55e" onclick="adApply()" id="ad-btn-apply" disabled>✅ Criar todas as rotas</button>
+      </div>
+    </div>
+  `;
+}
+
+async function adPreview() {
+  const date = document.getElementById('ad-date').value;
+  const max = parseInt(document.getElementById('ad-max').value) || null;
+  AD.date = date;
+  document.getElementById('ad-preview').innerHTML = '<div style="text-align:center;padding:30px;color:#888">⏳ Calculando…</div>';
+  document.getElementById('ad-btn-apply').disabled = true;
+  try {
+    const r = await api('/operacional/api/routes/auto-distribute/preview', {
+      method:'POST', body: { target_date: date, max_sales_per_tech: max }
+    });
+    AD.preview = r;
+    if (!r.suggested_routes?.length) {
+      document.getElementById('ad-preview').innerHTML = `<div style="text-align:center;padding:30px;color:#666">Nenhuma distribuição possível.<br>${r.reason||''}<br><br>Total scanned: ${r.total_sales_scanned||0}<br>Unassigned: ${r.unassigned?.length||0}</div>`;
+      return;
+    }
+    document.getElementById('ad-preview').innerHTML = `
+      <div style="background:#0D1117;border:1px solid #21262D;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#cbd5e1">
+        📊 <b>${r.total_assigned}</b> de ${r.total_sales_scanned} sales distribuídos em <b>${r.suggested_routes.length}</b> rota(s) · ${r.unassigned?.length||0} sem técnico compatível
+      </div>
+      ${r.suggested_routes.map(rt => `
+        <div style="background:#0D1117;border:1px solid #21262D;border-radius:6px;padding:12px 14px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
+            <div>
+              <div style="color:#fff;font-weight:800;font-size:13px">${rt.technician_name} <span style="color:#888;font-size:11px;font-weight:400">· ${rt.daily_capacity - rt.current_load} vagas livres (${rt.current_load}/${rt.daily_capacity})</span></div>
+              <div style="color:#aaa;font-size:11px;margin-top:2px">${rt.technician_base_city ? '📍 base: '+rt.technician_base_city : ''} · 🛠 ${(rt.technician_skills||[]).join(', ') || 'sem skills'}</div>
+            </div>
+            <span style="background:#22c55e;color:#000;padding:3px 8px;border-radius:4px;font-weight:800;font-size:12px">${rt.suggested_count} sale(s)</span>
+          </div>
+          <div style="color:#888;font-size:10px;margin-bottom:6px">🏙 ${rt.cities.join(', ')}</div>
+          <div style="font-size:11px;color:#cbd5e1;padding-left:8px;border-left:2px solid #1f6feb">
+            ${rt.sales.slice(0,5).map(s => `• ${s.customer_name} (${s.city})${s.required_skill?' · 🛠 '+s.required_skill:''}`).join('<br>')}
+            ${rt.sales.length>5?`<br><span style="color:#666">+${rt.sales.length-5} outras</span>`:''}
+          </div>
+        </div>
+      `).join('')}
+      ${r.unassigned?.length ? `
+        <div style="background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:6px;padding:10px 14px;margin-top:8px">
+          <div style="color:#fca5a5;font-weight:700;font-size:12px;margin-bottom:6px">⚠ ${r.unassigned.length} sale(s) sem técnico compatível:</div>
+          ${r.unassigned.slice(0,8).map(u => `<div style="color:#cbd5e1;font-size:11px;padding:2px 0">• ${u.customer_name} (${u.city})${u.required_skill?' precisa skill: '+u.required_skill:''} — ${u.reason}</div>`).join('')}
+        </div>
+      ` : ''}
+    `;
+    document.getElementById('ad-btn-apply').disabled = false;
+  } catch (e) {
+    document.getElementById('ad-preview').innerHTML = `<div style="color:#f87171;padding:14px">${e.message}</div>`;
+  }
+}
+
+async function adApply() {
+  if (!AD.preview || !AD.preview.suggested_routes?.length) return;
+  if (!confirm(`Criar ${AD.preview.suggested_routes.length} rota(s) com ${AD.preview.total_assigned} sale(s)?`)) return;
+  const distributions = AD.preview.suggested_routes.map(rt => ({
+    technician_id: rt.technician_id,
+    sale_ids: rt.sales.map(s => s.sale_id),
+  }));
+  try {
+    const r = await api('/operacional/api/routes/auto-distribute/apply', {
+      method:'POST', body: { target_date: AD.date, distributions }
+    });
+    toast(`✅ ${r.routes_created} rotas criadas`);
+    document.getElementById('ad-modal').remove();
+    loadKpis(); loadSales();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function kpiClickTechs() {
+  document.querySelectorAll('.op-kpi').forEach(el => el.classList.remove('active-filter'));
+  document.querySelector('[onclick="kpiClickTechs()"]')?.classList.add('active-filter');
+  techsAvailabilityOpen();
+}
+
+function kpiClickRoutes() {
+  document.querySelectorAll('.op-kpi').forEach(el => el.classList.remove('active-filter'));
+  document.querySelector('[onclick="kpiClickRoutes()"]')?.classList.add('active-filter');
+  routesListOpen();
+}
+
+// ============ Modal "Criar Rota" ============
+let _newRoute = { saleIds: new Set(), eligibleSales: [], technicians: [] };
+
+async function newRouteOpen() {
+  // Cria modal se não existe
+  if (!document.getElementById('nr-modal')) {
+    const div = document.createElement('div');
+    div.id = 'nr-modal';
+    div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9500;display:flex;align-items:center;justify-content:center;padding:14px';
+    div.innerHTML = `
+      <div style="background:#161B22;border:1px solid #30363D;border-radius:12px;width:780px;max-width:100%;max-height:95vh;display:flex;flex-direction:column" onclick="event.stopPropagation()">
+        <div style="padding:14px 18px;border-bottom:1px solid #30363D;display:flex;justify-content:space-between;align-items:center">
+          <h3 style="margin:0;font-size:14px;color:#fff">🛣 Criar Rota Manual</h3>
+          <button onclick="newRouteClose()" style="background:#21262D;border:1px solid #30363D;color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer">✕</button>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:14px 18px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+            <div>
+              <label style="font-size:11px;color:#93c5fd;text-transform:uppercase;letter-spacing:.4px">Data*</label>
+              <input id="nr-date" type="date" style="width:100%;background:#0D1117;border:1px solid #30363D;color:#fff;padding:7px;border-radius:5px;margin-top:4px">
+            </div>
+            <div>
+              <label style="font-size:11px;color:#93c5fd;text-transform:uppercase;letter-spacing:.4px">Técnico*</label>
+              <select id="nr-tech" style="width:100%;background:#0D1117;border:1px solid #30363D;color:#fff;padding:7px;border-radius:5px;margin-top:4px"><option value="">Carregando…</option></select>
+            </div>
+            <div>
+              <label style="font-size:11px;color:#93c5fd;text-transform:uppercase;letter-spacing:.4px">Janela</label>
+              <select id="nr-window" style="width:100%;background:#0D1117;border:1px solid #30363D;color:#fff;padding:7px;border-radius:5px;margin-top:4px">
+                <option value="">— qualquer —</option>
+                <option value="manha">Manhã (8-12)</option>
+                <option value="tarde">Tarde (13-17)</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-bottom:8px">
+            <label style="font-size:11px;color:#93c5fd;text-transform:uppercase;letter-spacing:.4px">Buscar sales</label>
+            <input id="nr-search" type="text" placeholder="filtrar por nome, cidade…" oninput="newRouteFilter()" style="width:100%;background:#0D1117;border:1px solid #30363D;color:#fff;padding:7px;border-radius:5px;margin-top:4px">
+          </div>
+          <div id="nr-capacity-warn" style="display:none;background:rgba(251,191,36,.1);border:1px solid #fbbf24;color:#fbbf24;padding:6px 10px;border-radius:5px;font-size:11px;margin-bottom:8px"></div>
+          <div style="background:#0D1117;border:1px solid #21262D;border-radius:6px;max-height:300px;overflow-y:auto" id="nr-sales"></div>
+          <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#888">
+            <span><b id="nr-selected-count">0</b> selecionada(s) de <span id="nr-total">0</span> elegíveis</span>
+            <span id="nr-tech-cap">Capacidade do técnico: —</span>
+          </div>
+        </div>
+        <div style="padding:12px 18px;border-top:1px solid #30363D;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <span style="font-size:11px;color:#666;align-self:center">Status inicial: rota fica como "pendente". Use "Confirmar rota" pra mover pra "agendado".</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sec" onclick="newRouteClose()">Cancelar</button>
+            <button class="btn btn-warn" onclick="newRouteSave(false)">💾 Salvar como rascunho</button>
+            <button class="btn btn-pri" style="background:#1f6feb;color:#fff;border-color:#1f6feb" onclick="newRouteSave(true)">✅ Salvar e confirmar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    div.addEventListener('click', (e) => { if (e.target === div) newRouteClose(); });
+    document.body.appendChild(div);
+    document.getElementById('nr-date').value = new Date().toISOString().slice(0,10);
+  }
+  document.getElementById('nr-modal').style.display = 'flex';
+  _newRoute.saleIds = new Set();
+  await Promise.all([newRouteLoadTechs(), newRouteLoadSales()]);
+}
+
+function newRouteClose() {
+  const m = document.getElementById('nr-modal');
+  if (m) m.style.display = 'none';
+}
+
+async function newRouteLoadTechs() {
+  try {
+    const techs = await api('/operacional/api/technicians');
+    const list = Array.isArray(techs) ? techs : (techs.items || []);
+    _newRoute.technicians = list.filter(t => t.active);
+    const sel = document.getElementById('nr-tech');
+    sel.innerHTML = '<option value="">— selecione —</option>' + _newRoute.technicians.map(t =>
+      `<option value="${t.id}" data-capacity="${t.daily_capacity||8}">${t.name} (capacidade ${t.daily_capacity||8})</option>`
+    ).join('');
+    sel.onchange = newRouteCheckCapacity;
+  } catch (e) { console.error(e); }
+}
+
+async function newRouteLoadSales() {
+  try {
+    const r = await api('/operacional/api/sales?status=aguardando_rota&page_size=200');
+    _newRoute.eligibleSales = r.items || [];
+    document.getElementById('nr-total').textContent = _newRoute.eligibleSales.length;
+    newRouteRender();
+  } catch (e) { console.error(e); }
+}
+
+function newRouteFilter() {
+  newRouteRender();
+}
+
+function newRouteRender() {
+  const q = (document.getElementById('nr-search')?.value || '').toLowerCase();
+  const filtered = q
+    ? _newRoute.eligibleSales.filter(s =>
+        (s.customer_name||'').toLowerCase().includes(q)
+        || (s.address?.city||'').toLowerCase().includes(q)
+        || (s.product_line||'').toLowerCase().includes(q)
+      )
+    : _newRoute.eligibleSales;
+  document.getElementById('nr-sales').innerHTML = filtered.length
+    ? filtered.map(s => `
+      <label style="display:grid;grid-template-columns:24px 1fr auto;gap:8px;padding:8px 10px;border-bottom:1px solid #21262D;cursor:pointer;align-items:center">
+        <input type="checkbox" data-sale="${s.id}" ${_newRoute.saleIds.has(s.id)?'checked':''} onchange="newRouteToggle(${s.id}, this.checked)">
+        <div>
+          <div style="color:#fff;font-size:12px;font-weight:700">${s.customer_name||'—'}</div>
+          <div style="color:#888;font-size:10px">${(s.product_line||'').substring(0,60)} · ${s.address?.city||'—'}</div>
+        </div>
+        <span style="font-size:10px;color:#888">${s.service_type||''} · ${s.service_priority||'normal'}</span>
+      </label>
+    `).join('')
+    : '<div style="padding:20px;text-align:center;color:#666;font-size:12px">Nenhum sale elegível encontrado</div>';
+  newRouteCheckCapacity();
+}
+
+function newRouteToggle(saleId, checked) {
+  if (checked) _newRoute.saleIds.add(saleId); else _newRoute.saleIds.delete(saleId);
+  document.getElementById('nr-selected-count').textContent = _newRoute.saleIds.size;
+  newRouteCheckCapacity();
+}
+
+function newRouteCheckCapacity() {
+  const opt = document.querySelector('#nr-tech option:checked');
+  const cap = parseInt(opt?.dataset?.capacity || '0') || 0;
+  const sel = _newRoute.saleIds.size;
+  document.getElementById('nr-tech-cap').textContent = cap ? `Capacidade técnico: ${sel}/${cap}` : 'Capacidade: —';
+  const warn = document.getElementById('nr-capacity-warn');
+  if (cap && sel > cap) {
+    warn.style.display = 'block';
+    warn.textContent = `⚠ Excede capacidade do técnico (${sel} paradas > ${cap}). Considere dividir em rotas separadas.`;
+  } else { warn.style.display = 'none'; }
+}
+
+let _nrSubmitting = false;
+let _lastCreatedRouteId = null;
+
+async function newRouteSave(confirm) {
+  if (_nrSubmitting) return;
+  const date = document.getElementById('nr-date').value;
+  const tech = document.getElementById('nr-tech').value;
+  const wind = document.getElementById('nr-window').value;
+  if (!date) return toast('Data obrigatória', 'error');
+  if (!tech) return toast('Técnico obrigatório', 'error');
+  if (_newRoute.saleIds.size === 0) return toast('Selecione ao menos 1 sale', 'error');
+  _nrSubmitting = true;
+  try {
+    const r = await api('/operacional/api/routes', {
+      method: 'POST',
+      body: {
+        route_date: date,
+        technician_id: parseInt(tech),
+        sale_ids: Array.from(_newRoute.saleIds),
+        window: wind || null,
+        status: 'pendente',
+      }
+    });
+    _lastCreatedRouteId = r.route_id;
+    let confirmedMsg = '';
+    if (confirm && r.route_id) {
+      const c = await api(`/operacional/api/routes/${r.route_id}/confirm`, { method:'POST', body:{} });
+      confirmedMsg = ` + ${c.sales_updated || 0} confirmadas`;
+    }
+    toast(`Rota #${r.route_id} criada: ${r.sales_moved} sale(s) ${confirmedMsg} ✓`);
+    // Em vez de fechar, mostra painel de ações pós-criação
+    showRouteCreatedActions(r.route_id, r.technician_name);
+    loadKpis(); loadSales();
+  } catch (e) {
+    toast(e.message, 'error');
+  } finally {
+    _nrSubmitting = false;
+  }
+}
+
+function showRouteCreatedActions(routeId, techName) {
+  // Substitui body do modal por painel de pós-ações
+  const body = document.querySelector('#nr-modal > div > div[style*="overflow-y:auto"]');
+  if (!body) { newRouteClose(); return; }
+  body.innerHTML = `
+    <div style="text-align:center;padding:20px 14px">
+      <div style="font-size:42px;margin-bottom:8px">✅</div>
+      <div style="color:#22c55e;font-weight:800;font-size:16px;margin-bottom:4px">Rota #${routeId} criada</div>
+      <div style="color:#888;font-size:12px;margin-bottom:20px">Técnico: ${techName||'—'}</div>
+
+      <div style="background:#0D1117;border:1px solid #21262D;border-radius:8px;padding:14px;text-align:left">
+        <div style="color:#93c5fd;font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;font-weight:700">⚙️ Otimizar e Notificar</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <button class="btn btn-warn" style="padding:8px 14px" onclick="nrOptimize(${routeId})">🔀 Otimizar ordem</button>
+          <button class="btn btn-warn" style="padding:8px 14px" onclick="nrViewBriefing(${routeId})">📋 Ver briefing</button>
+          <button class="btn btn-pri" style="background:#25D366;color:#000;border-color:#25D366;padding:8px 14px" onclick="nrNotifyTech(${routeId})">📱 Enviar Z-API ao técnico</button>
+        </div>
+        <div id="nr-action-result" style="font-size:11px;color:#cbd5e1;margin-top:8px;white-space:pre-wrap;font-family:monospace"></div>
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:8px;justify-content:center">
+        <button class="btn btn-sec" onclick="newRouteClose()">Fechar</button>
+      </div>
+    </div>
+  `;
+}
+
+async function nrOptimize(routeId) {
+  const out = document.getElementById('nr-action-result');
+  out.textContent = '⏳ Otimizando…';
+  try {
+    const r = await api(`/operacional/api/routes/${routeId}/optimize`, { method:'POST', body:{} });
+    out.textContent = `✅ Reordenado: ${r.stops_count} paradas (${r.condo_count} condomínios, ${r.urgent_count} urgentes, ${(r.changes||[]).length} mudanças)`;
+  } catch (e) { out.textContent = '❌ ' + e.message; }
+}
+
+async function nrViewBriefing(routeId) {
+  const out = document.getElementById('nr-action-result');
+  out.textContent = '⏳ Gerando briefing…';
+  try {
+    const b = await api(`/operacional/api/routes/${routeId}/briefing`);
+    out.textContent = `📊 ${b.stops_count} paradas · ~${b.total_km} km · saída ${b.suggested_start}\n${(b.dicas||[]).join('\n') || '(sem dicas extras)'}\n\n--- Mensagem ---\n${b.message}`;
+  } catch (e) { out.textContent = '❌ ' + e.message; }
+}
+
+async function nrNotifyTech(routeId) {
+  const out = document.getElementById('nr-action-result');
+  if (!confirm('Confirma envio Z-API pro técnico com o briefing da rota?')) return;
+  out.textContent = '⏳ Enviando…';
+  try {
+    const r = await api(`/operacional/api/routes/${routeId}/notify-technician`, { method:'POST', body:{} });
+    out.textContent = `✅ Enviado pra ${r.technician_phone}\n\n${r.message_preview}…`;
+  } catch (e) { out.textContent = '❌ ' + e.message; }
+}
+
+// ============ Disponibilidade Técnicos (KPI techs) ============
+async function techsAvailabilityOpen() {
+  try {
+    const techs = await api('/operacional/api/technicians/availability');
+    const lines = (techs||[]).map(t =>
+      `${t.has_window ? '✅' : '❌'} ${t.name} — ${t.has_window ? 'janela disponível' : 'sem janela'}${t.phone?' · '+t.phone:''}`
+    ).join('\n');
+    alert(`👷 Disponibilidade de técnicos\n\n${lines || 'Nenhum técnico ativo'}`);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ============ Rotas próximos 14d ============
+async function routesListOpen() {
+  try {
+    const routes = await api('/operacional/api/routes');
+    if (!routes || !routes.length) {
+      alert('🛣 Rotas próximos 14 dias\n\nSem rotas no horizonte');
+      return;
+    }
+    // Cria modal com lista clicável
+    let modal = document.getElementById('rl-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'rl-modal';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9500;display:flex;align-items:center;justify-content:center;padding:14px';
+      modal.onclick = (e) => { if (e.target===modal) modal.remove(); };
+      document.body.appendChild(modal);
+    }
+    modal.innerHTML = `
+      <div style="background:#161B22;border:1px solid #30363D;border-radius:12px;width:640px;max-width:100%;max-height:90vh;display:flex;flex-direction:column" onclick="event.stopPropagation()">
+        <div style="padding:14px 18px;border-bottom:1px solid #30363D;display:flex;justify-content:space-between;align-items:center">
+          <h3 style="margin:0;font-size:14px;color:#fff">🛣 Rotas próximos 14 dias</h3>
+          <button onclick="document.getElementById('rl-modal').remove()" style="background:#21262D;border:1px solid #30363D;color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer">✕</button>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:8px">
+          ${routes.map(r => {
+            const statusColor = {agendado:'#22c55e', pendente:'#fbbf24', em_rota:'#1f6feb', concluido:'#888', cancelado:'#ef4444'}[r.status] || '#475569';
+            return `
+              <a href="/operacional/routes/${r.id}" target="_blank" style="display:grid;grid-template-columns:50px 80px 1fr 80px 90px;gap:10px;padding:10px 14px;border-bottom:1px solid #21262D;text-decoration:none;color:#fff;font-size:12px;align-items:center;border-left:3px solid ${statusColor}">
+                <span style="color:#888">#${r.id}</span>
+                <span>${r.route_date}</span>
+                <span><b>${r.technician_name || '(sem tech)'}</b></span>
+                <span style="color:${statusColor};font-weight:700;text-transform:uppercase;font-size:10px">${r.status}</span>
+                <span style="text-align:right;color:#aaa">${r.total_stops||0} paradas →</span>
+              </a>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ===== SEARCH GLOBAL =====
+const SEARCH = { timer: null, lastQ: '' };
+const KIND_META = {
+  sale:        { icon: '🛒', label: 'Venda',       color: '#25D366' },
+  shipment:    { icon: '📦', label: 'Envio',       color: '#a371f7' },
+  visit:       { icon: '🛠', label: 'Visita',      color: '#22c55e' },
+  post_sale:   { icon: '📞', label: 'Pós-venda',   color: '#fb923c' },
+  address:     { icon: '📍', label: 'Endereço',    color: '#93c5fd' },
+  vehicle:     { icon: '🚗', label: 'Veículo',     color: '#fb7185' },
+  technician:  { icon: '👷', label: 'Técnico',     color: '#fbbf24' },
+};
+const searchInput = document.getElementById('op-search');
+const searchResults = document.getElementById('op-search-results');
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim();
+  clearTimeout(SEARCH.timer);
+  if (q.length < 2) {
+    searchResults.style.display = 'none';
+    return;
+  }
+  SEARCH.timer = setTimeout(() => doSearch(q), 300);
+});
+searchInput.addEventListener('focus', () => {
+  if (searchInput.value.trim().length >= 2) searchResults.style.display = 'block';
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#op-search') && !e.target.closest('#op-search-results')) {
+    searchResults.style.display = 'none';
+  }
+});
+
+async function doSearch(q) {
+  if (q === SEARCH.lastQ) return;
+  SEARCH.lastQ = q;
+  searchResults.innerHTML = '<div style="padding:14px;color:#888;font-size:12px">Buscando…</div>';
+  searchResults.style.display = 'block';
+  try {
+    const res = await api(`/operacional/api/search?q=${encodeURIComponent(q)}&limit=20`);
+    if (!res.results || !res.results.length) {
+      searchResults.innerHTML = '<div style="padding:14px;color:#666;font-size:12px;text-align:center">Nada encontrado</div>';
+      return;
+    }
+    // Agrupar por kind
+    const grouped = {};
+    res.results.forEach(r => {
+      const k = r.kind;
+      if (!grouped[k]) grouped[k] = [];
+      grouped[k].push(r);
+    });
+    const order = ['sale', 'shipment', 'visit', 'post_sale', 'address', 'vehicle', 'technician'];
+    const html = order
+      .filter(k => grouped[k] && grouped[k].length)
+      .map(k => {
+        const meta = KIND_META[k];
+        const items = grouped[k].slice(0, 5).map(r => searchItemHTML(k, r)).join('');
+        return `
+          <div style="padding:8px 12px 4px;background:#0D1117;border-bottom:1px solid #21262D">
+            <span style="font-size:10px;color:${meta.color};text-transform:uppercase;letter-spacing:.5px;font-weight:700">${meta.icon} ${meta.label} <span style="color:#666">·${grouped[k].length}</span></span>
+          </div>
+          ${items}
+        `;
+      }).join('');
+    searchResults.innerHTML = html;
+  } catch (e) {
+    searchResults.innerHTML = `<div style="padding:14px;color:#f87171;font-size:12px">${e.message}</div>`;
+  }
+}
+
+function searchItemHTML(kind, r) {
+  const cust = r.customer_name || r.name || r.plate || '—';
+  let detail = '';
+  if (kind === 'sale') {
+    detail = [r.product_line, r.queue, r.status, r.pedido_sige ? `SIGE ${r.pedido_sige}` : null, r.city]
+      .filter(Boolean).join(' · ');
+  } else if (kind === 'shipment') {
+    detail = `${r.tracking_code || '—'} · ${r.stage}`;
+  } else if (kind === 'visit') {
+    detail = `${r.visit_type} · ${r.status}${r.auvo_task_id ? ' · AUVO ' + r.auvo_task_id : ''}`;
+  } else if (kind === 'post_sale') {
+    detail = `stage ${r.stage || '?'}${r.zoho_postsale_id ? ' · ' + r.zoho_postsale_id : ''}`;
+  } else if (kind === 'address') {
+    detail = r.address || r.city || '';
+  } else if (kind === 'vehicle') {
+    detail = `${r.model || ''}${r.tech_name ? ' · ' + r.tech_name : ''}`;
+  } else if (kind === 'technician') {
+    detail = [r.phone, r.base_city, r.active ? 'ativo' : 'inativo'].filter(Boolean).join(' · ');
+  }
+  const action = onClickFor(kind, r);
+  return `
+    <div onclick="${action}" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #21262D" onmouseenter="this.style.background='rgba(37,211,102,.05)'" onmouseleave="this.style.background=''">
+      <div style="color:#fff;font-weight:600;font-size:12px">${cust}</div>
+      <div style="color:#888;font-size:11px;margin-top:2px">${detail}</div>
+    </div>
+  `;
+}
+
+function onClickFor(kind, r) {
+  if (r.sale_id) {
+    return `selectSale(${r.sale_id});document.querySelector('[data-tab=instalacoes]').click();document.getElementById('op-search-results').style.display='none';document.getElementById('op-search').value='';`;
+  }
+  if (kind === 'vehicle') {
+    return `window.location.href='/operacional/cadastros'`;
+  }
+  if (kind === 'technician') {
+    return `window.location.href='/operacional/cadastros'`;
+  }
+  return '';
+}
+
+// INIT
+(async () => {
+  initMap();
+  await loadSales();
+  await loadKpis();
+  // Auto-refresh a cada 60s
+  setInterval(loadSales, 60000);
+  setInterval(loadKpis, 120000);
+  // Tutorial automático na primeira visita
+  if (!localStorage.getItem('op_tut_seen_v1')) {
+    setTimeout(() => startTutorial(true), 1500);
+  }
+})();
+
+// ===== TUTORIAL GUIADO (intro.js) =====
+function startTutorial(firstTime=false) {
+  if (typeof introJs === 'undefined') {
+    toast('Tutorial carregando, aguarde 1 segundo…', 'error');
+    return;
+  }
+  // Garante que tab Instalações está ativa pro tour começar correto
+  document.querySelector('[data-tab=instalacoes]').click();
+
+  const intro = introJs();
+  intro.setOptions({
+    nextLabel: 'Próximo →',
+    prevLabel: '← Voltar',
+    doneLabel: 'Entendi! Bora trabalhar 🚀',
+    skipLabel: 'Pular',
+    showBullets: true,
+    showProgress: true,
+    showStepNumbers: false,
+    overlayOpacity: 0.7,
+    exitOnOverlayClick: false,
+    exitOnEsc: true,
+    tooltipPosition: 'auto',
+    scrollToElement: true,
+    steps: [
+      {
+        title: '👋 Bem-vinda ao Operacional',
+        intro: 'Aqui você cuida de <b>tudo que rola depois da venda fechada</b> — rotas técnicas, envios, manutenções, pós-venda. Em 2 minutos eu te mostro o essencial.',
+      },
+      {
+        element: '#kpis',
+        title: '📊 KPIs do dia',
+        intro: 'Visão rápida do que tá acontecendo: vendas aguardando rota, sugestões de encaixe da IA, técnicos com vaga livre, rotas dos próximos 14 dias.',
+        position: 'bottom',
+      },
+      {
+        element: '#tabs',
+        title: '🗂 5 abas pra 5 fluxos',
+        intro: '<b>Instalações</b> (técnicos), <b>Envios</b> (transportadora), <b>Bebedouros</b>, <b>Manutenção</b> (refil/recorrência) e <b>Pós-venda</b>. Cada aba mostra só o que precisa de ação naquele fluxo.',
+        position: 'bottom',
+      },
+      {
+        element: '#sale-list',
+        title: '📥 Fila de vendas (Aba Instalações)',
+        intro: 'Toda venda fechada do Zoho aparece aqui se for instalação técnica. <b>Clique numa venda</b> que a IA já calculou a melhor rota. Atualiza sozinho a cada 60s.',
+        position: 'right',
+      },
+      {
+        element: '#map',
+        title: '🗺 Mapa interativo',
+        intro: 'Mostra o cliente da venda selecionada (🏠) e os técnicos da região. Clique em qualquer venda à esquerda pra centralizar.',
+        position: 'left',
+      },
+      {
+        element: '#suggestion-panel',
+        title: '🤖 Sugestão da IA',
+        intro: 'O Claude analisa cada venda nova considerando: <b>distância real (Google Maps)</b>, janela do técnico, prazo do cliente e prioridade. Você vê a recomendação em PT-BR e decide com 1 clique.',
+        position: 'left',
+      },
+      {
+        element: '[data-tab=envios]',
+        title: '📦 Aba Envios',
+        intro: 'Quando a venda é por <b>transportadora</b>, ela aparece aqui num kanban com 10 estágios. <b>Arraste o card</b> entre colunas pra mover. Mensagem WATI dispara automático em "Em separação", "Coletado", "Saiu pra entrega" e "Entregue".',
+        position: 'bottom',
+      },
+      {
+        element: '[data-tab=manutencao]',
+        title: '🔄 Aba Manutenção',
+        intro: 'Forecasts de quem precisa trocar refil/manutenção. AcquaBios a cada 90 dias, filtro de entrada 180, Iron Free 365. Cores indicam urgência: verde > amarelo > vermelho.',
+        position: 'bottom',
+      },
+      {
+        element: '[data-tab=posvenda]',
+        title: '📞 Aba Pós-venda',
+        intro: 'Espelho do módulo P_s_Venda do Zoho. Vê quem precisa de ligação, satisfação registrada, oportunidades de upsell. Sincronizado a cada 30 minutos.',
+        position: 'bottom',
+      },
+      {
+        element: '#btn-tutorial',
+        title: '❓ Pode reabrir esse tour quando quiser',
+        intro: 'Cliquei nesse botão a qualquer momento que esse passo-a-passo aparece de novo.',
+        position: 'left',
+      },
+      {
+        element: '#link-auditoria',
+        title: '📊 Auditoria de Campo',
+        intro: 'Outra tela importante: aqui você vê <b>scores dos técnicos</b> (8 dimensões), eventos suspeitos (excesso de tempo/KM), e narrativa da IA explicando cada caso.',
+        position: 'left',
+      },
+      {
+        element: '#link-cadastros',
+        title: '⚙ Cadastros',
+        intro: 'Configurações que alimentam tudo: telefone WATI dos técnicos, veículos + consumo, tipos de serviço, preço do combustível. <b>Importante:</b> sem o telefone do técnico aqui, escalada WATI automática não roda.',
+        position: 'left',
+      },
+      {
+        title: '🎯 Tudo certo!',
+        intro: 'Resumo: <b>vendas chegam → IA sugere → você decide → técnico/transportadora executa → sistema audita → IA narra resultado</b>. Se algo travar, aciona Lucas/Paulo. Bora!',
+      },
+    ],
+  });
+  intro.oncomplete(() => localStorage.setItem('op_tut_seen_v1', '1'));
+  intro.onexit(() => { if (firstTime) localStorage.setItem('op_tut_seen_v1', 'skipped'); });
+  intro.start();
+}
+</script>
+<script src="https://unpkg.com/intro.js@7.2.0/minified/intro.min.js" defer></script>

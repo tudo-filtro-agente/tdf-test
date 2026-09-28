@@ -1,0 +1,52 @@
+<%- include('../../layout', { user, activePage, pageTitle }) %>
+<%- include('_shared') %>
+<div class="tb-wrap">
+  <a class="tb-back" href="<%= base %>">← Voltar ao treinamento</a>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px">
+    <% ROLEPLAYS.forEach(function(r){ %><a class="tb-pill" style="text-decoration:none;<%= String(r.id)===String(rp.id)?'border-color:#00AAFF;color:#00AAFF':'' %>" href="<%= base %>/roleplay/<%= r.id %>"><%= r.titulo %></a><% }) %>
+  </div>
+  <h1 style="color:#fff;margin:8px 0 2px">🎭 <%= rp.titulo %></h1>
+  <div class="tb-callout info"><div class="ct">Cenário</div><div><%- rp.contexto %></div></div>
+
+  <div id="rpArea"></div>
+  <div id="rpResult" style="margin-top:14px"></div>
+</div>
+
+<script>
+(function(){
+  var RP=<%- JSON.stringify(rp) %>;
+  var passos=RP.passos||[]; var i=0, pontos=0, max=0;
+  passos.forEach(p=>{ max += Math.max.apply(null,(p.opcoes||[]).map(o=>o.pontos||0)); });
+  var area=document.getElementById('rpArea');
+  function render(){
+    if(i>=passos.length) return fim();
+    var p=passos[i];
+    var h='<div class="tb-dialog"><div class="bubble cli"><div class="who">Cliente</div>'+p.fala+'</div></div>';
+    h+='<div style="color:#5b7c99;font-size:.8rem;margin:6px 0">Passo '+(i+1)+' de '+passos.length+' — escolha a melhor resposta:</div>';
+    p.opcoes.forEach(function(o,oi){ h+='<button class="tb-opt rp-opt" data-o="'+oi+'">'+o.texto+'</button>'; });
+    h+='<div id="rpFb" class="tb-exp"></div><div id="rpNext" style="margin-top:10px"></div>';
+    area.innerHTML=h;
+    area.querySelectorAll('.rp-opt').forEach(function(b){ b.onclick=function(){ escolher(p,+b.dataset.o); }; });
+  }
+  function escolher(p,oi){
+    var o=p.opcoes[oi];
+    area.querySelectorAll('.rp-opt').forEach(function(b,bi){ b.disabled=true; var oo=p.opcoes[bi]; if(oo.adequada)b.classList.add('ok'); else if(bi===oi)b.classList.add('no'); });
+    pontos+=(o.pontos||0);
+    var fb=document.getElementById('rpFb'); fb.classList.add('show');
+    fb.innerHTML='<div class="tb-callout '+(o.adequada?'sucesso':'alerta')+'" style="margin:10px 0"><div class="ct">'+(o.adequada?'✅ Boa escolha':'⚠️ Cuidado')+' (+'+(o.pontos||0)+' pts)</div>'+
+      '<div style="font-size:.87rem"><b>Por quê:</b> '+(o.porque||'')+'</div>'+
+      (o.risco?'<div style="font-size:.87rem;margin-top:4px"><b>Risco:</b> '+o.risco+'</div>':'')+
+      (o.melhora?'<div style="font-size:.87rem;margin-top:4px"><b>Como melhorar:</b> '+o.melhora+'</div>':'')+'</div>';
+    document.getElementById('rpNext').innerHTML='<button class="tb-btn" id="rpGo">'+(i+1>=passos.length?'Ver resultado':'Próximo passo →')+'</button>';
+    document.getElementById('rpGo').onclick=function(){ i++; render(); };
+  }
+  async function fim(){
+    area.innerHTML='';
+    var pct=max?Math.round(pontos/max*100):0;
+    await TB.post('/api/roleplay/'+RP.id,{pontos:pontos,max:max});
+    document.getElementById('rpResult').innerHTML='<div class="tb-callout '+(pct>=70?'sucesso':'alerta')+'"><div class="ct">Resultado: '+pontos+'/'+max+' ('+pct+'%)</div><div style="font-size:.87rem">'+(pct>=70?'Boa condução! Registrado no seu progresso.':'Vale refazer revisando os módulos de qualificação e objeções.')+'</div></div>'+
+      '<a class="tb-btn ghost" href="<%= base %>/roleplay/'+RP.id+'">↻ Refazer</a> <a class="tb-btn" href="<%= base %>">Voltar</a>';
+  }
+  render();
+})();
+</script>

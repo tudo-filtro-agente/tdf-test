@@ -1,0 +1,185 @@
+<% const activePage = 'admin'; const pageTitle = 'Squads & Metas'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.sq-wrap{max-width:1280px;margin:0 auto;padding:24px}
+.sq-card{background:#151515;border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.sq-card h3{margin:0 0 12px;font-size:15px;color:var(--text);display:flex;align-items:center;gap:8px}
+.sq-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px}
+.sq-tile{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;border-left:4px solid var(--border)}
+.sq-tile.empresa{border-left-color:#a371f7;background:linear-gradient(135deg,#1a0f2e,var(--bg-card))}
+.sq-tile h4{margin:0 0 8px;font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:800}
+.sq-tile .big{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px}
+.sq-tile .sub{font-size:11px;color:var(--text-muted)}
+.sq-tile .bar{height:6px;background:#222;border-radius:3px;margin-top:10px;overflow:hidden}
+.sq-tile .bar > .fill{height:100%;background:#22c55e;transition:width .2s}
+.sq-tile .members{margin-top:10px;font-size:11px;color:var(--text-muted);line-height:1.5}
+.sq-tile .pct.bad{color:#f87171}.sq-tile .pct.ok{color:#4ade80}.sq-tile .pct.med{color:#fbbf24}
+.sq-tile.filtro_tratada{border-left-color:#3b82f6}
+.sq-tile.filtro_poco{border-left-color:#06b6d4}
+.sq-tile.bebedouro{border-left-color:#22c55e}
+.sq-tile.refil{border-left-color:#fbbf24}
+.sq-tile.loja{border-left-color:#ef4444}
+.sq-input{padding:6px 10px;background:var(--bg-hover);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;width:120px;font-family:inherit}
+.sq-btn{padding:5px 12px;border-radius:6px;border:1px solid #22c55e;background:transparent;color:#22c55e;font-size:10px;font-weight:700;cursor:pointer;text-transform:uppercase}
+.sq-btn:hover{background:rgba(34,197,94,.1)}
+.sq-table{width:100%;border-collapse:collapse;font-size:12px}
+.sq-table th{text-align:left;padding:10px 8px;font-size:10px;color:var(--text-muted);text-transform:uppercase;font-weight:700;border-bottom:1px solid var(--border);background:var(--bg-card)}
+.sq-table td{padding:10px 8px;border-bottom:1px solid #1a1a1a;color:var(--text)}
+.sq-table tr:hover td{background:var(--bg-hover)}
+.sq-table .ck-cell{text-align:center}
+.sq-table input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:#22c55e}
+.sq-toast{position:fixed;bottom:24px;right:24px;background:var(--bg-hover);border:1px solid #22c55e;color:#4ade80;padding:14px 20px;border-radius:10px;font-size:13px;font-weight:700;z-index:200}
+.sq-toast.err{border-color:#ef4444;color:#f87171}
+</style>
+
+<div class="sq-wrap">
+  <h1 style="font-size:22px;color:var(--text);margin:0 0 6px">🎯 Squads & Metas</h1>
+  <p style="color:var(--text-muted);font-size:13px;margin:0 0 18px">Configura metas mensais por squad, atribui vendedores (multi-squad permitido) e acompanha o atingimento da meta da empresa.</p>
+
+  <!-- VISÃO GERAL -->
+  <div class="sq-card">
+    <h3>📊 Visão Geral</h3>
+    <div class="sq-grid" id="sq-tiles"></div>
+  </div>
+
+  <!-- METAS POR SQUAD -->
+  <div class="sq-card">
+    <h3>💰 Metas Mensais por Squad</h3>
+    <p style="color:var(--text-muted);font-size:11px;margin:-6px 0 14px">A <strong>Meta Empresa</strong> é a soma das metas das squads.</p>
+    <table class="sq-table">
+      <thead><tr>
+        <th>Squad</th><th>Meta Faturamento (R$)</th><th>Meta Vendas (qty)</th>
+        <th>Faturamento Atual</th><th>%</th><th></th>
+      </tr></thead>
+      <tbody id="sq-metas-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- MEMBROS x SQUADS -->
+  <div class="sq-card">
+    <h3>👥 Vendedores × Squads</h3>
+    <p style="color:var(--text-muted);font-size:11px;margin:-6px 0 14px">Marque os squads de cada vendedor (multi-squad permitido). A primeira marcada vira a <strong>squad primária</strong> dele.</p>
+    <table class="sq-table">
+      <thead><tr id="sq-members-head"></tr></thead>
+      <tbody id="sq-members-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let SQ_DATA = null;
+
+const fmt = v => 'R$ ' + Math.round(v||0).toLocaleString('pt-BR');
+const pctClass = p => p >= 100 ? 'ok' : p >= 70 ? 'med' : 'bad';
+
+function toast(msg, isErr){
+  const t = document.createElement('div');
+  t.className = 'sq-toast' + (isErr?' err':'');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+
+async function load(){
+  try{
+    const r = await fetch('/admin/squads/data');
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    SQ_DATA = await r.json();
+    render();
+  }catch(e){ toast('Erro: '+e.message, true); }
+}
+
+function render(){
+  const d = SQ_DATA;
+  // Tiles
+  const tiles = [
+    `<div class="sq-tile empresa"><h4>🏢 Empresa (Total)</h4>
+      <div class="big">${fmt(d.empresa.faturamentoMes)}</div>
+      <div class="sub">Meta ${fmt(d.empresa.metaTotal)} · ${d.empresa.vendasMes} vendas</div>
+      <div class="bar"><div class="fill" style="width:${Math.min(100,d.empresa.pct)}%;background:${d.empresa.pct>=100?'#22c55e':d.empresa.pct>=70?'#fbbf24':'#ef4444'}"></div></div>
+      <div style="margin-top:6px;font-size:11px"><span class="pct ${pctClass(d.empresa.pct)}" style="font-weight:800">${d.empresa.pct}%</span> da meta</div>
+    </div>`
+  ];
+  for (const s of d.squads) {
+    const memberNames = s.membros.map(m => m.name).join(', ') || '<em style="color:#666">sem vendedores</em>';
+    tiles.push(`
+      <div class="sq-tile ${s.key}"><h4>${s.icon} ${s.label}</h4>
+        <div class="big">${fmt(s.faturamentoMes)}</div>
+        <div class="sub">Meta ${fmt(s.meta.faturamento)} · ${s.vendasMes} vendas</div>
+        <div class="bar"><div class="fill" style="width:${Math.min(100,s.pct)}%;background:${s.pct>=100?'#22c55e':s.pct>=70?'#fbbf24':'#ef4444'}"></div></div>
+        <div style="margin-top:6px;font-size:11px"><span class="pct ${pctClass(s.pct)}" style="font-weight:800">${s.pct}%</span> · ${s.membros.length} no time</div>
+        <div class="members">${memberNames}</div>
+      </div>
+    `);
+  }
+  document.getElementById('sq-tiles').innerHTML = tiles.join('');
+
+  // Tabela de metas
+  document.getElementById('sq-metas-tbody').innerHTML = d.squads.map(s => `
+    <tr>
+      <td><strong>${s.icon} ${s.label}</strong></td>
+      <td><input type="number" class="sq-input" id="meta-fat-${s.key}" value="${s.meta.faturamento||0}"></td>
+      <td><input type="number" class="sq-input" id="meta-vend-${s.key}" value="${s.meta.vendas||0}"></td>
+      <td>${fmt(s.faturamentoMes)}</td>
+      <td><span class="pct ${pctClass(s.pct)}" style="font-weight:800">${s.pct}%</span></td>
+      <td><button class="sq-btn" onclick="salvarMeta('${s.key}')">Salvar</button></td>
+    </tr>
+  `).join('');
+  const empresaMetaSum = d.squads.reduce((s,sq)=>s+(sq.meta.faturamento||0),0);
+  document.getElementById('sq-metas-tbody').innerHTML += `
+    <tr style="background:#0f0a18">
+      <td><strong style="color:#a371f7">🏢 EMPRESA (soma)</strong></td>
+      <td colspan="2" style="font-weight:800;color:#c084fc">${fmt(empresaMetaSum)}</td>
+      <td style="font-weight:800;color:#fff">${fmt(d.empresa.faturamentoMes)}</td>
+      <td><span class="pct ${pctClass(d.empresa.pct)}" style="font-weight:800">${d.empresa.pct}%</span></td>
+      <td style="font-size:10px;color:#666">auto</td>
+    </tr>
+  `;
+
+  // Tabela de membros × squads
+  const head = `<th style="min-width:160px">Vendedor</th>${d.squads.map(s => `<th class="ck-cell">${s.icon}<br><span style="font-size:9px">${s.label.replace('Filtro ','').replace('Time ','')}</span></th>`).join('')}<th></th>`;
+  document.getElementById('sq-members-head').innerHTML = head;
+  document.getElementById('sq-members-tbody').innerHTML = d.todosUsuarios.map(u => `
+    <tr>
+      <td><strong>${u.name}</strong> <span style="color:#666;font-size:10px">(${u.username})</span></td>
+      ${d.squads.map(s => `<td class="ck-cell"><input type="checkbox" data-user="${u.username}" data-team="${s.key}" ${u.teams.includes(s.key)?'checked':''}></td>`).join('')}
+      <td><button class="sq-btn" onclick="salvarMembros('${u.username}')">Aplicar</button></td>
+    </tr>
+  `).join('');
+}
+
+async function salvarMeta(squad){
+  const faturamento = +document.getElementById('meta-fat-'+squad).value || 0;
+  const vendas = +document.getElementById('meta-vend-'+squad).value || 0;
+  try{
+    const r = await fetch('/admin/squads/meta', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ squad, faturamento, vendas })
+    });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    toast('✅ Meta salva: '+squad);
+    load();
+  }catch(e){ toast('Erro: '+e.message, true); }
+}
+
+async function salvarMembros(username){
+  const checks = document.querySelectorAll(`input[data-user="${username}"]:checked`);
+  const teams = Array.from(checks).map(c => c.dataset.team);
+  try{
+    const r = await fetch('/admin/squads/membros', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username, teams })
+    });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    toast('✅ '+username+' agora em: '+(teams.join(', ')||'(nenhuma)'));
+    load();
+  }catch(e){ toast('Erro: '+e.message, true); }
+}
+
+load();
+</script>
+
+</div></body></html>

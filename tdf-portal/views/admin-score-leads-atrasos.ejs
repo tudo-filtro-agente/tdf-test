@@ -1,0 +1,142 @@
+<% const activePage = 'admin-score-leads'; const pageTitle = 'Score de Leads — Tarefas Atrasadas'; %>
+<%- include('layout', { user, activePage, pageTitle }) %>
+
+<style>
+.lsa-wrap{max-width:1500px;margin:0 auto;padding:24px;color:var(--text)}
+.lsa-header{background:linear-gradient(135deg,#1a0e2a,var(--bg));border:2px solid #ef4444;border-radius:12px;padding:18px;margin-bottom:14px}
+.lsa-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.lsa-tab{background:transparent;color:#9ca3af;border:none;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;text-decoration:none}
+.lsa-tab.active{color:#fca5a5;border-bottom-color:#ef4444}
+.lsa-toolbar{display:flex;gap:10px;align-items:center;background:#161725;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px;flex-wrap:wrap}
+.lsa-btn{background:#a371f7;color:#fff;border:none;border-radius:5px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer}
+.lsa-btn.d{background:#ef4444}
+.lsa-btn.g{background:#374151}
+.lsa-btn.s{background:#10b981;color:#000}
+.lsa-btn:disabled{opacity:.5;cursor:wait}
+.lsa-owner-card{background:#161725;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;border-left:4px solid #ef4444}
+.lsa-owner-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.lsa-owner-head .name{font-weight:800;color:var(--text);font-size:14px}
+.lsa-owner-head .badge{background:rgba(239,68,68,.2);color:#fca5a5;padding:2px 9px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase}
+.lsa-tbl{width:100%;border-collapse:collapse;font-size:11px;background:#0a0a0f;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.lsa-tbl th{background:#1a0e2a;color:#fca5a5;padding:7px 10px;text-align:left;text-transform:uppercase;font-size:10px}
+.lsa-tbl td{padding:6px 10px;border-bottom:1px solid #1a1a2a}
+.lsa-pill{display:inline-block;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase}
+.lsa-pill.call{background:rgba(16,185,129,.15);color:#10b981}
+.lsa-pill.task{background:rgba(6,182,212,.15);color:#06b6d4}
+.lsa-empty{background:#161725;border:1px dashed var(--border);border-radius:8px;padding:30px;text-align:center;color:#9ca3af}
+.lsa-banner{background:rgba(16,185,129,.1);border:1px solid #10b981;border-radius:8px;padding:12px;margin-bottom:14px;color:#86efac}
+</style>
+
+<div class="lsa-wrap">
+  <div class="lsa-header">
+    <h1 style="color:#fca5a5;margin:0;font-size:20px">🚨 Tarefas / Chamadas Atrasadas</h1>
+    <p style="color:#9ca3af;font-size:12px;margin:8px 0 0;line-height:1.5">
+      Atividades criadas pela cadência cujo prazo já passou em mais de
+      <strong>2h úteis</strong>. Cron a cada 30min detecta e dispara:
+      <strong style="color:#10b981">Z-API</strong> pro closer,
+      <strong style="color:#06b6d4">Cliq #operacional</strong> pro gestor,
+      <strong style="color:#fbbf24">Note no Zoho</strong> como evidência permanente de cadência mal executada.
+      Cooldown 4h pra não floodar.
+    </p>
+  </div>
+
+  <div class="lsa-tabs">
+    <a class="lsa-tab" href="/admin/score-leads">📋 Critérios</a>
+    <a class="lsa-tab" href="/admin/score-leads/distancia">📍 Distância</a>
+    <a class="lsa-tab" href="/admin/score-leads/cadencia">⏱️ Cadência</a>
+    <a class="lsa-tab active" href="/admin/score-leads/atrasos">🚨 Atrasos</a>
+    <a class="lsa-tab" href="/admin/score-leads/auditoria-atividades">🛡️ Auditoria Atividades</a>
+    <a class="lsa-tab" href="/admin/score-leads/teste">🧪 Testar Lead</a>
+    <a class="lsa-tab" href="/admin/score-leads/auditoria">📜 Auditoria Geral</a>
+  </div>
+
+  <div class="lsa-toolbar">
+    <button class="lsa-btn s" onclick="lsaRunNow(false)">⚡ Verificar atrasos agora (e alertar)</button>
+    <button class="lsa-btn g" onclick="lsaRunNow(true)">🧪 Dry-run (só conta, sem alertar)</button>
+    <span style="flex:1"></span>
+    <button class="lsa-btn g" onclick="lsaLoad()">🔄 Atualizar</button>
+  </div>
+
+  <div id="lsa-content"><div class="lsa-empty">⏳ Carregando…</div></div>
+</div>
+
+<script>
+async function lsaLoad(){
+  try {
+    const r = await fetch('/api/lead-score/overdue?limit=500').then(r=>r.json());
+    if (!r.ok) throw new Error(r.error);
+    const items = r.items || [];
+    if (!items.length) {
+      document.getElementById('lsa-content').innerHTML = `<div class="lsa-banner">✅ Nenhum atraso registrado no momento.</div>`;
+      return;
+    }
+    // agrupa por owner
+    const byOwner = {};
+    for (const it of items) {
+      const k = it.owner_zoho_name || '(sem owner)';
+      if (!byOwner[k]) byOwner[k] = [];
+      byOwner[k].push(it);
+    }
+    const html = Object.entries(byOwner).map(([owner, list]) => `
+      <div class="lsa-owner-card">
+        <div class="lsa-owner-head">
+          <div class="name">${escapeHtml(owner)}</div>
+          <span class="badge">${list.length} atraso${list.length>1?'s':''}</span>
+          <span style="color:#9ca3af;font-size:11px">último alerta: ${new Date(list[0].alerted_at).toLocaleString('pt-BR')}</span>
+        </div>
+        <table class="lsa-tbl">
+          <thead><tr>
+            <th style="width:60px">Tipo</th>
+            <th style="width:140px">Deal</th>
+            <th style="width:120px">Atrasada</th>
+            <th>Canais alertados</th>
+            <th style="width:130px">Note Zoho</th>
+            <th style="width:130px">Alertado em</th>
+          </tr></thead>
+          <tbody>
+            ${list.slice(0, 30).map(it => `
+              <tr>
+                <td><span class="lsa-pill ${it.activity_kind}">${it.activity_kind}</span></td>
+                <td>
+                  <code style="color:#a371f7;font-size:10px;cursor:pointer;padding:3px 6px;border-radius:3px;background:rgba(167,113,247,.08);border:1px solid rgba(167,113,247,.3)"
+                        onclick="copyText('${escapeHtml(it.deal_id)}', this, 'Deal ID')"
+                        title="Clique pra copiar">📋 ${escapeHtml(it.deal_id)}</code>
+                  <a href="https://crmplus.zoho.com/tudodefiltro3711/index.do/cxapp/crm/org856385701/tab/Potentials/${escapeHtml(it.deal_id)}" target="_blank" style="margin-left:4px;color:#06b6d4;font-size:10px;text-decoration:none" title="Abrir no Zoho">↗</a>
+                </td>
+                <td style="color:#fca5a5">${Math.round(it.overdue_minutes/60*10)/10}h</td>
+                <td style="font-size:10px">${(it.channels_sent||[]).join(', ') || '-'}</td>
+                <td><code style="font-size:9px">${escapeHtml(it.note_id||'-')}</code></td>
+                <td style="color:#9ca3af">${new Date(it.alerted_at).toLocaleString('pt-BR')}</td>
+              </tr>
+            `).join('')}
+            ${list.length>30 ? `<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:8px">…e mais ${list.length-30} mais antigos</td></tr>` : ''}
+          </tbody>
+        </table>
+      </div>
+    `).join('');
+    document.getElementById('lsa-content').innerHTML = html;
+  } catch(e) {
+    document.getElementById('lsa-content').innerHTML = `<div style="color:#ef4444;padding:20px">${e.message}</div>`;
+  }
+}
+
+async function lsaRunNow(dryRun){
+  const btn = event.target; btn.disabled = true; btn.textContent = '⏳ Processando…';
+  try {
+    const r = await fetch('/api/lead-score/overdue/run-now', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ dry_run: !!dryRun })
+    }).then(r=>r.json());
+    if (!r.ok) { alert(r.error||'erro'); return; }
+    alert(`${dryRun?'🧪 DRY-RUN':'⚡ EXECUTADO'}\n\nDetectados: ${r.detected}\nA alertar (fora cooldown): ${r.to_alert}\nOwners afetados: ${r.owners}\nNotificações enviadas: ${r.sent}\nErros: ${r.errors||0}`);
+    lsaLoad();
+  } finally {
+    btn.disabled = false;
+    btn.textContent = dryRun ? '🧪 Dry-run (só conta, sem alertar)' : '⚡ Verificar atrasos agora (e alertar)';
+  }
+}
+
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+lsaLoad();
+</script>

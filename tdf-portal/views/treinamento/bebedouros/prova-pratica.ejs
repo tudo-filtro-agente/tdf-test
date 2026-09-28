@@ -1,0 +1,73 @@
+<%- include('../../layout', { user, activePage, pageTitle }) %>
+<%- include('_shared') %>
+<div class="tb-wrap">
+  <a class="tb-back" href="<%= base %>">← Voltar à academia</a>
+  <h1 style="color:#fff;margin:12px 0 2px">🎬 Prova Prática do Closer</h1>
+  <% var minima=(PP&&PP.notaMinima)||85; %>
+  <p style="color:#8899AA;margin:0 0 6px">3 etapas — qualificação, apresentação e fechamento + upsell. Aprovação com <b style="color:#F59E0B"><%= minima %>%</b>. Exigida para o certificado.</p>
+  <% if(prog.provaPratica&&prog.provaPratica.melhorNota){ %><span class="tb-pill">Melhor: <%= prog.provaPratica.melhorNota %>%</span><% } %>
+  <% if(prog.provaPratica&&prog.provaPratica.aprovado){ %><span class="tb-tag sdr">✅ aprovado</span><% } %>
+
+  <% if(!PP||!(PP.ETAPAS||[]).length){ %>
+    <div class="tb-callout alerta" style="margin-top:12px"><div class="ct">Em preparação</div><div>A prova prática está sendo finalizada.</div></div>
+  <% } else { %>
+    <div id="ppForm" style="margin-top:14px">
+      <% PP.ETAPAS.forEach(function(et,ei){ %>
+        <div style="margin:18px 0">
+          <div class="tb-h2">Etapa <%= ei+1 %> — <%= et.titulo %></div>
+          <% if(et.contexto){ %><div class="tb-callout info"><div><%- et.contexto %></div></div><% } %>
+          <% (et.questoes||[]).forEach(function(q,qi){ %>
+            <div class="tb-quiz" data-et="<%= ei %>" data-q="<%= qi %>">
+              <div class="q"><%= qi+1 %>. <%- q.pergunta %></div>
+              <% q.opcoes.forEach(function(op,oi){ %>
+                <button class="tb-opt pp-opt" data-k="<%= ei %>-<%= qi %>" data-p="<%= op.pontos||0 %>" data-fb="<%= (op.feedback||'').replace(/"/g,'&quot;') %>"><%- op.texto %></button>
+              <% }) %>
+              <div class="tb-exp" data-fbfor="<%= ei %>-<%= qi %>"></div>
+            </div>
+          <% }) %>
+        </div>
+      <% }) %>
+    </div>
+    <div class="tb-navrow">
+      <span style="color:#5b7c99;font-size:.85rem" id="ppCount">0 respondidas</span>
+      <button class="tb-btn green" id="ppSubmit">Entregar prova prática</button>
+    </div>
+    <div id="ppResult" style="margin-top:16px"></div>
+
+    <script>
+    (function(){
+      var resp={}, maxByKey={}, total=0;
+      // max points por questão = maior pontos entre as opções
+      document.querySelectorAll('.tb-quiz[data-et]').forEach(function(qz){
+        var k=qz.dataset.et+'-'+qz.dataset.q; total++;
+        var mx=0; qz.querySelectorAll('.pp-opt').forEach(function(b){ mx=Math.max(mx, +b.dataset.p||0); }); maxByKey[k]=mx;
+      });
+      var maxTotal=Object.values(maxByKey).reduce(function(a,b){return a+b;},0)||1;
+      document.querySelectorAll('.pp-opt').forEach(function(b){
+        b.onclick=function(){
+          var k=b.dataset.k;
+          document.querySelectorAll('.pp-opt[data-k="'+k+'"]').forEach(function(x){ x.classList.remove('ok','no'); });
+          var best=maxByKey[k]; var pts=+b.dataset.p||0;
+          if(pts>=best) b.classList.add('ok'); else b.classList.add('no');
+          resp[k]=pts;
+          var fb=document.querySelector('.tb-exp[data-fbfor="'+k+'"]'); if(fb){ fb.textContent=b.dataset.fb||''; fb.classList.add('show'); }
+          document.getElementById('ppCount').textContent=Object.keys(resp).length+' / '+total+' respondidas';
+        };
+      });
+      document.getElementById('ppSubmit').onclick=async function(){
+        if(Object.keys(resp).length<total && !confirm('Faltam questões. Entregar assim mesmo?')) return;
+        var pontos=Object.values(resp).reduce(function(a,b){return a+b;},0);
+        this.disabled=true; this.textContent='corrigindo…';
+        var r=await TB.post('/api/prova-pratica',{pontos:pontos,max:maxTotal});
+        this.disabled=false; this.textContent='Entregar prova prática';
+        var cor=r.aprovado?'#3FB950':'#ef6a6a';
+        var h='<div class="tb-callout '+(r.aprovado?'sucesso':'perigo')+'"><div class="ct" style="color:'+cor+'">'+(r.aprovado?'✅ Aprovado na prática!':'❌ Não atingiu a mínima')+' — '+r.nota+'% (mín '+r.minima+'%)</div></div>';
+        if(r.aprovado) h+='<a class="tb-btn green" href="<%= base %>/certificado">🎓 Ver certificado</a> ';
+        h+='<a class="tb-btn ghost" href="<%= base %>/prova-pratica">↻ Refazer</a>';
+        document.getElementById('ppResult').innerHTML=h;
+        document.getElementById('ppResult').scrollIntoView({behavior:'smooth'});
+      };
+    })();
+    </script>
+  <% } %>
+</div>

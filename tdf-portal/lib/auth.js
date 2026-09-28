@@ -165,6 +165,8 @@ function requireAuth(req, res, next) {
       role: session.role,
       must_reset: session.must_reset,
     };
+    res.locals.isAdmin = session.role === 'admin';
+    res.locals.user = req.user;
     next();
   }).catch((err) => {
     console.error('[auth] session lookup error', err);

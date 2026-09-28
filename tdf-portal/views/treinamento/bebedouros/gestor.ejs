@@ -1,0 +1,52 @@
+<%- include('../../layout', { user, activePage, pageTitle }) %>
+<%- include('_shared') %>
+<div class="tb-wrap">
+  <a class="tb-back" href="<%= base %>">← Voltar ao treinamento</a>
+  <h1 style="color:#fff;margin:12px 0 2px">📊 Painel do Gestor — Bebedouros</h1>
+  <p style="color:#8899AA;margin:0 0 12px">Acompanhamento por vendedor. <%= linhas.length %> pessoa(s) com progresso registrado.</p>
+
+  <div class="tb-stats">
+    <div class="tb-stat"><b><%= linhas.filter(l=>l.pct>0).length %></b><span>iniciaram</span></div>
+    <div class="tb-stat"><b><%= linhas.filter(l=>l.pct===100).length %></b><span>concluíram módulos</span></div>
+    <div class="tb-stat"><b><%= linhas.filter(l=>l.certificado).length %></b><span>certificados</span></div>
+    <div class="tb-stat"><b><%= linhas.filter(l=>l.prova && l.prova.aprovado).length %></b><span>aprovados na prova</span></div>
+  </div>
+
+  <div style="margin:12px 0">
+    <input id="flt" class="tb-opt" style="max-width:280px" placeholder="🔎 filtrar por nome…" oninput="fltRows(this.value)">
+  </div>
+
+  <div style="overflow-x:auto">
+    <table class="tb-table" id="gt">
+      <thead><tr><th>Vendedor</th><th>Progresso</th><th>Nota média</th><th>Prova</th><th>Roleplays</th><th>Upsell (apr/ace)</th><th>Certificado</th><th>Última atividade</th></tr></thead>
+      <tbody>
+        <% if(!linhas.length){ %><tr><td colspan="8" style="color:#8899AA">Ninguém iniciou o treinamento ainda.</td></tr><% } %>
+        <% linhas.forEach(function(l){ %>
+          <tr data-nome="<%= (l.nome||'').toLowerCase() %>">
+            <td><b><%= l.nome %></b><br><span style="color:#5b7c99;font-size:.75rem"><%= l.username %></span></td>
+            <td style="min-width:130px"><div class="tb-prog" style="height:8px"><i style="width:<%= l.pct %>%"></i></div><span style="font-size:.75rem;color:#8899AA"><%= l.concluidos %>/<%= l.total %> (<%= l.pct %>%)</span></td>
+            <td><%= l.notaMedia==null?'—':l.notaMedia+'%' %></td>
+            <td><%= l.prova && l.prova.aprovado ? '<span class="tb-tag sdr">✅ '+l.prova.melhorNota+'%</span>' : (l.prova && l.prova.melhorNota ? l.prova.melhorNota+'%' : '—') %></td>
+            <td><%= l.roleplaysFeitos %></td>
+            <td><%= (l.upsell.apresentado||0) %> / <%= (l.upsell.aceito||0) %></td>
+            <td><%= l.certificado ? '🎓 '+l.certificado.codigo : '—' %></td>
+            <td style="font-size:.78rem;color:#8899AA"><%= l.ultima ? l.ultima.texto : '—' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (areas && areas.length) { %>
+    <h2 class="tb-h2" style="margin-top:26px">Áreas com mais erro (agregado da prova)</h2>
+    <div class="tb-cards">
+      <% areas.slice(0,8).forEach(function(a){ %>
+        <div class="tb-mini"><div class="mt"><%= a.tema %></div><div class="md">Aproveitamento médio <b style="color:<%= a.media<60?'#ef6a6a':'#F59E0B' %>"><%= a.media %>%</b> · <%= a.ocorrencias %> ocorrência(s)</div></div>
+      <% }) %>
+    </div>
+    <div class="tb-callout info"><div style="font-size:.85rem">Sugestão de reciclagem: priorize revisão coletiva dos temas acima com pior aproveitamento.</div></div>
+  <% } %>
+</div>
+<script>
+function fltRows(q){ q=(q||'').toLowerCase(); document.querySelectorAll('#gt tbody tr[data-nome]').forEach(function(tr){ tr.style.display = tr.dataset.nome.includes(q)?'':'none'; }); }
+</script>
