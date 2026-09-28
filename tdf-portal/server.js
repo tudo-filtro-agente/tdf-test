@@ -48,7 +48,8 @@ function renderAuth(res, data) {
     buttonLabel: 'Entrar',
     altHref: '', altText: '',
   };
-  return res.status(data.status || 200).render('auth', { ...defaults, ...data });
+  // Tela de login é standalone — não herda o layout paulo/* (que exige `user`).
+  return res.status(data.status || 200).render('auth', { ...defaults, ...data, layout: false });
 }
 function renderAuthErr(res, status, data) {
   return renderAuth(res, { ...data, status });
