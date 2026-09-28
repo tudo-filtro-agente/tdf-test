@@ -669,6 +669,7 @@ app.get('/area-tecnica', auth.requireAuth, (req, res) => {
 
 // BI Financeiro
 app.get('/bi/financeiro', auth.requireAuth, (req, res) => {
+  // bi-financeiro.ejs declara layout próprio via <% const layout = 'paulo/layout' %>
   res.render('bi-financeiro', { user: req.user, isAdmin: req.user.role === 'admin' });
 });
 
