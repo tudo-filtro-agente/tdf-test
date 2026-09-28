@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= typeof pageTitle !== 'undefined' ? pageTitle + ' - ' : '' %>Portal TDF</title>
+<link rel="icon" type="image/png" href="/paulo-assets/favicon.png">
+<meta name="theme-color" content="#0066CC">
+<script>
+// Tema dia/noite — aplica ANTES do primeiro paint
+try { if (localStorage.getItem('tdf-theme') === 'light') document.documentElement.setAttribute('data-theme', 'light'); } catch(_) {}
+window.tdfTemaToggle = function(){
+  var root = document.documentElement;
+  var eraLight = root.getAttribute('data-theme') === 'light';
+  if (eraLight) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', 'light');
+  try { localStorage.setItem('tdf-theme', eraLight ? 'dark' : 'light'); } catch(_) {}
+  window.tdfTemaAtualizarBtn && tdfTemaAtualizarBtn();
+};
+window.tdfTemaAtualizarBtn = function(){
+  var b = document.getElementById('tdf-tema-btn');
+  if (!b) return;
+  var light = document.documentElement.getAttribute('data-theme') === 'light';
+  b.textContent = light ? '☀️' : '🌙';
+};
+document.addEventListener('DOMContentLoaded', function(){ tdfTemaAtualizarBtn(); });
+</script>
+<link rel="stylesheet" href="/paulo-assets/style.css?v=20260927">
+</head>
+<body>
+<%- include('sidebar', { user: user, activePage: typeof activePage !== 'undefined' ? activePage : '' }) %>
+
+<main class="tdf-main" id="tdfMain">
+  <div class="tdf-content">
+    <%- body %>
+  </div>
+</main>
+</body>
+</html>

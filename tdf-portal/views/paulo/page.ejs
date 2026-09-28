@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= pageTitle %> - Portal TDF</title>
+<link rel="icon" type="image/png" href="/paulo-assets/favicon.png">
+<meta name="theme-color" content="#0066CC">
+<script>
+try { if (localStorage.getItem('tdf-theme') === 'light') document.documentElement.setAttribute('data-theme', 'light'); } catch(_) {}
+window.tdfTemaToggle = function(){
+  var root = document.documentElement;
+  var eraLight = root.getAttribute('data-theme') === 'light';
+  if (eraLight) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', 'light');
+  try { localStorage.setItem('tdf-theme', eraLight ? 'dark' : 'light'); } catch(_) {}
+};
+</script>
+<link rel="stylesheet" href="/paulo-assets/style.css?v=20260927">
+</head>
+<body>
+<aside class="tdf-sidebar" id="tdfSidebar">
+  <div class="tsb-brand">
+    <img src="/paulo-assets/logo-small.png" alt="Tudo de Filtro" class="tsb-logo">
+    <div class="tsb-brand-txt"><b>Tudo de Filtro</b><small>PORTAL INTERNO</small></div>
+    <button class="tsb-collapse" type="button" onclick="tdfSidebarToggle()">⇤</button>
+  </div>
+  <div class="tsb-search">
+    <span class="tsb-search-ic">🔍</span>
+    <input id="tsbQ" type="text" placeholder="Buscar tela..." oninput="tdfSidebarFiltrar(this.value)" autocomplete="off">
+    <span class="tsb-kbd">⌘K</span>
+  </div>
+  <nav class="tsb-nav" id="tsbNav">
+
+    <div class="tsb-group">
+      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎯</span><span class="tsb-lbl">Trabalho do dia</span><span class="tsb-chev">▾</span></button>
+      <div class="tsb-group-body">
+        <a class="tsb-item <%= activePage === 'home' ? 'active' : '' %>" href="/paulo/home"><span class="tsb-ico">🏠</span><span class="tsb-lbl">Home</span></a>
+        <a class="tsb-item <%= activePage === 'cockpit' ? 'active' : '' %>" href="/paulo/cockpit"><span class="tsb-ico">📊</span><span class="tsb-lbl">Painel</span></a>
+        <a class="tsb-item <%= activePage === 'minhas-metas' ? 'active' : '' %>" href="/paulo/minhas-metas"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Minhas Metas</span></a>
+        <a class="tsb-item" href="/paulo/premiacao"><span class="tsb-ico">🏆</span><span class="tsb-lbl">Premiação</span><span class="tsb-badge">NEW</span></a>
+      </div>
+    </div>
+
+    <div class="tsb-group">
+      <button class="tsb-group-title" type="button"><span class="tsb-gi">💬</span><span class="tsb-lbl">Clientes &amp; Conversas</span><span class="tsb-chev">▾</span></button>
+      <div class="tsb-group-body">
+        <a class="tsb-item <%= activePage === 'manutencao' ? 'active' : '' %>" href="/paulo/manutencao"><span class="tsb-ico">🗂️</span><span class="tsb-lbl">CRM</span></a>
+        <a class="tsb-item" href="/paulo/inbox"><span class="tsb-ico">💬</span><span class="tsb-lbl">Inbox</span></a>
+        <a class="tsb-item" href="/paulo/operacional"><span class="tsb-ico">🛠</span><span class="tsb-lbl">Operacional</span></a>
+      </div>
+    </div>
+
+    <% if (user.role === 'admin') { %>
+    <div class="tsb-group">
+      <button class="tsb-group-title" type="button"><span class="tsb-gi">🪜</span><span class="tsb-lbl">Funis (Closy)</span><span class="tsb-chev">▾</span></button>
+      <div class="tsb-group-body">
+        <a class="tsb-item <%= activePage === 'closy' ? 'active' : '' %>" href="/paulo/closy"><span class="tsb-ico">🪜</span><span class="tsb-lbl">Funis Closy</span></a>
+      </div>
+    </div>
+    <div class="tsb-group">
+      <button class="tsb-group-title" type="button"><span class="tsb-gi">📊</span><span class="tsb-lbl">Gestão &amp; Inteligência</span><span class="tsb-chev">▾</span></button>
+      <div class="tsb-group-body">
+        <a class="tsb-item <%= activePage === 'gestao' ? 'active' : '' %>" href="/paulo/gestao"><span class="tsb-ico">📊</span><span class="tsb-lbl">Gestor</span></a>
+        <a class="tsb-item <%= activePage === 'gestao-closy' ? 'active' : '' %>" href="/paulo/gestao-closy"><span class="tsb-ico">📈</span><span class="tsb-lbl">Gestão Closy</span></a>
+      </div>
+    </div>
+    <% } %>
+
+    <div class="tsb-group">
+      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎓</span><span class="tsb-lbl">Aprender &amp; Ferramentas</span><span class="tsb-chev">▾</span></button>
+      <div class="tsb-group-body">
+        <a class="tsb-item <%= activePage === 'onboarding' ? 'active' : '' %>" href="/paulo/onboarding"><span class="tsb-ico">📚</span><span class="tsb-lbl">Onboarding</span></a>
+        <a class="tsb-item <%= activePage === 'playbook' ? 'active' : '' %>" href="/paulo/playbook"><span class="tsb-ico">📖</span><span class="tsb-lbl">Playbook</span></a>
+        <a class="tsb-item <%= activePage === 'treinamento' ? 'active' : '' %>" href="/paulo/treinamento"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Treinamento</span></a>
+        <a class="tsb-item <%= activePage === 'produtos' ? 'active' : '' %>" href="/paulo/produtos"><span class="tsb-ico">📦</span><span class="tsb-lbl">Produtos</span></a>
+        <a class="tsb-item <%= activePage === 'ferramentas' ? 'active' : '' %>" href="/paulo/ferramentas"><span class="tsb-ico">🛠️</span><span class="tsb-lbl">Ferramentas</span></a>
+        <a class="tsb-item <%= activePage === 'ia' ? 'active' : '' %>" href="/paulo/ia"><span class="tsb-ico">🤖</span><span class="tsb-lbl">IA Consulta</span></a>
+      </div>
+    </div>
+
+    <div class="tsb-group">
+      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎮</span><span class="tsb-lbl">Jogo &amp; Premiação</span><span class="tsb-chev">▾</span></button>
+      <div class="tsb-group-body">
+        <a class="tsb-item <%= activePage === 'conquistas' ? 'active' : '' %>" href="/paulo/conquistas"><span class="tsb-ico">🏅</span><span class="tsb-lbl">Conquistas</span></a>
+        <a class="tsb-item <%= activePage === 'corrida' ? 'active' : '' %>" href="/paulo/corrida"><span class="tsb-ico">🏎️</span><span class="tsb-lbl">Corrida</span></a>
+      </div>
+    </div>
+
+    <% if (user.role === 'admin') { %>
+    <div class="tsb-group tsb-group-admin">
+      <button class="tsb-group-title" type="button"><span class="tsb-gi">🛡️</span><span class="tsb-lbl">Administração</span><span class="tsb-chev">▾</span></button>
+      <div class="tsb-group-body">
+        <a class="tsb-item tsb-money" href="/bi"><span class="tsb-ico">💰</span><span class="tsb-lbl">BI Financeiro Multiempresa</span></a>
+        <a class="tsb-item" href="/paulo/pdv"><span class="tsb-ico">🛒</span><span class="tsb-lbl">PDV (Loja)</span></a>
+        <a class="tsb-item <%= activePage === 'admin' ? 'active' : '' %>" href="/paulo/admin"><span class="tsb-ico">⚙️</span><span class="tsb-lbl">Admin Sistema</span></a>
+      </div>
+    </div>
+    <% } %>
+
+  </nav>
+  <div class="tsb-foot">
+    <a class="tsb-foot-link" href="/paulo/meu-perfil">
+      <span class="tsb-avatar"><%= (user.name || '?').charAt(0).toUpperCase() %></span>
+      <span class="tsb-foot-name"><b><%= user.name %></b><small>Ver perfil</small></span>
+    </a>
+    <div class="tsb-foot-actions">
+      <button onclick="window.tdfTemaToggle()" class="tsb-iconbtn" type="button">🌙</button>
+      <a href="/logout" class="tsb-iconbtn tsb-logout">⏻</a>
+    </div>
+  </div>
+</aside>
+<button class="tsb-hamb" type="button" onclick="tdfSidebarMobile()">☰</button>
+<div class="tsb-overlay" id="tsbOverlay" onclick="tdfSidebarMobile(false)"></div>
+
+<main class="tdf-main" id="tdfMain">
+  <div class="tdf-content">
+    <div class="tdf-header-bar">
+      <div class="tdf-header-left">
+        <h1 class="tdf-greeting"><%= pageTitle %></h1>
+      </div>
+    </div>
+
+    <% if (emBreve) { %>
+    <div class="tdf-em-breve-container">
+      <div class="tdf-em-breve-icon">🚧</div>
+      <h2 class="tdf-em-breve-titulo">Em breve</h2>
+      <p class="tdf-em-breve-desc"><%= descricao || 'Esta funcionalidade está sendo desenvolvida.' %></p>
+      <div class="tdf-em-breve-actions">
+        <a href="/bi" class="tdf-btn tdf-btn-primary">📊 Ver BI Financeiro</a>
+        <a href="/paulo/home" class="tdf-btn tdf-btn-secondary">🏠 Voltar ao Home</a>
+      </div>
+    </div>
+    <% } else { %>
+    <%- body %>
+    <% } %>
+  </div>
+</main>
+
+<script>
+function tdfSidebarToggle(){
+  document.getElementById('tdfSidebar').classList.toggle('collapsed');
+}
+function tdfSidebarMobile(force){
+  const sb = document.getElementById('tdfSidebar');
+  const ov = document.getElementById('tsbOverlay');
+  const abrir = (force === undefined) ? !sb.classList.contains('mobile-open') : force;
+  sb.classList.toggle('mobile-open', abrir);
+  ov.classList.toggle('show', abrir);
+}
+function tdfSidebarFiltrar(q){
+  q = (q||'').trim().toLowerCase();
+  document.querySelectorAll('#tsbNav .tsb-group').forEach(g => {
+    let any = false;
+    g.querySelectorAll('.tsb-item').forEach(it => {
+      const hit = it.textContent.toLowerCase().includes(q);
+      it.style.display = hit ? 'flex' : 'none';
+      if (hit) any = true;
+    });
+    g.style.display = any ? 'block' : 'none';
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('#tsbNav .tsb-group-title').forEach(t => {
+    t.addEventListener('click', () => t.closest('.tsb-group').classList.toggle('collapsed'));
+  });
+});
+</script>
+</body>
+</html>

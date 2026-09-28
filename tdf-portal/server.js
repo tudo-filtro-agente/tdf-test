@@ -306,6 +306,199 @@ app.get('/admin', auth.requireAuth, (req, res) => {
 });
 
 // ====================================================================
+// PORTAL DO PAULO — visual idêntico, integrado no Portal 2
+// ====================================================================
+
+// Redirect /paulo -> /paulo/home
+app.get('/paulo', auth.requireAuth, (req, res) => res.redirect('/paulo/home'));
+
+// Home do Paulo
+app.get('/paulo/home', auth.requireAuth, (req, res) => {
+  res.render('paulo/home', {
+    user: req.user,
+    activePage: 'home',
+    pageTitle: 'Home',
+  });
+});
+
+// Cockpit / Painel
+app.get('/paulo/cockpit', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'cockpit',
+    pageTitle: 'Painel',
+    emBreve: true,
+    descricao: 'Acompanhe suas métricas de vendas e Conversões em tempo real.',
+  });
+});
+
+// Minhas Metas
+app.get('/paulo/minhas-metas', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'minhas-metas',
+    pageTitle: 'Minhas Metas',
+    emBreve: true,
+    descricao: 'Suas metas pessoais de vendas e faturamento.',
+  });
+});
+
+// CRM / Manutenção
+app.get('/paulo/manutencao', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'manutencao',
+    pageTitle: 'CRM',
+    emBreve: true,
+    descricao: 'Gestão de clientes e deals — em breve com integração Zoho/Closy.',
+  });
+});
+
+// Funis Closy
+app.get('/paulo/closy', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'closy',
+    pageTitle: 'Funis Closy',
+    emBreve: true,
+    descricao: 'Pipeline de vendas Closy — em breve.',
+  });
+});
+
+// Gestão
+app.get('/paulo/gestao', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'gestao',
+    pageTitle: 'Gestor (geral)',
+    emBreve: true,
+    descricao: 'KPIs e gestão de resultados — em breve.',
+  });
+});
+
+// Gestão Closy KPIs
+app.get('/paulo/gestao-closy', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'gestao-closy',
+    pageTitle: 'Gestão Closy (KPIs)',
+    emBreve: true,
+    descricao: 'Indicadores de performance do time — em breve.',
+  });
+});
+
+// Onboarding
+app.get('/paulo/onboarding', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'onboarding',
+    pageTitle: 'Onboarding',
+    emBreve: true,
+    descricao: 'Primeiros passos na TDF — bem-vindo!',
+  });
+});
+
+// Playbook
+app.get('/paulo/playbook', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'playbook',
+    pageTitle: 'Playbook',
+    emBreve: true,
+    descricao: 'Melhores práticas de vendas e atendimento.',
+  });
+});
+
+// Treinamento
+app.get('/paulo/treinamento', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'treinamento',
+    pageTitle: 'Treinamento',
+    emBreve: true,
+    descricao: 'Cursos e treinamentos da Escola TDF.',
+  });
+});
+
+// Produtos
+app.get('/paulo/produtos', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'produtos',
+    pageTitle: 'Produtos',
+    emBreve: true,
+    descricao: 'Catálogo completo de produtos TDF.',
+  });
+});
+
+// Ferramentas
+app.get('/paulo/ferramentas', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'ferramentas',
+    pageTitle: 'Ferramentas',
+    emBreve: true,
+    descricao: 'Gerador de propostas, calculadoras e mais.',
+  });
+});
+
+// IA
+app.get('/paulo/ia', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'ia',
+    pageTitle: 'IA Consulta',
+    emBreve: true,
+    descricao: 'Consultas inteligentes com IA.',
+  });
+});
+
+// Conquistas
+app.get('/paulo/conquistas', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'conquistas',
+    pageTitle: 'Conquistas',
+    emBreve: true,
+    descricao: 'Suas conquistas e medalhas.',
+  });
+});
+
+// Corrida
+app.get('/paulo/corrida', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'corrida',
+    pageTitle: 'Corrida',
+    emBreve: true,
+    descricao: 'Ranking de vendas — corrida do mês.',
+  });
+});
+
+// Meu Perfil
+app.get('/paulo/meu-perfil', auth.requireAuth, (req, res) => {
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'meu-perfil',
+    pageTitle: 'Meu Perfil',
+    emBreve: true,
+    descricao: 'Suas informações e preferências.',
+  });
+});
+
+// Admin Sistema
+app.get('/paulo/admin', auth.requireAuth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).send('Acesso negado');
+  res.render('paulo/page', {
+    user: req.user,
+    activePage: 'admin',
+    pageTitle: 'Admin Sistema',
+    emBreve: true,
+    descricao: 'Configurações avançadas do sistema.',
+  });
+});
+
+// ====================================================================
 // AUTH — Etapa 1 / Parte 1
 // ====================================================================
 
