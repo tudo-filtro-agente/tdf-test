@@ -26,3 +26,17 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+node_modules/
+node_modules
+.env
+.DS_Store
+rag/
+node_modules/
+# BI Financeiro: tokens Z-API por empresa (cleartext credentials, não commitar)
+data/bi-zapi-config.json
+data/bi-zapi-pending.json
+# BI Financeiro: tokens Focus NFe por empresa
+data/bi-focusnfe-config.json
+.github/
+
+tdf-painel/node_modules/

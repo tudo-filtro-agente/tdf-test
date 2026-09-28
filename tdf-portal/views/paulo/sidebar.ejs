@@ -1,7 +1,7 @@
 <%
   // Sidebar idêntica ao do Paulo (copiada do original)
   function isA(p){ return (typeof activePage !== 'undefined' && activePage === p) ? 'active' : ''; }
-  const _inicial = ((user && user.name) ? user.name.trim().charAt(0) : '?').toUpperCase();
+  const _inicial = ((user && user.name || user.username) ? user.name || user.username.trim().charAt(0) : '?').toUpperCase();
   const isAdminUser = (user && user.role === 'admin');
 %>
 <aside class="tdf-sidebar" id="tdfSidebar">
@@ -125,7 +125,7 @@
   <div class="tsb-foot">
     <a class="tsb-foot-link <%= isA('meu-perfil') %>" href="/paulo/meu-perfil" title="Meu perfil">
       <span class="tsb-avatar"><%= _inicial %></span>
-      <span class="tsb-foot-name"><b><%= user.name %></b><small>Ver perfil</small></span>
+      <span class="tsb-foot-name"><b><%= user.name || user.username %></b><small>Ver perfil</small></span>
     </a>
     <div class="tsb-foot-actions">
       <button onclick="window.tdfTemaToggle&&tdfTemaToggle()" id="tdf-tema-btn" class="tsb-iconbtn" type="button" title="Tema dia/noite">🌙</button>

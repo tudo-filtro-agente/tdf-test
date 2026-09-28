@@ -100,8 +100,8 @@ window.tdfTemaToggle = function(){
   </nav>
   <div class="tsb-foot">
     <a class="tsb-foot-link" href="/paulo/meu-perfil">
-      <span class="tsb-avatar"><%= (user.name || '?').charAt(0).toUpperCase() %></span>
-      <span class="tsb-foot-name"><b><%= user.name %></b><small>Ver perfil</small></span>
+      <span class="tsb-avatar"><%= (user.name || user.username || '?').charAt(0).toUpperCase() %></span>
+      <span class="tsb-foot-name"><b><%= user.name || user.username %></b><small>Ver perfil</small></span>
     </a>
     <div class="tsb-foot-actions">
       <button onclick="window.tdfTemaToggle()" class="tsb-iconbtn" type="button">🌙</button>

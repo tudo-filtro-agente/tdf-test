@@ -4,7 +4,7 @@ const dias = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
 const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const diaStr = dias[hoje.getDay()] + ', ' + hoje.getDate() + ' ' + meses[hoje.getMonth()];
 const horaStr = hoje.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-const userName = (user && user.name) ? user.name : 'Usuário';
+const userName = (user && (user.name || user.username)) ? (user.name || user.username) : 'Usuário';
 const isAdminUser = (user && user.role === 'admin');
 %>
 <!DOCTYPE html>
