@@ -1,0 +1,202 @@
+<% const activePage = 'unificar-cidades'; const pageTitle = 'Unificar Cidades — TDF'; %>
+
+<style>
+/* Estilos baseados no admin-conectores.ejs */
+.uc-wrap{max-width:1400px;margin:0 auto;padding:24px;color:var(--text)}
+.uc-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #a371f7;border-radius:12px;padding:18px;margin-bottom:18px}
+.uc-header h1{color:#c084fc;margin:0;font-size:20px}
+.uc-content{display:flex;flex-direction:column;gap:16px}
+.uc-section{background:#161725;border:1px solid var(--border);border-radius:12px;padding:16px}
+.uc-section h2{color:#c084fc;margin:0 0 12px;font-size:16px}
+.uc-desc{color:#9ca3af;font-size:12px;line-height:1.5;margin-bottom:16px}
+.uc-form{display:flex;flex-direction:column;gap:12px}
+.uc-row{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center}
+.uc-field{display:flex;flex-direction:column;gap:4px}
+.uc-field label{color:#9ca3af;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.uc-field select,.uc-field input{background:#0a0a0f;border:1px solid var(--border);color:#fff;border-radius:5px;padding:8px 12px;font-size:13px}
+.uc-field select:focus,.uc-field input:focus{border-color:#a371f7;outline:none}
+.uc-arrow{font-size:24px;color:#c084fc;text-align:center}
+.uc-actions{display:flex;gap:8px;margin-top:8px}
+.uc-actions button{background:#1f1f2e;color:#ddd;border:1px solid var(--border);border-radius:5px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer}
+.uc-actions button.merge{background:#22c55e;color:#000;border:none}
+.uc-actions button.cancel{background:#ef4444;color:#fff;border:none}
+.uc-result{margin-top:16px;padding:12px;border-radius:8px;font-size:12px;display:none}
+.uc-result.success{background:rgba(34,197,94,.1);border:1px solid #22c55e;color:#22c55e;display:block}
+.uc-result.error{background:rgba(239,68,68,.1);border:1px solid #ef4444;color:#fca5a5;display:block}
+.uc-table{width:100%;border-collapse:collapse;margin-top:12px}
+.uc-table th,.uc-table td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:12px}
+.uc-table th{color:#9ca3af;font-size:9px;text-transform:uppercase;background:#0a0a0f}
+.uc-table td{color:#fff}
+.uc-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;text-transform:uppercase}
+.uc-badge.active{background:rgba(34,197,94,.15);color:#22c55e}
+.uc-badge.merged{background:rgba(163,113,247,.15);color:#c084fc}
+.uc-placeholder{text-align:center;color:var(--text-muted);padding:30px}
+</style>
+
+<div class="uc-wrap">
+  <div class="uc-header">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:28px">🗺️</span>
+      <h1 style="flex:1">Unificar Cidades</h1>
+      <button onclick="ucCarregar()" style="background:#1a0e2a;border:1px solid #a371f7;color:#c084fc;padding:8px 14px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">🔄 Atualizar</button>
+    </div>
+    <p style="color:#9ca3af;font-size:12px;margin:6px 0 0;line-height:1.5">
+      Ferramenta para unificar registros de cidades duplicados no sistema.
+      Ideal para corrigir inconsistências de nomenclatura (ex: "São Paulo" vs "S. Paulo" vs "São Paulo - SP").
+    </p>
+  </div>
+
+  <div class="uc-content">
+    <!-- Formulário de unificação -->
+    <div class="uc-section">
+      <h2>🔀 Unificar Duplicatas</h2>
+      <p class="uc-desc">
+        Selecione a cidade de origem (que será mesclada) e a cidade de destino (que permanecerá).
+        Todos os registros vinculados à cidade de origem serão transferidos para a cidade de destino.
+      </p>
+      
+      <div class="uc-form">
+        <div class="uc-row">
+          <div class="uc-field">
+            <label>Cidade de Origem (será mesclada)</label>
+            <select id="uc-origem">
+              <option value="">Selecione a cidade...</option>
+              <option value="sp1">São Paulo - SP (antigo)</option>
+              <option value="sp2">S. Paulo - SP (duplicado)</option>
+              <option value="rj1">Rio de Janeiro - RJ (antigo)</option>
+              <option value="bh1">Belo Horizonte - MG</option>
+            </select>
+          </div>
+          <div class="uc-arrow">→</div>
+          <div class="uc-field">
+            <label>Cidade de Destino (permanecerá)</label>
+            <select id="uc-destino">
+              <option value="">Selecione a cidade...</option>
+              <option value="sp">São Paulo - SP (principal)</option>
+              <option value="rj">Rio de Janeiro - RJ (principal)</option>
+              <option value="bh">Belo Horizonte - MG (principal)</option>
+              <option value="cur">Curitiba - PR</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="uc-actions">
+          <button class="merge" onclick="ucUnificar()">🔀 Unificar Cidades</button>
+          <button class="cancel" onclick="ucLimpar()">🗑️ Limpar</button>
+        </div>
+      </div>
+      
+      <div id="uc-result" class="uc-result"></div>
+    </div>
+
+    <!-- Lista de cidades -->
+    <div class="uc-section">
+      <h2>📋 Cidades Registradas</h2>
+      <div id="uc-table-wrap">
+        <div class="uc-placeholder">⏳ Carregando...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function ucCarregar(){
+  const wrap = document.getElementById('uc-table-wrap');
+  wrap.innerHTML = '<div class="uc-placeholder">⏳ Carregando...</div>';
+  
+  try {
+    // Placeholder: integrar com endpoint real quando disponível
+    const cidadesExemplo = [
+      { id: 'sp', nome: 'São Paulo', estado: 'SP', status: 'active', registros: 1247 },
+      { id: 'rj', nome: 'Rio de Janeiro', estado: 'RJ', status: 'active', registros: 892 },
+      { id: 'bh', nome: 'Belo Horizonte', estado: 'MG', status: 'active', registros: 543 },
+      { id: 'cur', nome: 'Curitiba', estado: 'PR', status: 'active', registros: 421 },
+      { id: 'poa', nome: 'Porto Alegre', estado: 'RS', status: 'active', registros: 318 },
+      { id: 'sal', nome: 'Salvador', estado: 'BA', status: 'merged', registros: 0 },
+      { id: 'sp1', nome: 'São Paulo (antigo)', estado: 'SP', status: 'merged', registros: 0 }
+    ];
+    
+    ucRenderTabela(cidadesExemplo);
+  } catch(e) {
+    wrap.innerHTML = `<div class="uc-placeholder" style="color:#ef4444">Erro: ${e.message}</div>`;
+  }
+}
+
+function ucRenderTabela(cidades){
+  const wrap = document.getElementById('uc-table-wrap');
+  const statusBadge = { active: 'ATIVA', merged: 'UNIFICADA' };
+  
+  let html = `
+    <table class="uc-table">
+      <thead>
+        <tr>
+          <th>Cidade</th>
+          <th>Estado</th>
+          <th>Status</th>
+          <th>Registros</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  for (const c of cidades) {
+    html += `
+      <tr>
+        <td>${c.nome}</td>
+        <td>${c.estado}</td>
+        <td><span class="uc-badge ${c.status}">${statusBadge[c.status]}</span></td>
+        <td>${c.registros}</td>
+        <td>
+          ${c.status === 'active' ? `<button onclick="ucEditar('${c.id}')" style="background:#1a0e2a;border:1px solid #a371f7;color:#c084fc;padding:4px 8px;border-radius:4px;font-size:10px;cursor:pointer">✏️ Editar</button>` : '—'}
+        </td>
+      </tr>
+    `;
+  }
+  
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function ucUnificar(){
+  const origem = document.getElementById('uc-origem').value;
+  const destino = document.getElementById('uc-destino').value;
+  const result = document.getElementById('uc-result');
+  
+  if (!origem || !destino) {
+    result.className = 'uc-result error';
+    result.textContent = '⚠️ Selecione tanto a cidade de origem quanto a de destino.';
+    return;
+  }
+  
+  if (origem === destino) {
+    result.className = 'uc-result error';
+    result.textContent = '⚠️ A cidade de origem e destino não podem ser iguais.';
+    return;
+  }
+  
+  if (!confirm('Tem certeza que deseja unificar as cidades?\n\nEsta ação transferirá todos os registros da cidade de origem para a cidade de destino e não pode ser desfeita.')) {
+    return;
+  }
+  
+  // Placeholder: integrar com endpoint real
+  result.className = 'uc-result success';
+  result.innerHTML = `✅ Cidades unificadas com sucesso!<br><small>API de unificação será integrada em breve.</small>`;
+  
+  ucLimpar();
+  setTimeout(() => ucCarregar(), 1500);
+}
+
+function ucLimpar(){
+  document.getElementById('uc-origem').value = '';
+  document.getElementById('uc-destino').value = '';
+  document.getElementById('uc-result').className = 'uc-result';
+  document.getElementById('uc-result').style.display = 'none';
+}
+
+function ucEditar(id){
+  alert(`Editar cidade ID: ${id}\n(Funcionalidade em desenvolvimento)`);
+}
+
+ucCarregar();
+</script>

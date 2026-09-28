@@ -1,178 +1,187 @@
-<%
-  // Sidebar idêntica ao do Paulo (copiada do original)
-  function isA(p){ return (typeof activePage !== 'undefined' && activePage === p) ? 'active' : ''; }
-  const _inicial = ((user && user.name || user.username) ? user.name || user.username.trim().charAt(0) : '?').toUpperCase();
-  const isAdminUser = (user && user.role === 'admin');
-%>
-<aside class="tdf-sidebar" id="tdfSidebar">
-  <div class="tsb-brand">
-    <img src="/paulo-assets/logo-small.png" alt="Tudo de Filtro" class="tsb-logo">
-    <div class="tsb-brand-txt"><b>Tudo de Filtro</b><small>PORTAL INTERNO</small></div>
-    <button class="tsb-collapse" type="button" onclick="tdfSidebarToggle()" title="Recolher / expandir menu">⇤</button>
-  </div>
-
-  <div class="tsb-search">
-    <span class="tsb-search-ic">🔍</span>
-    <input id="tsbQ" type="text" placeholder="Buscar tela..." oninput="tdfSidebarFiltrar(this.value)" autocomplete="off">
-    <span class="tsb-kbd">⌘K</span>
-  </div>
-
-  <nav class="tsb-nav" id="tsbNav">
-
-    <!-- TRABALHO DO DIA -->
-    <div class="tsb-group">
-      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎯</span><span class="tsb-lbl">Trabalho do dia</span><span class="tsb-chev">▾</span></button>
-      <div class="tsb-group-body">
-        <a class="tsb-item <%= isA('home') %>" href="/paulo/home" title="Home"><span class="tsb-ico">🏠</span><span class="tsb-lbl">Home</span></a>
-        <a class="tsb-item <%= isA('cockpit') %>" href="/paulo/cockpit" title="Painel"><span class="tsb-ico">📊</span><span class="tsb-lbl">Painel</span></a>
-        <a class="tsb-item <%= isA('minhas-metas') %>" href="/paulo/minhas-metas" title="Minhas Metas"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Minhas Metas</span></a>
-        <a class="tsb-item <%= isA('premiacao') %>" href="/paulo/premiacao" title="Premiação"><span class="tsb-ico">🏆</span><span class="tsb-lbl">Premiação v7</span><span class="tsb-badge">NEW</span></a>
-        <a class="tsb-item <%= isA('commit-semana') %>" href="/paulo/commit-semana" title="Commit da semana"><span class="tsb-ico">📋</span><span class="tsb-lbl">Commit da semana</span></a>
-        <a class="tsb-item <%= isA('leads-parados') %>" href="/paulo/leads-parados" title="Parados hoje"><span class="tsb-ico">⏰</span><span class="tsb-lbl">Parados hoje</span></a>
-        <a class="tsb-item <%= isA('retornos') %>" href="/paulo/retornos" title="Retornos & Follow-ups"><span class="tsb-ico">📅</span><span class="tsb-lbl">Retornos & Follow-ups</span></a>
-        <% if (isAdminUser) { %>
-        <a class="tsb-item <%= isA('resgate') %>" href="/paulo/resgate" title="Resgate — deals em risco"><span class="tsb-ico">🆘</span><span class="tsb-lbl">Resgate</span></a>
-        <% } %>
-      </div>
-    </div>
-
-    <!-- CLIENTES & CONVERSAS -->
-    <div class="tsb-group">
-      <button class="tsb-group-title" type="button"><span class="tsb-gi">💬</span><span class="tsb-lbl">Clientes &amp; Conversas</span><span class="tsb-chev">▾</span></button>
-      <div class="tsb-group-body">
-        <a class="tsb-item <%= isA('manutencao') %>" href="/paulo/manutencao" title="CRM"><span class="tsb-ico">🗂️</span><span class="tsb-lbl">CRM</span></a>
-        <a class="tsb-item <%= isA('inbox') %>" href="/paulo/inbox" title="Inbox"><span class="tsb-ico">💬</span><span class="tsb-lbl">Inbox</span></a>
-        <a class="tsb-item <%= isA('operacional') %>" href="/paulo/operacional" title="Operacional"><span class="tsb-ico">🛠</span><span class="tsb-lbl">Operacional</span></a>
-        <% if (isAdminUser) { %>
-        <a class="tsb-item <%= isA('contatos') %>" href="/paulo/contatos" title="Contatos"><span class="tsb-ico">📇</span><span class="tsb-lbl">Contatos</span></a>
-        <a class="tsb-item <%= isA('auvo') %>" href="/paulo/auvo" title="Auvo (campo)"><span class="tsb-ico">📍</span><span class="tsb-lbl">Auvo (campo)</span></a>
-        <% } %>
-      </div>
-    </div>
-
-    <% if (isAdminUser) { %>
-    <!-- FUNIS (CLOSY) -->
-    <div class="tsb-group">
-      <button class="tsb-group-title" type="button"><span class="tsb-gi">🪜</span><span class="tsb-lbl">Funis (Closy)</span><span class="tsb-chev">▾</span></button>
-      <div class="tsb-group-body">
-        <a class="tsb-item" href="/paulo/closy" title="Funis Closy"><span class="tsb-ico">🪜</span><span class="tsb-lbl">Funis Closy</span></a>
-        <a class="tsb-item" href="/paulo/closy-produtos" title="Produtos + Calculadora"><span class="tsb-ico">📦</span><span class="tsb-lbl">Produtos + Calculadora</span></a>
-        <a class="tsb-item tsb-money" href="/paulo/forecast" title="Forecast Manutenção"><span class="tsb-ico">💰</span><span class="tsb-lbl">Forecast Manutenção</span></a>
-        <a class="tsb-item" href="/paulo/closy-custom" title="Campos Personalizados"><span class="tsb-ico">🏷️</span><span class="tsb-lbl">Campos Personalizados</span></a>
-      </div>
-    </div>
-
-    <!-- GESTÃO & INTELIGÊNCIA -->
-    <div class="tsb-group">
-      <button class="tsb-group-title" type="button"><span class="tsb-gi">📊</span><span class="tsb-lbl">Gestão &amp; Inteligência</span><span class="tsb-chev">▾</span></button>
-      <div class="tsb-group-body">
-        <a class="tsb-item <%= isA('gestao') %>" href="/paulo/gestao" title="Gestor (geral)"><span class="tsb-ico">📊</span><span class="tsb-lbl">Gestor (geral)</span></a>
-        <a class="tsb-item <%= isA('gestao-closy') %>" href="/paulo/gestao-closy" title="Gestão Closy (KPIs)"><span class="tsb-ico">📈</span><span class="tsb-lbl">Gestão Closy (KPIs)</span></a>
-        <a class="tsb-item <%= isA('funnel-compare') %>" href="/paulo/funnel-compare" title="Funnel Compare"><span class="tsb-ico">📉</span><span class="tsb-lbl">Funnel Compare</span></a>
-        <a class="tsb-item <%= isA('dashboard-trafego') %>" href="/paulo/dashboard-trafego" title="Dashboard Tráfego"><span class="tsb-ico">⚡</span><span class="tsb-lbl">Dashboard Tráfego</span><span class="tsb-badge">NEW</span></a>
-        <a class="tsb-item <%= isA('intake-monitor') %>" href="/paulo/intake-monitor" title="Monitor Intake"><span class="tsb-ico">📡</span><span class="tsb-lbl">Monitor Intake</span></a>
-        <a class="tsb-item" href="/paulo/raiox-vendedor" title="Raio-X de Vendedor"><span class="tsb-ico">🔍</span><span class="tsb-lbl">Raio-X de Vendedor</span></a>
-        <a class="tsb-item" href="/paulo/reuniao-matinal" title="Reunião Matinal"><span class="tsb-ico">☕</span><span class="tsb-lbl">Reunião Matinal</span></a>
-        <a class="tsb-item <%= isA('nubia') %>" href="/paulo/nubia" title="Núbia SDR IA"><span class="tsb-ico">🤖</span><span class="tsb-lbl">Núbia SDR IA</span></a>
-        <a class="tsb-item <%= isA('auditoria-crm') %>" href="/paulo/auditoria-crm" title="Auditoria CRM"><span class="tsb-ico">🔍</span><span class="tsb-lbl">Auditoria CRM</span></a>
-        <a class="tsb-item" href="/paulo/score-leads" title="Score de Leads"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Score de Leads</span></a>
-      </div>
-    </div>
-    <% } %>
-
-    <!-- APRENDER & FERRAMENTAS -->
-    <div class="tsb-group">
-      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎓</span><span class="tsb-lbl">Aprender &amp; Ferramentas</span><span class="tsb-chev">▾</span></button>
-      <div class="tsb-group-body">
-        <a class="tsb-item <%= isA('onboarding') %>" href="/paulo/onboarding" title="Onboarding"><span class="tsb-ico">📚</span><span class="tsb-lbl">Onboarding</span></a>
-        <a class="tsb-item <%= isA('playbook') %>" href="/paulo/playbook" title="Playbook"><span class="tsb-ico">📖</span><span class="tsb-lbl">Playbook</span></a>
-        <a class="tsb-item <%= isA('produtos') %>" href="/paulo/produtos" title="Produtos"><span class="tsb-ico">📦</span><span class="tsb-lbl">Produtos</span></a>
-        <a class="tsb-item <%= isA('treinamento') %>" href="/paulo/treinamento" title="Treinamento"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Treinamento</span></a>
-        <a class="tsb-item <%= isA('ferramentas') %>" href="/paulo/ferramentas" title="Ferramentas"><span class="tsb-ico">🛠️</span><span class="tsb-lbl">Ferramentas</span></a>
-        <a class="tsb-item <%= isA('ia') %>" href="/paulo/ia" title="IA Consulta"><span class="tsb-ico">🤖</span><span class="tsb-lbl">IA Consulta</span></a>
-      </div>
-    </div>
-
-    <!-- JOGO & PREMIAÇÃO -->
-    <div class="tsb-group">
-      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎮</span><span class="tsb-lbl">Jogo &amp; Premiação</span><span class="tsb-chev">▾</span></button>
-      <div class="tsb-group-body">
-        <a class="tsb-item <%= isA('conquistas') %>" href="/paulo/conquistas" title="Conquistas"><span class="tsb-ico">🏅</span><span class="tsb-lbl">Conquistas</span></a>
-        <a class="tsb-item <%= isA('corrida') %>" href="/paulo/corrida" title="Corrida"><span class="tsb-ico">🏎️</span><span class="tsb-lbl">Corrida</span></a>
-        <a class="tsb-item <%= isA('coins') %>" href="/paulo/coins" title="Coins"><span class="tsb-ico">🪙</span><span class="tsb-lbl">Coins</span></a>
-        <a class="tsb-item <%= isA('meta-pessoal') %>" href="/paulo/meta-pessoal" title="Minha Meta"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Minha Meta</span></a>
-        <a class="tsb-item <%= isA('loja') %>" href="/paulo/loja" title="Loja"><span class="tsb-ico">🏪</span><span class="tsb-lbl">Loja</span></a>
-      </div>
-    </div>
-
-    <% if (isAdminUser) { %>
-    <!-- ADMINISTRAÇÃO -->
-    <div class="tsb-group tsb-group-admin">
-      <button class="tsb-group-title" type="button"><span class="tsb-gi">🛡️</span><span class="tsb-lbl">Administração</span><span class="tsb-chev">▾</span></button>
-      <div class="tsb-group-body">
+1|<%
+2|  // Sidebar idêntica ao do Paulo (copiada do original)
+3|  function isA(p){ return (typeof activePage !== 'undefined' && activePage === p) ? 'active' : ''; }
+4|  const _inicial = ((user && user.name || user.username) ? user.name || user.username.trim().charAt(0) : '?').toUpperCase();
+5|  const isAdminUser = (user && user.role === 'admin');
+6|%>
+7|<aside class="tdf-sidebar" id="tdfSidebar">
+8|  <div class="tsb-brand">
+9|    <img src="/paulo-assets/logo-small.png" alt="Tudo de Filtro" class="tsb-logo">
+10|    <div class="tsb-brand-txt"><b>Tudo de Filtro</b><small>PORTAL INTERNO</small></div>
+11|    <button class="tsb-collapse" type="button" onclick="tdfSidebarToggle()" title="Recolher / expandir menu">⇤</button>
+12|  </div>
+13|
+14|  <div class="tsb-search">
+15|    <span class="tsb-search-ic">🔍</span>
+16|    <input id="tsbQ" type="text" placeholder="Buscar tela..." oninput="tdfSidebarFiltrar(this.value)" autocomplete="off">
+17|    <span class="tsb-kbd">⌘K</span>
+18|  </div>
+19|
+20|  <nav class="tsb-nav" id="tsbNav">
+21|
+22|    <!-- TRABALHO DO DIA -->
+23|    <div class="tsb-group">
+24|      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎯</span><span class="tsb-lbl">Trabalho do dia</span><span class="tsb-chev">▾</span></button>
+25|      <div class="tsb-group-body">
+26|        <a class="tsb-item <%= isA('home') %>" href="/paulo/home" title="Home"><span class="tsb-ico">🏠</span><span class="tsb-lbl">Home</span></a>
+27|        <a class="tsb-item <%= isA('cockpit') %>" href="/paulo/cockpit" title="Painel"><span class="tsb-ico">📊</span><span class="tsb-lbl">Painel</span></a>
+28|        <a class="tsb-item <%= isA('minhas-metas') %>" href="/paulo/minhas-metas" title="Minhas Metas"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Minhas Metas</span></a>
+29|        <a class="tsb-item <%= isA('metas-time-produto') %>" href="/paulo/metas-time-produto" title="Metas por Time × Produto"><span class="tsb-ico">🪙</span><span class="tsb-lbl">Metas por Time × Produto</span></a>
+30|        <a class="tsb-item <%= isA('metas-closer-produto') %>" href="/paulo/metas-closer-produto" title="Metas Closer × Produto"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Metas Closer × Produto</span></a>
+31|        <a class="tsb-item <%= isA('premiacoes-extras') %>" href="/paulo/premiacoes-extras" title="Premiações Extras"><span class="tsb-ico">🏆</span><span class="tsb-lbl">Premiações Extras</span></a>
+32|        <a class="tsb-item <%= isA('premiacao') %>" href="/paulo/premiacao" title="Premiação"><span class="tsb-ico">🏆</span><span class="tsb-lbl">Premiação v7</span><span class="tsb-badge">NEW</span></a>
+33|        <a class="tsb-item <%= isA('commit-semana') %>" href="/paulo/commit-semana" title="Commit da semana"><span class="tsb-ico">📋</span><span class="tsb-lbl">Commit da semana</span></a>
+34|        <a class="tsb-item <%= isA('leads-parados') %>" href="/paulo/leads-parados" title="Parados hoje"><span class="tsb-ico">⏰</span><span class="tsb-lbl">Parados hoje</span></a>
+35|        <a class="tsb-item <%= isA('retornos') %>" href="/paulo/retornos" title="Retornos & Follow-ups"><span class="tsb-ico">📅</span><span class="tsb-lbl">Retornos & Follow-ups</span></a>
+36|        <% if (isAdminUser) { %>
+37|        <a class="tsb-item <%= isA('resgate') %>" href="/paulo/resgate" title="Resgate — deals em risco"><span class="tsb-ico">🆘</span><span class="tsb-lbl">Resgate</span></a>
+38|        <% } %>
+39|      </div>
+40|    </div>
+41|
+42|    <!-- CLIENTES & CONVERSAS -->
+43|    <div class="tsb-group">
+44|      <button class="tsb-group-title" type="button"><span class="tsb-gi">💬</span><span class="tsb-lbl">Clientes &amp; Conversas</span><span class="tsb-chev">▾</span></button>
+45|      <div class="tsb-group-body">
+46|        <a class="tsb-item <%= isA('manutencao') %>" href="/paulo/manutencao" title="CRM"><span class="tsb-ico">🗂️</span><span class="tsb-lbl">CRM</span></a>
+47|        <a class="tsb-item <%= isA('inbox') %>" href="/paulo/inbox" title="Inbox"><span class="tsb-ico">💬</span><span class="tsb-lbl">Inbox</span></a>
+48|        <a class="tsb-item <%= isA('operacional') %>" href="/paulo/operacional" title="Operacional"><span class="tsb-ico">🛠</span><span class="tsb-lbl">Operacional</span></a>
+49|        <% if (isAdminUser) { %>
+50|        <a class="tsb-item <%= isA('contatos') %>" href="/paulo/contatos" title="Contatos"><span class="tsb-ico">📇</span><span class="tsb-lbl">Contatos</span></a>
+51|        <a class="tsb-item <%= isA('auvo') %>" href="/paulo/auvo" title="Auvo (campo)"><span class="tsb-ico">📍</span><span class="tsb-lbl">Auvo (campo)</span></a>
+52|        <% } %>
+53|      </div>
+54|    </div>
+55|
+56|    <% if (isAdminUser) { %>
+57|    <!-- FUNIS (CLOSY) -->
+58|    <div class="tsb-group">
+59|      <button class="tsb-group-title" type="button"><span class="tsb-gi">🪜</span><span class="tsb-lbl">Funis (Closy)</span><span class="tsb-chev">▾</span></button>
+60|      <div class="tsb-group-body">
+61|        <a class="tsb-item" href="/paulo/closy" title="Funis Closy"><span class="tsb-ico">🪜</span><span class="tsb-lbl">Funis Closy</span></a>
+62|        <a class="tsb-item" href="/paulo/closy-produtos" title="Produtos + Calculadora"><span class="tsb-ico">📦</span><span class="tsb-lbl">Produtos + Calculadora</span></a>
+63|        <a class="tsb-item tsb-money" href="/paulo/forecast" title="Forecast Manutenção"><span class="tsb-ico">💰</span><span class="tsb-lbl">Forecast Manutenção</span></a>
+64|        <a class="tsb-item" href="/paulo/closy-custom" title="Campos Personalizados"><span class="tsb-ico">🏷️</span><span class="tsb-lbl">Campos Personalizados</span></a>
+65|      </div>
+66|    </div>
+67|
+68|    <!-- GESTÃO & INTELIGÊNCIA -->
+69|    <div class="tsb-group">
+70|      <button class="tsb-group-title" type="button"><span class="tsb-gi">📊</span><span class="tsb-lbl">Gestão &amp; Inteligência</span><span class="tsb-chev">▾</span></button>
+71|      <div class="tsb-group-body">
+72|        <a class="tsb-item <%= isA('gestao') %>" href="/paulo/gestao" title="Gestor (geral)"><span class="tsb-ico">📊</span><span class="tsb-lbl">Gestor (geral)</span></a>
+73|        <a class="tsb-item <%= isA('gestao-closy') %>" href="/paulo/gestao-closy" title="Gestão Closy (KPIs)"><span class="tsb-ico">📈</span><span class="tsb-lbl">Gestão Closy (KPIs)</span></a>
+74|        <a class="tsb-item <%= isA('funnel-compare') %>" href="/paulo/funnel-compare" title="Funnel Compare"><span class="tsb-ico">📉</span><span class="tsb-lbl">Funnel Compare</span></a>
+75|        <a class="tsb-item <%= isA('dashboard-trafego') %>" href="/paulo/dashboard-trafego" title="Dashboard Tráfego"><span class="tsb-ico">⚡</span><span class="tsb-lbl">Dashboard Tráfego</span><span class="tsb-badge">NEW</span></a>
+76|        <a class="tsb-item <%= isA('intake-monitor') %>" href="/paulo/intake-monitor" title="Monitor Intake"><span class="tsb-ico">📡</span><span class="tsb-lbl">Monitor Intake</span></a>
+77|        <a class="tsb-item" href="/paulo/raiox-vendedor" title="Raio-X de Vendedor"><span class="tsb-ico">🔍</span><span class="tsb-lbl">Raio-X de Vendedor</span></a>
+78|        <a class="tsb-item" href="/paulo/reuniao-matinal" title="Reunião Matinal"><span class="tsb-ico">☕</span><span class="tsb-lbl">Reunião Matinal</span></a>
+79|        <a class="tsb-item <%= isA('nubia') %>" href="/paulo/nubia" title="Núbia SDR IA"><span class="tsb-ico">🤖</span><span class="tsb-lbl">Núbia SDR IA</span></a>
+80|        <a class="tsb-item <%= isA('auditoria-crm') %>" href="/paulo/auditoria-crm" title="Auditoria CRM"><span class="tsb-ico">🔍</span><span class="tsb-lbl">Auditoria CRM</span></a>
+81|        <a class="tsb-item" href="/paulo/score-leads" title="Score de Leads"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Score de Leads</span></a>
+82|      </div>
+83|    </div>
+84|    <% } %>
+85|
+86|    <!-- APRENDER & FERRAMENTAS -->
+87|    <div class="tsb-group">
+88|      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎓</span><span class="tsb-lbl">Aprender &amp; Ferramentas</span><span class="tsb-chev">▾</span></button>
+89|      <div class="tsb-group-body">
+90|        <a class="tsb-item <%= isA('onboarding') %>" href="/paulo/onboarding" title="Onboarding"><span class="tsb-ico">📚</span><span class="tsb-lbl">Onboarding</span></a>
+91|        <a class="tsb-item <%= isA('playbook') %>" href="/paulo/playbook" title="Playbook"><span class="tsb-ico">📖</span><span class="tsb-lbl">Playbook</span></a>
+92|        <a class="tsb-item <%= isA('produtos') %>" href="/paulo/produtos" title="Produtos"><span class="tsb-ico">📦</span><span class="tsb-lbl">Produtos</span></a>
+93|        <a class="tsb-item <%= isA('treinamento') %>" href="/paulo/treinamento" title="Treinamento"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Treinamento</span></a>
+94|        <a class="tsb-item <%= isA('ferramentas') %>" href="/paulo/ferramentas" title="Ferramentas"><span class="tsb-ico">🛠️</span><span class="tsb-lbl">Ferramentas</span></a>
+95|        <a class="tsb-item <%= isA('ia') %>" href="/paulo/ia" title="IA Consulta"><span class="tsb-ico">🤖</span><span class="tsb-lbl">IA Consulta</span></a>
+96|      </div>
+97|    </div>
+98|
+99|    <!-- JOGO & PREMIAÇÃO -->
+100|    <div class="tsb-group">
+101|      <button class="tsb-group-title" type="button"><span class="tsb-gi">🎮</span><span class="tsb-lbl">Jogo &amp; Premiação</span><span class="tsb-chev">▾</span></button>
+102|      <div class="tsb-group-body">
+103|        <a class="tsb-item <%= isA('conquistas') %>" href="/paulo/conquistas" title="Conquistas"><span class="tsb-ico">🏅</span><span class="tsb-lbl">Conquistas</span></a>
+104|        <a class="tsb-item <%= isA('corrida') %>" href="/paulo/corrida" title="Corrida"><span class="tsb-ico">🏎️</span><span class="tsb-lbl">Corrida</span></a>
+105|        <a class="tsb-item <%= isA('coins') %>" href="/paulo/coins" title="Coins"><span class="tsb-ico">🪙</span><span class="tsb-lbl">Coins</span></a>
+106|        <a class="tsb-item <%= isA('meta-pessoal') %>" href="/paulo/meta-pessoal" title="Minha Meta"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Minha Meta</span></a>
+107|        <a class="tsb-item <%= isA('loja') %>" href="/paulo/loja" title="Loja"><span class="tsb-ico">🏪</span><span class="tsb-lbl">Loja</span></a>
+108|      </div>
+109|    </div>
+110|
+111|    <% if (isAdminUser) { %>
+112|    <!-- ADMINISTRAÇÃO -->
+113|    <div class="tsb-group tsb-group-admin">
+114|      <button class="tsb-group-title" type="button"><span class="tsb-gi">🛡️</span><span class="tsb-lbl">Administração</span><span class="tsb-chev">▾</span></button>
+<div class="tsb-group-body">
         <a class="tsb-item tsb-money" href="/bi/financeiro" title="BI Financeiro Multiempresa"><span class="tsb-ico">💰</span><span class="tsb-lbl">BI Financeiro Multiempresa</span></a>
+        <a class="tsb-item" href="/admin/conectores" title="Conectores (APIs)"><span class="tsb-ico">🔌</span><span class="tsb-lbl">Conectores (APIs)</span></a>
+        <a class="tsb-item" href="/paulo/whatsapp-status" title="WhatsApp Status"><span class="tsb-ico">💬</span><span class="tsb-lbl">WhatsApp Status</span></a>
+        <a class="tsb-item" href="/paulo/goto-connect" title="GoTo Connect"><span class="tsb-ico">📞</span><span class="tsb-lbl">GoTo Connect</span></a>
+        <a class="tsb-item" href="/paulo/unificar-cidades" title="Unificar Cidades"><span class="tsb-ico">🗺️</span><span class="tsb-lbl">Unificar Cidades</span></a>
         <a class="tsb-item <%= isA('pdv') %>" href="/paulo/pdv" title="PDV (Loja Física)"><span class="tsb-ico">🛒</span><span class="tsb-lbl">PDV (Loja Física)</span></a>
         <a class="tsb-item" href="/paulo/squads" title="Squads & Metas"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Squads &amp; Metas</span></a>
         <a class="tsb-item" href="/paulo/admin" title="Admin Sistema"><span class="tsb-ico">⚙️</span><span class="tsb-lbl">Admin Sistema</span></a>
-        <a class="tsb-item" href="/paulo/admin-acessos" title="Acessos & Logs"><span class="tsb-ico">📊</span><span class="tsb-lbl">Acessos &amp; Logs</span></a>
-      </div>
-    </div>
-    <% } %>
-
-  </nav>
-
-  <!-- RODAPÉ: perfil + ações -->
-  <div class="tsb-foot">
-    <a class="tsb-foot-link <%= isA('meu-perfil') %>" href="/paulo/meu-perfil" title="Meu perfil">
-      <span class="tsb-avatar"><%= _inicial %></span>
-      <span class="tsb-foot-name"><b><%= user.name || user.username %></b><small>Ver perfil</small></span>
-    </a>
-    <div class="tsb-foot-actions">
-      <button onclick="window.tdfTemaToggle&&tdfTemaToggle()" id="tdf-tema-btn" class="tsb-iconbtn" type="button" title="Tema dia/noite">🌙</button>
-      <a href="/logout" class="tsb-iconbtn tsb-logout" title="Sair">⏻</a>
-    </div>
-  </div>
-</aside>
-
-<!-- Mobile: botão hambúrguer + overlay -->
-<button class="tsb-hamb" type="button" onclick="tdfSidebarMobile()" aria-label="Abrir menu">☰</button>
-<div class="tsb-overlay" id="tsbOverlay" onclick="tdfSidebarMobile(false)"></div>
-
-<script>
-function tdfSidebarToggle(){
-  const sb = document.getElementById('tdfSidebar');
-  sb.classList.toggle('collapsed');
-  try { localStorage.setItem('tdfSidebarCollapsed', sb.classList.contains('collapsed') ? '1':'0'); } catch(_){}
-}
-function tdfSidebarMobile(force){
-  const sb = document.getElementById('tdfSidebar');
-  const ov = document.getElementById('tsbOverlay');
-  const abrir = (force === undefined) ? !sb.classList.contains('mobile-open') : force;
-  sb.classList.toggle('mobile-open', abrir);
-  ov.classList.toggle('show', abrir);
-}
-function tdfSidebarFiltrar(q){
-  q = (q||'').trim().toLowerCase();
-  document.querySelectorAll('#tsbNav .tsb-group').forEach(g => {
-    let any = false;
-    g.querySelectorAll('.tsb-item').forEach(it => {
-      const hit = it.textContent.toLowerCase().includes(q);
-      it.style.display = hit ? 'flex' : 'none';
-      if (hit) any = true;
-    });
-    g.style.display = any ? 'block' : 'none';
-    if (q) g.classList.remove('collapsed');
-  });
-}
-document.addEventListener('DOMContentLoaded', () => {
-  try { if (localStorage.getItem('tdfSidebarCollapsed') === '1') document.getElementById('tdfSidebar').classList.add('collapsed'); } catch(_){}
-  document.querySelectorAll('#tsbNav .tsb-group-title').forEach(t => {
-    t.addEventListener('click', () => t.closest('.tsb-group').classList.toggle('collapsed'));
-  });
-  const ativo = document.querySelector('#tsbNav .tsb-item.active');
-  if (ativo) ativo.closest('.tsb-group')?.classList.remove('collapsed');
-});
-document.addEventListener('keydown', e => {
-  if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); document.getElementById('tsbQ')?.focus(); }
-});
-</script>
+        <a class="tsb-item" href="/paulo/admin-acessos" title="Acessos &amp; Logs"><span class="tsb-ico">📊</span><span class="tsb-lbl">Acessos &amp; Logs</span></a>
+        <a class="tsb-item" href="/paulo/meta-global" title="Meta global (simples)"><span class="tsb-ico">🌙</span><span class="tsb-lbl">Meta global (simples)</span></a>
+        <a class="tsb-item" href="/paulo/integracoes-antigas" title="Integrações antigas"><span class="tsb-ico">🌙</span><span class="tsb-lbl">Integrações antigas</span></a>
+122|      </div>
+123|    </div>
+124|    <% } %>
+125|
+126|  </nav>
+127|
+128|  <!-- RODAPÉ: perfil + ações -->
+129|  <div class="tsb-foot">
+130|    <a class="tsb-foot-link <%= isA('meu-perfil') %>" href="/paulo/meu-perfil" title="Meu perfil">
+131|      <span class="tsb-avatar"><%= _inicial %></span>
+132|      <span class="tsb-foot-name"><b><%= user.name || user.username %></b><small>Ver perfil</small></span>
+133|    </a>
+134|    <div class="tsb-foot-actions">
+135|      <button onclick="window.tdfTemaToggle&&tdfTemaToggle()" id="tdf-tema-btn" class="tsb-iconbtn" type="button" title="Tema dia/noite">🌙</button>
+136|      <a href="/logout" class="tsb-iconbtn tsb-logout" title="Sair">⏻</a>
+137|    </div>
+138|  </div>
+139|</aside>
+140|
+141|<!-- Mobile: botão hambúrguer + overlay -->
+142|<button class="tsb-hamb" type="button" onclick="tdfSidebarMobile()" aria-label="Abrir menu">☰</button>
+143|<div class="tsb-overlay" id="tsbOverlay" onclick="tdfSidebarMobile(false)"></div>
+144|
+145|<script>
+146|function tdfSidebarToggle(){
+147|  const sb = document.getElementById('tdfSidebar');
+148|  sb.classList.toggle('collapsed');
+149|  try { localStorage.setItem('tdfSidebarCollapsed', sb.classList.contains('collapsed') ? '1':'0'); } catch(_){}
+150|}
+151|function tdfSidebarMobile(force){
+152|  const sb = document.getElementById('tdfSidebar');
+153|  const ov = document.getElementById('tsbOverlay');
+154|  const abrir = (force === undefined) ? !sb.classList.contains('mobile-open') : force;
+155|  sb.classList.toggle('mobile-open', abrir);
+156|  ov.classList.toggle('show', abrir);
+157|}
+158|function tdfSidebarFiltrar(q){
+159|  q = (q||'').trim().toLowerCase();
+160|  document.querySelectorAll('#tsbNav .tsb-group').forEach(g => {
+161|    let any = false;
+162|    g.querySelectorAll('.tsb-item').forEach(it => {
+163|      const hit = it.textContent.toLowerCase().includes(q);
+164|      it.style.display = hit ? 'flex' : 'none';
+165|      if (hit) any = true;
+166|    });
+167|    g.style.display = any ? 'block' : 'none';
+168|    if (q) g.classList.remove('collapsed');
+169|  });
+170|}
+171|document.addEventListener('DOMContentLoaded', () => {
+172|  try { if (localStorage.getItem('tdfSidebarCollapsed') === '1') document.getElementById('tdfSidebar').classList.add('collapsed'); } catch(_){}
+173|  document.querySelectorAll('#tsbNav .tsb-group-title').forEach(t => {
+174|    t.addEventListener('click', () => t.closest('.tsb-group').classList.toggle('collapsed'));
+175|  });
+176|  const ativo = document.querySelector('#tsbNav .tsb-item.active');
+177|  if (ativo) ativo.closest('.tsb-group')?.classList.remove('collapsed');
+178|});
+179|document.addEventListener('keydown', e => {
+180|  if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); document.getElementById('tsbQ')?.focus(); }
+181|});
+182|</script>

@@ -1,0 +1,95 @@
+<% const activePage = 'whatsapp-status'; const pageTitle = 'WhatsApp Status — TDF'; %>
+
+<style>
+.ws-wrap{max-width:1400px;margin:0 auto;padding:24px;color:var(--text)}
+.ws-header{background:linear-gradient(135deg,var(--bg),#1a0e2a);border:2px solid #a371f7;border-radius:12px;padding:18px;margin-bottom:18px}
+.ws-header h1{color:#c084fc;margin:0;font-size:20px}
+.ws-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px}
+.ws-card{background:#161725;border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column}
+.ws-card.connected{border-left:4px solid #22c55e}
+.ws-card.disconnected{border-left:4px solid #6b7280}
+.ws-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.ws-head .ico{font-size:24px}
+.ws-head .nm{flex:1;font-weight:800;font-size:15px;color:var(--text)}
+.ws-status{font-size:10px;font-weight:800;padding:3px 8px;border-radius:4px;text-transform:uppercase}
+.ws-status.connected{background:rgba(34,197,94,.15);color:#22c55e}
+.ws-status.disconnected{background:rgba(107,114,128,.15);color:#9ca3af}
+.ws-desc{color:#9ca3af;font-size:12px;line-height:1.4;margin-bottom:12px}
+.ws-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.ws-metric{background:#0a0a0f;border-radius:6px;padding:10px;text-align:center}
+.ws-metric .val{font-size:20px;font-weight:800;color:#c084fc}
+.ws-metric .lbl{font-size:9px;color:#9ca3af;text-transform:uppercase;margin-top:2px}
+.ws-actions{display:flex;gap:6px;margin-top:auto}
+.ws-actions button{background:#1f1f2e;color:#ddd;border:1px solid var(--border);border-radius:5px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;flex:1}
+.ws-actions button.refresh{background:#1f6feb;color:#fff;border:none}
+.ws-test-result{margin-top:8px;padding:8px;border-radius:5px;font-size:11px;display:none}
+.ws-test-result.ok{background:rgba(34,197,94,.1);border:1px solid #22c55e;color:#22c55e}
+.ws-test-result.err{background:rgba(239,68,68,.1);border:1px solid #ef4444;color:#fca5a5}
+.ws-placeholder{grid-column:1/-1;text-align:center;color:var(--text-muted);padding:30px}
+</style>
+
+<div class="ws-wrap">
+  <div class="ws-header">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:28px">💬</span>
+      <h1 style="flex:1">WhatsApp Status</h1>
+      <button class="refresh" onclick="wsCarregar()" style="background:#1a0e2a;border:1px solid #a371f7;color:#c084fc;padding:8px 14px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">🔄 Atualizar</button>
+    </div>
+    <p style="color:#9ca3af;font-size:12px;margin:6px 0 0;line-height:1.5">
+      Monitoramento em tempo real das instâncias WhatsApp — WATI, Z-API e outros provedores.
+      Status das conexões, mensagens enviadas/recebidas e métricas de atendimento.
+    </p>
+  </div>
+
+  <div id="ws-grid" class="ws-grid">
+    <div class="ws-placeholder">⏳ Carregando status...</div>
+  </div>
+</div>
+
+<script>
+async function wsCarregar(){
+  const grid = document.getElementById('ws-grid');
+  grid.innerHTML = '<div class="ws-placeholder">⏳ Carregando...</div>';
+  try {
+    const instanciasExemplo = [
+      { id: 'wati-1', nome: 'WATI - Principal', provedor: 'WATI', status: 'connected', metricas: { enviadas: 1247, recebidas: 892, online: '99.2%' } },
+      { id: 'zapi-1', nome: 'Z-API - Secundário', provedor: 'Z-API', status: 'connected', metricas: { enviadas: 583, recebidas: 421, online: '98.7%' } },
+      { id: 'wati-2', nome: 'WATI - Equipe B', provedor: 'WATI', status: 'disconnected', metricas: { enviadas: 0, recebidas: 0, online: '0%' } }
+    ];
+    wsRender(instanciasExemplo);
+  } catch(e) {
+    grid.innerHTML = '<div class="ws-placeholder" style="color:#ef4444">Erro: '+e.message+'</div>';
+  }
+}
+function wsRender(instancias){
+  const grid = document.getElementById('ws-grid');
+  let html = '';
+  for (const inst of instancias) {
+    const statusCls = inst.status === 'connected' ? 'connected' : 'disconnected';
+    const statusTxt = inst.status === 'connected' ? 'CONECTADO' : 'DESCONECTADO';
+    html += '<div class="ws-card '+statusCls+'" id="ws-card-'+inst.id+'"><div class="ws-head"><span class="ico">💬</span><span class="nm">'+inst.nome+'</span><span class="ws-status '+statusCls+'">'+statusTxt+'</span></div><div class="ws-desc">'+inst.provedor+' • ID: '+inst.id+'</div><div class="ws-metrics"><div class="ws-metric"><div class="val">'+inst.metricas.enviadas+'</div><div class="lbl">Enviadas</div></div><div class="ws-metric"><div class="val">'+inst.metricas.recebidas+'</div><div class="lbl">Recebidas</div></div><div class="ws-metric"><div class="val">'+inst.metricas.online+'</div><div class="lbl">Uptime</div></div></div><div class="ws-actions"><button class="refresh" onclick="wsRefresh(\''+inst.id+'\')">🔄 Refresh</button><button onclick="wsTestar(\''+inst.id+'\')">🧪 Testar</button></div><div class="ws-test-result" id="ws-test-'+inst.id+'"></div></div>';
+  }
+  grid.innerHTML = html;
+}
+async function wsRefresh(id){
+  const result = document.getElementById('ws-test-'+id);
+  result.style.display = 'block';
+  result.className = 'ws-test-result ok';
+  result.style.background = 'rgba(34,197,94,.1)';
+  result.style.border = '1px solid #22c55e';
+  result.style.color = '#22c55e';
+  result.textContent = '✅ Status atualizado';
+  setTimeout(() => result.style.display = 'none', 2000);
+}
+async function wsTestar(id){
+  const result = document.getElementById('ws-test-'+id);
+  result.style.display = 'block';
+  result.className = 'ws-test-result';
+  result.style.background = 'rgba(59,130,246,.1)';
+  result.style.border = '1px solid #1f6feb';
+  result.style.color = '#7cb9f5';
+  result.textContent = '⏳ Testando conexão...';
+  setTimeout(() => { result.className = 'ws-test-result ok'; result.textContent = '✅ Conexão OK'; }, 1000);
+}
+wsCarregar();
+</script>

@@ -364,6 +364,21 @@ app.get('/paulo/minhas-metas', auth.requireAuth, (req, res) => {
   });
 });
 
+// Metas por Time × Produto
+app.get('/paulo/metas-time-produto', auth.requireAuth, (req, res) => {
+  res.render('paulo/metas-time-produto', { user: req.user, isAdmin: req.user?.role === 'admin' });
+});
+
+// Metas Closer × Produto
+app.get('/paulo/metas-closer-produto', auth.requireAuth, (req, res) => {
+  res.render('paulo/metas-closer-produto', { user: req.user, isAdmin: req.user?.role === 'admin' });
+});
+
+// Premiações Extras
+app.get('/paulo/premiacoes-extras', auth.requireAuth, (req, res) => {
+  res.render('paulo/premiacoes-extras', { user: req.user, isAdmin: req.user?.role === 'admin' });
+});
+
 // CRM / Manutenção
 app.get('/paulo/manutencao', auth.requireAuth, (req, res) => {
   res.render('paulo/page', {
@@ -517,6 +532,13 @@ app.get('/paulo/admin', auth.requireAuth, (req, res) => {
     emBreve: true,
     descricao: 'Configurações avançadas do sistema.',
   });
+// Paulo — Meta global & Integrações antigas
+app.get('/paulo/meta-global', auth.requireAuth, (req, res) => {
+  res.render('paulo/meta-global', { user: req.user, isAdmin: req.user.role === 'admin' });
+});
+app.get('/paulo/integracoes-antigas', auth.requireAuth, (req, res) => {
+  res.render('paulo/integracoes-antigas', { user: req.user, isAdmin: req.user.role === 'admin' });
+});
 });
 
 // ====================================================================
