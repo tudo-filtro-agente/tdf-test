@@ -23,6 +23,7 @@ const omie = require('./lib/omie');
 const sync = require('./lib/sync');
 const cron = require('./lib/cron');
 const bi = require('./lib/bi');
+const biFinanceiro = require('./lib/bi-financeiro');
 const opsClient = require('./lib/tdf-ops-client');
 const auth = require('./lib/auth');
 const { initAuth } = require('./lib/seed');
@@ -36,6 +37,9 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(expressLayouts);
 app.set('layout', 'paulo/layout');
+
+// ========== BI FINANCEIRO — router isolado (clone do Paulo) ==========
+app.use('/bi-financeiro/api', biFinanceiro({ pool: auth.pool, requireAuth: auth.requireAuth }));
 
 // Helper: renderiza views/auth com defaults garantidos (EJS não tem typeof safety)
 function renderAuth(res, data) {
