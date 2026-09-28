@@ -1,0 +1,13 @@
+<% const activePage = 'integracoes-antigas'; const pageTitle = 'Integrações antigas — TDF'; %>
+
+<style>
+.ig-wrap{max-width:1200px;margin:0 auto;padding:24px;color:var(--text,#eee)}
+.ig-header{background:linear-gradient(135deg,#161725,#1a0e2a);border:2px solid #a371f7;border-radius:12px;padding:18px;margin-bottom:18px}
+.ig-header h1{color:#c084fc;margin:0;font-size:20px}
+.ig-card{background:#161725;border:1px solid #2a2a3e;border-radius:12px;padding:32px;text-align:center;color:#9ca3af}
+</style>
+
+<div class="ig-wrap">
+  <div class="ig-header"><h1>📌 <%= pageTitle %></h1></div>
+  <div class="ig-card">🚀 Em construção. Em breve.</div>
+</div>

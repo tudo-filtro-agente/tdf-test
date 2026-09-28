@@ -26,9 +26,6 @@
         <a class="tsb-item <%= isA('home') %>" href="/paulo/home" title="Home"><span class="tsb-ico">🏠</span><span class="tsb-lbl">Home</span></a>
         <a class="tsb-item <%= isA('cockpit') %>" href="/paulo/cockpit" title="Painel"><span class="tsb-ico">📊</span><span class="tsb-lbl">Painel</span></a>
         <a class="tsb-item <%= isA('minhas-metas') %>" href="/paulo/minhas-metas" title="Minhas Metas"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Minhas Metas</span></a>
-        <a class="tsb-item <%= isA('metas-time-produto') %>" href="/paulo/metas-time-produto" title="Metas por Time × Produto"><span class="tsb-ico">🪙</span><span class="tsb-lbl">Metas por Time × Produto</span></a>
-        <a class="tsb-item <%= isA('metas-closer-produto') %>" href="/paulo/metas-closer-produto" title="Metas Closer × Produto"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Metas Closer × Produto</span></a>
-        <a class="tsb-item <%= isA('premiacoes-extras') %>" href="/paulo/premiacoes-extras" title="Premiações Extras"><span class="tsb-ico">🏆</span><span class="tsb-lbl">Premiações Extras</span></a>
         <a class="tsb-item <%= isA('premiacao') %>" href="/paulo/premiacao" title="Premiação"><span class="tsb-ico">🏆</span><span class="tsb-lbl">Premiação v7</span><span class="tsb-badge">NEW</span></a>
         <a class="tsb-item <%= isA('commit-semana') %>" href="/paulo/commit-semana" title="Commit da semana"><span class="tsb-ico">📋</span><span class="tsb-lbl">Commit da semana</span></a>
         <a class="tsb-item <%= isA('leads-parados') %>" href="/paulo/leads-parados" title="Parados hoje"><span class="tsb-ico">⏰</span><span class="tsb-lbl">Parados hoje</span></a>
@@ -112,18 +109,13 @@
     <!-- ADMINISTRAÇÃO -->
     <div class="tsb-group tsb-group-admin">
       <button class="tsb-group-title" type="button"><span class="tsb-gi">🛡️</span><span class="tsb-lbl">Administração</span><span class="tsb-chev">▾</span></button>
-<div class="tsb-group-body">
+      <div class="tsb-group-body">
         <a class="tsb-item tsb-money" href="/bi/financeiro" title="BI Financeiro Multiempresa"><span class="tsb-ico">💰</span><span class="tsb-lbl">BI Financeiro Multiempresa</span></a>
         <a class="tsb-item" href="/admin/conectores" title="Conectores (APIs)"><span class="tsb-ico">🔌</span><span class="tsb-lbl">Conectores (APIs)</span></a>
-        <a class="tsb-item" href="/paulo/whatsapp-status" title="WhatsApp Status"><span class="tsb-ico">💬</span><span class="tsb-lbl">WhatsApp Status</span></a>
-        <a class="tsb-item" href="/paulo/goto-connect" title="GoTo Connect"><span class="tsb-ico">📞</span><span class="tsb-lbl">GoTo Connect</span></a>
-        <a class="tsb-item" href="/paulo/unificar-cidades" title="Unificar Cidades"><span class="tsb-ico">🗺️</span><span class="tsb-lbl">Unificar Cidades</span></a>
         <a class="tsb-item <%= isA('pdv') %>" href="/paulo/pdv" title="PDV (Loja Física)"><span class="tsb-ico">🛒</span><span class="tsb-lbl">PDV (Loja Física)</span></a>
         <a class="tsb-item" href="/paulo/squads" title="Squads & Metas"><span class="tsb-ico">🎯</span><span class="tsb-lbl">Squads &amp; Metas</span></a>
         <a class="tsb-item" href="/paulo/admin" title="Admin Sistema"><span class="tsb-ico">⚙️</span><span class="tsb-lbl">Admin Sistema</span></a>
-        <a class="tsb-item" href="/paulo/admin-acessos" title="Acessos &amp; Logs"><span class="tsb-ico">📊</span><span class="tsb-lbl">Acessos &amp; Logs</span></a>
-        <a class="tsb-item" href="/paulo/meta-global" title="Meta global (simples)"><span class="tsb-ico">🌙</span><span class="tsb-lbl">Meta global (simples)</span></a>
-        <a class="tsb-item" href="/paulo/integracoes-antigas" title="Integrações antigas"><span class="tsb-ico">🌙</span><span class="tsb-lbl">Integrações antigas</span></a>
+        <a class="tsb-item" href="/paulo/admin-acessos" title="Acessos & Logs"><span class="tsb-ico">📊</span><span class="tsb-lbl">Acessos &amp; Logs</span></a>
       </div>
     </div>
     <% } %>
