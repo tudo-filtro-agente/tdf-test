@@ -532,6 +532,7 @@ app.get('/paulo/admin', auth.requireAuth, (req, res) => {
     emBreve: true,
     descricao: 'Configurações avançadas do sistema.',
   });
+});
 // Paulo — Meta global & Integrações antigas
 app.get('/paulo/meta-global', auth.requireAuth, (req, res) => {
   res.render('paulo/meta-global', { user: req.user, isAdmin: req.user.role === 'admin' });
@@ -539,6 +540,20 @@ app.get('/paulo/meta-global', auth.requireAuth, (req, res) => {
 app.get('/paulo/integracoes-antigas', auth.requireAuth, (req, res) => {
   res.render('paulo/integracoes-antigas', { user: req.user, isAdmin: req.user.role === 'admin' });
 });
+
+// Paulo — WhatsApp Status
+app.get('/paulo/whatsapp-status', auth.requireAuth, (req, res) => {
+  res.render('paulo/whatsapp-status', { user: req.user, isAdmin: req.user.role === 'admin' });
+});
+
+// Paulo — GoTo Connect
+app.get('/paulo/goto-connect', auth.requireAuth, (req, res) => {
+  res.render('paulo/goto-connect', { user: req.user, isAdmin: req.user.role === 'admin' });
+});
+
+// Paulo — Unificar Cidades
+app.get('/paulo/unificar-cidades', auth.requireAuth, (req, res) => {
+  res.render('paulo/unificar-cidades', { user: req.user, isAdmin: req.user.role === 'admin' });
 });
 
 // ====================================================================
