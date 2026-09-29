@@ -1257,25 +1257,60 @@ body.tdf-app-shell .tdf-app-main { min-width: 0; }     /* evita estouro de tabel
 }
 
 /* ============================================================
-   HOME — classes tdf-* usadas por views/paulo/home.ejs
-   (nao existiam no stylesheet; resultado era texto preto sobre preto)
+   HOME — recriado para ficar igual ao painel original do Paulo
    ============================================================ */
 .tdf-main { flex: 1 1 auto; min-width: 0; overflow-y: auto; min-height: 0; }
-.tdf-content { padding: 28px 32px 80px; max-width: 1180px; margin: 0 auto; }
+.tdf-content { padding: 0 0 80px; }
 
-.tdf-header-bar { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 28px; }
-.tdf-header-left { min-width: 0; }
-.tdf-greeting { font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; margin: 0 0 4px; color: var(--text); }
-.tdf-greeting strong { color: var(--accent); }
-.tdf-empresa { margin: 0; color: var(--text-muted); font-size: 14px; }
-.tdf-header-right { text-align: right; }
-.tdf-clock { font-size: 26px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.1; }
-.tdf-date { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; }
+/* ---- barra de KPIs (topo, colada) ---- */
+.tdf-kpi-bar { display: flex; align-items: stretch; gap: 10px; padding: 10px 18px; background: rgba(13,17,23,.75); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.tdf-kpi { display: flex; align-items: center; gap: 9px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 13px; min-width: 0; }
+.tdf-kpi-ic { font-size: 17px; line-height: 1; }
+.tdf-kpi-txt { min-width: 0; }
+.tdf-kpi-label { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .5px; color: var(--text-muted); text-transform: uppercase; }
+.tdf-kpi-row { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.tdf-kpi-val { font-size: 14.5px; font-weight: 700; color: var(--green); }
+.tdf-kpi-val.is-blue { color: var(--primary-light); }
+.tdf-kpi-val.is-ghost { color: var(--text); font-size: 12.5px; }
+.tdf-kpi-pill { font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 5px; background: var(--bg-hover); color: var(--text-muted); }
+.tdf-kpi-pill.up   { background: rgba(63,185,80,.16);  color: var(--green); }
+.tdf-kpi-pill.down { background: rgba(248,81,73,.16);  color: var(--danger); }
+.tdf-kpi-total { margin-left: auto; display: flex; align-items: center; gap: 9px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 15px; }
+.tdf-kpi-total .tdf-kpi-val { font-size: 17px; color: var(--gold); }
+.tdf-kpi-clock { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 6px 13px; text-align: center; }
+.tdf-kpi-clock b { display: block; font-size: 17px; color: var(--primary-light); font-variant-numeric: tabular-nums; line-height: 1.15; }
+.tdf-kpi-clock small { font-size: 9.5px; color: var(--text-muted); letter-spacing: .3px; }
 
-.tdf-section { margin-bottom: 28px; }
-.tdf-section-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+/* ---- greeting grande centralizado ---- */
+.tdf-greet-wrap { text-align: center; padding: 52px 20px 34px; }
+.tdf-greeting { font-size: clamp(2rem, 5.2vw, 3.1rem); font-weight: 800; margin: 0 0 12px; color: var(--primary-light); letter-spacing: -.5px; }
+.tdf-greeting strong { color: inherit; }
+.tdf-empresa { margin: 0; color: var(--text-muted); font-size: 15px; }
 
-.tdf-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; transition: border-color .2s, background .2s; }
+/* ---- bloco de novidades (formato original) ---- */
+.tdf-section { max-width: 1160px; margin: 0 auto 26px; padding: 0 20px; }
+.tdf-news { background: var(--bg-card); border: 1px solid var(--purple); border-radius: 16px; padding: 22px 24px 18px; }
+.tdf-news-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+.tdf-news-title { font-size: 21px; font-weight: 800; color: var(--purple); }
+.tdf-news-tag { font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; padding: 3px 9px; border-radius: 6px; background: rgba(163,113,247,.16); color: var(--purple); }
+.tdf-news-acts { margin-left: auto; display: flex; gap: 9px; flex-wrap: wrap; }
+.tdf-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 7px 14px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg-hover); color: var(--text); text-decoration: none; cursor: pointer; }
+.tdf-btn:hover { border-color: var(--primary); }
+.tdf-btn-accent { background: var(--primary); border-color: var(--primary); color: #fff; }
+.tdf-btn-hot { background: rgba(248,81,73,.12); border-color: rgba(248,81,73,.4); color: var(--danger); }
+.tdf-news-sub { color: var(--text-muted); font-size: 12.5px; font-style: italic; margin: 0 0 16px; }
+.tdf-news-list { display: flex; flex-direction: column; gap: 8px; }
+.tdf-news-item { display: flex; align-items: center; gap: 12px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; font-size: 13.5px; }
+.tdf-news-ic { font-size: 15px; }
+.tdf-news-txt { flex: 1 1 auto; min-width: 0; }
+.tdf-news-tagline { font-size: 9.5px; font-weight: 800; letter-spacing: .4px; color: var(--text); margin-right: 6px; }
+.tdf-news-txt strong { color: var(--text); font-weight: 700; }
+.tdf-news-act { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 8px; background: var(--purple); color: #fff; text-decoration: none; white-space: nowrap; }
+.tdf-news-act:hover { filter: brightness(1.12); }
+
+/* ---- modulos compactos ---- */
+.tdf-section-title { font-size: 14px; font-weight: 700; color: var(--text); margin: 0 0 11px; }
+.tdf-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 13px; padding: 16px; transition: border-color .2s, background .2s; }
 a.tdf-card { display: block; text-decoration: none; color: var(--text); }
 a.tdf-card:hover { background: var(--bg-card-hover); border-color: var(--primary); }
 .tdf-card-purple { border-left: 3px solid var(--purple); }
@@ -1283,16 +1318,12 @@ a.tdf-card:hover { background: var(--bg-card-hover); border-color: var(--primary
 .tdf-card-orange { border-left: 3px solid var(--warning); }
 .tdf-card-gold   { border-left: 3px solid var(--gold); }
 .tdf-card-blue   { border-left: 3px solid var(--primary-light); }
-
-.tdf-news-list { display: flex; flex-direction: column; gap: 10px; }
-.tdf-news-item { color: var(--text); font-size: 14px; line-height: 1.6; }
-.tdf-news-item strong { color: var(--accent); }
-
-.tdf-grid-3, .tdf-grid-4 { display: grid; gap: 16px; }
-.tdf-grid-3 { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
-.tdf-grid-4 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-
-.tdf-card-icon { font-size: 22px; margin-bottom: 8px; }
-.tdf-card-label { font-size: 14px; font-weight: 600; color: var(--text); }
-.tdf-card-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 4px; }
-.tdf-card-value { font-size: 20px; font-weight: 700; color: var(--green); margin-top: 8px; }
+.tdf-grid-3, .tdf-grid-4 { display: grid; gap: 13px; }
+.tdf-grid-3 { grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); }
+.tdf-grid-4 { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.tdf-card-icon { font-size: 20px; margin-bottom: 7px; }
+.tdf-card-label { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.tdf-card-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.tdf-card-value { font-size: 18px; font-weight: 700; color: var(--green); margin-top: 6px; }
+.tdf-clock, .tdf-date { display: none; }   /* migraram para a barra de KPIs */
+.tdf-header-bar, .tdf-header-left, .tdf-header-right { display: none; }
