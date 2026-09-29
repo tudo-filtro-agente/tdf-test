@@ -24,12 +24,12 @@ window.tdfTemaAtualizarBtn = function(){
 };
 document.addEventListener('DOMContentLoaded', function(){ tdfTemaAtualizarBtn(); });
 </script>
-<link rel="stylesheet" href="/paulo-assets/style.css?v=20260927">
+<link rel="stylesheet" href="/paulo-assets/style.css?v=20260928">
 </head>
-<body>
+<body class="tdf-app-shell">
 <%- include('sidebar', { user: user, activePage: typeof activePage !== 'undefined' ? activePage : '' }) %>
 
-<main class="tdf-main" id="tdfMain">
+<main class="tdf-app-main" id="tdfMain">
   <div class="tdf-content">
     <%- body %>
   </div>

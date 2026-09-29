@@ -1255,3 +1255,44 @@ body.tdf-app-shell .tdf-app-main { min-width: 0; }     /* evita estouro de tabel
   .tdf-sidebar.collapsed { width: 258px; }   /* no mobile sempre largura cheia */
   body.tdf-app-shell .tdf-app-main { padding-top: 4px; }
 }
+
+/* ============================================================
+   HOME — classes tdf-* usadas por views/paulo/home.ejs
+   (nao existiam no stylesheet; resultado era texto preto sobre preto)
+   ============================================================ */
+.tdf-main { flex: 1 1 auto; min-width: 0; overflow-y: auto; min-height: 0; }
+.tdf-content { padding: 28px 32px 80px; max-width: 1180px; margin: 0 auto; }
+
+.tdf-header-bar { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 28px; }
+.tdf-header-left { min-width: 0; }
+.tdf-greeting { font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; margin: 0 0 4px; color: var(--text); }
+.tdf-greeting strong { color: var(--accent); }
+.tdf-empresa { margin: 0; color: var(--text-muted); font-size: 14px; }
+.tdf-header-right { text-align: right; }
+.tdf-clock { font-size: 26px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.tdf-date { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; }
+
+.tdf-section { margin-bottom: 28px; }
+.tdf-section-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+
+.tdf-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; transition: border-color .2s, background .2s; }
+a.tdf-card { display: block; text-decoration: none; color: var(--text); }
+a.tdf-card:hover { background: var(--bg-card-hover); border-color: var(--primary); }
+.tdf-card-purple { border-left: 3px solid var(--purple); }
+.tdf-card-green  { border-left: 3px solid var(--green); }
+.tdf-card-orange { border-left: 3px solid var(--warning); }
+.tdf-card-gold   { border-left: 3px solid var(--gold); }
+.tdf-card-blue   { border-left: 3px solid var(--primary-light); }
+
+.tdf-news-list { display: flex; flex-direction: column; gap: 10px; }
+.tdf-news-item { color: var(--text); font-size: 14px; line-height: 1.6; }
+.tdf-news-item strong { color: var(--accent); }
+
+.tdf-grid-3, .tdf-grid-4 { display: grid; gap: 16px; }
+.tdf-grid-3 { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.tdf-grid-4 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+
+.tdf-card-icon { font-size: 22px; margin-bottom: 8px; }
+.tdf-card-label { font-size: 14px; font-weight: 600; color: var(--text); }
+.tdf-card-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 4px; }
+.tdf-card-value { font-size: 20px; font-weight: 700; color: var(--green); margin-top: 8px; }
