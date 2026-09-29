@@ -1,63 +1,59 @@
 <% const activePage = 'home'; const pageTitle = 'Home'; %>
 <% const hoje = new Date(); const _dias = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB']; const _meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']; const _dia = _dias[hoje.getDay()] + ', ' + hoje.getDate() + ' ' + _meses[hoje.getMonth()]; const _hora = hoje.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); const _un = (user && (user.name || user.username)) ? (user.name || user.username) : 'Usuário'; const _adm = user && user.role === 'admin'; %>
-<main class="tdf-main" id="tdfMain">
-  <div class="tdf-content">
-    <div class="tdf-header-bar">
-      <div class="tdf-header-left">
-        <h1 class="tdf-greeting">Bom dia, <strong><%= _un %>!</strong></h1>
-        <p class="tdf-empresa">Tudo de Filtro — Portal TDF</p>
-      </div>
-      <div class="tdf-header-right">
-        <div class="tdf-clock" id="tdfClock"><%= _hora %></div>
-        <div class="tdf-date"><%= _dia %></div>
-      </div>
+  <div class="tdf-header-bar">
+    <div class="tdf-header-left">
+      <h1 class="tdf-greeting">Bom dia, <strong><%= _un %>!</strong></h1>
+      <p class="tdf-empresa">Tudo de Filtro — Portal TDF</p>
     </div>
-    <div class="tdf-section">
-      <div class="tdf-section-title">📣 Novidades do Portal</div>
-      <div class="tdf-card tdf-card-purple">
-        <div class="tdf-news-list">
-          <div class="tdf-news-item">🎉 <strong>BI Financeiro Multiempresa</strong> — chegou! Sincronização OMIE em tempo real.</div>
-          <div class="tdf-news-item">📊 <strong>Dashboard de Tráfego</strong> — monitoramento de campanhas.</div>
-          <div class="tdf-news-item">🏆 <strong>Premiação v7</strong> — novo sistema com ranking.</div>
-          <div class="tdf-news-item">📚 <strong>Central de Treinamentos</strong> — aulas gravadas e trilhas.</div>
-        </div>
-      </div>
+    <div class="tdf-header-right">
+      <div class="tdf-clock" id="tdfClock"><%= _hora %></div>
+      <div class="tdf-date"><%= _dia %></div>
     </div>
-    <div class="tdf-section">
-      <div class="tdf-section-title">📄 Propostas do Mês</div>
-      <div class="tdf-grid-4">
-        <div class="tdf-card tdf-card-blue"><div class="tdf-card-icon">🏠</div><div class="tdf-card-label">Filtro de Entrada</div><div class="tdf-card-value">R$ 0</div></div>
-        <div class="tdf-card tdf-card-blue"><div class="tdf-card-icon">🚰</div><div class="tdf-card-label">Bebedouro</div><div class="tdf-card-value">R$ 0</div></div>
-        <div class="tdf-card tdf-card-blue"><div class="tdf-card-icon">💧</div><div class="tdf-card-label">Purificador</div><div class="tdf-card-value">R$ 0</div></div>
-        <div class="tdf-card tdf-card-blue"><div class="tdf-card-icon">📦</div><div class="tdf-card-label">Outros</div><div class="tdf-card-value">R$ 0</div></div>
-      </div>
-    </div>
-    <div class="tdf-section">
-      <div class="tdf-section-title">🎯 Trabalho do Dia</div>
-      <div class="tdf-grid-3">
-        <a href="/paulo/cockpit" class="tdf-card tdf-card-green"><div class="tdf-card-icon">📊</div><div class="tdf-card-label">Meu Painel</div><div class="tdf-card-sub">Acompanhe suas métricas</div></a>
-        <a href="/paulo/playbook" class="tdf-card tdf-card-green"><div class="tdf-card-icon">📋</div><div class="tdf-card-label">Scripts &amp; Modelos</div><div class="tdf-card-sub">Ferramentas de vendas</div></a>
-        <a href="/paulo/ia" class="tdf-card tdf-card-green"><div class="tdf-card-icon">🤖</div><div class="tdf-card-label">IA Consulta</div><div class="tdf-card-sub">Tire dúvidas rápido</div></a>
-      </div>
-    </div>
-    <div class="tdf-section">
-      <div class="tdf-section-title">🎓 Escola TDF</div>
-      <div class="tdf-grid-3">
-        <a href="/paulo/treinamento" class="tdf-card tdf-card-orange"><div class="tdf-card-icon">📚</div><div class="tdf-card-label">Treinamentos</div><div class="tdf-card-sub">Aprenda a vender mais</div></a>
-        <a href="/paulo/onboarding" class="tdf-card tdf-card-orange"><div class="tdf-card-icon">🚀</div><div class="tdf-card-label">Onboarding</div><div class="tdf-card-sub">Primeiros passos</div></a>
-        <a href="/paulo/playbook" class="tdf-card tdf-card-orange"><div class="tdf-card-icon">📖</div><div class="tdf-card-label">Playbook</div><div class="tdf-card-sub">Melhores práticas</div></a>
-      </div>
-    </div>
-    <div class="tdf-section">
-      <div class="tdf-section-title">📈 Resultados &amp; Gestão</div>
-      <div class="tdf-grid-3">
-        <a href="/bi" class="tdf-card tdf-card-gold"><div class="tdf-card-icon">💰</div><div class="tdf-card-label">BI Financeiro</div><div class="tdf-card-sub">Dados OMIE em tempo real</div></a>
-        <a href="/paulo/gestao" class="tdf-card tdf-card-gold"><div class="tdf-card-icon">📊</div><div class="tdf-card-label">Central de Resultados</div><div class="tdf-card-sub">KPIs e metas</div></a>
-        <a href="/paulo/gestao-closy" class="tdf-card tdf-card-gold"><div class="tdf-card-icon">🪜</div><div class="tdf-card-label">Documentação do Processo</div><div class="tdf-card-sub">Como funciona</div></a>
+  </div>
+  <div class="tdf-section">
+    <div class="tdf-section-title">📣 Novidades do Portal</div>
+    <div class="tdf-card tdf-card-purple">
+      <div class="tdf-news-list">
+        <div class="tdf-news-item">🎉 <strong>BI Financeiro Multiempresa</strong> — chegou! Sincronização OMIE em tempo real.</div>
+        <div class="tdf-news-item">📊 <strong>Dashboard de Tráfego</strong> — monitoramento de campanhas.</div>
+        <div class="tdf-news-item">🏆 <strong>Premiação v7</strong> — novo sistema com ranking.</div>
+        <div class="tdf-news-item">📚 <strong>Central de Treinamentos</strong> — aulas gravadas e trilhas.</div>
       </div>
     </div>
   </div>
-</main>
+  <div class="tdf-section">
+    <div class="tdf-section-title">📄 Propostas do Mês</div>
+    <div class="tdf-grid-4">
+      <div class="tdf-card tdf-card-blue"><div class="tdf-card-icon">🏠</div><div class="tdf-card-label">Filtro de Entrada</div><div class="tdf-card-value">R$ 0</div></div>
+      <div class="tdf-card tdf-card-blue"><div class="tdf-card-icon">🚰</div><div class="tdf-card-label">Bebedouro</div><div class="tdf-card-value">R$ 0</div></div>
+      <div class="tdf-card tdf-card-blue"><div class="tdf-card-icon">💧</div><div class="tdf-card-label">Purificador</div><div class="tdf-card-value">R$ 0</div></div>
+      <div class="tdf-card tdf-card-blue"><div class="tdf-card-icon">📦</div><div class="tdf-card-label">Outros</div><div class="tdf-card-value">R$ 0</div></div>
+    </div>
+  </div>
+  <div class="tdf-section">
+    <div class="tdf-section-title">🎯 Trabalho do Dia</div>
+    <div class="tdf-grid-3">
+      <a href="/paulo/cockpit" class="tdf-card tdf-card-green"><div class="tdf-card-icon">📊</div><div class="tdf-card-label">Meu Painel</div><div class="tdf-card-sub">Acompanhe suas métricas</div></a>
+      <a href="/paulo/playbook" class="tdf-card tdf-card-green"><div class="tdf-card-icon">📋</div><div class="tdf-card-label">Scripts &amp; Modelos</div><div class="tdf-card-sub">Ferramentas de vendas</div></a>
+      <a href="/paulo/ia" class="tdf-card tdf-card-green"><div class="tdf-card-icon">🤖</div><div class="tdf-card-label">IA Consulta</div><div class="tdf-card-sub">Tire dúvidas rápido</div></a>
+    </div>
+  </div>
+  <div class="tdf-section">
+    <div class="tdf-section-title">🎓 Escola TDF</div>
+    <div class="tdf-grid-3">
+      <a href="/paulo/treinamento" class="tdf-card tdf-card-orange"><div class="tdf-card-icon">📚</div><div class="tdf-card-label">Treinamentos</div><div class="tdf-card-sub">Aprenda a vender mais</div></a>
+      <a href="/paulo/onboarding" class="tdf-card tdf-card-orange"><div class="tdf-card-icon">🚀</div><div class="tdf-card-label">Onboarding</div><div class="tdf-card-sub">Primeiros passos</div></a>
+      <a href="/paulo/playbook" class="tdf-card tdf-card-orange"><div class="tdf-card-icon">📖</div><div class="tdf-card-label">Playbook</div><div class="tdf-card-sub">Melhores práticas</div></a>
+    </div>
+  </div>
+  <div class="tdf-section">
+    <div class="tdf-section-title">📈 Resultados &amp; Gestão</div>
+    <div class="tdf-grid-3">
+      <a href="/bi" class="tdf-card tdf-card-gold"><div class="tdf-card-icon">💰</div><div class="tdf-card-label">BI Financeiro</div><div class="tdf-card-sub">Dados OMIE em tempo real</div></a>
+      <a href="/paulo/gestao" class="tdf-card tdf-card-gold"><div class="tdf-card-icon">📊</div><div class="tdf-card-label">Central de Resultados</div><div class="tdf-card-sub">KPIs e metas</div></a>
+      <a href="/paulo/gestao-closy" class="tdf-card tdf-card-gold"><div class="tdf-card-icon">🪜</div><div class="tdf-card-label">Documentação do Processo</div><div class="tdf-card-sub">Como funciona</div></a>
+    </div>
+  </div>
 <script>
 function tdfAtualizarRelogio(){
   var el = document.getElementById('tdfClock');
@@ -75,18 +71,18 @@ function tdfSidebarMobile(force){
 function tdfSidebarFiltrar(q){
   q = (q||'').trim().toLowerCase();
   document.querySelectorAll('#tsbNav .tsb-group').forEach(function(g) {
-    var any = false;
-    g.querySelectorAll('.tsb-item').forEach(function(it) {
-      var hit = it.textContent.toLowerCase().indexOf(q) !== -1;
-      it.style.display = hit ? 'flex' : 'none';
-      if (hit) any = true;
-    });
-    g.style.display = any ? 'block' : 'none';
+  var any = false;
+  g.querySelectorAll('.tsb-item').forEach(function(it) {
+    var hit = it.textContent.toLowerCase().indexOf(q) !== -1;
+    it.style.display = hit ? 'flex' : 'none';
+    if (hit) any = true;
+  });
+  g.style.display = any ? 'block' : 'none';
   });
 }
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('#tsbNav .tsb-group-title').forEach(function(t) {
-    t.addEventListener('click', function() { t.closest('.tsb-group').classList.toggle('collapsed'); });
+  t.addEventListener('click', function() { t.closest('.tsb-group').classList.toggle('collapsed'); });
   });
 });
 </script>
